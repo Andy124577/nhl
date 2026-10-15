@@ -26,7 +26,7 @@
         echanges: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>`,
         classement: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>`,
         stats: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`,
-        calendrier: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h2M14 14h2M8 18h2"/></svg>`
+        calendrier: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4.5" width="20" height="15" rx="2.5"/><path d="M6 10.25 7.5 8.75v6.5"/><rect x="15.25" y="8.75" width="3.5" height="6.5" rx="1.75"/><path d="M12 10.5h.01M12 13.5h.01"/></svg>`
     };
 
     const LIBELLE_ETAT = {
@@ -41,7 +41,7 @@
         { href: 'repechage.html',  cle: 'repechage',  texte: 'Repêchage',  icone: 'repechage' },
         { href: 'trade.html',      cle: 'trade',      texte: 'Échanges',   icone: 'echanges' },
         { href: 'classement.html', cle: 'classement', texte: 'Classement', icone: 'classement' },
-        { href: 'calendrier.html', cle: 'calendrier', texte: 'Calendrier', icone: 'calendrier' },
+        { href: 'calendrier.html', cle: 'calendrier', texte: 'Scores',     icone: 'calendrier' },
         { href: 'stats.html',      cle: 'stats',      texte: 'Stats',      icone: 'stats' }
     ];
 

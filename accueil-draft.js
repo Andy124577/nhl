@@ -59,6 +59,7 @@ function renderDraftHome({ tonight, activeName }) {
         <div class="fzh-hero-place" data-fzh-hero></div>
         <div class="fzh-slot" data-fz-bloc="surveiller"></div>
         ${fzhLinesHTML()}
+        <div class="fzh-slot" data-fz-bloc="meilleurs"></div>
         ${liveGames.length ? `<section class="fzh-scores fzh-panel">${fzhHeading('zap', 'Matchs en direct', '<a class="fzh-link" href="calendrier.html">Calendrier complet <span aria-hidden="true">→</span></a>')}<div class="fzh-score-track">${fzhGamesHTML(liveGames)}</div></section>` : ''}
         ${started ? '<section class="fzh-picks fzh-panel" id="fzhPicks" aria-labelledby="fzhPicksTitle">' + fzhHeading('users', '<span id="fzhPicksTitle">Sélections</span>') + '<div class="fzh-picks-tabs" role="group" aria-label="Équipes du pool"></div><div class="fzh-picks-body" aria-live="polite"></div></section>' : ''}
         <div class="fzh-slot" data-fz-bloc="horssaison"></div>

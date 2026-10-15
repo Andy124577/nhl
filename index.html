@@ -95,6 +95,10 @@
     <link rel="stylesheet" href="accueil-draft.css?v=20260930a">
     <link rel="stylesheet" href="accueil-draft-hero.css?v=20260927f">
     <link rel="stylesheet" href="accueil-watch.css?v=20260926b">
+    <!-- « Meilleurs joueurs » : le composant de la page Stats, puis son
+         habit de panneau d'accueil (#fzTopPlayers). -->
+    <link rel="stylesheet" href="statsTopPlayers.css?v=20260926b">
+    <link rel="stylesheet" href="accueil-top-players.css?v=20261015a">
     <!-- Panneau de la file du repêchage instantané (instantDraft.js). -->
     <link rel="stylesheet" href="instantDraft.css?v=20261003a">
     <!-- Récapitulatif de repêchage : le même popup qu'à la fin du repêchage,
@@ -590,6 +594,42 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Meilleurs joueurs — les dix joueurs de la LNH qui ont le plus
+                 de points Fantazy sur 7, 14, 30 jours ou 6 mois (GET
+                 /hot-players-last*). Le même composant que la page Stats :
+                 statsTopPlayers.js le remplit, accueil-top-players.css
+                 l'habille en panneau d'accueil.
+                 BLOC PARTAGÉ : les accueils saison, repêchage et téléphone
+                 ouvrent un emplacement data-fz-bloc="meilleurs" et
+                 fzdPlaceCalendar() l'y déplace (accueil-dash.js). Masqué
+                 quand aucune fenêtre n'a de joueurs (.is-empty). -->
+            <section class="top-players-section fzd-off-section" id="fzTopPlayers" aria-labelledby="fzTopPlayersTitle">
+                <div class="section-title-row">
+                    <div class="section-title-group">
+                        <h2 class="fzd-section-title" id="fzTopPlayersTitle"><span data-icon="hockey" aria-hidden="true"></span>Meilleurs joueurs</h2>
+                        <span class="section-subtitle" id="timeRangeLabel">7 derniers jours</span>
+                    </div>
+                    <div class="time-filters" role="group" aria-label="Période">
+                        <button type="button" class="time-filter active" data-days="7" onclick="changeTimeRange(7)">7J</button>
+                        <button type="button" class="time-filter" data-days="14" onclick="changeTimeRange(14)">14J</button>
+                        <button type="button" class="time-filter" data-days="30" onclick="changeTimeRange(30)">30J</button>
+                        <!-- statsTopPlayers.js ne laisse visibles que les fenêtres qui ont des joueurs -->
+                        <button type="button" class="time-filter" data-days="180" onclick="changeTimeRange(180)">6M</button>
+                    </div>
+                </div>
+                <!-- Les cinq cartes en os (fzSquelette.css), aux classes de statsTopPlayers.js. -->
+                <div id="topPlayersSkeleton" aria-busy="true">
+                    <div class="players-grid">
+                        <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge gold">1</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:96px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
+                        <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge silver">2</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:84px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
+                        <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge bronze">3</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:104px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
+                        <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge normal">4</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:90px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
+                        <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge normal">5</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:98px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
+                    </div>
+                </div>
+                <div class="actual-content players-grid" id="topPlayersList" style="display:none;"><!-- Filled by statsTopPlayers.js --></div>
+            </section>
         </div>
         <!-- Squelette de l'accueil, le temps que la disposition soit choisie
              (html.fz-home-pending) : la dernière vue par ce navigateur —
@@ -748,20 +788,23 @@
     <script defer src="careerTotals.js"></script>
     <script defer src="accueil-carousel.js?v=20260915"></script>
     <script defer src="accueil-watch.js?v=20260922"></script>
-    <script defer src="accueil-dash.js?v=20261006a"></script>
+    <!-- Meilleurs joueurs : lit BASE_URL et escapeHTML (accueil.js) et ouvre
+         la fiche par fzhOpenPlayerCareer (accueil-watch.js, juste avant). -->
+    <script defer src="statsTopPlayers.js?v=20261015a"></script>
+    <script defer src="accueil-dash.js?v=20261015a"></script>
     <script defer src="instantDraft.js?v=20261003a"></script>
-    <script defer src="accueil-mobile.js?v=20260930b"></script>
-    <script defer src="accueil-season.js?v=20261006a"></script>
+    <script defer src="accueil-mobile.js?v=20261015a"></script>
+    <script defer src="accueil-season.js?v=20261015a"></script>
     <script defer src="accueil-draft-hero.js?v=20260928b"></script>
-    <script defer src="accueil-draft.js?v=20260927f"></script>
+    <script defer src="accueil-draft.js?v=20261015a"></script>
     <script defer src="demos.js"></script>
     <script defer src="landing.js?v=20260923b"></script>
-    <script defer src="navbar.js?v=20261010b"></script>
+    <script defer src="navbar.js?v=20261015a"></script>
     <script defer src="installerApp.js?v=20261010a"></script>
     <script defer src="avatars.js"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
-    <script defer src="poolNav.js?v=20261003a"></script>
+    <script defer src="poolNav.js?v=20261015a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20261010a"></script>
 </body>

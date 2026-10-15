@@ -1,0 +1,112 @@
+/* ============================================================
+   MEILLEURS JOUEURS — à l'accueil (#fzTopPlayers, index.html)
+   ------------------------------------------------------------
+   Le composant de la page Stats (statsTopPlayers.css/.js), habillé
+   en panneau d'accueil : le cadre de « Mouvements récents »
+   (.fzd-off-section), son titre, ses filtres en pastilles, et les
+   jetons --fzd-* que chaque accueil remappe pour son thème
+   (accueil-dash.css, accueil-palette.css, accueil-light.css). Les
+   retouches de couleur reprennent celles de stats-premium.css, qui
+   reste scopé à body.fz-stats.
+
+   Bloc partagé : il vit sous le tableau de bord et les accueils
+   saison, repêchage et téléphone le déplacent dans leur emplacement
+   (fzdPlaceCalendar, accueil-dash.js). Ici, sa place dans chacun.
+   ============================================================ */
+
+#fzTopPlayers {
+    max-width: none;
+    margin: 18px 0;
+    padding: 15px 14px 14px;
+}
+/* Aucune fenêtre n'a de joueurs, ou aucune n'a répondu : pas de panneau creux. */
+#fzTopPlayers.is-empty { display: none; }
+
+#fzTopPlayers .section-title-row { margin-bottom: 14px; gap: 10px 16px; }
+#fzTopPlayers .section-title-group { gap: 10px; }
+#fzTopPlayers .section-title-group [data-icon] { color: inherit; }
+#fzTopPlayers .section-subtitle {
+    padding: 3px 10px;
+    background: var(--fzd-tile-bg);
+    color: var(--fzd-text-muted);
+    font: 500 13px/1.2 'Barlow Condensed', sans-serif;
+}
+
+/* Les pastilles des filtres de « Mouvements récents » (.fzd-off-filter). */
+#fzTopPlayers .time-filter {
+    padding: 6px 13px;
+    background: none;
+    border: 1px solid var(--fzd-border);
+    border-radius: 999px;
+    font: 500 12px/1 'Barlow Condensed', sans-serif;
+    letter-spacing: .06em;
+    color: var(--fzd-text-faint);
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+#fzTopPlayers .time-filter:hover { color: var(--fzd-ink); border-color: var(--fzd-border-strong); }
+#fzTopPlayers .time-filter.active {
+    background: var(--fzd-accent-fill);
+    border-color: var(--fzd-accent-fill);
+    color: var(--fzd-on-accent);
+    box-shadow: none;
+}
+
+/* Cartes : le dégradé des cartes de « Mouvements récents », sans le
+   liseré du survol (retiré aussi aux Stats). */
+#fzTopPlayers .player-card {
+    padding: 18px 12px 14px;
+    background: linear-gradient(135deg, var(--fzd-surface), var(--fzd-bg-alt));
+    border-color: var(--fzd-border);
+    border-radius: 10px;
+}
+#fzTopPlayers .player-card::before { display: none; }
+#fzTopPlayers .player-card:hover {
+    border-color: var(--fzd-accent-fill);
+    box-shadow: 0 4px 16px rgba(var(--primary-rgb), .12);
+}
+#fzTopPlayers .player-card:focus-visible { outline: 2px solid var(--fzd-accent); outline-offset: 2px; }
+#fzTopPlayers .player-rank-badge:is(.gold, .silver, .bronze) {
+    background: var(--fzd-accent-tint);
+    color: var(--fzd-accent);
+}
+#fzTopPlayers .player-rank-badge.normal {
+    background: var(--fzd-tile-bg);
+    color: var(--fzd-text-muted);
+}
+#fzTopPlayers .player-card-photo .no-photo { color: var(--fzd-text-muted); }
+#fzTopPlayers .player-card-name { color: var(--fzd-ink); }
+#fzTopPlayers .player-card-team { color: var(--fzd-accent); }
+#fzTopPlayers .pc-stat { background: var(--fzd-tile-bg); }
+#fzTopPlayers .pc-stat-val { font-family: 'Oswald', sans-serif; color: var(--fzd-ink); }
+#fzTopPlayers .pc-stat-val.pts { color: var(--fzd-accent); }
+#fzTopPlayers .pc-stat-label { color: var(--fzd-text-muted); }
+
+/* Os des cartes (fzSquelette.css), aux mesures de stats-premium.css. */
+#fzTopPlayers .tp-sk-card { cursor: default; }
+#fzTopPlayers .tp-sk-card:hover { border-color: var(--fzd-border); box-shadow: none; transform: none; }
+#fzTopPlayers .tp-sk-name { width: var(--w); height: 12px; margin: 0 auto 7px; }
+#fzTopPlayers .tp-sk-team { width: 70px; height: 9px; margin: 0 auto 16px; }
+#fzTopPlayers .tp-sk-val { width: 22px; height: 16px; }
+#fzTopPlayers .tp-sk-lbl { width: 26px; height: 7px; margin-top: 5px; }
+
+/* ---- Sa place dans chaque accueil ---- */
+
+/* Saison : pleine largeur, après mon duel, avant « À surveiller » et les
+   alignements (même ordre 5, mais posé avant eux — accueil-season.js). */
+.fzs #fzTopPlayers { grid-column: 1 / -1; order: 5; margin: 0; padding: 16px; border-radius: 11px; }
+
+/* Repêchage : pleine largeur, sous « À surveiller » et les alignements. */
+.fzh #fzTopPlayers { grid-column: 1 / -1; margin: 0; padding: 18px; }
+
+/* Téléphone : l'espacement des autres blocs partagés (accueil-mobile.css). */
+.fz-mobile-home #fzTopPlayers { margin: 0 0 18px; }
+
+@media (max-width: 768px) {
+    /* La rangée qu'on fait défiler au doigt va jusqu'aux bords du panneau. */
+    #fzTopPlayers,
+    .fzs #fzTopPlayers,
+    .fzh #fzTopPlayers { padding: 14px; }
+    #fzTopPlayers .players-grid { margin: 0 -14px; padding: 4px 14px 10px; }
+    /* Repêchage : juste après les alignements (ordre 3, posé après eux). */
+    .fzh #fzTopPlayers { order: 3; }
+}

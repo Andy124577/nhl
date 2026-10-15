@@ -429,6 +429,9 @@ function renderMobileHome(tonight, movement, activeName) {
     // la ligue (marché, échanges) — même contenu qu'au bureau.
     const showActivity = isRegular || isLive;
     if (showActivity) html += '<div class="fzm-slot" data-fz-bloc="surveiller"></div>';
+    // Les meilleurs joueurs de la LNH (statsTopPlayers.js), dans tous les
+    // modes : en plein repêchage, ce sont aussi des joueurs à viser.
+    html += '<div class="fzm-slot" data-fz-bloc="meilleurs"></div>';
 
     // « Mouvements récents » : le carrousel partagé (fzd-off-carousel), suivi
     // des actualités, qui vivaient jusqu'ici dans le même bloc.

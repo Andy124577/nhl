@@ -1147,12 +1147,13 @@ function calGamesScroll(dir) {
 // ============================================================
 // BLOCS PARTAGÉS — un seul nœud par panneau, déplacé d'un accueil à l'autre
 //
-// Le calendrier, le compte à rebours hors-saison, « Mouvements récents » et
-// « À surveiller » sont les mêmes quatre panneaux sur les quatre accueils
-// (tableau de bord, repêchage, saison, téléphone). Ils existent donc UNE
-// seule fois dans index.html et chaque accueil ouvre un emplacement vide
-// `data-fz-bloc="<clé>"` où on les déplace : un seul balisage, un seul
-// rendu, jamais deux versions du même panneau qui finissent par diverger.
+// Le calendrier, le compte à rebours hors-saison, « Mouvements récents »,
+// « À surveiller » et « Meilleurs joueurs » sont les mêmes cinq panneaux sur
+// les quatre accueils (tableau de bord, repêchage, saison, téléphone). Ils
+// existent donc UNE seule fois dans index.html et chaque accueil ouvre un
+// emplacement vide `data-fz-bloc="<clé>"` où on les déplace : un seul
+// balisage, un seul rendu, jamais deux versions du même panneau qui
+// finissent par diverger.
 //
 // Les emplacements portent display:contents (accueil-dash.css) : c'est le
 // nœud déplacé qui devient l'enfant de grille, pas l'emplacement.
@@ -1161,7 +1162,8 @@ const FZD_BLOCS = [
     { cle: 'calendrier', id: 'fzDashCalendarWrap' },
     { cle: 'horssaison', id: 'fzdOffCount' },
     { cle: 'mouvements', id: 'fzdOffMoves' },
-    { cle: 'surveiller', id: 'fzdOffWatch' }
+    { cle: 'surveiller', id: 'fzdOffWatch' },
+    { cle: 'meilleurs', id: 'fzTopPlayers' }
 ];
 let fzdBlocsMaison = null;
 

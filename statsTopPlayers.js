@@ -1,12 +1,13 @@
 /* ============================================================ */
 /* TOP PLAYERS — "Meilleurs joueurs"                             */
-/* Relocated from accueil.js: this used to render as the signed- */
-/* in homepage's "Meilleurs joueurs" grid; the homepage now leads*/
-/* with personal content and this league-wide reference content  */
-/* lives here instead, right under "Meneurs de la ligue" — same  */
-/* reasoning as statsLeaders.js. Shown to every visitor. Reads    */
-/* BASE_URL (index.js) and escapeHTML (statsLeaders.js), both    */
-/* loaded before this script.                                    */
+/* Rendered in two places, from the same markup:                 */
+/*  - stats.html, right under "Meneurs de la ligue";             */
+/*  - index.html, as one of the member homes' shared blocks      */
+/*    (#fzTopPlayers), moved into each layout by                 */
+/*    fzdPlaceCalendar() in accueil-dash.js.                     */
+/* Reads BASE_URL and escapeHTML — index.js/statsLeaders.js on   */
+/* the stats page, accueil.js on the home — loaded before this   */
+/* script.                                                       */
 /* ============================================================ */
 
 const TOP_PLAYERS_SIX_MONTHS_DAYS = 180;
@@ -16,7 +17,66 @@ let topPlayersData = null;
 /** Réponse de chaque fenêtre, chargée une fois : days → données (ou null). */
 const topPlayersCache = new Map();
 
-document.addEventListener('DOMContentLoaded', () => loadTopPlayers());
+/**
+ * Quatre requêtes, lancées quand la section approche de l'écran plutôt
+ * qu'au chargement : à l'accueil, un visiteur ne la voit jamais
+ * (#fzDashSection reste masquée) ; aux Stats, elle attend que l'onglet
+ * « Meneurs » s'ouvre.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    const section = document.querySelector('.top-players-section');
+    if (!section) return;
+    bindTopPlayerCards(document.getElementById('topPlayersList'));
+    if (!('IntersectionObserver' in window)) { loadTopPlayers(); return; }
+    const guet = new IntersectionObserver(entrees => {
+        if (!entrees.some(e => e.isIntersecting)) return;
+        guet.disconnect();
+        loadTopPlayers();
+    }, { rootMargin: '600px 0px' });
+    guet.observe(section);
+});
+
+/**
+ * La fiche du joueur : showCareerStats aux Stats (index.js),
+ * fzhOpenPlayerCareer à l'accueil (accueil-watch.js).
+ */
+function openTopPlayerCareer(card) {
+    const id = card.dataset.playerId ? Number(card.dataset.playerId) : null;
+    const nom = card.dataset.playerName || '';
+    if (typeof showCareerStats === 'function') showCareerStats(id, nom);
+    else if (typeof fzhOpenPlayerCareer === 'function') fzhOpenPlayerCareer(id, nom);
+}
+
+/** Un seul écouteur pour les dix cartes, qui se redessinent à chaque fenêtre. */
+function bindTopPlayerCards(list) {
+    if (!list) return;
+    const carte = e => e.target.closest('.player-card[role="button"]');
+    list.addEventListener('click', e => {
+        const card = carte(e);
+        if (card) openTopPlayerCareer(card);
+    });
+    list.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const card = carte(e);
+        if (!card) return;
+        e.preventDefault();
+        openTopPlayerCareer(card);
+    });
+}
+
+/**
+ * Rien à montrer (aucune fenêtre n'a de joueurs, ou aucune n'a répondu).
+ * Les Stats l'écrivent en toutes lettres ; l'accueil, qui ne garde jamais
+ * de panneau creux, masque la section (accueil-top-players.css).
+ */
+function markTopPlayersEmpty(vide) {
+    document.querySelector('.top-players-section')?.classList.toggle('is-empty', vide);
+}
+
+/** La couleur du club derrière la photo (.fz-shot, teamLogos.css), gris ardoise sans teamColors.js. */
+function topPlayerShotColor(teamAbbrev) {
+    return typeof getTeamColors === 'function' ? getTeamColors(teamAbbrev)[0] : '#3A414D';
+}
 
 function topPlayersRangeText(days) {
     return days === TOP_PLAYERS_SIX_MONTHS_DAYS ? '6 derniers mois' : `${days} derniers jours`;
@@ -88,6 +148,7 @@ function renderTopPlayersVide() {
     const skeleton = document.getElementById('topPlayersSkeleton');
     const content  = document.getElementById('topPlayersList');
     if (skeleton) skeleton.style.display = 'none';
+    markTopPlayersEmpty(true);
     const label = document.getElementById('timeRangeLabel');
     if (label) label.textContent = '';
     if (!content) return;
@@ -114,6 +175,7 @@ function renderTopPlayers() {
     }
 
     const performers = topPlayersData.topPlayers.slice(0, 10);
+    markTopPlayersEmpty(!performers.length);
 
     if (!performers.length) {
         content.innerHTML = `<p style="grid-column:1/-1;width:100%;text-align:center;
@@ -137,14 +199,19 @@ function renderTopPlayers() {
         const wins    = p.wins || 0;
         const saves   = p.saves || 0;
 
-        const headshot = p.headshot || buildHeadshotUrl(p.playerId, p.teamAbbrev);
+        // headshots.js n'est pas chargé à l'accueil : le serveur envoie
+        // toujours la photo, l'URL reconstruite n'est qu'un repli.
+        const headshot = p.headshot
+            || (typeof buildHeadshotUrl === 'function' ? buildHeadshotUrl(p.playerId, p.teamAbbrev) : '');
+        const id = Number(p.playerId) || '';
 
         return `
-        <div class="player-card" onclick="showCareerStats(${p.playerId || 'null'})"
+        <div class="player-card" role="button" tabindex="0" aria-label="Voir la fiche de ${name}"
+             data-player-id="${id}" data-player-name="${name}"
              style="animation-delay:${i * 0.07}s">
             <div class="player-rank-badge ${rankCls(i)}">${i + 1}</div>
             ${isHot ? '<span class="hot-streak" title="En feu!">🔥</span>' : ''}
-            <div class="player-card-photo fz-shot" style="--fz-shot-team: ${escapeHTML(teamShotColor(p.teamAbbrev))}">
+            <div class="player-card-photo fz-shot" style="--fz-shot-team: ${escapeHTML(topPlayerShotColor(p.teamAbbrev))}">
                 <img src="${headshot}" alt="${name}"
                      onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';"
                      loading="lazy">
@@ -189,6 +256,7 @@ function renderTopPlayersError() {
     const skeleton = document.getElementById('topPlayersSkeleton');
     const content  = document.getElementById('topPlayersList');
     if (skeleton) skeleton.style.display = 'none';
+    markTopPlayersEmpty(true);
     if (!content) return;
     content.style.display = '';
     content.innerHTML = `

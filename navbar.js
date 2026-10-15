@@ -141,7 +141,7 @@ const PAGE_ICON = {
     classement: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>`,
     stats: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`,
     pools: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg>`,
-    calendrier: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h2M14 14h2M8 18h2"/></svg>`
+    calendrier: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4.5" width="20" height="15" rx="2.5"/><path d="M6 10.25 7.5 8.75v6.5"/><rect x="15.25" y="8.75" width="3.5" height="6.5" rx="1.75"/><path d="M12 10.5h.01M12 13.5h.01"/></svg>`
 };
 
 // ==================== THÈME ====================
@@ -235,7 +235,7 @@ function buildLoggedOutNavbar() {
 
 // ==================== LOGGED IN NAVBAR ====================
 // Ordre : Accueil → Pools ▾ → Repêchage (🔴) → Échanges (🔴) → Classement
-//         → Calendrier → Stats
+//         → Scores → Stats
 //
 // « Pools » mène à l'accueil des pools (pool.html) : trois boutons, créer
 // un pool, en rejoindre un, ou ouvrir le pool actif sous son nom — ses
@@ -283,7 +283,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                     </a>
                     <a href="calendrier.html" class="nav-link ${'calendrier' === currentPage ? 'active' : ''}">
                         <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.calendrier}</span>
-                        <span class="nav-text">Calendrier</span>
+                        <span class="nav-text">Scores</span>
                     </a>
                     <a href="stats.html" class="nav-link ${'stats' === currentPage ? 'active' : ''}">
                         <span class="nav-icon-img" aria-hidden="true">${PAGE_ICON.stats}</span>
@@ -430,7 +430,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 
 // ==================== MOBILE BOTTOM NAV ====================
 // Même ordre que la barre du haut :
-// Accueil → Repêchage → Échanges → Classement → Calendrier → Stats
+// Accueil → Repêchage → Échanges → Classement → Scores → Stats
 function buildBottomNav(currentPage) {
     const existing = document.querySelector('.bottom-nav');
     if (existing) existing.remove();
@@ -457,7 +457,7 @@ function buildBottomNav(currentPage) {
             </a>
             ${onglet('classement', 'classement.html', PAGE_ICON.classement, 'Classement', ' id="bottomClassementLink"')}
             </a>
-            ${onglet('calendrier', 'calendrier.html', PAGE_ICON.calendrier, 'Calendrier')}
+            ${onglet('calendrier', 'calendrier.html', PAGE_ICON.calendrier, 'Scores')}
             </a>
             ${onglet('stats', 'stats.html', PAGE_ICON.stats, 'Stats')}
             </a>

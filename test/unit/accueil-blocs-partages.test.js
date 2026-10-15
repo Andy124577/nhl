@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * Les quatre panneaux communs aux accueils — calendrier, compte à rebours
- * hors-saison, « Mouvements récents » et « À surveiller » — n'existent qu'une
- * fois dans index.html. Chaque accueil ouvre un emplacement data-fz-bloc et
+ * Les cinq panneaux communs aux accueils — calendrier, compte à rebours
+ * hors-saison, « Mouvements récents », « À surveiller » et « Meilleurs
+ * joueurs » — n'existent qu'une fois dans index.html. Chaque accueil ouvre un emplacement data-fz-bloc et
  * fzdPlaceCalendar() y déplace le nœud.
  *
  * Ces tests gardent l'invariant : le jour où un accueil se remet à écrire son
@@ -35,7 +35,8 @@ const BLOCS = {
     calendrier: 'fzDashCalendarWrap',
     horssaison: 'fzdOffCount',
     mouvements: 'fzdOffMoves',
-    surveiller: 'fzdOffWatch'
+    surveiller: 'fzdOffWatch',
+    meilleurs: 'fzTopPlayers'
 };
 
 describe('accueil — blocs partagés', () => {
@@ -65,6 +66,21 @@ describe('accueil — blocs partagés', () => {
         // l'en-tête à flèches — pour que les deux panneaux voisins se lisent
         // comme un seul jeu de cartes.
         assert.match(INDEX, /class="fzh-watch fzd-off-section fzd-off-carousel" id="fzdOffWatch" data-watch-panel/);
+    });
+
+    test('« Meilleurs joueurs » est le composant de la page Stats', () => {
+        // Même script, mêmes identifiants : statsTopPlayers.js remplit l'un
+        // comme l'autre. Le panneau prend le cadre de « Mouvements récents ».
+        const STATS = lire('stats.html');
+        assert.match(INDEX, /class="top-players-section fzd-off-section" id="fzTopPlayers"/);
+        for (const page of [INDEX, STATS]) {
+            for (const id of ['timeRangeLabel', 'topPlayersSkeleton', 'topPlayersList']) {
+                assert.equal(page.split(`id="${id}"`).length - 1, 1, `#${id} devrait être déclaré une seule fois`);
+            }
+            assert.match(page, /<script defer src="statsTopPlayers\.js\?v=[^"]+"><\/script>/);
+        }
+        // À l'accueil, la fiche s'ouvre par fzhOpenPlayerCareer (accueil-watch.js).
+        assert.ok(INDEX.indexOf('accueil-watch.js') < INDEX.indexOf('statsTopPlayers.js'));
     });
 
     test('aucun accueil ne réécrit un bloc partagé, chacun ouvre un emplacement', () => {
