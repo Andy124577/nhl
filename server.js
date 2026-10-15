@@ -51,6 +51,7 @@ const routesInstantane = require("./routes/instantDraft.js");
 const routesEchanges = require("./routes/trades.js");
 const routesH2H = require("./routes/h2h.js");
 const routesRecords = require("./routes/records.js");
+const routesSoiree = require("./routes/soiree.js");
 const routesNotifications = require("./routes/notifications.js");
 const routesAujourdhui = require("./routes/today.js");
 const routesInvitations = require("./routes/invitations.js");
@@ -657,6 +658,13 @@ contexteRoutes.resultatsClubs = (demande) => resultatsClubsLNH(demande);
 // La journée entamée ou non : la tendance du classement garde la semaine qui
 // finit hier jusqu'au premier match du jour (routes/records.js).
 contexteRoutes.etatDeLaJournee = () => pointsEnDirect.lireJournee();
+// Le bilan de la soirée (routes/soiree.js) : les matchs d'une journée, et
+// l'identifiant et le club d'un joueur dont seul le direct connaît le match.
+contexteRoutes.matchsDuJour = (jour) => lireScoreDuJourBrut(jour);
+contexteRoutes.ficheReleve = (nom) => {
+    const ligne = (memStatsCache.players || []).find(p => p.playerName === nom);
+    return ligne ? { playerId: ligne.playerId, teamAbbrev: ligne.teamAbbrev } : null;
+};
 
 const comptes = routesIdentite.monter(app, contexteRoutes);
 // Connexion avec Google : inactive (bouton masqué) tant que les deux clés ne
@@ -677,6 +685,7 @@ routesInstantane.monter(app, contexteRoutes);
 routesEchanges.monter(app, contexteRoutes);
 routesH2H.monter(app, contexteRoutes);
 routesRecords.monter(app, contexteRoutes);
+routesSoiree.monter(app, contexteRoutes);
 routesNotifications.monter(app, contexteRoutes);
 routesInvitations.monter(app, contexteRoutes);
 routesAujourdhui.monter(app, contexteRoutes);

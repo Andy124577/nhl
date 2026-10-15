@@ -1,0 +1,756 @@
+/* =========================================================================
+ * Bilan de la soirée (bilanSoiree.js)
+ *
+ * Une fenêtre par-dessus la page, une fois le dernier match du soir fini :
+ * les cartes des joueurs défilent une à une, leurs points filent vers le
+ * total, puis le mouvement au classement ou le duel de la semaine.
+ *
+ * La fenêtre suit le thème (l'échelle de gris d'Apple, DESIGN.md). Les
+ * cartes de joueurs, elles, sont aux couleurs de leur club dans les deux
+ * thèmes — la seule chroma libre du site — avec le liseré de 3 px du club en
+ * bas, la silhouette « team-accent card ». Le rouge ne marque que l'action.
+ * ========================================================================= */
+
+.fzb-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;                        /* au-dessus de la fiche de joueur (10000), sous fzDialog (10100) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--overlay-dark, rgba(0, 0, 0, .6));
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    animation: fzbFondu .22s ease both;
+}
+.fzb-overlay.is-leaving { animation: fzbFonduSortie .2s ease both; }
+html.fzb-lock, html.fzb-lock body { overflow: hidden; }
+
+@keyframes fzbFondu { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fzbFonduSortie { to { opacity: 0; } }
+@keyframes fzbMontee {
+    from { opacity: 0; transform: translateY(24px) scale(.97); }
+    to { opacity: 1; transform: none; }
+}
+
+.fzb-sheet {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    max-height: calc(100dvh - 32px);
+    display: flex;
+    flex-direction: column;
+    background: var(--card, #1C1C1E);
+    color: var(--text-main, #F5F5F7);
+    border: 1px solid var(--border-light, #38383A);
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+    overflow: hidden;
+    animation: fzbMontee .34s cubic-bezier(.2, .8, .2, 1) both;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+/* La fenêtre reçoit le focus à l'ouverture pour que le lecteur d'écran lise
+   son titre ; c'est un conteneur, pas une commande : pas d'anneau. */
+.fzb-sheet:focus,
+.fzb-sheet:focus-visible { outline: none; }
+
+/* ---- En-tête : la progression, la date, l'équipe ------------------------ */
+
+.fzb-head { padding: 12px 16px 14px; flex: none; }
+
+.fzb-progress { display: flex; gap: 4px; margin-bottom: 14px; }
+.fzb-seg {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border-light, #38383A);
+    overflow: hidden;
+}
+.fzb-seg i {
+    display: block;
+    height: 100%;
+    background: var(--text-main, #F5F5F7);
+    transform: scaleX(0);
+    transform-origin: left;
+}
+.fzb-seg.is-done i { transform: scaleX(1); }
+.fzb-seg.is-active i { animation: fzbSegment var(--fzb-step, 1750ms) linear both; }
+@keyframes fzbSegment { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.fzb-head-row { display: flex; align-items: center; gap: 12px; }
+.fzb-titles { flex: 1; min-width: 0; }
+.fzb-eyebrow {
+    margin: 0 0 2px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #A1A1A6);
+}
+.fzb-title {
+    margin: 0;
+    font: 400 1.55rem/1.05 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1.5px;
+    color: var(--text-main, #F5F5F7);
+}
+.fzb-team {
+    margin: 2px 0 0;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-secondary, #A1A1A6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Le logo d'une équipe de pool : son premier club, sinon ses initiales. */
+.fzb-logo,
+.fzb-duel-logo {
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--card-white, #2C2C2E);
+    border: 1px solid var(--border-light, #38383A);
+    overflow: hidden;
+}
+.fzb-logo { width: 44px; height: 44px; }
+.fzb-logo img,
+.fzb-duel-logo img {
+    position: absolute;
+    inset: 14%;
+    width: 72%;
+    height: 72%;
+    object-fit: contain;
+    z-index: 1;
+}
+.fzb-logo img ~ span,
+.fzb-duel-logo img ~ span { visibility: hidden; }
+.fzb-logo-initiales,
+.fzb-duel-logo-initiales {
+    font-weight: 800;
+    font-size: .85rem;
+    color: var(--text-secondary, #A1A1A6);
+}
+
+.fzb-close {
+    flex: none;
+    align-self: flex-start;
+    width: 44px;
+    height: 44px;
+    margin: -6px -10px 0 0;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary, #A1A1A6);
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+.fzb-close:hover { background: var(--bg-hover, #2C2C2E); color: var(--text-main, #F5F5F7); }
+.fzb-close:focus-visible { outline: none; box-shadow: var(--focus-ring, 0 0 0 3px rgba(230, 32, 48, .4)); }
+
+/* ---- Corps : la scène des cartes, puis la conclusion -------------------- */
+
+.fzb-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 16px;
+}
+
+.fzb-stage {
+    position: relative;
+    height: 236px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- Une carte de joueur ------------------------------------------------ */
+
+.fzb-card {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 44% 1fr;
+    grid-template-rows: 1fr auto;
+    border-radius: 14px;
+    overflow: hidden;
+    color: #FFFFFF;
+    background-color: var(--fzb-surface, #2C2C2E);
+    background-image:
+        radial-gradient(120% 90% at 18% 100%, rgba(255, 255, 255, .16), transparent 62%),
+        linear-gradient(160deg, rgba(255, 255, 255, .08), rgba(0, 0, 0, .34));
+    border-bottom: 3px solid var(--fzb-trim, #636366);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
+    isolation: isolate;
+}
+.fzb-card.is-entering { animation: fzbCarteEntree .44s cubic-bezier(.2, .8, .2, 1) both; }
+.fzb-card.is-leaving { animation: fzbCarteSortie .34s ease both; pointer-events: none; }
+@keyframes fzbCarteEntree {
+    from { opacity: 0; transform: translateX(48px) rotate(2.5deg) scale(.95); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes fzbCarteSortie {
+    to { opacity: 0; transform: translateX(-48px) rotate(-2.5deg) scale(.95); }
+}
+
+/* L'écusson du club en filigrane, comme sur la fiche du joueur. */
+.fzb-card-crest {
+    position: absolute;
+    z-index: -1;
+    top: -18%;
+    right: -12%;
+    width: 64%;
+    height: auto;
+    opacity: .16;
+    transform: rotate(-12deg);
+    pointer-events: none;
+}
+
+.fzb-card-photo {
+    position: relative;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-width: 0;
+}
+.fzb-card-photo img {
+    position: relative;
+    z-index: 1;
+    width: 112%;
+    max-width: none;
+    height: auto;
+    margin-left: -6%;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .35));
+}
+.fzb-card-photo.is-club { align-items: center; }
+.fzb-card-photo.is-club img { width: 78%; margin: 0; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .3)); }
+.fzb-card-photo img ~ span { display: none; }
+.fzb-card-photo-initiales {
+    align-self: center;
+    font: 400 3.4rem/1 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, .5);
+}
+
+.fzb-card-info {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    min-width: 0;
+    padding: 16px 16px 0 6px;
+}
+.fzb-card-name {
+    margin: 0;
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #FFFFFF;
+    overflow-wrap: anywhere;
+}
+.fzb-card-meta {
+    margin: 3px 0 0;
+    font-size: .75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .74);
+}
+.fzb-card-stats {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 10px 0 0;
+    padding: 0;
+}
+.fzb-card-stats li {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .14);
+    font-size: .75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fzb-card-pts {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 0 16px 12px 0;
+    animation: fzbPoints .5s .22s cubic-bezier(.2, .9, .3, 1.35) both;
+}
+.fzb-card-pts-v {
+    font: 400 3.4rem/.9 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1px;
+}
+.fzb-card-pts-l {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .74);
+}
+.fzb-card-pts.is-zero .fzb-card-pts-v { color: rgba(255, 255, 255, .6); }
+@keyframes fzbPoints {
+    0% { opacity: 0; transform: scale(.4); }
+    60% { opacity: 1; transform: scale(1.14); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Ceux qui ont joué sans marquer, en une carte neutre. */
+.fzb-card.is-groupe,
+.fzb-card.is-vide {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    color: var(--text-main, #F5F5F7);
+    background: var(--card-white, #2C2C2E);
+    background-image: none;
+    border: 1px solid var(--border-light, #38383A);
+    box-shadow: none;
+}
+.fzb-card.is-groupe .fzb-card-info,
+.fzb-card.is-vide .fzb-card-info { grid-column: 1; grid-row: 2; padding: 10px 18px 0; align-self: start; }
+.fzb-card.is-groupe .fzb-card-name,
+.fzb-card.is-vide .fzb-card-name { color: var(--text-main, #F5F5F7); }
+.fzb-card.is-groupe .fzb-card-meta,
+.fzb-card.is-vide .fzb-card-meta {
+    color: var(--text-secondary, #A1A1A6);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.fzb-card.is-vide .fzb-card-info { grid-row: 1 / span 3; align-self: center; text-align: center; }
+.fzb-card.is-groupe .fzb-card-pts { grid-column: 1; grid-row: 3; }
+.fzb-card.is-groupe .fzb-card-pts-v { color: var(--text-secondary, #A1A1A6); }
+.fzb-card.is-groupe .fzb-card-pts-l { color: var(--text-secondary, #A1A1A6); }
+
+.fzb-faces { display: flex; padding: 22px 18px 0; }
+.fzb-face {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    margin-right: -10px;
+    border-radius: 50%;
+    border: 2px solid var(--card-white, #2C2C2E);
+    background: var(--fzb-surface, #3A3A3C);
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+}
+.fzb-face.is-plus {
+    background: var(--bg-hover, #3A3A3C);
+    font-size: .8rem;
+    font-weight: 800;
+    color: var(--text-secondary, #A1A1A6);
+}
+.fzb-face-photo { position: absolute; inset: 0; display: grid; place-items: center; }
+.fzb-face-photo img { position: absolute; left: 0; bottom: -2px; width: 100%; height: auto; z-index: 1; }
+.fzb-face-photo.is-club img { inset: 18%; width: 64%; height: 64%; object-fit: contain; }
+.fzb-face-photo img ~ span { visibility: hidden; }
+.fzb-face-photo-initiales { font-size: .78rem; font-weight: 800; color: rgba(255, 255, 255, .8); }
+
+/* ---- Les points qui filent vers le total -------------------------------- */
+
+.fzb-fly {
+    position: fixed;
+    z-index: 10060;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font: 400 1.6rem/1 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
+}
+.fzb-fly.is-plus { background: var(--success, #30D158); color: var(--on-success, #000000); }
+.fzb-fly.is-moins { background: var(--card-white, #2C2C2E); color: var(--primary-text, #FF5C66); }
+
+/* ---- Le total ------------------------------------------------------------ */
+
+.fzb-tally {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 12px 16px 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--card-white, #2C2C2E);
+    border: 1px solid var(--border-light, #38383A);
+}
+.fzb-tally-label {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #A1A1A6);
+}
+.fzb-tally-value { display: flex; align-items: baseline; gap: 5px; }
+.fzb-tally-n {
+    display: inline-block;
+    min-width: 2ch;
+    text-align: right;
+    font: 400 2.3rem/1 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main, #F5F5F7);
+}
+.fzb-tally-value small {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #A1A1A6);
+}
+.fzb-tally.is-bump .fzb-tally-n { animation: fzbBond .42s cubic-bezier(.2, .9, .3, 1.4); }
+@keyframes fzbBond {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.18); color: var(--success, #30D158); }
+    100% { transform: scale(1); }
+}
+
+/* ---- Pied : passer, puis l'action et fermer ----------------------------- */
+
+.fzb-foot {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px 16px;
+}
+.fzb-foot [hidden] { display: none !important; }
+
+.fzb-btn-primary,
+.fzb-btn-secondary,
+.fzb-btn-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+    font: inherit;
+    font-size: .95rem;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .2s cubic-bezier(.4, 0, .2, 1), transform .2s cubic-bezier(.4, 0, .2, 1);
+}
+.fzb-btn-primary {
+    flex: 1 1 100%;
+    min-height: 48px;
+    border: 0;
+    background: var(--primary, #E62030);
+    color: var(--on-primary, #FFFFFF);
+}
+.fzb-btn-primary:hover { background: var(--primary-deep, #C41A28); transform: translateY(-2px); }
+.fzb-btn-secondary {
+    flex: 1 1 100%;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary, #A1A1A6);
+}
+.fzb-btn-secondary:hover { background: var(--bg-hover, #2C2C2E); color: var(--text-main, #F5F5F7); }
+.fzb-btn-text {
+    border: 0;
+    background: transparent;
+    color: var(--primary-text, #FF5C66);
+}
+.fzb-btn-text:hover { background: rgba(var(--primary-rgb, 230, 32, 48), .08); }
+.fzb-btn-primary:active,
+.fzb-btn-text:active { transform: translateY(0); }
+.fzb-btn-primary:focus-visible,
+.fzb-btn-secondary:focus-visible,
+.fzb-btn-text:focus-visible { outline: none; box-shadow: var(--focus-ring, 0 0 0 3px rgba(230, 32, 48, .4)); }
+
+/* ---- Conclusion ------------------------------------------------------------ */
+
+.fzb-finale { animation: fzbFondu .3s ease both; }
+.fzb-finale > section + section { margin-top: 14px; }
+.fzb-label {
+    margin: 0 0 8px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #A1A1A6);
+}
+
+/* Le mouvement au classement (cumulatif). */
+.fzb-rank {
+    padding: 14px 16px 16px;
+    border-radius: 14px;
+    background: var(--card-white, #2C2C2E);
+    border: 1px solid var(--border-light, #38383A);
+    text-align: center;
+}
+.fzb-rank-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.fzb-rank-from,
+.fzb-rank-to {
+    font: 400 2.8rem/1 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1px;
+}
+.fzb-rank-from { color: var(--text-secondary, #A1A1A6); animation: fzbFondu .3s .1s both; }
+.fzb-rank-to { color: var(--text-main, #F5F5F7); animation: fzbPoints .5s .55s cubic-bezier(.2, .9, .3, 1.35) both; }
+/* Bebas Neue n'a pas de minuscules : le « e » de 2e reprend la police du texte. */
+.fzb-rank-from sup,
+.fzb-rank-to sup {
+    font: 700 .34em/1 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    letter-spacing: 0;
+    vertical-align: super;
+    margin-left: 2px;
+}
+.fzb-rank-arrow { color: var(--text-secondary, #A1A1A6); display: inline-flex; animation: fzbFleche .4s .3s ease both; }
+@keyframes fzbFleche { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+.fzb-rank-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 800;
+    background: var(--bg-gray-light, #2C2C2E);
+    color: var(--text-secondary, #A1A1A6);
+    animation: fzbPoints .45s .85s cubic-bezier(.2, .9, .3, 1.35) both;
+}
+.fzb-rank.is-up .fzb-rank-badge { background: rgba(48, 209, 88, .14); color: var(--success, #30D158); }
+.fzb-rank.is-down .fzb-rank-badge { background: rgba(var(--primary-rgb, 230, 32, 48), .12); color: var(--primary-text, #FF5C66); }
+.fzb-rank.is-flat .fzb-rank-badge { border: 1px solid var(--border-light, #38383A); background: transparent; }
+.fzb-rank-sub {
+    margin: 10px 0 0;
+    font-size: .85rem;
+    color: var(--text-secondary, #A1A1A6);
+}
+
+/* Le duel de la semaine (tête-à-tête) : deux équipes face à face, le
+   pointage en grand, un triangle vers celle qui mène. */
+.fzb-duel {
+    padding: 14px 12px 16px;
+    border-radius: 14px;
+    background: var(--card-white, #2C2C2E);
+    border: 1px solid var(--border-light, #38383A);
+    text-align: center;
+}
+.fzb-duel-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: start;
+    gap: 6px;
+}
+.fzb-duel-team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    animation: fzbDuelEntree .45s cubic-bezier(.2, .8, .2, 1) both;
+}
+.fzb-duel-team.is-eux { animation-name: fzbDuelEntreeDroite; animation-delay: .08s; }
+@keyframes fzbDuelEntree { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+@keyframes fzbDuelEntreeDroite { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+.fzb-duel-logo { width: 58px; height: 58px; margin-bottom: 4px; }
+.fzb-duel-name {
+    max-width: 100%;
+    font-size: .92rem;
+    font-weight: 800;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+.fzb-duel-rec {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--text-secondary, #A1A1A6);
+    font-variant-numeric: tabular-nums;
+}
+.fzb-duel-rec sup { font-size: .7em; }
+.fzb-duel-score {
+    margin-top: 6px;
+    font: 400 2.6rem/1 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary, #A1A1A6);
+    transition: color .3s ease;
+}
+.fzb-duel-team.is-lead .fzb-duel-score { color: var(--text-main, #F5F5F7); }
+.fzb-duel-soir {
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--text-secondary, #A1A1A6);
+}
+.fzb-duel-you {
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border-light, #38383A);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #A1A1A6);
+}
+.fzb-duel-vs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-top: 20px;
+    font: 400 1.1rem/1 'Bebas Neue', 'Segoe UI', sans-serif;
+    letter-spacing: 1.5px;
+    color: var(--text-light-gray, #6E6E73);
+}
+/* Le triangle d'ESPN : il pointe vers le pointage qui mène. */
+.fzb-duel-caret {
+    width: 0;
+    height: 0;
+    margin-top: 64px;
+    border-top: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+    opacity: 0;
+    transition: opacity .3s 1.2s ease;
+}
+.fzb-duel-caret.is-nous { border-right: 9px solid var(--text-main, #F5F5F7); opacity: 1; }
+.fzb-duel-caret.is-eux { border-left: 9px solid var(--text-main, #F5F5F7); opacity: 1; }
+
+.fzb-duel-status {
+    display: inline-block;
+    margin: 14px 0 0;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: .9rem;
+    font-weight: 800;
+    animation: fzbPoints .45s 1.35s cubic-bezier(.2, .9, .3, 1.35) both;
+}
+.fzb-duel-status.is-win { background: rgba(48, 209, 88, .14); color: var(--success, #30D158); }
+.fzb-duel-status.is-loss { background: rgba(var(--primary-rgb, 230, 32, 48), .12); color: var(--primary-text, #FF5C66); }
+.fzb-duel-status.is-tie { border: 1px solid var(--border-light, #38383A); color: var(--text-secondary, #A1A1A6); }
+.fzb-duel-note {
+    margin: 8px 0 0;
+    font-size: .8rem;
+    color: var(--text-secondary, #A1A1A6);
+}
+
+/* Le récapitulatif : chacun, ses statistiques, ses points. */
+.fzb-recap-list { list-style: none; margin: 0; padding: 0; }
+.fzb-recap-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-top: 1px solid var(--border-light, #38383A);
+}
+.fzb-recap-row:first-child { border-top: 0; }
+.fzb-recap-photo {
+    position: relative;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: var(--fzb-surface, #3A3A3C);
+}
+.fzb-recap-photo img { position: absolute; left: 0; bottom: -1px; width: 100%; height: auto; z-index: 1; }
+.fzb-recap-photo.is-club img { inset: 16%; width: 68%; height: 68%; object-fit: contain; }
+.fzb-recap-photo img ~ span { visibility: hidden; }
+.fzb-recap-photo-initiales { font-size: .7rem; font-weight: 800; color: rgba(255, 255, 255, .85); }
+.fzb-recap-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fzb-recap-name {
+    font-size: .88rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fzb-recap-line {
+    font-size: .75rem;
+    color: var(--text-secondary, #A1A1A6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fzb-recap-pts {
+    flex: none;
+    min-width: 3ch;
+    text-align: right;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .88rem;
+    font-weight: 700;
+    color: var(--text-secondary, #A1A1A6);
+}
+.fzb-recap-pts.is-plus { color: var(--success, #30D158); }
+.fzb-recap-pts.is-moins { color: var(--primary-text, #FF5C66); }
+
+.fzb-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---- Petits téléphones ---------------------------------------------------- */
+
+@media (max-width: 480px) {
+    .fzb-overlay { padding: 12px; }
+    .fzb-sheet { max-height: calc(100dvh - 24px); }
+    .fzb-stage { height: 220px; }
+    .fzb-card-name { font-size: 1.02rem; }
+    .fzb-card-pts-v { font-size: 3rem; }
+    .fzb-duel-score { font-size: 2.3rem; }
+    .fzb-duel-logo { width: 50px; height: 50px; }
+    .fzb-duel-caret { margin-top: 56px; }
+}
+
+/* Écrans bas (téléphone à l'horizontale) : la scène se resserre. */
+@media (max-height: 640px) {
+    .fzb-stage { height: 196px; }
+    .fzb-progress { margin-bottom: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fzb-overlay,
+    .fzb-sheet,
+    .fzb-card.is-entering,
+    .fzb-card.is-leaving,
+    .fzb-card-pts,
+    .fzb-finale,
+    .fzb-rank-from,
+    .fzb-rank-to,
+    .fzb-rank-arrow,
+    .fzb-rank-badge,
+    .fzb-duel-team,
+    .fzb-duel-status,
+    .fzb-tally.is-bump .fzb-tally-n { animation: none; }
+    .fzb-card.is-leaving { display: none; }
+    .fzb-seg.is-active i { animation: none; transform: scaleX(1); }
+    .fzb-duel-caret { transition: none; }
+}

@@ -705,6 +705,8 @@ const H2H_FORM_LABEL = { W: 'Victoire', L: 'Défaite', T: 'Nulle' };
 const H2H_ICON = {
     calendrier: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
     graphique: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V10M12 21V4M19 21v-7"/></svg>`,
+    // Le podium : celui de l'onglet et de la navigation (navbar.js, PAGE_ICON).
+    podium: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 21V9a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v12"/><path d="M8.5 13h-5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h17a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1h-5"/><path d="M12 .6l.76 1.95 2.09.12-1.61 1.33.52 2.03L12 4.9l-1.76 1.13.52-2.03-1.61-1.33 2.09-.12z" fill="currentColor" stroke="none"/></svg>`,
     horloge: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>`,
     trophee: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg>`
 };
@@ -1074,7 +1076,7 @@ async function renderPoolStandings(poolData, poolName) {
         // parmi d'autres sur l'onglet.
         standingsList.innerHTML = `${standingsSummaryHTML(standings)}<section class="fz-card st-card">
                <div class="fz-card-head">
-                   <span class="fz-card-icon">${H2H_ICON.graphique}</span>
+                   <span class="fz-card-icon">${H2H_ICON.podium}</span>
                    <h2 class="fz-card-title">Classement de la saison</h2>
                </div>
                <div class="standings-table-container"><table id="standingsTable">${buildStandingsHead(getStandingsColumns(), activeSortKey)}</table></div>
