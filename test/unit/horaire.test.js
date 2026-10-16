@@ -146,6 +146,62 @@ describe('ce qu’il faut aller vérifier', () => {
     });
 });
 
+describe('les matchs à venir de la journée (carte d’avant-match de l’accueil)', () => {
+    /** Un match brut de /v1/score/now. */
+    const brut = (id, gameState, startTimeUTC, extra = {}) => ({
+        id, gameState, startTimeUTC, gameScheduleState: 'OK',
+        venue: { default: 'Centre Bell' },
+        awayTeam: { abbrev: 'TOR', name: { default: 'Maple Leafs' }, score: 0 },
+        homeTeam: { abbrev: 'MTL', name: { default: 'Canadiens' }, score: 0 },
+        ...extra
+    });
+
+    test('seuls les matchs pas encore commencés, du premier départ au dernier', () => {
+        const jour = [
+            brut(3, 'FUT', '2026-10-16T02:00:00Z'),
+            brut(1, 'LIVE', '2026-10-15T23:00:00Z'),
+            brut(2, 'PRE', '2026-10-15T23:30:00Z'),
+            brut(4, 'OFF', '2026-10-15T17:00:00Z'),
+            brut(5, 'FINAL', '2026-10-15T19:00:00Z'),
+            brut(6, 'CRIT', '2026-10-15T23:00:00Z')
+        ];
+        assert.deepEqual(H.matchsAVenir(jour).map(m => m.id), [2, 3]);
+    });
+
+    test('la forme que lit la carte : heure, clubs, aréna, sans pointage', () => {
+        const [m] = H.matchsAVenir([brut(2026020150, 'FUT', '2026-10-15T23:00:00Z')]);
+        assert.deepEqual(m, {
+            id: 2026020150,
+            state: 'FUT',
+            startTimeUTC: '2026-10-15T23:00:00Z',
+            venue: 'Centre Bell',
+            away: { abbrev: 'TOR', name: 'Maple Leafs' },
+            home: { abbrev: 'MTL', name: 'Canadiens' }
+        });
+    });
+
+    test('un match reporté ou sans heure arrêtée n’annonce pas d’heure', () => {
+        const jour = [
+            brut(1, 'FUT', '2026-10-15T23:00:00Z', { gameScheduleState: 'PPD' }),
+            brut(2, 'FUT', '2026-10-15T23:00:00Z', { gameScheduleState: 'TBD' }),
+            brut(3, 'FUT', 'à déterminer'),
+            brut(4, 'FUT', undefined),
+            brut(5, 'FUT', '2026-10-15T23:00:00Z', { gameScheduleState: undefined })
+        ];
+        assert.deepEqual(H.matchsAVenir(jour).map(m => m.id), [5], 'sans état d’horaire, le match reste');
+    });
+
+    test('un flux incomplet ne casse rien', () => {
+        assert.deepEqual(H.matchsAVenir(null), []);
+        assert.deepEqual(H.matchsAVenir(undefined), []);
+        assert.deepEqual(H.matchsAVenir([null, { gameState: 'FUT', startTimeUTC: '2026-10-15T23:00:00Z' }]), [], 'sans identifiant, pas de lien vers la feuille');
+        const [m] = H.matchsAVenir([{ id: 7, gameState: 'FUT', startTimeUTC: '2026-10-15T23:00:00Z', awayTeam: { abbrev: 'TOR' } }]);
+        assert.deepEqual(m.away, { abbrev: 'TOR', name: '' });
+        assert.deepEqual(m.home, { abbrev: '', name: '' });
+        assert.equal(m.venue, '');
+    });
+});
+
 describe('le calendrier de l’accueil, du lundi au dimanche', () => {
     const { fzdDecalerJour, fzdLundiDe, fzdSemaineLundiDimanche } =
         chargerFonctions('accueil-dash.js', ['fzdDecalerJour', 'fzdLundiDe', 'fzdSemaineLundiDimanche']);

@@ -38,13 +38,17 @@ const userData = {
 
 const {
     storyAssistsHTML, storyLiveHTML, storyGoalsHTML, storyGoalKey,
-    storyPeriodLabel, storyClockLabel, storyPeriodDots
+    storyPeriodLabel, storyClockLabel, storyPeriodDots,
+    storyPreHTML, storyHeure, storyAvantLabel, storyJourLabel, storyGameChipHTML
 } = chargerFonctions('accueil.js', [
     'STORY_STRENGTH_LABEL', 'STORY_PERIOD_LABEL', 'STORY_NICKNAMES_2_MOTS',
     'storyTeamIdentity', 'storyTeamAccent', 'storyHexToRgb', 'storyTeamVars',
     'storyNomLong', 'storyAssistsHTML', 'storyGoalScore', 'storyGoalKey',
     'storyEnEntracte', 'storyPeriodLabel', 'storyClockLabel', 'storyPeriodDots',
-    'storyGoalsHTML', 'storyGoalsBlocHTML', 'storyLiveHTML'
+    'storyGoalsHTML', 'storyGoalsBlocHTML', 'storyLiveHTML',
+    'storyPreHTML', 'storyTopHTML', 'storyFondHTML', 'storyCampHTML',
+    'storyLienMatchHTML', 'storyNomComplet', 'storyHeure', 'storyAvantLabel',
+    'storyJourLabel', 'storySlideKey', 'storyGameChipHTML'
 ], { escapeHTML, userData });
 
 /** Un match en cours plausible, avec les quatre cas d'aide qui existent. */
@@ -218,7 +222,7 @@ describe('accueil — le flux en direct ne ment pas sur ses pannes', () => {
     // C'est la distinction qui empêche un hoquet réseau d'effacer un tableau
     // indicateur bien vivant : « aucun match » et « je n'ai pas pu demander »
     // ne doivent pas se ressembler.
-    const charger = reponse => chargerFonctions('accueil.js', ['fetchLiveGames'], {
+    const charger = reponse => chargerFonctions('accueil.js', ['fetchLiveGames', 'fetchStoryGames'], {
         BASE_URL: '',
         console: { warn() {} },
         fetch: async () => reponse
@@ -239,7 +243,7 @@ describe('accueil — le flux en direct ne ment pas sur ses pannes', () => {
     });
 
     test('une requête qui échoue rend null', async () => {
-        const f = chargerFonctions('accueil.js', ['fetchLiveGames'], {
+        const f = chargerFonctions('accueil.js', ['fetchLiveGames', 'fetchStoryGames'], {
             BASE_URL: '',
             console: { warn() {} },
             fetch: async () => { throw new Error('hors ligne'); }
@@ -284,7 +288,10 @@ describe('accueil — le sélecteur de match', () => {
 
     test('une diapo se reconnaît par sa clé, pas par sa position', () => {
         const { storySlideKey } = chargerFonctions('accueil.js', ['storySlideKey'], {});
-        assert.equal(storySlideKey({ type: 'live', game: { id: 42 } }), 'live:42');
+        assert.equal(storySlideKey({ type: 'live', game: { id: 42 } }), 'match:42');
+        // Même clé avant et après la mise au jeu : un match épinglé à l'avance
+        // reste épinglé quand sa carte devient le tableau indicateur.
+        assert.equal(storySlideKey({ type: 'pre', game: { id: 42 } }), 'match:42');
         assert.equal(storySlideKey({ type: 'news', article: { url: 'https://x/a', title: 'T' } }), 'news:https://x/a');
         assert.equal(storySlideKey(undefined), null);
     });
@@ -359,5 +366,172 @@ describe('accueil — le suivi rapproché', () => {
         // c'est le dernier posé qui nettoie, d'où le jeton.
         assert.match(ACCUEIL_JS, /const jeton = \+\+storyFlashSeq;/);
         assert.match(ACCUEIL_JS, /if \(jeton !== storyFlashSeq\) return;/);
+    });
+});
+
+describe('accueil — la carte d’avant-match', () => {
+    // Un match du jour pas encore commencé : l'heure de la mise au jeu et les
+    // deux clubs, sur le dessin du tableau indicateur qu'il deviendra.
+    const MIDI = new Date(2026, 9, 15, 12, 0).getTime();
+    const SOIR = new Date(2026, 9, 15, 19, 0).toISOString();
+    const avantMatch = (extra = {}) => ({
+        id: 2026020150,
+        state: 'FUT',
+        startTimeUTC: SOIR,
+        venue: 'Centre Bell',
+        away: { abbrev: 'TOR', name: 'Maple Leafs' },
+        home: { abbrev: 'MTL', name: 'Canadiens' },
+        ...extra
+    });
+
+    test('l’heure s’écrit à la française, à l’heure du membre', () => {
+        assert.match(storyHeure(SOIR), /^19\sh\s00$/u);
+        assert.equal(storyHeure('pas une date'), '');
+    });
+
+    test('le temps qui reste, puis « imminente » une fois l’heure passée', () => {
+        const depart = new Date(MIDI + (2 * 60 + 14) * 60000).toISOString();
+        assert.equal(storyAvantLabel(depart, MIDI), 'dans 2 h 14');
+        assert.equal(storyAvantLabel(new Date(MIDI + 60 * 60000).toISOString(), MIDI), 'dans 1 h 00');
+        assert.equal(storyAvantLabel(new Date(MIDI + 12 * 60000).toISOString(), MIDI), 'dans 12 min');
+        // Une minute entamée compte : 30 secondes, c'est encore « dans 1 min ».
+        assert.equal(storyAvantLabel(new Date(MIDI + 30000).toISOString(), MIDI), 'dans 1 min');
+        // L'heure est passée, la LNH n'a pas encore lancé le match.
+        assert.equal(storyAvantLabel(new Date(MIDI - 5 * 60000).toISOString(), MIDI), 'imminente');
+        assert.equal(storyAvantLabel(undefined, MIDI), '');
+    });
+
+    test('« Aujourd’hui », ou « Demain » si le flux a basculé sur le lendemain', () => {
+        assert.equal(storyJourLabel(SOIR, MIDI), 'Aujourd’hui');
+        assert.equal(storyJourLabel(new Date(2026, 9, 16, 19, 0).toISOString(), MIDI), 'Demain');
+    });
+
+    test('la carte annonce les deux clubs, l’heure et le temps qui reste', () => {
+        const html = storyPreHTML(avantMatch(), MIDI);
+        assert.match(html, /class="sl-live sl-pre"/);
+        assert.match(html, /sl-name[^"]*">Maple Leafs</, 'le visiteur');
+        assert.match(html, /sl-name[^"]*">Canadiens</, 'le club local');
+        assert.ok(html.indexOf('Maple Leafs') < html.indexOf('Canadiens'), 'le visiteur à gauche, comme en direct');
+        assert.match(html, /<time class="sl-time" datetime="[^"]+">19\sh\s00<\/time>/u);
+        assert.match(html, /sl-kick">Mise au jeu</);
+        assert.match(html, /sl-until">dans 7 h 00</);
+        assert.match(html, /sl-record">2 - 2 - 0</, 'la fiche du club, comme au tableau indicateur');
+    });
+
+    test('avant la mise au jeu, ni pointage ni point qui bat', () => {
+        // Un « 0 - 0 » se lirait comme un match commencé.
+        const html = storyPreHTML(avantMatch(), MIDI);
+        assert.ok(!html.includes('sl-score'), 'aucun pointage');
+        assert.ok(!html.includes('sl-badge-dot'), 'la pastille ne bat pas');
+        assert.ok(!html.includes('En direct'));
+        assert.match(html, /class="sl-badge is-pre">Aujourd’hui</);
+    });
+
+    test('l’aréna s’affiche quand la LNH la donne, échappée', () => {
+        assert.match(storyPreHTML(avantMatch(), MIDI), /class="sl-venue">Centre Bell</);
+        assert.ok(!storyPreHTML(avantMatch({ venue: '' }), MIDI).includes('sl-venue'));
+        const html = storyPreHTML(avantMatch({ venue: '<b>Aréna</b>' }), MIDI);
+        assert.ok(!html.includes('<b>Aréna'));
+        assert.match(html, /&lt;b&gt;Aréna/);
+    });
+
+    test('le jeton du sélecteur montre l’heure, pas une marque', () => {
+        const chip = storyGameChipHTML({ type: 'pre', game: avantMatch() });
+        assert.match(chip, /stories-chip-time">19\sh\s00</u);
+        assert.ok(!chip.includes('stories-chip-score'));
+        assert.match(chip, /data-story-pick="match:2026020150"/);
+
+        const direct = storyGameChipHTML({ type: 'live', game: matchDeReference() });
+        assert.match(direct, /stories-chip-score">2<i>-<\/i>3</);
+        assert.ok(!direct.includes('stories-chip-time'));
+    });
+});
+
+describe('accueil — un clic sur un match ouvre sa feuille', () => {
+    const lien = html => (html.match(/<a class="sl-open"[^>]*><\/a>/) || [])[0];
+
+    test('la carte d’avant-match mène à match.html', () => {
+        const a = lien(storyPreHTML({
+            id: 2026020150, startTimeUTC: '2026-10-15T23:00:00Z', venue: '',
+            away: { abbrev: 'TOR', name: 'Maple Leafs' }, home: { abbrev: 'MTL', name: 'Canadiens' }
+        }));
+        assert.ok(a, 'un lien couvre la carte');
+        assert.match(a, /href="match\.html\?id=2026020150"/);
+        assert.match(a, /aria-label="Feuille de match : Toronto Maple Leafs contre Montreal Canadiens, mise au jeu à /);
+    });
+
+    test('le tableau indicateur en direct mène à la même feuille', () => {
+        const a = lien(storyLiveHTML(matchDeReference()));
+        assert.ok(a, 'un lien couvre la carte');
+        assert.match(a, /href="match\.html\?id=2026020123"/);
+        assert.match(a, /aria-label="Feuille de match : Montreal Canadiens contre Toronto Maple Leafs"/);
+        // L'étiquette ne suit pas le direct : un pointage y serait vite faux.
+        assert.ok(!/\d+\s*-\s*\d+/.test(a), 'pas de pointage dans l’étiquette');
+    });
+
+    test('le lien est vide et posé après les buts : les buts restent cliquables', () => {
+        // Un <a> qui envelopperait la carte contiendrait les boutons du
+        // carrousel des buts — interdit, et le clic sur un buteur ouvrirait
+        // le match au lieu de sa fiche.
+        const html = storyLiveHTML(matchDeReference());
+        assert.ok(html.indexOf('class="sl-goals"') < html.indexOf('class="sl-open"'));
+        const ACCUEIL_CSS = fs.readFileSync(path.join(racine, 'accueil.css'), 'utf8');
+        assert.match(ACCUEIL_CSS, /\.sl-open \{\s*position: absolute; inset: 0; z-index: 1;/);
+        assert.match(ACCUEIL_CSS, /\.stories-card\.is-live \.sl-goals \{ position: relative; z-index: 2; \}/);
+    });
+
+    test('l’invitation « Feuille de match » n’est pas un second lien', () => {
+        const html = storyLiveHTML(matchDeReference());
+        assert.match(html, /<span class="sl-cta" aria-hidden="true">Feuille de match/);
+        assert.equal(html.split('<a ').length - 1, 1, 'un seul lien par carte');
+    });
+});
+
+describe('accueil — les matchs du jour arrivent avec le direct', () => {
+    const charger = reponse => chargerFonctions('accueil.js', ['fetchStoryGames'], {
+        BASE_URL: '',
+        console: { warn() {} },
+        fetch: async () => reponse
+    }).fetchStoryGames;
+
+    // L'objet rendu naît dans le bac à sable : on compare son contenu, pas
+    // son prototype, qui n'est pas celui de ce fichier.
+    const contenu = valeur => JSON.parse(JSON.stringify(valeur));
+
+    test('une lecture rend les matchs en cours et ceux à venir', async () => {
+        const f = charger({ ok: true, json: async () => ({ games: [{ id: 1 }], upcoming: [{ id: 2 }] }) });
+        assert.deepEqual(contenu(await f()), { games: [{ id: 1 }], upcoming: [{ id: 2 }] });
+    });
+
+    test('un serveur qui n’envoie pas encore `upcoming` rend une liste vide', async () => {
+        const f = charger({ ok: true, json: async () => ({ games: [] }) });
+        assert.deepEqual(contenu(await f()), { games: [], upcoming: [] });
+    });
+
+    test('une panne rend null, comme pour le direct', async () => {
+        assert.equal(await charger({ ok: false, status: 503 })(), null);
+    });
+
+    test('une heure de mise au jeu passée réveille le suivi du direct', () => {
+        // Sans match en cours, rien ne suivait la LNH : la carte d'avant-match
+        // serait restée figée jusqu'à un rechargement complet des diapos.
+        const maintenant = Date.parse('2026-10-15T23:05:00Z');
+        const passee = slides => chargerFonctions('accueil.js', ['storyMiseAuJeuPassee'], { storySlides: slides })
+            .storyMiseAuJeuPassee(maintenant);
+        assert.equal(passee([{ type: 'pre', game: { startTimeUTC: '2026-10-15T23:00:00Z' } }]), true);
+        assert.equal(passee([{ type: 'pre', game: { startTimeUTC: '2026-10-15T23:30:00Z' } }]), false);
+        assert.equal(passee([{ type: 'news', article: {} }]), false);
+
+        const ACCUEIL_JS = fs.readFileSync(path.join(racine, 'accueil.js'), 'utf8');
+        assert.match(ACCUEIL_JS, /if \(!storySlides\.some\(s => s\.type === 'live'\) && !storyMiseAuJeuPassee\(\)\) return;/);
+        assert.match(ACCUEIL_JS, /if \(!storySuiviActif\(\) && storyMiseAuJeuPassee\(\)\) startStoryLivePoll\(\);/);
+    });
+
+    test('le serveur joint les matchs à venir à /live-games, panne comprise', () => {
+        const SERVER = fs.readFileSync(path.join(racine, 'server.js'), 'utf8');
+        assert.match(SERVER, /upcoming: horaireLNH\.matchsAVenir\(allGames\)/);
+        const route = SERVER.slice(SERVER.indexOf("app.get('/live-games'"));
+        const corps = route.slice(0, route.indexOf('\n});'));
+        assert.equal(corps.split('upcoming: []').length - 1, 2, 'les deux réponses de repli portent la liste vide');
     });
 });

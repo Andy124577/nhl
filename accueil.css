@@ -1117,3 +1117,110 @@ html[data-theme="light"] .btn-hero-secondary:hover {
 @media (prefers-reduced-motion: reduce) {
     .sl-goals-carousel .fzd-goal-card.is-new { animation: none; border-color: var(--primary); }
 }
+
+/* ============================================================
+   STORIES — la carte d'avant-match, et la carte qui mène au match
+   ------------------------------------------------------------
+   Un match du jour pas encore commencé prend le dessin du tableau
+   indicateur (.stories-card.is-live) : mêmes clubs, mêmes couleurs,
+   l'heure de la mise au jeu à la place du pointage (.is-pre). À la
+   mise au jeu, la même diapo devient le tableau indicateur.
+   Toute carte de match mène à sa feuille (match.html) par un lien
+   étiré sur la carte (.sl-open, accueil.js) ; le carrousel des buts
+   reste au-dessus, avec ses flèches et ses fiches de buteur.
+   ============================================================ */
+.sl-live { position: relative; }
+.sl-open {
+    position: absolute; inset: 0; z-index: 1;
+    border-radius: 15px;
+}
+.sl-open:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+.stories-card.is-live .sl-goals { position: relative; z-index: 2; }
+
+/* « Feuille de match › » : ce que fait un clic, à côté de la ligue. */
+.sl-top-end { display: inline-flex; align-items: center; gap: calc(var(--su) * 10); }
+.sl-cta {
+    display: inline-flex; align-items: center; gap: calc(var(--su) * 6);
+    height: calc(var(--su) * 34);
+    padding: 0 calc(var(--su) * 14) 0 calc(var(--su) * 16);
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 100px;
+    color: #F5F5F7;
+    font-family: 'Barlow Condensed', 'Barlow', 'Segoe UI', sans-serif;
+    font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
+    letter-spacing: .07em; text-transform: uppercase; white-space: nowrap;
+    transition: background .15s, border-color .15s;
+}
+.sl-cta i { font-style: normal; font-size: 1.25em; transition: transform .15s; }
+.sl-live:has(> .sl-open:hover) .sl-cta,
+.sl-live:has(> .sl-open:focus-visible) .sl-cta {
+    background: rgba(var(--primary-rgb),.16);
+    border-color: rgba(var(--primary-rgb),.55);
+}
+.sl-live:has(> .sl-open:hover) .sl-cta i { transform: translateX(calc(var(--su) * 3)); }
+
+/* La pastille d'avant-match : pas de point qui bat, rien n'est en cours. */
+.sl-badge.is-pre {
+    padding: 0 calc(var(--su) * 16);
+    border-color: rgba(255,255,255,.16);
+    background: rgba(255,255,255,.06);
+    box-shadow: none;
+}
+
+/* L'heure de la mise au jeu, là où se tient le pointage. */
+.sl-kickoff {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 0;
+    text-align: center;
+}
+/* Rouge texte du thème sombre, comme la période : la carte reste sombre. */
+.sl-kick {
+    color: #FF5C66;
+    font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
+    letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+}
+.sl-time {
+    margin-top: calc(var(--su) * 10);
+    color: #fff;
+    font-size: calc(var(--su) * 64); font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.sl-until {
+    margin-top: calc(var(--su) * 12);
+    color: #A1A1A6;
+    font-size: calc(var(--su) * 17); font-weight: 600; line-height: 1;
+    white-space: nowrap;
+}
+
+/* Sans buts à montrer, le bandeau et l'aréna se centrent dans la hauteur
+   commune à toutes les diapos. */
+.stories-card.is-pre .sl-board { margin-top: auto; }
+.stories-card.is-pre .sl-pre:not(:has(> .sl-venue)) .sl-board { margin-bottom: auto; }
+.sl-venue {
+    margin: calc(var(--su) * 16) 0 auto;
+    padding: 0 calc(var(--su) * 15);
+    color: #A1A1A6;
+    font-size: calc(var(--su) * 16); font-weight: 600; line-height: 1.2;
+    letter-spacing: .06em; text-transform: uppercase; text-align: center;
+}
+
+/* Jeton d'un match à venir : l'heure à la place de la marque. */
+.stories-chip-time { color: var(--text-main); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 768px) {
+    .stories-card.is-live .sl-top-end { gap: 6px; }
+    .stories-card.is-live .sl-cta { height: 24px; gap: 4px; padding: 0 9px 0 10px; font-size: 11px; }
+    .stories-card.is-live .sl-badge.is-pre { padding: 0 10px; box-shadow: none; }
+    .stories-card.is-live .sl-kick { font-size: 10px; }
+    .stories-card.is-live .sl-time { margin-top: 5px; font-size: 28px; }
+    .stories-card.is-live .sl-until { margin-top: 5px; font-size: 11.5px; }
+    .stories-card.is-live .sl-venue { margin-top: 10px; padding: 0 10px; font-size: 11px; }
+}
+/* Sous 360 px, la pastille, l'invitation et la ligue ne tiennent plus sur
+   une ligne : la ligue, purement décorative, s'efface. */
+@media (max-width: 359px) {
+    .stories-card.is-live .sl-league { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sl-cta, .sl-cta i { transition: none; }
+}

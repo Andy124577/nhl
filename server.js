@@ -2475,7 +2475,11 @@ async function releverMatchsEnDirect() {
             };
         });
 
-    const payload = { games: liveGames, generatedAt: new Date().toISOString() };
+    // Les matchs du jour pas encore commencés : la carte d'avant-match des
+    // histoires (heure et clubs), qui devient le tableau indicateur à la mise
+    // au jeu. Le direct poussé (scores:*) ne les porte pas : la page les relit
+    // ici à chaque reconstruction des diapos.
+    const payload = { games: liveGames, upcoming: horaireLNH.matchsAVenir(allGames), generatedAt: new Date().toISOString() };
     // Le relevé brut reste à côté : les points en direct ont besoin de ce
     // que la carte d'accueil n'affiche pas (type de match, heure de début,
     // matchs terminés).
@@ -2552,12 +2556,12 @@ app.get('/live-games', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
         const charge = await lireMatchsEnDirect();
-        if (!charge) return res.json({ games: [], generatedAt: new Date().toISOString() });
+        if (!charge) return res.json({ games: [], upcoming: [], generatedAt: new Date().toISOString() });
         const { lu, ...payload } = charge;
         res.json(payload);
     } catch (error) {
         console.error('❌ Error fetching live games:', error.message);
-        res.json({ games: [], generatedAt: new Date().toISOString() });
+        res.json({ games: [], upcoming: [], generatedAt: new Date().toISOString() });
     }
 });
 

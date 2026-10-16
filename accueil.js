@@ -235,13 +235,18 @@ async function loadStories() {
     if (!section) return;
     stopStoryTimer();
     stopStoryLivePoll();
+    stopStoryAvantMatch();
     storyDernierChargement = Date.now();
 
-    const [liveGames, news] = await Promise.all([fetchLiveGames(), fetchNhlNews()]);
-    (liveGames || []).forEach(g => storyRecu(g, 0));
+    const [matchs, news] = await Promise.all([fetchStoryGames(), fetchNhlNews()]);
+    const liveGames = matchs ? matchs.games : [];
+    liveGames.forEach(g => storyRecu(g, 0));
 
+    // Les matchs du jour d'abord — en direct, puis à venir dans l'ordre des
+    // mises au jeu —, les actualités ensuite.
     storySlides = [
-        ...(liveGames || []).map(game => ({ type: 'live', game })),
+        ...liveGames.map(game => ({ type: 'live', game })),
+        ...(matchs ? matchs.upcoming : []).map(game => ({ type: 'pre', game })),
         ...news.map(article => ({ type: 'news', article }))
     ];
 
@@ -263,18 +268,19 @@ async function loadStories() {
     bindStoryHover();
 
     // Une diapo épinglée le reste d'un rafraîchissement à l'autre, tant
-    // qu'elle est encore au flux — un match tant qu'il joue, une actualité
-    // tant que la LNH la publie. Dès qu'elle en sort, la rotation reprend.
-    // Une actualité épinglée cède aussi la place quand un match commence :
-    // le sélecteur ne montre alors plus que les matchs.
-    const aDuDirect = storySlides.some(s => s.type === 'live');
+    // qu'elle est encore au flux — un match jusqu'à sa fin, mise au jeu
+    // comprise, une actualité tant que la LNH la publie. Dès qu'elle en sort,
+    // la rotation reprend. Une actualité épinglée cède aussi la place dès que
+    // la journée a des matchs : le sélecteur ne montre alors plus qu'eux.
+    const aDesMatchs = storySlides.some(storyEstMatch);
     const epingle = storyPinnedKey === null ? -1
-        : storySlides.findIndex(s => storySlideKey(s) === storyPinnedKey && (s.type === 'live' || !aDuDirect));
+        : storySlides.findIndex(s => storySlideKey(s) === storyPinnedKey && (storyEstMatch(s) || !aDesMatchs));
     if (epingle < 0) storyPinnedKey = null;
 
     storyIndex = epingle < 0 ? 0 : epingle;
     renderStorySlide();
     startStoryLivePoll();
+    startStoryAvantMatch();
 
     if (storyPinnedKey === null) startStoryTimer();
     else startStoryPinnedRefresh();
@@ -283,13 +289,20 @@ async function loadStories() {
 /**
  * Ce qui identifie une diapo d'un chargement à l'autre, et la valeur que
  * porte son jeton dans le sélecteur. L'index ne suffirait pas : une actualité
- * publiée entre deux chargements décalerait tout le monde d'un cran.
+ * publiée entre deux chargements décalerait tout le monde d'un cran. Un match
+ * garde la même clé avant et après la mise au jeu : épinglé à l'avance, il
+ * reste épinglé une fois en direct.
  */
 function storySlideKey(slide) {
     if (!slide) return null;
-    return slide.type === 'live'
-        ? `live:${slide.game.id}`
-        : `news:${slide.article.url || slide.article.title}`;
+    return slide.type === 'news'
+        ? `news:${slide.article.url || slide.article.title}`
+        : `match:${slide.game.id}`;
+}
+
+/** Une diapo de match : en direct, ou à venir aujourd'hui. */
+function storyEstMatch(slide) {
+    return !!slide && (slide.type === 'live' || slide.type === 'pre');
 }
 
 // ---- Suivi rapproché des matchs en cours --------------------------------
@@ -299,7 +312,9 @@ function storySlideKey(slide) {
 
 function startStoryLivePoll() {
     stopStoryLivePoll();
-    if (!storySlides.some(s => s.type === 'live')) return;
+    // Un match à venir dont l'heure est passée suffit : c'est le suivi qui
+    // verra la mise au jeu (la liste du direct change) et rebâtira les diapos.
+    if (!storySlides.some(s => s.type === 'live') && !storyMiseAuJeuPassee()) return;
     // Un onglet caché ne consomme ni réseau ni batterie — même règle que le
     // calendrier du tableau de bord et que fzToday.
     if (document.visibilityState !== 'visible') return;
@@ -320,6 +335,48 @@ function stopStoryLivePoll() {
 
 function demarrerStorySecours() {
     if (!storyLiveTimer) storyLiveTimer = setInterval(refreshStoryLive, STORY_LIVE_POLL_MS);
+}
+
+/** Le suivi du direct tourne déjà, par le socket ou par le sondage. */
+function storySuiviActif() {
+    return storySuiviSocket || !!storyLiveTimer;
+}
+
+// ---- Avant la mise au jeu -----------------------------------------------
+// Une carte d'avant-match annonce l'heure et le temps qui reste. Ce minuteur
+// tient ce compte à jour sur la diapo affichée, et lance le suivi du direct
+// dès qu'une heure de mise au jeu est passée — la LNH met souvent quelques
+// minutes de plus à déclarer le match commencé. Rien ne s'y lit sur le réseau.
+const STORY_AVANT_MATCH_MS = 30000;
+let storyAvantMatchTimer = null;
+
+function startStoryAvantMatch() {
+    stopStoryAvantMatch();
+    if (!storySlides.some(s => s.type === 'pre')) return;
+    storyAvantMatchTimer = setInterval(() => {
+        if (document.hidden) return;
+        const courant = storySlides[storyIndex];
+        if (courant && courant.type === 'pre') patchStoryAvantMatch(courant.game);
+        if (!storySuiviActif() && storyMiseAuJeuPassee()) startStoryLivePoll();
+    }, STORY_AVANT_MATCH_MS);
+}
+
+function stopStoryAvantMatch() {
+    if (storyAvantMatchTimer) { clearInterval(storyAvantMatchTimer); storyAvantMatchTimer = null; }
+}
+
+/** Un match à venir dont l'heure de mise au jeu est passée. */
+function storyMiseAuJeuPassee(maintenant = Date.now()) {
+    return storySlides.some(s => s.type === 'pre' && Date.parse(s.game.startTimeUTC) <= maintenant);
+}
+
+/** Le temps qui reste, sur la carte d'avant-match affichée. */
+function patchStoryAvantMatch(g) {
+    const card = document.getElementById('storiesCard');
+    const reste = card && card.querySelector('.sl-pre .sl-until');
+    if (!reste) return;
+    const texte = storyAvantLabel(g.startTimeUTC);
+    if (reste.textContent !== texte) reste.textContent = texte;
 }
 
 function arreterStorySecours() {
@@ -569,7 +626,7 @@ function renderStoryPicker() {
     const picker = document.getElementById('storiesPicker');
     if (!picker) return;
 
-    const matchs = storySlides.filter(s => s.type === 'live');
+    const matchs = storySlides.filter(storyEstMatch);
     const nouvelles = storySlides.filter(s => s.type === 'news');
     const jetons = matchs.length ? matchs : nouvelles;
 
@@ -596,13 +653,17 @@ function renderStoryPicker() {
     updateStoryPickerActive();
 }
 
+/** Un jeton de match : la marque en direct, l'heure de la mise au jeu avant. */
 function storyGameChipHTML(slide) {
     const g = slide.game;
+    const milieu = slide.type === 'pre'
+        ? `<span class="stories-chip-time">${escapeHTML(storyHeure(g.startTimeUTC))}</span>`
+        : `<span class="stories-chip-score">${g.away.score}<i>-</i>${g.home.score}</span>`;
     return `
         <button type="button" class="stories-chip" data-story-pick="${escapeHTML(storySlideKey(slide))}">
             <img src="teams/${escapeHTML(g.away.abbrev)}.png" alt="" onerror="this.style.display='none'">
             <span class="stories-chip-team">${escapeHTML(g.away.abbrev)}</span>
-            <span class="stories-chip-score">${g.away.score}<i>-</i>${g.home.score}</span>
+            ${milieu}
             <span class="stories-chip-team">${escapeHTML(g.home.abbrev)}</span>
             <img src="teams/${escapeHTML(g.home.abbrev)}.png" alt="" onerror="this.style.display='none'">
         </button>`;
@@ -667,7 +728,7 @@ function renderStoriesEmpty() {
 
     // La carte reprend sa hauteur fixe : le message vide est posé en absolu,
     // il ne porte pas la carte comme le fait le tableau indicateur.
-    card.classList.remove('is-live');
+    card.classList.remove('is-live', 'is-pre');
 
     card.innerHTML = `
         <div class="stories-empty">
@@ -688,11 +749,21 @@ function renderStoriesEmpty() {
  * pas pu demander » doit la laisser telle quelle.
  */
 async function fetchLiveGames() {
+    const matchs = await fetchStoryGames();
+    return matchs && matchs.games;
+}
+
+/**
+ * Les matchs du jour d'une seule lecture de /live-games : `games`, ceux en
+ * cours, et `upcoming`, ceux à venir. null si la requête n'a pas abouti —
+ * même nuance que ci-dessus.
+ */
+async function fetchStoryGames() {
     try {
         const res = await fetch(`${BASE_URL}/live-games`, { cache: 'no-store' });
         if (!res.ok) return null;
         const data = await res.json();
-        return (data && data.games) || [];
+        return { games: (data && data.games) || [], upcoming: (data && data.upcoming) || [] };
     } catch (err) {
         console.warn('Could not load live games:', err);
         return null;
@@ -816,7 +887,10 @@ function renderStorySlide() {
     if (!card || !storySlides.length) return;
 
     const slide = storySlides[storyIndex];
-    card.classList.toggle('is-live', slide.type === 'live');
+    // `is-live` porte la surface sombre et le dessin du tableau indicateur,
+    // que la carte d'avant-match reprend ; `is-pre` dit qu'il est sans pointage.
+    card.classList.toggle('is-live', storyEstMatch(slide));
+    card.classList.toggle('is-pre', slide.type === 'pre');
     updateStoryPickerActive();
 
     if (slide.type === 'news') {
@@ -830,6 +904,11 @@ function renderStorySlide() {
                     <span class="stories-title">${escapeHTML(a.title)}</span>
                 </span>
             </a>`;
+        return;
+    }
+
+    if (slide.type === 'pre') {
+        card.innerHTML = storyPreHTML(slide.game);
         return;
     }
 
@@ -1013,33 +1092,15 @@ function storyLiveHTML(g) {
     const visiteur = storyTeamIdentity(g.away.abbrev, g.away.name);
     const local = storyTeamIdentity(g.home.abbrev, g.home.name);
 
-    const camp = (cote, equipe, identite) => `
-                <div class="sl-side sl-side-${cote}">
-                    <img class="sl-crest" src="teams/${escapeHTML(equipe.abbrev)}.png" alt="" onerror="this.style.visibility='hidden'">
-                    <span class="sl-ident">
-                        <span class="sl-place">${escapeHTML(identite.ville)}</span>
-                        <span class="sl-name${storyNomLong(identite.surnom)}">${escapeHTML(identite.surnom)}</span>
-                        ${identite.fiche ? `<span class="sl-record">${escapeHTML(identite.fiche)}</span>` : ''}
-                    </span>
-                </div>`;
-
     const buts = storyGoalsBlocHTML(g);
 
     return `
         <div class="sl-live" style="${storyTeamVars('away', g.away.abbrev)}; ${storyTeamVars('home', g.home.abbrev)}">
-            <div class="sl-top">
-                <span class="sl-badge"><span class="sl-badge-dot"></span>En direct</span>
-                <span class="sl-league">LNH</span>
-            </div>
+${storyTopHTML('<span class="sl-badge"><span class="sl-badge-dot"></span>En direct</span>')}
 
             <div class="sl-board">
-                <img class="sl-mark sl-mark-away" src="teams/${escapeHTML(g.away.abbrev)}.png" alt="" aria-hidden="true" onerror="this.style.display='none'">
-                <img class="sl-mark sl-mark-home" src="teams/${escapeHTML(g.home.abbrev)}.png" alt="" aria-hidden="true" onerror="this.style.display='none'">
-                <span class="sl-edge sl-edge-away"></span>
-                <span class="sl-edge sl-edge-home"></span>
-                <span class="sl-rule sl-rule-away"></span>
-                <span class="sl-rule sl-rule-home"></span>
-${camp('away', g.away, visiteur)}
+${storyFondHTML(g)}
+${storyCampHTML('away', g.away, visiteur)}
                 <div class="sl-center">
                     <span class="sl-score">${g.away.score}</span>
                     <span class="sl-state">
@@ -1049,11 +1110,127 @@ ${camp('away', g.away, visiteur)}
                     </span>
                     <span class="sl-score">${g.home.score}</span>
                 </div>
-${camp('home', g.home, local)}
+${storyCampHTML('home', g.home, local)}
             </div>
 
             <div class="sl-goals">${buts || '<div class="sl-goal sl-goal-none">Aucun but pour l’instant.</div>'}</div>
+            ${storyLienMatchHTML(g, `Feuille de match : ${storyNomComplet(visiteur)} contre ${storyNomComplet(local)}`)}
         </div>`;
+}
+
+/**
+ * La carte d'avant-match d'un match du jour : le même bandeau que le tableau
+ * indicateur, l'heure de la mise au jeu à la place du pointage, le temps qui
+ * reste et l'aréna. Quand la LNH déclare le match commencé, les diapos se
+ * rebâtissent et la carte devient le tableau indicateur (startStoryAvantMatch).
+ */
+function storyPreHTML(g, maintenant = Date.now()) {
+    const visiteur = storyTeamIdentity(g.away.abbrev, g.away.name);
+    const local = storyTeamIdentity(g.home.abbrev, g.home.name);
+    const heure = storyHeure(g.startTimeUTC);
+
+    return `
+        <div class="sl-live sl-pre" style="${storyTeamVars('away', g.away.abbrev)}; ${storyTeamVars('home', g.home.abbrev)}">
+${storyTopHTML(`<span class="sl-badge is-pre">${storyJourLabel(g.startTimeUTC, maintenant)}</span>`)}
+
+            <div class="sl-board">
+${storyFondHTML(g)}
+${storyCampHTML('away', g.away, visiteur)}
+                <div class="sl-kickoff">
+                    <span class="sl-kick">Mise au jeu</span>
+                    <time class="sl-time" datetime="${escapeHTML(g.startTimeUTC)}">${escapeHTML(heure)}</time>
+                    <span class="sl-until">${escapeHTML(storyAvantLabel(g.startTimeUTC, maintenant))}</span>
+                </div>
+${storyCampHTML('home', g.home, local)}
+            </div>
+
+            ${g.venue ? `<p class="sl-venue">${escapeHTML(g.venue)}</p>` : ''}
+            ${storyLienMatchHTML(g, `Feuille de match : ${storyNomComplet(visiteur)} contre ${storyNomComplet(local)}, mise au jeu à ${heure}`)}
+        </div>`;
+}
+
+/**
+ * Le bandeau supérieur : la pastille d'état à gauche ; à droite, ce que fait
+ * un clic sur la carte, puis la ligue. L'invitation n'est qu'un repère
+ * visuel — le lien, c'est la carte entière (storyLienMatchHTML).
+ */
+function storyTopHTML(pastille) {
+    return `
+            <div class="sl-top">
+                ${pastille}
+                <span class="sl-top-end">
+                    <span class="sl-cta" aria-hidden="true">Feuille de match<i>›</i></span>
+                    <span class="sl-league">LNH</span>
+                </span>
+            </div>`;
+}
+
+/** Le décor du bandeau : crests fantômes, traits de bord aux couleurs des clubs, filets. */
+function storyFondHTML(g) {
+    return `
+                <img class="sl-mark sl-mark-away" src="teams/${escapeHTML(g.away.abbrev)}.png" alt="" aria-hidden="true" onerror="this.style.display='none'">
+                <img class="sl-mark sl-mark-home" src="teams/${escapeHTML(g.home.abbrev)}.png" alt="" aria-hidden="true" onerror="this.style.display='none'">
+                <span class="sl-edge sl-edge-away"></span>
+                <span class="sl-edge sl-edge-home"></span>
+                <span class="sl-rule sl-rule-away"></span>
+                <span class="sl-rule sl-rule-home"></span>`;
+}
+
+/** Un camp du bandeau : crest, ville, surnom, fiche. */
+function storyCampHTML(cote, equipe, identite) {
+    return `
+                <div class="sl-side sl-side-${cote}">
+                    <img class="sl-crest" src="teams/${escapeHTML(equipe.abbrev)}.png" alt="" onerror="this.style.visibility='hidden'">
+                    <span class="sl-ident">
+                        <span class="sl-place">${escapeHTML(identite.ville)}</span>
+                        <span class="sl-name${storyNomLong(identite.surnom)}">${escapeHTML(identite.surnom)}</span>
+                        ${identite.fiche ? `<span class="sl-record">${escapeHTML(identite.fiche)}</span>` : ''}
+                    </span>
+                </div>`;
+}
+
+/**
+ * La carte entière mène à la feuille du match (match.html), comme au
+ * calendrier. Un lien vide étiré sur toute la carte plutôt qu'un <a> qui
+ * l'envelopperait : le carrousel des buts garde ses boutons — une carte de
+ * but ouvre la fiche du buteur —, et un bouton dans un lien n'est pas permis.
+ * L'étiquette ne porte pas le pointage : elle ne suivrait pas le direct.
+ */
+function storyLienMatchHTML(g, libelle) {
+    return `<a class="sl-open" href="match.html?id=${encodeURIComponent(g.id)}" aria-label="${escapeHTML(libelle)}"></a>`;
+}
+
+/** « Montreal Canadiens » — ou le code et le surnom, sans fiche du club. */
+function storyNomComplet(identite) {
+    return [identite.ville, identite.surnom].filter(Boolean).join(' ');
+}
+
+/** « 19 h 00 » : la mise au jeu à l'heure du membre, comme au calendrier. */
+function storyHeure(iso) {
+    const d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+/**
+ * « dans 2 h 14 », « dans 12 min », puis « imminente » une fois l'heure
+ * passée : la LNH met souvent quelques minutes à déclarer le match commencé.
+ */
+function storyAvantLabel(iso, maintenant = Date.now()) {
+    const min = Math.ceil((Date.parse(iso) - maintenant) / 60000);
+    if (!Number.isFinite(min)) return '';
+    if (min <= 0) return 'imminente';
+    if (min < 60) return `dans ${min} min`;
+    return `dans ${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
+}
+
+/**
+ * « Aujourd’hui », ou « Demain » si /score/now a déjà basculé sur la journée
+ * suivante : il suit la journée de la LNH, pas celle du membre.
+ */
+function storyJourLabel(iso, maintenant = Date.now()) {
+    const demain = new Date(maintenant);
+    demain.setDate(demain.getDate() + 1);
+    return new Date(iso).toDateString() === demain.toDateString() ? 'Demain' : 'Aujourd’hui';
 }
 
 function startStoryTimer() {
