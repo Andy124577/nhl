@@ -138,21 +138,53 @@
         document.getElementById('calGames').innerHTML = CARTES_SQUELETTE;
     }
 
+    /**
+     * Une semaine refusée (la LNH limite le serveur par moments, et il n'en
+     * avait pas de copie) se redemande seule : après 10 s, 20 s, 40 s, puis
+     * chaque minute. Onglet caché, on attend son retour (visibilitychange).
+     */
+    let relance = null;
+    let refus = 0;
+
+    function oublierRelance() {
+        if (relance) { clearTimeout(relance); relance = null; }
+    }
+
+    function relancer(date) {
+        oublierRelance();
+        const delai = Math.min(10000 * 2 ** refus, 60000);
+        refus += 1;
+        relance = setTimeout(() => {
+            relance = null;
+            if (!document.hidden) chargerSemaine(date, { silencieux: true });
+        }, delai);
+    }
+
     async function chargerSemaine(date, { silencieux = false } = {}) {
         const jeton = ++chargement;
         const lundi = lundiDe(date);
         lundiVise = lundi;
+        oublierRelance();
         rendreSemaine();
         if (!silencieux) rendreSquelette(lundi, date);
+        let recue = null;
         try {
             const reponse = await fetch(`${BASE_URL}/schedule/${lundi}`, { cache: 'no-store' });
             const donnees = reponse.ok ? await reponse.json() : null;
             if (jeton !== chargement) return;
-            semaine = donnees && Array.isArray(donnees.days) ? donnees : { days: [] };
+            if (donnees && Array.isArray(donnees.days) && donnees.days.length) recue = donnees;
         } catch (e) {
             if (jeton !== chargement) return;
-            semaine = { days: [] };
         }
+        if (!recue) {
+            relancer(date);
+            // Une relecture de fond refusée garde la semaine affichée : ses
+            // matchs ne cèdent plus la place à « calendrier indisponible ».
+            if (silencieux && semaine && semaine.days.length && semaine.days[0].date === lundi) return;
+        } else {
+            refus = 0;
+        }
+        semaine = recue || { days: [] };
         // Une semaine vide reste vide : sept jours sans match inventés
         // cacheraient le message « calendrier indisponible ».
         if (semaine.days.length) semaine.days = septJours(lundi, semaine.days);
@@ -387,7 +419,11 @@
 
         if (!semaine || !semaine.days.length) {
             compte.textContent = '';
-            zone.innerHTML = '<p class="cal-empty">Le calendrier de la LNH est indisponible pour le moment. Réessayez dans un instant.</p>';
+            zone.innerHTML = `
+                <div class="cal-empty cal-indispo" role="status">
+                    <p>La LNH ne répond pas pour le moment. Nouvel essai automatique dans un instant.</p>
+                    <button type="button" class="cal-retry" data-reessayer>Réessayer</button>
+                </div>`;
             return;
         }
         compte.textContent = !matchs.length ? 'Aucun match'
@@ -1030,6 +1066,10 @@
         // d'un élément à l'autre, d'où l'écoute à la capture.
         const zone = document.getElementById('calGames');
         zone.addEventListener('click', e => {
+            if (e.target.closest && e.target.closest('[data-reessayer]')) {
+                chargerSemaine(jourChoisi || lundiVise || aujourdhui());
+                return;
+            }
             const joueur = e.target.closest && e.target.closest('[data-player]');
             if (joueur) return ouvrirFiche(joueur);
             const fleche = e.target.closest && e.target.closest('[data-car-dir]');
@@ -1070,7 +1110,9 @@
                 return;
             }
             const auj = aujourdhui();
-            if (semaine && semaine.days.some(d => d.date === auj)) chargerSemaine(jourChoisi || auj, { silencieux: true });
+            // Une semaine refusée pendant l'absence se redemande au retour.
+            if (semaine && !semaine.days.length) chargerSemaine(jourChoisi || lundiVise || auj, { silencieux: true });
+            else if (semaine && semaine.days.some(d => d.date === auj)) chargerSemaine(jourChoisi || auj, { silencieux: true });
             else reglerSuivi();
         });
     });

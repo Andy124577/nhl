@@ -26,6 +26,9 @@ const { savePctFromSeasons } = require("./lib/savePct.js");
 const ficheCarriere = require("./lib/ficheCarriere.js");
 // Fiches de carrière gardées : /player-career les sert, la collecte les range.
 const fichesCarriere = ficheCarriere.creerMemoireFiches();
+// Horaire de la semaine et calendriers des clubs : gardés, partagés, et
+// servis depuis la dernière copie quand la LNH limite (lib/gardeLNH.js).
+const gardeLNH = require("./lib/gardeLNH.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
 const joueursRepeches = require("./lib/joueursRepeches.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
@@ -2609,26 +2612,36 @@ io.on('connection', (socket) => pointsEnDirect.brancher(socket));
  * `clubs` : les noms complets, tels que les effectifs de pool les portent.
  * null si le calendrier d'un club manque : on ne prétend pas savoir.
  */
-const calendrierClubCache = new Map(); // `${abrév.}|${saison}` → { games, lu }
 const CALENDRIER_CLUB_MS = 30 * 60 * 1000;
+/**
+ * Un calendrier de club par clé `${abrév.}|${saison}`. Le cache expirait pour
+ * tous les clubs en même temps, et chaque appelant du moment les relisait
+ * tous à la fois : une salve de vingt à quarante appels qui faisait limiter
+ * notre adresse (429) — et refuser l'horaire de la page Scores avec. La
+ * lecture est maintenant partagée, quatre clubs à la fois au plus, et un
+ * club refusé n'est pas redemandé avant une minute (lib/gardeLNH.js).
+ */
+const gardeCalendriersClubs = gardeLNH.creerGarde({ dureeMs: CALENDRIER_CLUB_MS });
+const fileCalendriersClubs = gardeLNH.creerFile(4);
 
-async function calendrierDuClub(abbrev, saison) {
-    const cle = `${abbrev}|${saison}`;
-    const connu = calendrierClubCache.get(cle);
-    if (connu && Date.now() - connu.lu < CALENDRIER_CLUB_MS) return connu.games;
+function calendrierDuClub(abbrev, saison) {
+    return gardeCalendriersClubs.lire(`${abbrev}|${saison}`,
+        () => fileCalendriersClubs(() => lireCalendrierDuClub(abbrev, saison)));
+}
+
+/** Les matchs de saison régulière d'un club, de la LNH ; null si elle refuse. */
+async function lireCalendrierDuClub(abbrev, saison) {
     const brut = await lireJsonLNH(`https://api-web.nhle.com/v1/club-schedule-season/${abbrev}/${saison}`,
         `calendrier de ${abbrev}`).catch(() => null);
-    if (!brut || !Array.isArray(brut.games)) return connu ? connu.games : null;
+    if (!brut || !Array.isArray(brut.games)) return null;
     // Seulement ce que le pointage lit : la saison régulière, en bref.
-    const games = brut.games.filter(g => Number(g.gameType) === 2).map(g => ({
+    return brut.games.filter(g => Number(g.gameType) === 2).map(g => ({
         id: g.id, season: g.season, gameType: g.gameType, gameDate: g.gameDate, gameState: g.gameState,
         awayTeam: { abbrev: g.awayTeam?.abbrev, score: g.awayTeam?.score },
         homeTeam: { abbrev: g.homeTeam?.abbrev, score: g.homeTeam?.score },
         ...(g.gameOutcome ? { gameOutcome: { lastPeriodType: g.gameOutcome.lastPeriodType } } : {}),
         ...(g.periodDescriptor ? { periodDescriptor: { periodType: g.periodDescriptor.periodType } } : {})
     }));
-    calendrierClubCache.set(cle, { games, lu: Date.now() });
-    return games;
 }
 
 async function resultatsClubsLNH({ clubs, debut, fin, saison, direct = null }) {
@@ -2720,9 +2733,10 @@ app.get('/season-window', async (req, res) => {
 // Cached per requested date: short TTL near "today" (scores move), long TTL
 // further out (finished scores and the future schedule barely change).
 // ============================================================
-const scheduleCache = new Map(); // date -> { data, fetchedAt }
 const SCHEDULE_NEAR_TTL_MS = 60 * 1000;
 const SCHEDULE_FAR_TTL_MS = 12 * 60 * 60 * 1000;
+/** Après un refus de la LNH, l'horaire n'est pas redemandé avant ce délai. */
+const SCHEDULE_REPIT_MS = 15 * 1000;
 
 const HORAIRE_VIDE = {
     days: [], nextStartDate: null, previousStartDate: null,
@@ -2736,26 +2750,37 @@ const HORAIRE_VIDE = {
  * l'horaire — et non la feuille du jour — qui dit quels matchs ont commencé
  * et sur quelle marque. Les deux routes partagent ainsi le même cache, et une
  * journée déjà affichée au calendrier ne coûte pas un appel de plus.
+ *
+ * Un refus de la LNH (limite 429, panne) ne rend plus une semaine vide : la
+ * dernière copie sert, même périmée — la page Scores affichait sinon « Le
+ * calendrier de la LNH est indisponible » par-dessus des matchs qu'elle
+ * montrait la minute d'avant. Vide seulement si la semaine n'a jamais été lue.
  */
-async function chargerHoraireLNH(date) {
+const gardeHoraire = gardeLNH.creerGarde({
     // « Proche » se mesure en journées du pool (lue en UTC, la journée en
     // cours passait au lendemain dès 20 h à l'Est), et sur toute la SEMAINE
     // rendue, pas sur la date demandée : calendrier.html demande toujours le
     // lundi, et dès le mercredi la semaine en cours passait dans le cache de
     // douze heures — un match lu en direct y restait « En direct » le
     // lendemain (voir lib/horaire.js).
-    const cached = scheduleCache.get(date);
-    if (cached) {
-        const ttl = horaireLNH.dureeGardeHoraire(cached.data, {
-            aujourdhui: datesPool.journeeLocale(), demande: date,
-            courtMs: SCHEDULE_NEAR_TTL_MS, longMs: SCHEDULE_FAR_TTL_MS
-        });
-        if ((Date.now() - cached.fetchedAt) < ttl) return cached.data;
-    }
+    dureeMs: (horaire, date) => horaireLNH.dureeGardeHoraire(horaire, {
+        aujourdhui: datesPool.journeeLocale(), demande: date,
+        courtMs: SCHEDULE_NEAR_TTL_MS, longMs: SCHEDULE_FAR_TTL_MS
+    }),
+    repitMs: SCHEDULE_REPIT_MS
+});
 
-    const response = await fetch(`https://api-web.nhle.com/v1/schedule/${date}`);
-    if (!response.ok) return HORAIRE_VIDE;
-    const raw = await response.json();
+async function chargerHoraireLNH(date) {
+    return (await gardeHoraire.lire(date, () => lireHoraireLNH(date))) || HORAIRE_VIDE;
+}
+
+/** La semaine telle que la LNH la donne, relancée une fois si elle limite ; null si refusée. */
+async function lireHoraireLNH(date) {
+    const { status, data: raw } = await ficheCarriere.lireAvecRelance(`https://api-web.nhle.com/v1/schedule/${date}`);
+    if (!raw) {
+        console.warn(`⚠️ Horaire LNH du ${date} refusé (${status || 'injoignable'}) — la dernière copie sert`);
+        return null;
+    }
 
     const days = (raw.gameWeek || []).map(day => ({
         date: day.date,
@@ -2780,7 +2805,6 @@ async function chargerHoraireLNH(date) {
         regularSeasonStartDate: raw.regularSeasonStartDate || null,
         regularSeasonEndDate: raw.regularSeasonEndDate || null
     };
-    scheduleCache.set(date, { data: payload, fetchedAt: Date.now() });
     return payload;
 }
 

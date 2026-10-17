@@ -523,6 +523,21 @@ body.fz-cal-page { background: var(--cal-bg); }
     text-align: center;
     color: var(--cal-muted);
 }
+/* La LNH ne répond pas : le message, et de quoi redemander tout de suite
+   (calendrier.js redemande aussi seul). Le rouge marque ce qu'on touche. */
+.cal-indispo p { margin: 0 0 14px; }
+.cal-retry {
+    min-height: 40px;
+    padding: 0 18px;
+    border: 1px solid var(--cal-line);
+    border-radius: 10px;
+    background: var(--cal-card);
+    color: var(--cal-accent);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.cal-retry:hover { background: var(--cal-accent-soft); }
 
 /* ---- Chargement : la semaine en os (calendrier.html, rendreSquelette) ----
    Os de fzSquelette.css, aux tailles de ce qu'ils remplacent. */
