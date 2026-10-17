@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="injuries.css?v=20260926b">
     <link rel="stylesheet" href="statsLeaders.css?v=20260926b">
     <link rel="stylesheet" href="statsTopPlayers.css?v=20260926b">
-    <link rel="stylesheet" href="stats-premium.css?v=20261009d">
+    <link rel="stylesheet" href="stats-premium.css?v=20261016a">
     <link rel="stylesheet" href="statsLineup.css?v=20260926b">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
@@ -149,45 +149,43 @@
     <!-- ============================================================ -->
     <div class="stats-tab-panel" data-stats-panel="tous">
         <div class="stats-container">
-            <!-- Enhanced Filters Section -->
-            <div class="filters-section">
-                <div class="filter-group filter-search">
-                    <label for="searchInput">
-                        <span class="filter-icon" data-icon="search" data-icon-size="17"></span> Rechercher
-                    </label>
-                    <input type="text" id="searchInput" placeholder="Nom du joueur">
+            <!-- Filtres : la recherche et la saison sur une ligne, les
+                 positions en pastilles dessous. Plus de sélecteur « Trier
+                 par » : on trie en touchant l'en-tête d'une colonne
+                 (initStatsHeaderSorting, index.js). -->
+            <div class="st-filters">
+                <div class="st-filters-row">
+                    <div class="st-search">
+                        <span class="st-search-icon" data-icon="search" data-icon-size="16" aria-hidden="true"></span>
+                        <label for="searchInput" class="lu-sr">Rechercher un joueur</label>
+                        <input type="search" id="searchInput" placeholder="Rechercher un joueur"
+                               autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+                        <button type="button" class="st-search-clear" id="searchClear" aria-label="Effacer la recherche" hidden>
+                            <span data-icon="x" data-icon-size="12" aria-hidden="true"></span>
+                        </button>
+                    </div>
+
+                    <!-- Libellés complétés par index.js : la saison réelle suit
+                         /current-stats, celle des projections suit la trousse. -->
+                    <div class="st-season">
+                        <label for="seasonMode" class="lu-sr">Saison</label>
+                        <select id="seasonMode">
+                            <option value="stats">Réelle</option>
+                            <option value="projection">Projections</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="filter-group">
-                    <label for="playerFilter">Filtre</label>
-                    <select id="playerFilter">
-                        <option value="all">Tous</option>
-                        <option value="offensive">Attaquants</option>
-                        <option value="defensive">Défenseurs</option>
-                        <option value="goalies">Gardiens</option>
-                        <option value="rookies">Recrues</option>
-                        <option value="teams">Équipes</option>
-                    </select>
-                </div>
-
-                <!-- Libellés complétés par index.js : la saison réelle suit
-                     /current-stats, celle des projections suit la trousse. -->
-                <div class="filter-group">
-                    <label for="seasonMode">Saison</label>
-                    <select id="seasonMode">
-                        <option value="stats">Réelle</option>
-                        <option value="projection">Projections</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="sortBy">Trier par</label>
-                    <select id="sortBy">
-                        <option value="points">Points</option>
-                        <option value="goals">Buts</option>
-                        <option value="assists">Passes</option>
-                        <option value="gamesPlayed">Parties jouées</option>
-                    </select>
+                <div class="st-chips" id="playerFilter" role="group" aria-label="Filtrer par position">
+                    <button type="button" class="st-chip" data-filter="all" aria-pressed="true">Tous</button>
+                    <button type="button" class="st-chip" data-filter="offensive" aria-pressed="false">Attaquants</button>
+                    <button type="button" class="st-chip" data-filter="C" aria-pressed="false">Centres</button>
+                    <button type="button" class="st-chip" data-filter="L" aria-pressed="false">Ailiers G</button>
+                    <button type="button" class="st-chip" data-filter="R" aria-pressed="false">Ailiers D</button>
+                    <button type="button" class="st-chip" data-filter="defensive" aria-pressed="false">Défenseurs</button>
+                    <button type="button" class="st-chip" data-filter="goalies" aria-pressed="false">Gardiens</button>
+                    <button type="button" class="st-chip" data-filter="rookies" aria-pressed="false">Recrues</button>
+                    <button type="button" class="st-chip" data-filter="teams" aria-pressed="false">Équipes</button>
                 </div>
             </div>
 
@@ -203,7 +201,7 @@
                                 <th title="Parties jouées">PJ</th>
                                 <th title="Buts">B</th>
                                 <th title="Passes décisives">A</th>
-                                <th class="points-column" title="Points">PTS</th>
+                                <th class="points-column is-sorted" title="Points">PTS<span class="sort-caret" aria-hidden="true">▼</span></th>
                             </tr>
                         </thead>
                         <!-- Rangées en os (fzSquelette.css) jusqu'au premier rendu :
@@ -253,7 +251,7 @@
          le fichier allégé draftkit-watchlist.json, pas la trousse entière. -->
     <script defer src="draftkitData.js?v=20260930a"></script>
     <script defer src="draft-watch.js?v=20260925"></script>
-    <script defer src="index.js?v=20261009c"></script>
+    <script defer src="index.js?v=20261016a"></script>
     <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
     <script defer src="statsLeaders.js?v=20260925c"></script>
     <!-- Meilleurs joueurs : lit BASE_URL (index.js) et escapeHTML (statsLeaders.js). -->

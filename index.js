@@ -194,10 +194,51 @@ function getTeamLogoPath(t) {
     return `teams/${t.split(",").pop().trim()}.png`
 }
 
+/* ==================== FILTRES : POSITION, RECHERCHE ET TRI ====================
+ *
+ * Les pastilles de position (#playerFilter) et les en-têtes triables ont
+ * remplacé les sélecteurs « Filtre » et « Trier par » : l'état vit ici
+ * plutôt que dans deux <select>. Le tri est partagé entre les tableaux ; une
+ * clé qu'un tableau n'a pas (les buts, chez les gardiens) y retombe sur les
+ * points, sans être oubliée pour autant au retour aux patineurs.
+ */
+let statsFilter = "all";
+let statsSort = "points";
+
+/** La clé de tri d'un tableau : celle choisie si l'une de ses colonnes la porte. */
+function cleDeTri(columns) {
+    return columns.some(c => c.sort === statsSort) ? statsSort : "points";
+}
+
+/** Sans accents ni majuscules : « stutzle » trouve Stützle, « lafreniere » Lafrenière. */
+function normaliserRecherche(texte) {
+    return String(texte || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+/**
+ * Le nom contient la recherche, ou la recherche est le sigle exact du club
+ * (« mtl »). `club` est une fonction : le sigle d'un joueur se cherche dans
+ * /current-stats, inutile de le faire pour chaque frappe qui n'a pas trois lettres.
+ */
+function correspondRecherche(recherche, nom, club) {
+    if (!recherche) return true;
+    if (normaliserRecherche(nom).includes(recherche)) return true;
+    if (3 !== recherche.length) return false;
+    return String(club() || "").split(",").some(c => normaliserRecherche(c) === recherche);
+}
+
+/** Club et position tels que la rangée les affiche : /current-stats d'abord. */
+function clubJoueur(joueur) {
+    return getCurrentPlayerStats(joueur.skaterFullName || joueur.goalieFullName, joueur.playerId)?.teamAbbrev
+        || joueur.teamAbbrevs;
+}
+function positionJoueur(joueur) {
+    return getCurrentPlayerStats(joueur.skaterFullName, joueur.playerId)?.position || joueur.positionCode;
+}
+
 function updateTable() {
-    const t = document.getElementById("playerFilter").value,
-        e = document.getElementById("sortBy").value,
-        a = document.getElementById("searchInput").value.toLowerCase();
+    const t = statsFilter,
+        a = normaliserRecherche(document.getElementById("searchInput").value);
     clearStatsPagination();
     const projete = modeProjection(),
         patineurs = projete ? projectionPools.skaters : fullPlayerData,
@@ -207,7 +248,8 @@ function updateTable() {
         // Les clubs souffraient du même mélange : un club absent de
         // /current-teams était classé sur ses points de l'an passé.
         const clubsPrets = !projete && !!(currentTeams && currentTeams.teams && currentTeams.teams.length);
-        return void populateTeamTable([...clubs].sort((t, e) => {
+        return void populateTeamTable(clubs.filter(c => correspondRecherche(a, c.teamFullName,
+            () => c.teamAbbrev || getTeamAbbreviation(c.teamFullName))).sort((t, e) => {
             const a = clubsPrets ? getCurrentTeamStats(t.teamFullName) : t,
                 n = clubsPrets ? getCurrentTeamStats(e.teamFullName) : e;
             return comparerParStat(nombreStat(a && a.points), nombreStat(n && n.points),
@@ -215,25 +257,87 @@ function updateTable() {
         }))
     }
     if ("goalies" === t) {
-        return void populateGoalieTable([...gardiens].sort((t, a) => comparerParStat(
-            valeurDeTri(t, t.goalieFullName, t.playerId, e, !0),
-            valeurDeTri(a, a.goalieFullName, a.playerId, e, !0),
-            t.goalieFullName, a.goalieFullName
-        )))
+        const e = cleDeTri(GOALIE_COLUMNS);
+        return void populateGoalieTable(gardiens.filter(g => correspondRecherche(a, g.goalieFullName, () => clubJoueur(g)))
+            .sort((t, a) => comparerParStat(
+                valeurDeTri(t, t.goalieFullName, t.playerId, e, !0),
+                valeurDeTri(a, a.goalieFullName, a.playerId, e, !0),
+                t.goalieFullName, a.goalieFullName
+            )))
     }
-    let n = patineurs;
-    "offensive" === t ? n = n.filter(t => ["C", "R", "L"].includes(t.positionCode)) : "defensive" === t ? n = n.filter(t => "D" === t.positionCode) : "rookies" === t && (n = projete ? patineurs.filter(t => t.isRookie) : rookiePlayerData.slice()), a && (n = n.filter(t => t.skaterFullName.toLowerCase().includes(a))), n.sort((t, a) => comparerParStat(
+    const e = cleDeTri(SKATER_COLUMNS);
+    let n;
+    if ("offensive" === t) n = patineurs.filter(j => ["C", "R", "L"].includes(j.positionCode));
+    else if ("defensive" === t) n = patineurs.filter(j => "D" === j.positionCode);
+    // Centres et ailiers : la position que la rangée affiche, pas celle de la trousse.
+    else if (["C", "L", "R"].includes(t)) n = patineurs.filter(j => positionJoueur(j) === t);
+    else if ("rookies" === t) n = projete ? patineurs.filter(j => j.isRookie) : rookiePlayerData.slice();
+    else n = patineurs.slice();
+    if (a) n = n.filter(j => correspondRecherche(a, j.skaterFullName, () => clubJoueur(j)));
+    n.sort((t, a) => comparerParStat(
         valeurDeTri(t, t.skaterFullName, t.playerId, e, !1),
         valeurDeTri(a, a.skaterFullName, a.playerId, e, !1),
         t.skaterFullName, a.skaterFullName
     )), statsFullList = n, statsVisibleCount = STATS_PAGE_SIZE, populatePlayerTable(n)
 }
+
+/** Une pastille de position : la seule pressée, et visible dans sa rangée défilante. */
+function choisirFiltre(valeur) {
+    statsFilter = valeur;
+    document.querySelectorAll("#playerFilter .st-chip").forEach(chip => {
+        const actif = chip.dataset.filter === valeur;
+        chip.setAttribute("aria-pressed", String(actif));
+        if (actif) chip.scrollIntoView({ block: "nearest", inline: "nearest" });
+    });
+}
+
+/** Le ✕ de la recherche n'apparaît qu'avec quelque chose à effacer. */
+function synchroniserEffacer() {
+    const effacer = document.getElementById("searchClear");
+    if (effacer) effacer.hidden = !document.getElementById("searchInput").value;
+}
+
+function viderRecherche() {
+    document.getElementById("searchInput").value = "";
+    synchroniserEffacer();
+}
+
+/** Bouton de l'état vide : tout revient à l'ouverture de la page, sauf la saison. */
+function reinitialiserFiltres() {
+    viderRecherche();
+    choisirFiltre("all");
+    statsSort = "points";
+    updateTable();
+}
+
+function initStatsFilters() {
+    const recherche = document.getElementById("searchInput");
+    recherche.addEventListener("input", () => { synchroniserEffacer(); updateTable(); });
+    // Échap vide le champ, comme le ✕ ; il ne fait rien sur un champ déjà vide.
+    recherche.addEventListener("keydown", e => {
+        if ("Escape" !== e.key || !recherche.value) return;
+        e.preventDefault();
+        viderRecherche();
+        updateTable();
+    });
+    document.getElementById("searchClear")?.addEventListener("click", () => {
+        viderRecherche();
+        updateTable();
+        recherche.focus();
+    });
+    document.getElementById("playerFilter")?.addEventListener("click", e => {
+        const chip = e.target.closest(".st-chip");
+        if (!chip || chip.dataset.filter === statsFilter) return;
+        choisirFiltre(chip.dataset.filter);
+        updateTable();
+    });
+    synchroniserEffacer();
+}
 /**
  * Colonnes du tableau des patineurs.
  *
- * `sort` renvoie vers la même clé que le sélecteur « Trier par » : cliquer
- * un en-tête met à jour le sélecteur puis relance le rendu, ce qui évite
- * d'avoir deux états de tri qui divergent.
+ * `sort` est la clé que l'en-tête écrit dans statsSort quand on le touche,
+ * puis le rendu est relancé.
  *
  * Abréviations en français (PJ/B/A/PTS) plutôt qu'en anglais : le reste du
  * site est en français, et chacune porte une infobulle — l'utilisateur ne
@@ -248,6 +352,19 @@ const SKATER_COLUMNS = [
     { label: 'PTS', sort: 'points', title: 'Points', cls: 'points-column', w: '11%' }
 ];
 
+/** Gardiens : chaque colonne chiffrée se trie aussi, PTS étant le pointage de pool. */
+const GOALIE_COLUMNS = [
+    { label: '#', cls: 'rank-col', title: 'Rang', w: '6%' },
+    { label: 'Gardien', cls: 'player-col', w: '38%' },
+    { label: 'PJ', sort: 'gamesPlayed', title: 'Parties jouées', w: '8%' },
+    { label: 'V', sort: 'wins', title: 'Victoires', w: '7%' },
+    { label: 'D', sort: 'losses', title: 'Défaites', w: '7%' },
+    { label: 'DP', sort: 'otLosses', title: 'Défaites en prolongation', w: '8%' },
+    { label: '%ARR', sort: 'savePct', title: 'Pourcentage d\'arrêts', w: '10%' },
+    { label: 'BL', sort: 'shutouts', title: 'Blanchissages', w: '7%' },
+    { label: 'PTS', sort: 'points', title: 'Points', cls: 'points-column', w: '9%' }
+];
+
 /**
  * Construit <colgroup> + <thead>.
  *
@@ -256,8 +373,9 @@ const SKATER_COLUMNS = [
  * colonnes et désignaient les mauvaises colonnes dès qu'on en ajoutait une.
  * Ici la largeur vit à côté du libellé, dans la même définition.
  * La colonne sans largeur absorbe l'espace restant.
+ * `count`, s'il est donné, suit le libellé de la colonne joueur : « Joueur · 312 ».
  */
-function buildTableHead(columns, activeSort) {
+function buildTableHead(columns, activeSort, count) {
     // La largeur passe par une variable CSS et non par `width` en ligne : un
     // style en ligne l'emporte sur toute feuille de style, ce qui rendait les
     // ajustements responsive impossibles sans !important.
@@ -267,21 +385,35 @@ function buildTableHead(columns, activeSort) {
     const cells = columns.map(c => {
         const cls = [c.cls, c.sort ? 'sortable' : ''].filter(Boolean).join(' ');
         const actif = c.sort && c.sort === activeSort;
+        const compte = 'player-col' === c.cls && null != count
+            ? `<span class="th-count"> · ${count}</span>` : '';
         return `<th${cls ? ` class="${cls}${actif ? ' is-sorted' : ''}"` : ''}`
             + (c.title ? ` title="${c.title}"` : '')
             + (c.sort ? ` data-sort="${c.sort}" role="button" tabindex="0"` : '')
             + (actif ? ' aria-sort="descending"' : '')
-            + `>${c.label}${actif ? '<span class="sort-caret" aria-hidden="true">▼</span>' : ''}</th>`;
+            + `>${c.label}${compte}${actif ? '<span class="sort-caret" aria-hidden="true">▼</span>' : ''}</th>`;
     }).join('');
     return `<colgroup>${cols}</colgroup><thead><tr>${cells}</tr></thead>`;
 }
 
-/** Message d'état vide : une recherche infructueuse doit expliquer quoi faire. */
+/** Vrai dès que la recherche ou une pastille restreint la liste. */
+function filtresActifs() {
+    return "all" !== statsFilter || !!document.getElementById("searchInput")?.value.trim();
+}
+
+/**
+ * Message d'état vide : une recherche infructueuse doit expliquer quoi faire,
+ * et offrir la sortie d'un geste quand ce sont les filtres qui ont tout caché.
+ */
 function buildEmptyState(colspan, message, hint) {
+    const sortie = filtresActifs()
+        ? '<button type="button" class="table-empty-reset" data-action="reset-filters">Réinitialiser les filtres</button>'
+        : '';
     return `<tbody><tr class="table-empty-row"><td colspan="${colspan}">
         <div class="table-empty">
             <p class="table-empty-title">${message}</p>
             ${hint ? `<p class="table-empty-hint">${hint}</p>` : ''}
+            ${sortie}
         </div>
     </td></tr></tbody>`;
 }
@@ -290,17 +422,18 @@ async function populatePlayerTable(t) {
     await fetchImageData();
     const e = document.getElementById("playerTable");
     const visible = t.slice(0, statsVisibleCount);
-    const sortKey = document.getElementById("sortBy")?.value;
+    const sortKey = cleDeTri(SKATER_COLUMNS);
 
     if (!t.length) {
-        e.innerHTML = buildTableHead(colonnesDuMode(SKATER_COLUMNS), sortKey)
-            + buildEmptyState(SKATER_COLUMNS.length, 'Aucun joueur ne correspond',
-                'Vérifiez l\'orthographe ou effacez la recherche.');
+        const recherche = document.getElementById("searchInput").value.trim();
+        e.innerHTML = buildTableHead(colonnesDuMode(SKATER_COLUMNS), sortKey, 0)
+            + buildEmptyState(SKATER_COLUMNS.length, 'Aucun joueur trouvé',
+                recherche ? 'Vérifiez l\'orthographe, ou cherchez le sigle d\'un club (MTL).' : '');
         renderStatsPagination(0);
         return;
     }
 
-    e.innerHTML = buildTableHead(colonnesDuMode(SKATER_COLUMNS), sortKey);
+    e.innerHTML = buildTableHead(colonnesDuMode(SKATER_COLUMNS), sortKey, t.length);
     const tbody = document.createElement("tbody");
     e.appendChild(tbody);
     visible.forEach((t, index) => {
@@ -422,18 +555,19 @@ function makeRowInteractive(row, action, label) {
  */
 function initStatsHeaderSorting() {
     const table = document.getElementById("playerTable");
-    const select = document.getElementById("sortBy");
-    if (!table || !select) return;
+    if (!table) return;
 
     const trier = (th) => {
         const key = th?.dataset?.sort;
-        if (!key) return;
-        if (![...select.options].some(o => o.value === key)) return;
-        select.value = key;
+        if (!key || key === statsSort) return;
+        statsSort = key;
         updateTable();
     };
 
-    table.addEventListener('click', e => trier(e.target.closest('th[data-sort]')));
+    table.addEventListener('click', e => {
+        if (e.target.closest('[data-action="reset-filters"]')) { reinitialiserFiltres(); return; }
+        trier(e.target.closest('th[data-sort]'));
+    });
     table.addEventListener('keydown', e => {
         if (e.key !== 'Enter' && e.key !== ' ') return;
         const th = e.target.closest('th[data-sort]');
@@ -476,23 +610,13 @@ function clearStatsPagination() {
 
 function populateGoalieTable(t) {
     const e = document.getElementById("playerTable");
-    const GOALIE_COLUMNS = [
-        { label: '#', cls: 'rank-col', title: 'Rang', w: '6%' },
-        { label: 'Gardien', cls: 'player-col', w: '38%' },
-        { label: 'PJ', title: 'Parties jouées', w: '8%' },
-        { label: 'V', title: 'Victoires', w: '7%' },
-        { label: 'D', title: 'Défaites', w: '7%' },
-        { label: 'DP', title: 'Défaites en prolongation', w: '8%' },
-        { label: '%ARR', title: 'Pourcentage d\'arrêts', w: '10%' },
-        { label: 'BL', title: 'Blanchissages', w: '7%' },
-        { label: 'PTS', title: 'Points', cls: 'points-column', w: '9%' }
-    ];
+    const sortKey = cleDeTri(GOALIE_COLUMNS);
     if (!t.length) {
-        e.innerHTML = buildTableHead(colonnesDuMode(GOALIE_COLUMNS))
-            + buildEmptyState(GOALIE_COLUMNS.length, 'Aucun gardien à afficher');
+        e.innerHTML = buildTableHead(colonnesDuMode(GOALIE_COLUMNS), sortKey, 0)
+            + buildEmptyState(GOALIE_COLUMNS.length, 'Aucun gardien trouvé');
         return;
     }
-    e.innerHTML = buildTableHead(colonnesDuMode(GOALIE_COLUMNS));
+    e.innerHTML = buildTableHead(colonnesDuMode(GOALIE_COLUMNS), sortKey, t.length);
     const tbody = document.createElement("tbody");
     e.appendChild(tbody);
     t.forEach((t, index) => {
@@ -515,7 +639,8 @@ function populateGoalieTable(t) {
         t.playerId && makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
             `Voir la fiche de ${a}`);
         tbody.appendChild(g)
-    })
+    });
+    marquerColonneTriee(e)
 }
 
 function getTeamAbbreviation(t) {
@@ -547,11 +672,11 @@ function populateTeamTable(t) {
         { label: 'PTS', title: 'Points', cls: 'points-column', w: '8%' }
     ];
     if (!t.length) {
-        e.innerHTML = buildTableHead(colonnesDuMode(TEAM_COLUMNS))
-            + buildEmptyState(TEAM_COLUMNS.length, 'Aucune équipe à afficher');
+        e.innerHTML = buildTableHead(colonnesDuMode(TEAM_COLUMNS), null, 0)
+            + buildEmptyState(TEAM_COLUMNS.length, 'Aucune équipe trouvée');
         return;
     }
-    e.innerHTML = buildTableHead(colonnesDuMode(TEAM_COLUMNS));
+    e.innerHTML = buildTableHead(colonnesDuMode(TEAM_COLUMNS), null, t.length);
     const tbody = document.createElement("tbody");
     e.appendChild(tbody);
     t.forEach((t, index) => {
@@ -723,7 +848,7 @@ async function switchToUser(t, e) {
 function logout(t) {
     t && t.preventDefault(), localStorage.removeItem("isLoggedIn"), localStorage.removeItem("username"), localStorage.removeItem("isAdmin"), localStorage.removeItem("activeUser"), location.reload()
 }
-document.getElementById("searchInput").addEventListener("input", updateTable), document.getElementById("playerFilter").addEventListener("change", updateTable), document.getElementById("sortBy").addEventListener("change", updateTable), document.getElementById("seasonMode").addEventListener("change", changerModeSaison), "undefined" != typeof FZDraftKit && FZDraftKit.chargerWatchlist().then(libellerModesSaison, () => {}), fetchPlayerData(), $(document).ready(function() {
+initStatsFilters(), document.getElementById("seasonMode").addEventListener("change", changerModeSaison), "undefined" != typeof FZDraftKit && FZDraftKit.chargerWatchlist().then(libellerModesSaison, () => {}), fetchPlayerData(), $(document).ready(function() {
     const t = "true" === localStorage.getItem("isLoggedIn"),
         e = localStorage.getItem("username"),
         a = "true" === localStorage.getItem("isAdmin");

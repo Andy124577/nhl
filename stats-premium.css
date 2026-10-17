@@ -228,34 +228,167 @@ body.fz-stats .tp-error-retry {
 body.fz-stats .tp-error-retry:hover { background: var(--fzs-accent-fill-hover); }
 
 /* ==================== TOUS LES JOUEURS — filtres ==================== */
-body.fz-stats .filters-section {
+/* Maquette « Filter UI improvements » : plus de carte à libellés. La
+   recherche et la saison tiennent sur une ligne de 44px, les positions
+   passent en pastilles défilantes, et le tri se fait aux en-têtes. */
+body.fz-stats .st-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+body.fz-stats .st-filters-row { display: flex; gap: 8px; }
+
+body.fz-stats .st-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 6px 0 12px;
   background: var(--fzs-surface);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   border: 1px solid var(--fzs-border);
+  border-radius: 12px;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-body.fz-stats .filter-group label { color: var(--fzs-ink); }
-body.fz-stats .filter-icon { color: var(--fzs-text-faint); }
-body.fz-stats .filter-group input,
-body.fz-stats .filter-group select {
-  background-color: var(--fzs-bg-alt);
-  border-color: var(--fzs-border-input);
-  color: var(--fzs-ink);
-}
-body.fz-stats .filter-group input::placeholder { color: var(--fzs-text-fainter); }
-body.fz-stats .filter-group input:focus,
-body.fz-stats .filter-group select:focus {
+body.fz-stats .st-search:focus-within {
   border-color: var(--fzs-accent-fill);
   box-shadow: 0 0 0 3px var(--fzs-accent-wash);
-  background-color: var(--fzs-surface);
 }
-body.fz-stats .filter-group select {
+body.fz-stats .st-search-icon { display: flex; flex: none; color: var(--fzs-text-muted); }
+body.fz-stats .st-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--fzs-ink);
+  font: 500 14px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  text-overflow: ellipsis;
+  -webkit-appearance: none;
+  appearance: none;
+}
+body.fz-stats .st-search input::placeholder { color: var(--fzs-text-fainter); }
+/* Le ✕ natif de type="search" doublerait le nôtre. */
+body.fz-stats .st-search input::-webkit-search-cancel-button,
+body.fz-stats .st-search input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+/* Cible de 32px autour d'une pastille de 20px. */
+body.fz-stats .st-search-clear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fzs-text-muted);
+  cursor: pointer;
+}
+body.fz-stats .st-search-clear[hidden] { display: none; }
+body.fz-stats .st-search-clear > span {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--fzs-border-input);
+  transition: background .15s ease, color .15s ease;
+}
+body.fz-stats .st-search-clear:hover > span { background: var(--fzs-text-fainter); color: var(--fzs-surface); }
+body.fz-stats .st-search-clear:focus-visible { outline: 2px solid var(--fzs-accent); outline-offset: -2px; border-radius: 8px; }
+
+body.fz-stats .st-season { position: relative; flex: none; max-width: 48%; }
+/* La largeur de la saison choisie, pas celle de « 2026-27 projetée » : la
+   recherche garde la place de son libellé (navigateurs qui le permettent). */
+body.fz-stats .st-season select {
+  field-sizing: content;
+  width: 100%;
+  min-width: 96px;
+  height: 44px;
+  padding: 0 32px 0 12px;
+  background-color: var(--fzs-surface);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236E6E73' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  border: 1px solid var(--fzs-border);
+  border-radius: 12px;
+  color: var(--fzs-ink);
+  font: 600 14px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  outline: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+body.fz-stats .st-season select:hover { border-color: var(--fzs-border-input); }
+body.fz-stats .st-season select:focus-visible {
+  border-color: var(--fzs-accent-fill);
+  box-shadow: 0 0 0 3px var(--fzs-accent-wash);
 }
 /* Chevron dans l'URI : pas de var() possible, la teinte secondaire est
    donc redonnée par thème. */
-html[data-theme="dark"] body.fz-stats .filter-group select {
+html[data-theme="dark"] body.fz-stats .st-season select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23A1A1A6' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E");
+}
+
+/* Pastilles de position : une rangée qui défile au doigt plutôt qu'une
+   liste déroulante — chaque choix est visible et à un toucher. */
+body.fz-stats .st-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+body.fz-stats .st-chips::-webkit-scrollbar { display: none; }
+body.fz-stats .st-chip {
+  flex: none;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--fzs-border);
+  border-radius: 999px;
+  background: var(--fzs-surface);
+  color: var(--fzs-text);
+  font: 600 13px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+body.fz-stats .st-chip:hover { border-color: var(--fzs-border-input); color: var(--fzs-ink); }
+body.fz-stats .st-chip[aria-pressed="true"] {
+  background: var(--fzs-accent-fill);
+  border-color: var(--fzs-accent-fill);
+  color: var(--fzs-on-accent);
+}
+body.fz-stats .st-chip:focus-visible { outline: 2px solid var(--fzs-accent); outline-offset: 2px; }
+
+/* Bureau : une recherche à la largeur d'un nom, pas de toute la page ; les
+   pastilles passent à la ligne plutôt que de défiler sous une souris. Le
+   conteneur reprend la largeur et la marge des onglets, au-dessus, pour
+   qu'onglets, filtres et tableau partent du même bord. */
+@media (min-width: 769px) {
+  body.fz-stats .stats-container { max-width: 1380px; padding: 16px 24px 44px; }
+  body.fz-stats .st-filters-row { max-width: 520px; }
+  body.fz-stats .st-chips { flex-wrap: wrap; overflow: visible; }
+}
+
+/* Téléphone : iOS zoome sur un champ sous 16px ; les pastilles débordent
+   jusqu'aux bords de l'écran pour montrer qu'elles défilent. */
+@media (max-width: 768px) {
+  body.fz-stats .st-search input,
+  body.fz-stats .st-season select { font-size: 16px; }
+  body.fz-stats .st-filters { margin-bottom: 14px; }
+  body.fz-stats .st-chips {
+    margin: 0 calc(-1 * var(--st-gutter, 14px));
+    padding: 0 var(--st-gutter, 14px);
+    scroll-padding: 0 var(--st-gutter, 14px);
+  }
 }
 
 /* ==================== TOUS LES JOUEURS — tableau ==================== */
@@ -263,28 +396,34 @@ body.fz-stats .table-container {
   background: var(--fzs-surface);
   border: 1px solid var(--fzs-border);
 }
+/* En-tête sur le fond de la carte, comme la maquette : seule la colonne
+   triée prend la couleur, l'en-tête n'est plus une bande grise. */
 body.fz-stats th {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background: var(--fzs-bg-alt);
+  background: var(--fzs-surface);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   color: var(--fzs-text-muted);
-  font-weight: 600;
-  font-size: .74rem;
-  letter-spacing: .09em;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .06em;
   border-bottom: 1px solid var(--fzs-border-strong);
   box-shadow: none;
 }
 body.fz-stats #playerTable th.sortable:hover,
 body.fz-stats #playerTable th.sortable:focus-visible {
-  background: var(--fzs-bg);
+  background: var(--fzs-surface);
   color: var(--fzs-ink);
 }
 body.fz-stats #playerTable th.sortable:focus-visible { outline-color: var(--fzs-ink); }
-body.fz-stats #playerTable th.is-sorted {
-  background: var(--fzs-bg);
+body.fz-stats #playerTable th.is-sorted,
+body.fz-stats #playerTable th.is-sorted:hover {
+  background: var(--fzs-surface);
   color: var(--fzs-accent);
 }
+body.fz-stats #playerTable .sort-caret { margin-left: 3px; font-size: .8em; }
+/* « Joueur · 312 » : le nombre de rangées que les filtres laissent. */
+body.fz-stats #playerTable .th-count { font-variant-numeric: tabular-nums; }
 
 /* Une bande unie à filets, comme la liste du classement : pas de rangées
    alternées, et le survol est le gris de sa rangée survolée. */
@@ -296,7 +435,14 @@ body.fz-stats tbody tr:hover {
   transform: none;
   box-shadow: none;
 }
-body.fz-stats #playerTable tbody tr.is-clickable::after { background: var(--fzs-accent-fill); }
+/* Le liseré de survol en ombre intérieure de la première cellule, pas en
+   tr::after : Chrome comptait ce pseudo-élément comme une colonne de plus,
+   qui prenait de la largeur au nom et laissait une bande vide à droite. */
+body.fz-stats #playerTable tbody tr.is-clickable::after { content: none; }
+body.fz-stats #playerTable tbody tr.is-clickable:hover > td:first-child,
+body.fz-stats #playerTable tbody tr.is-clickable:focus-visible > td:first-child {
+  box-shadow: inset 3px 0 0 var(--fzs-accent-fill);
+}
 body.fz-stats #playerTable tbody tr.is-clickable:focus-visible { outline-color: var(--fzs-accent); }
 
 body.fz-stats td { color: var(--fzs-text-muted); }
@@ -441,6 +587,16 @@ body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: color-mix(in srgb, var(--warnin
      trois chiffres débordait de sa colonne. */
   body.fz-stats #playerTable:has(col:nth-child(6):last-child) col:nth-child(n+3) { width: 34px; }
   body.fz-stats #playerTable:has(col:nth-child(6):last-child) col:last-child { width: 44px; }
+  /* Le nom prend vraiment ce qui reste : à 50 %, les colonnes s'arrêtaient
+     avant le bord droit de la carte et laissaient une bande vide. */
+  body.fz-stats #playerTable col:nth-child(2) { width: auto; }
+  /* En-têtes chiffrés serrés : « %ARR » des gardiens tenait mal dans sa colonne. */
+  body.fz-stats #playerTable thead th:not(.player-col):not(.rank-col) {
+    padding-left: 2px;
+    padding-right: 2px;
+    letter-spacing: .02em;
+  }
+  body.fz-stats #playerTable .sort-caret { margin-left: 1px; font-size: .7em; }
 }
 @media (max-width: 359px) {
   body.fz-stats { --d-photo: 44px; }
@@ -463,8 +619,28 @@ body.fz-stats .stats-empty-state { color: var(--fzs-text-muted); }
 body.fz-stats .stats-empty-state .empty-icon { color: var(--fzs-text-fainter); }
 body.fz-stats .stats-empty-state h2 { color: var(--fzs-ink); }
 body.fz-stats .stats-empty-state p { color: var(--fzs-text-faint); }
+/* La cellule hérite du nowrap des colonnes chiffrées (index.css) : la phrase
+   d'aide sortait de la carte. */
+body.fz-stats .table-empty { padding: 36px 16px; white-space: normal; }
+/* Pagination vide (gardiens, équipes, aucun résultat) : pas de bande creuse
+   sous le tableau. */
+body.fz-stats .stats-pagination:empty { display: none; }
 body.fz-stats .table-empty-title { color: var(--fzs-ink); }
 body.fz-stats .table-empty-hint { color: var(--fzs-text-muted); }
+body.fz-stats .table-empty-reset {
+  margin-top: 14px;
+  padding: 9px 16px;
+  min-height: 40px;
+  border: 1px solid var(--fzs-border-input);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fzs-ink);
+  font: 600 13px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+body.fz-stats .table-empty-reset:hover { background: var(--fzs-bg); }
+body.fz-stats .table-empty-reset:focus-visible { outline: 2px solid var(--fzs-accent); outline-offset: 2px; }
 
 /* Chargement : rangées du tableau, palmarès et cartes en os (stats.html).
    Os de fzSquelette.css, aux hauteurs des lignes qu'ils remplacent. */
@@ -498,7 +674,17 @@ body.fz-stats .tp-sk-lbl { width: 26px; height: 7px; margin-top: 5px; }
 }
 /* Trois onglets sur un petit téléphone (Alignements s'est ajouté) :
    « Tous les joueurs » passait sur deux lignes. */
+/* Une seule marge latérale de 12px pour les onglets, les filtres et le
+   tableau (8px sous 360px) : les trois blocs s'alignent, et le tableau ne
+   colle plus aux bords de l'écran. */
 @media (max-width: 480px) {
-  body.fz-stats .stats-subnav { padding-left: 16px; padding-right: 16px; }
+  body.fz-stats { --st-gutter: 12px; }
+  body.fz-stats .stats-subnav,
+  body.fz-stats .stats-container { padding-left: var(--st-gutter); padding-right: var(--st-gutter); }
+  /* index.css ramène le haut du conteneur à 0 : la recherche collait aux onglets. */
+  body.fz-stats .stats-container { padding-top: 14px; }
   body.fz-stats .stats-subnav-btn { padding: 9px 6px; font-size: 12px; white-space: nowrap; }
+}
+@media (max-width: 359px) {
+  body.fz-stats { --st-gutter: 8px; }
 }
