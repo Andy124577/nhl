@@ -1,19 +1,26 @@
 /* Bilan de la soirée — la fenêtre qui surgit quand le dernier match du soir
  * est terminé.
  *
- * Tout tient sur un seul écran. À gauche, un carrousel : une carte par joueur
- * de son équipe qui a joué, posée l'une après l'autre de gauche à droite, du
- * plus petit apport au plus gros. Le carrousel glisse pour garder la carte du
- * moment au bord droit, contre le total, où ses points filent s'ajouter. Quand
- * la dernière carte est passée, la conclusion apparaît sous le total :
+ * En haut, deux cartes : le total de la soirée, avec la part de chaque
+ * joueur en une barre aux couleurs de son club, puis
  *
- *   - cumulatif : le mouvement au classement pendant la soirée (▲ ▼ ou même
- *     place), et un lien vers sa fiche au classement, qui détaille la soirée
- *     joueur par joueur ;
- *   - tête-à-tête : le duel de la semaine, les deux équipes et leur pointage,
- *     et un lien vers le duel.
+ *   - cumulatif : la place au classement, et le mouvement de la soirée
+ *     (▲ ▼ ou même place) ;
+ *   - tête-à-tête : le duel de la semaine, les deux pointages et l'écart.
  *
- * Les cartes restent : le carrousel se feuillette ensuite (flèches, glisser).
+ * Dessous, ses joueurs qui ont joué, triés par points : une rangée de cartes
+ * sur ordinateur, une liste sur téléphone, où la fenêtre devient un panneau
+ * qui monte du bas (et se referme en le tirant vers le bas).
+ *
+ * Le spectacle : les joueurs apparaissent un à un, du meilleur au moins bon ;
+ * les points de chacun filent jusqu'au total, qui grimpe, et sa part s'ajoute
+ * à la barre. À la fin, le classement passe du rang d'avant la soirée à celui
+ * d'après (ou les pointages du duel montent), et l'action reste.
+ *
+ * Rien ne bouge avant que tout soit prêt : la fenêtre se construit hors de la
+ * page, attend ses photos, ses écussons et ses polices (DELAI_CHARGEMENT_MAX_MS
+ * au plus, après quoi les initiales prennent la place d'une photo en retard),
+ * et seulement alors s'ouvre et joue.
  *
  * Le serveur décide de la soirée (routes/soiree.js) : celle du jour dès son
  * dernier match fini, sinon celle de la veille. La page lui demande au
@@ -23,7 +30,8 @@
  * la rejoue, pour la revoir.
  *
  * Chargé en <script defer> après activePool.js. Aucune dépendance de page :
- * photos, écussons et couleurs de club arrivent prêts du serveur. */
+ * photos, écussons et couleurs de club arrivent prêts du serveur ; les
+ * polices (Barlow), la fenêtre les charge elle-même. */
 (function () {
     'use strict';
     if (window.FZBilanSoiree) return;
@@ -44,8 +52,13 @@
     const DUREE_CARTE_MS = 1750;
     const DUREE_CARTE_RAPIDE_MS = 1250;
     const CARTES_LONGUES = 6;
+    /** Photos et polices : au-delà, la fenêtre s'ouvre quand même. */
+    const DELAI_CHARGEMENT_MAX_MS = 6000;
+    const POLICES_URL = 'https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap';
+    const POLICES = ['400 13px Barlow', '500 13px Barlow', '600 15px Barlow', '600 16px "Barlow Condensed"', '700 30px "Barlow Condensed"'];
 
     const reduit = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const telephone = () => window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
     const forcer = new URLSearchParams(window.location.search).get('bilan') === 'soiree';
 
     let minuteur = null;
@@ -117,11 +130,11 @@
     }
 
     function presenter(corps, pool) {
+        if (ouverte) return;
         if (autreFenetreOuverte()) {
             setTimeout(() => { if (!ouverte && FZPool.get() === pool) presenter(corps, pool); }, ATTENTE_AUTRE_FENETRE_MS);
             return;
         }
-        noterVu(pool, corps.jour);
         ouvrir(corps, pool);
     }
 
@@ -129,6 +142,45 @@
         if (document.hidden) { clearTimeout(minuteur); minuteur = null; return; }
         if (Date.now() - derniereVerif > REESSAI_MIN_MS) verifier();
     });
+
+    // ───────────────────────── Chargement ─────────────────────────
+
+    let policesPretes = null;
+
+    /** Barlow, que toutes les pages ne chargent pas : la feuille, puis les fontes. */
+    function polices() {
+        if (!policesPretes) {
+            policesPretes = new Promise(fini => {
+                const lien = document.createElement('link');
+                lien.rel = 'stylesheet';
+                lien.href = POLICES_URL;
+                lien.onload = lien.onerror = () => fini();
+                document.head.appendChild(lien);
+            }).then(() => (document.fonts && document.fonts.load
+                ? Promise.all(POLICES.map(f => document.fonts.load(f).catch(() => null)))
+                : null));
+        }
+        return policesPretes;
+    }
+
+    /**
+     * Les images de la fenêtre (photos, écussons, logo) chargées et décodées,
+     * et ses polices prêtes. Une image en erreur compte comme prête : elle se
+     * retire et ses initiales prennent sa place. Les <img> d'un élément hors
+     * de la page se chargent déjà : la fenêtre n'y entre qu'une fois prête.
+     */
+    function charger(racine) {
+        const images = [...racine.querySelectorAll('img')].map(img => new Promise(fini => {
+            const decoder = () => (img.decode ? img.decode().catch(() => null) : Promise.resolve()).then(() => fini());
+            if (img.complete) { decoder(); return; }
+            img.addEventListener('load', decoder, { once: true });
+            img.addEventListener('error', () => fini(), { once: true });
+        }));
+        return Promise.race([
+            Promise.all([...images, polices()]),
+            new Promise(fini => setTimeout(fini, DELAI_CHARGEMENT_MAX_MS))
+        ]);
+    }
 
     // ───────────────────────── Format ─────────────────────────
 
@@ -141,9 +193,9 @@
         return Number.isInteger(n) ? String(n) : n.toFixed(1);
     }
     const signe = v => (v > 0 ? `+${fmt(v)}` : v < 0 ? `−${fmt(-v)}` : '0');
+    const nombre = v => (v < 0 ? `−${fmt(-v)}` : fmt(v));
     const pluriel = (n, mot) => `${fmt(n)} ${mot}${Math.abs(n) > 1 ? 's' : ''}`;
     const ordinal = n => (n === 1 ? '1<sup>er</sup>' : `${n}<sup>e</sup>`);
-    const ordinalTexte = n => (n === 1 ? '1er' : `${n}e`);
 
     function dateLongue(jour) {
         const d = new Date(`${jour}T12:00:00Z`);
@@ -157,28 +209,43 @@
         return String(nom || '').slice(0, 2).toUpperCase();
     }
 
+    /** Deux libellés : le long sur ordinateur, le court sur téléphone. */
+    const deuxTailles = (long, court) => `<span class="fzb-long">${long}</span><span class="fzb-short">${court}</span>`;
+
     const POSTES = { offensive: 'Attaquant', defensive: 'Défenseur', goalie: 'Gardien', rookie: 'Recrue' };
     const DECISIONS = { BL: 'Blanchissage', V: 'Victoire', DP: 'Défaite en prol.', D: 'Défaite' };
 
-    /** Les statistiques d'une carte, en pastilles. Les tirs ne comptent qu'au tête-à-tête. */
-    function statsDe(carte, enH2H) {
+    /** Ce qu'une carte a fait de la soirée. Les tirs ne comptent qu'au tête-à-tête. */
+    function resultatsDe(carte, enH2H) {
         if (carte.type === 'club') {
             const issue = carte.issue === 'V' ? 'Victoire'
                 : carte.issue === 'DP' ? (carte.prolongation === 'SO' ? 'Défaite en t.b.' : 'Défaite en prol.')
                 : 'Défaite';
-            return [`${issue} ${carte.pour}-${carte.contre}`, `${carte.domicile ? 'contre' : 'à'} ${carte.adversaire}`];
+            return [`${issue} ${carte.pour}-${carte.contre} ${carte.domicile ? 'vs' : 'à'} ${carte.adversaire}`];
         }
         if (carte.gardien) {
             return [carte.decision ? DECISIONS[carte.decision] : null, carte.arrets ? pluriel(carte.arrets, 'arrêt') : null].filter(Boolean);
         }
-        return [pluriel(carte.buts, 'but'), pluriel(carte.aides, 'passe'), enH2H && carte.tirs ? pluriel(carte.tirs, 'tir') : null]
-            .filter(Boolean);
+        return [
+            carte.buts ? pluriel(carte.buts, 'but') : null,
+            carte.aides ? pluriel(carte.aides, 'passe') : null,
+            enH2H && carte.tirs ? pluriel(carte.tirs, 'tir') : null
+        ].filter(Boolean);
     }
 
-    /** Le style de fond d'une carte, aux couleurs de son club. */
-    function styleTeinte(teinte) {
+    /**
+     * Le filet d'un club : sa seconde couleur (`trim`), comme la « team-accent
+     * card » du site (DESIGN.md) — deux clubs au même marine s'y distinguent.
+     */
+    const filetDe = teinte => (teinte && (teinte.trim || teinte.edge)) || null;
+
+    /** Les couleurs d'une carte : la teinte sombre du club, et son filet. */
+    function styleClub(teinte) {
         if (!teinte) return '';
-        return ` style="--fzb-surface:${echapper(teinte.surface)};--fzb-edge:${echapper(teinte.edge)};--fzb-trim:${echapper(teinte.trim)}"`;
+        const decl = [];
+        if (teinte.surface) decl.push(`--fzb-surface:${echapper(teinte.surface)}`);
+        if (filetDe(teinte)) decl.push(`--fzb-club:${echapper(filetDe(teinte))}`);
+        return decl.length ? ` style="${decl.join(';')}"` : '';
     }
 
     /**
@@ -200,54 +267,74 @@
         const repli = `<span class="${cls}-initiales">${echapper(initiales(carte.nom))}</span>`;
         if (carte.type === 'club') {
             const ecusson = carte.teinte && carte.teinte.crest;
-            return `<span class="${cls} is-club">${ecusson ? `<img src="${echapper(ecusson)}" alt="" onerror="this.remove()">` : repli}</span>`;
+            return `<span class="${cls} is-club">${ecusson ? `<img src="${echapper(ecusson)}" alt="" onerror="this.remove()">` : ''}${repli}</span>`;
         }
         // L'image AVANT les initiales : la photo détourée les cache ; si
         // elle ne charge pas, elle se retire et les découvre.
         return `<span class="${cls}">${carte.photo ? `<img src="${echapper(carte.photo)}" alt="" onerror="this.remove()">` : ''}${repli}</span>`;
     }
 
+    function ptsHTML(points) {
+        const classe = points > 0 ? 'is-plus' : points < 0 ? 'is-moins' : 'is-zero';
+        return `<p class="fzb-card-pts ${classe}"><span class="fzb-card-pts-v">${signe(points)}</span><span class="fzb-card-pts-l">pts</span></p>`;
+    }
+
+    /**
+     * Une carte de joueur ou de club. Sur ordinateur, la photo sur la teinte
+     * du club, puis le nom, le poste et les pastilles ; sur téléphone, une
+     * rangée : la vignette, le nom, « poste · résultats », les points.
+     */
     function carteHTML(carte, enH2H) {
-        const ecusson = carte.teinte && carte.teinte.crest
+        const club = carte.type === 'club';
+        const ecusson = !club && carte.teinte && carte.teinte.crest
             ? `<img class="fzb-card-crest" src="${echapper(carte.teinte.crest)}" alt="" onerror="this.remove()">` : '';
-        const meta = carte.type === 'club'
+        const meta = club
             ? 'Club de la LNH'
             : [carte.club, POSTES[carte.categorie] || (carte.gardien ? 'Gardien' : '')].filter(Boolean).join(' · ');
-        const pastilles = statsDe(carte, enH2H).map(s => `<li>${echapper(s)}</li>`).join('');
-        const classePts = carte.points > 0 ? 'is-plus' : carte.points < 0 ? 'is-moins' : 'is-zero';
+        const resultats = resultatsDe(carte, enH2H);
+        const pastilles = resultats.length
+            ? `<ul class="fzb-card-stats">${resultats.map(s => `<li>${echapper(s)}</li>`).join('')}</ul>` : '';
+        const suite = resultats.length ? `<span class="fzb-card-meta-res"> · ${echapper(resultats.join(' · '))}</span>` : '';
         return `
-            <article class="fzb-card${carte.type === 'club' ? ' is-club' : ''}"${styleTeinte(carte.teinte)}>
-                ${ecusson}
-                ${photoHTML(carte, 'fzb-card-photo')}
-                <div class="fzb-card-info">
-                    <h3 class="fzb-card-name">${echapper(carte.nom)}</h3>
-                    <p class="fzb-card-meta">${echapper(meta)}</p>
-                    <ul class="fzb-card-stats">${pastilles}</ul>
+            <article class="fzb-card${club ? ' is-club' : ''} is-attente" role="listitem"${styleClub(carte.teinte)}>
+                <div class="fzb-card-media">${ecusson}${photoHTML(carte, 'fzb-card-photo')}</div>
+                <div class="fzb-card-body">
+                    <div class="fzb-card-id">
+                        <h3 class="fzb-card-name">${echapper(carte.nom)}</h3>
+                        <p class="fzb-card-meta">${echapper(meta)}${suite}</p>
+                    </div>
+                    ${pastilles}
                 </div>
-                <div class="fzb-card-pts ${classePts}"><span class="fzb-card-pts-v">${signe(carte.points)}</span><span class="fzb-card-pts-l">pts</span></div>
+                ${ptsHTML(carte.points)}
             </article>`;
     }
 
-    /** Ceux qui ont joué sans marquer : une seule carte, leurs visages côte à côte. */
+    /**
+     * Ceux qui ont joué sans marquer : une seule carte, leurs visages côte à
+     * côte. Quatre pastilles au plus : trois visages et « +N » au-delà.
+     */
     function carteGroupeHTML(cartes) {
-        const visages = cartes.slice(0, 4).map(c => `<span class="fzb-face"${styleTeinte(c.teinte)}>${photoHTML(c, 'fzb-face-photo')}</span>`).join('');
-        const noms = cartes.map(c => c.nom).join(', ');
+        const montres = cartes.length > 4 ? cartes.slice(0, 3) : cartes;
+        const visages = montres.map(c => `<span class="fzb-face"${styleClub(c.teinte)}>${photoHTML(c, 'fzb-face-photo')}</span>`).join('');
+        const plus = cartes.length > montres.length ? `<span class="fzb-face is-plus">+${cartes.length - montres.length}</span>` : '';
         const titre = cartes.length > 1 ? `${cartes.length} joueurs sans point` : '1 joueur sans point';
         return `
-            <article class="fzb-card is-groupe">
-                <div class="fzb-faces">${visages}${cartes.length > 4 ? `<span class="fzb-face is-plus">+${cartes.length - 4}</span>` : ''}</div>
-                <div class="fzb-card-info">
-                    <h3 class="fzb-card-name">${titre}</h3>
-                    <p class="fzb-card-meta">${echapper(noms)}</p>
+            <article class="fzb-card is-groupe is-attente" role="listitem">
+                <div class="fzb-card-media is-faces">${visages}${plus}</div>
+                <div class="fzb-card-body">
+                    <div class="fzb-card-id">
+                        <h3 class="fzb-card-name">${titre}</h3>
+                        <p class="fzb-card-meta">${echapper(cartes.map(c => c.nom).join(', '))}</p>
+                    </div>
                 </div>
-                <div class="fzb-card-pts is-zero"><span class="fzb-card-pts-v">0</span><span class="fzb-card-pts-l">pts</span></div>
+                ${ptsHTML(0)}
             </article>`;
     }
 
     function carteVideHTML() {
         return `
-            <article class="fzb-card is-vide">
-                <div class="fzb-card-info">
+            <article class="fzb-card is-vide is-attente" role="listitem">
+                <div class="fzb-card-body">
                     <h3 class="fzb-card-name">Soirée de congé</h3>
                     <p class="fzb-card-meta">Aucun de vos joueurs n’a joué ce soir.</p>
                 </div>
@@ -255,103 +342,112 @@
     }
 
     /**
-     * L'ordre de passage : ceux qui n'ont rien marqué d'abord, en une carte,
-     * puis du plus petit apport au plus gros — la meilleure soirée ferme la
-     * marche. Le serveur les donne du meilleur au moins bon.
+     * L'ordre de passage, celui de la liste : du plus gros apport au plus
+     * petit (le serveur les donne ainsi), ceux qui n'ont rien marqué réunis en
+     * une carte à leur place, avant les soirées négatives.
      */
     function etapesDe(corps) {
         const enH2H = corps.mode === 'head-to-head';
+        const etape = c => ({ html: carteHTML(c, enH2H), points: c.points, nom: c.nom, couleur: filetDe(c.teinte) });
         const zeros = corps.cartes.filter(c => !c.points);
-        const marqueurs = corps.cartes.filter(c => c.points).reverse();
-        const etapes = [];
+        const etapes = corps.cartes.filter(c => c.points > 0).map(etape);
         if (zeros.length) etapes.push({ html: carteGroupeHTML(zeros), points: 0 });
-        marqueurs.forEach(c => etapes.push({ html: carteHTML(c, enH2H), points: c.points }));
-        if (!etapes.length) etapes.push({ html: carteVideHTML(), points: 0 });
+        corps.cartes.filter(c => c.points < 0).forEach(c => etapes.push(etape(c)));
+        if (!etapes.length) etapes.push({ html: carteVideHTML(), points: 0, vide: true });
         return etapes;
     }
 
-    // ───────────────────────── Conclusion ─────────────────────────
+    // ───────────────────────── Les deux cartes du haut ─────────────────────────
 
-    const FLECHE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
-    const TRIANGLE_HAUT = '<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><path d="M12 4l8 10H4z" fill="currentColor"/></svg>';
-    const TRIANGLE_BAS = '<svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><path d="M12 20L4 10h16z" fill="currentColor"/></svg>';
+    const FLECHE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+    const TRIANGLE_HAUT = '<svg viewBox="0 0 24 24" width="9" height="9" aria-hidden="true"><path d="M12 4l9 14H3z" fill="currentColor"/></svg>';
+    const TRIANGLE_BAS = '<svg viewBox="0 0 24 24" width="9" height="9" aria-hidden="true"><path d="M12 20L3 6h18z" fill="currentColor"/></svg>';
+    const EGAL = '<span aria-hidden="true">=</span>';
 
-    function rangHTML(rang) {
-        if (!rang || !rang.avant || !rang.apres) return '';
-        const gain = rang.avant - rang.apres;
-        const sur = rang.equipes ? ` sur ${rang.equipes}` : '';
-        let classe = 'is-flat', pastille = 'Même place', phrase = `Vous gardez la ${ordinalTexte(rang.apres)} place${sur}.`;
-        if (gain > 0) {
-            classe = 'is-up';
-            pastille = `${TRIANGLE_HAUT}${gain} place${gain > 1 ? 's' : ''}`;
-            phrase = `Vous gagnez ${gain} place${gain > 1 ? 's' : ''} : ${ordinalTexte(rang.apres)}${sur}.`;
-        } else if (gain < 0) {
-            classe = 'is-down';
-            pastille = `${TRIANGLE_BAS}${-gain} place${gain < -1 ? 's' : ''}`;
-            phrase = `Vous perdez ${-gain} place${gain < -1 ? 's' : ''} : ${ordinalTexte(rang.apres)}${sur}.`;
-        }
-        const avant = gain !== 0 ? `<span class="fzb-rank-from">${ordinal(rang.avant)}</span><span class="fzb-rank-arrow">${FLECHE}</span>` : '';
+    /** Une ligne de mouvement : l'icône ▲ ▼ = dans son rond, puis le texte. */
+    function mouvementHTML(sens, texte) {
+        const icone = sens > 0 ? TRIANGLE_HAUT : sens < 0 ? TRIANGLE_BAS : EGAL;
+        const classe = sens > 0 ? 'is-up' : sens < 0 ? 'is-down' : 'is-flat';
+        return `<p class="fzb-move ${classe}"><span class="fzb-move-ico">${icone}</span><span class="fzb-move-txt">${texte}</span></p>`;
+    }
+
+    function totalHTML(corps, etapes) {
+        const n = corps.cartes.length;
+        const joueurs = n ? `${n} joueur${n > 1 ? 's' : ''}` : 'Aucun joueur';
+        const positif = etapes.reduce((s, e) => s + Math.max(0, e.points), 0);
+        const barre = positif > 0
+            ? `<div class="fzb-mix" aria-hidden="true">${etapes.map((e, i) => (e.points > 0
+                ? `<i data-etape="${i}" title="${echapper(e.nom)}" style="--fzb-part:${(e.points / positif * 100).toFixed(3)}${e.couleur ? `;--fzb-club:${echapper(e.couleur)}` : ''}"></i>`
+                : '')).join('')}</div>`
+            : '';
         return `
-            <section class="fzb-rank ${classe}" aria-label="Mouvement au classement">
-                <p class="fzb-label">Au classement</p>
-                <div class="fzb-rank-row">
-                    ${avant}
-                    <span class="fzb-rank-to">${ordinal(rang.apres)}</span>
-                    <span class="fzb-rank-badge">${pastille}</span>
+            <section class="fzb-panel fzb-tally" aria-label="Total de la soirée">
+                <div class="fzb-panel-head">
+                    <p class="fzb-label">${deuxTailles('Total de la soirée', 'Total')}</p>
+                    <p class="fzb-panel-aside">${joueurs}</p>
                 </div>
-                <p class="fzb-rank-sub">${phrase}</p>
+                <p class="fzb-big"><span class="fzb-big-n fzb-tally-n">0</span><span class="fzb-big-unit">pts</span></p>
+                ${barre}
             </section>`;
     }
 
     /**
-     * Une équipe du duel, sur une ligne : logo, nom et soirée, pointage de la
-     * semaine. Le duel loge sous le total, dans une colonne étroite.
+     * La place au classement (cumulatif). Pendant le spectacle, le rang
+     * d'avant la soirée ; à la fin, celui d'après et le mouvement.
      */
-    function duelEquipeHTML(equipe, cote, mene) {
-        const { v, d, n } = equipe.bilan || { v: 0, d: 0, n: 0 };
-        const depart = Math.round(((Number(equipe.points) || 0) - (Number(equipe.soiree) || 0)) * 10) / 10;
-        const fiche = `${v}-${d}-${n}${equipe.rang ? ` · ${ordinalTexte(equipe.rang)}` : ''}`;
+    function rangHTML(rang) {
+        if (!rang || !rang.avant || !rang.apres) return '';
+        const gain = rang.avant - rang.apres;
+        const places = n => `${n} place${n > 1 ? 's' : ''}`;
+        const etait = ` · était ${ordinal(rang.avant)}`;
+        const texte = gain > 0 ? `Gagne ${places(gain)}<span class="fzb-long">${etait}</span>`
+            : gain < 0 ? `Perd ${places(-gain)}<span class="fzb-long">${etait}</span>`
+            : deuxTailles('Même place qu’avant la soirée', 'Même place');
         return `
-            <li class="fzb-duel-team is-${cote}${mene ? ' is-lead' : ''}" title="${echapper(`${equipe.nom} (${fiche})`)}">
+            <section class="fzb-panel fzb-rank is-attente" aria-label="Au classement">
+                <div class="fzb-panel-head"><p class="fzb-label">${deuxTailles('Au classement', 'Classement')}</p></div>
+                <p class="fzb-big"><span class="fzb-big-n fzb-rank-n">${ordinal(rang.avant)}</span>${rang.equipes ? `<span class="fzb-big-unit">sur ${rang.equipes}</span>` : ''}</p>
+                ${mouvementHTML(gain, texte)}
+            </section>`;
+    }
+
+    /** Une équipe du duel : logo, nom, pointage de la semaine (d'avant la soirée, au départ). */
+    function duelEquipeHTML(equipe, mene) {
+        const depart = Math.round(((Number(equipe.points) || 0) - (Number(equipe.soiree) || 0)) * 10) / 10;
+        return `
+            <li class="fzb-duel-team${mene ? ' is-lead' : ''}">
                 ${logoEquipeHTML(equipe, 'fzb-duel-logo')}
-                <span class="fzb-duel-id">
-                    <span class="fzb-duel-name">${echapper(equipe.nom)}</span>
-                    <span class="fzb-duel-soir">${signe(equipe.soiree)} ce soir</span>
-                </span>
-                <span class="fzb-duel-score" data-de="${depart}" data-a="${Number(equipe.points) || 0}">${fmt(depart)}</span>
+                <span class="fzb-duel-name">${echapper(equipe.nom)}</span>
+                <span class="fzb-duel-score" data-de="${depart}" data-a="${Number(equipe.points) || 0}">${nombre(depart)}</span>
             </li>`;
     }
 
+    /** Le duel de la semaine (tête-à-tête) ; l'écart se dévoile à la fin. */
     function duelHTML(duel) {
         if (!duel) return '';
         const ecart = (Number(duel.nous.points) || 0) - (Number(duel.eux.points) || 0);
-        const ecartTexte = fmt(Math.abs(ecart));
-        let etat, classe;
+        const par = fmt(Math.abs(ecart));
+        let texte;
         if (duel.final) {
-            [etat, classe] = { W: ['Victoire', 'is-win'], L: ['Défaite', 'is-loss'], T: ['Nulle', 'is-tie'] }[duel.issue] || ['Nulle', 'is-tie'];
-            if (duel.issue === 'W' || duel.issue === 'L') etat += ` par ${ecartTexte}`;
-        } else if (ecart > 0) {
-            etat = `Vous menez par ${ecartTexte}`; classe = 'is-win';
-        } else if (ecart < 0) {
-            etat = `Vous tirez de l’arrière par ${ecartTexte}`; classe = 'is-loss';
+            texte = duel.issue === 'W' ? `Victoire par ${par}` : duel.issue === 'L' ? `Défaite par ${par}` : 'Nulle';
         } else {
-            etat = 'Égalité parfaite'; classe = 'is-tie';
+            texte = ecart > 0 ? `En avance de ${par}` : ecart < 0 ? `En retard de ${par}` : 'Égalité';
+            const reste = 7 - duel.jourDeSemaine;
+            if (reste > 0) texte += `<span class="fzb-long"> · encore ${reste} jour${reste > 1 ? 's' : ''}</span>`;
         }
-        const reste = 7 - duel.jourDeSemaine;
-        const quand = duel.final
-            ? `Semaine ${duel.semaine} · Résultat final`
-            : `Semaine ${duel.semaine} · Jour ${duel.jourDeSemaine} de 7`;
-        const suite = !duel.final && reste > 0 ? `<p class="fzb-duel-note">Encore ${reste} jour${reste > 1 ? 's' : ''} au duel.</p>` : '';
-        const meneur = ecart > 0 ? 'nous' : ecart < 0 ? 'eux' : null;
+        const sens = duel.final ? (duel.issue === 'W' ? 1 : duel.issue === 'L' ? -1 : 0) : Math.sign(ecart);
+        const quand = duel.final ? 'Final' : `Jour ${duel.jourDeSemaine} de 7`;
         return `
-            <section class="fzb-duel" aria-label="Votre duel de la semaine">
-                <p class="fzb-label">${quand}</p>
+            <section class="fzb-panel fzb-duel is-attente" aria-label="Votre duel de la semaine">
+                <div class="fzb-panel-head">
+                    <p class="fzb-label">${deuxTailles(`Duel · Semaine ${duel.semaine}`, `Duel · Sem. ${duel.semaine}`)}</p>
+                    <p class="fzb-panel-aside">${quand}</p>
+                </div>
                 <ul class="fzb-duel-rows">
-                    ${duelEquipeHTML(duel.nous, 'nous', meneur === 'nous')}
-                    ${duelEquipeHTML(duel.eux, 'eux', meneur === 'eux')}
+                    ${duelEquipeHTML(duel.nous, ecart > 0)}
+                    ${duelEquipeHTML(duel.eux, ecart < 0)}
                 </ul>
-                <p class="fzb-duel-status ${classe}">${etat}</p>
-                ${suite}
+                ${mouvementHTML(sens, texte)}
             </section>`;
     }
 
@@ -380,83 +476,105 @@
     const CHEVRON_GAUCHE = chevron('M15 18l-6-6 6-6');
     const CHEVRON_DROIT = chevron('M9 18l6-6-6-6');
 
-    function ouvrir(corps, pool) {
+    async function ouvrir(corps, pool) {
         ouverte = true;
         const enH2H = corps.mode === 'head-to-head';
         const etapes = etapesDe(corps);
-        const focusAvant = document.activeElement;
+        const n = corps.cartes.length;
 
         const lienDetail = enH2H && corps.duel
             ? `classement.html?pool=${encodeURIComponent(pool)}&h2h=matchups&semaine=${corps.duel.semaine}`
             : `classement.html?pool=${encodeURIComponent(pool)}&equipe=${encodeURIComponent(corps.equipe.cle)}`;
-        const texteDetail = enH2H && corps.duel ? 'Voir le duel' : 'Voir le détail au classement';
+        const texteDetail = enH2H && corps.duel ? 'Voir le duel' : 'Voir le classement';
 
         const overlay = document.createElement('div');
         overlay.className = 'fzb-overlay';
         overlay.innerHTML = `
-            <section class="fzb-sheet" role="dialog" aria-modal="true" aria-labelledby="fzbTitre" aria-describedby="fzbEquipe" tabindex="-1">
-                <header class="fzb-head">
+            <section class="fzb-sheet" role="dialog" aria-modal="true" aria-labelledby="fzbTitre" tabindex="-1">
+                <div class="fzb-top">
+                    <div class="fzb-grab" aria-hidden="true"><span></span></div>
                     <div class="fzb-progress" aria-hidden="true">${etapes.map(() => '<span class="fzb-seg"><i></i></span>').join('')}</div>
-                    <div class="fzb-head-row">
+                    <header class="fzb-head">
                         ${logoEquipeHTML(corps.equipe, 'fzb-logo')}
                         <div class="fzb-titles">
-                            <p class="fzb-eyebrow">Bilan de la soirée</p>
+                            <p class="fzb-eyebrow">${deuxTailles('Bilan de la soirée', 'Bilan')} · ${echapper(corps.equipe.nom)}</p>
                             <h2 class="fzb-title" id="fzbTitre">${echapper(dateLongue(corps.jour))}</h2>
-                            <p class="fzb-team" id="fzbEquipe">${echapper(corps.equipe.nom)}</p>
                         </div>
                         <button type="button" class="fzb-close" data-action="fermer" aria-label="Fermer le bilan">${ICONE_FERMER}</button>
-                    </div>
-                </header>
+                    </header>
+                </div>
                 <div class="fzb-body">
-                    <div class="fzb-board">
-                        <div class="fzb-rail-head">
-                            <p class="fzb-label" id="fzbJoueurs">Vos joueurs ce soir</p>
-                            <div class="fzb-rail-nav">
-                                <button type="button" class="fzb-rail-btn" data-action="precedent" aria-label="Joueurs précédents">${CHEVRON_GAUCHE}</button>
-                                <button type="button" class="fzb-rail-btn" data-action="suivant" aria-label="Joueurs suivants">${CHEVRON_DROIT}</button>
-                            </div>
+                    <div class="fzb-summary">
+                        ${totalHTML(corps, etapes)}
+                        ${enH2H ? duelHTML(corps.duel) : rangHTML(corps.rang)}
+                    </div>
+                    <div class="fzb-list-head">
+                        <p class="fzb-label" id="fzbJoueurs">Vos joueurs ce soir</p>
+                        <button type="button" class="fzb-skip" data-action="passer">Passer <span aria-hidden="true">›</span></button>
+                        <p class="fzb-list-aside" hidden>${n ? deuxTailles('Triés par points', `${n} joueur${n > 1 ? 's' : ''}`) : ''}</p>
+                    </div>
+                    <div class="fzb-rail-wrap">
+                        <div class="fzb-rail${etapes[0].vide ? ' is-vide' : ''} is-show" role="list" aria-labelledby="fzbJoueurs" data-action="avancer" title="Touchez pour passer au joueur suivant">
+                            ${etapes.map(e => e.html).join('')}
                         </div>
-                        <div class="fzb-rail" data-action="avancer" role="group" aria-labelledby="fzbJoueurs" title="Touchez pour passer au joueur suivant">
-                            <div class="fzb-track"></div>
-                        </div>
-                        <div class="fzb-tally">
-                            <span class="fzb-tally-label">Total de la soirée</span>
-                            <span class="fzb-tally-value"><span class="fzb-tally-n">0</span><small>pts</small></span>
-                        </div>
-                        <div class="fzb-result" hidden></div>
+                        <button type="button" class="fzb-rail-btn is-prev" data-action="precedent" aria-label="Joueurs précédents" hidden>${CHEVRON_GAUCHE}</button>
+                        <button type="button" class="fzb-rail-btn is-next" data-action="suivant" aria-label="Joueurs suivants" hidden>${CHEVRON_DROIT}</button>
                     </div>
                 </div>
                 <footer class="fzb-foot">
-                    <button type="button" class="fzb-btn-text fzb-skip" data-action="passer">Passer <span aria-hidden="true">›</span></button>
-                    <button type="button" class="fzb-btn-secondary fzb-done" data-action="fermer" hidden>Fermer</button>
-                    <a class="fzb-btn-primary fzb-detail" href="${lienDetail}" hidden>${texteDetail}</a>
+                    <button type="button" class="fzb-btn-secondary" data-action="fermer">Fermer</button>
+                    <a class="fzb-btn-primary fzb-detail" href="${lienDetail}">${texteDetail}${FLECHE}</a>
                 </footer>
                 <p class="fzb-sr" role="status" aria-live="polite"></p>
             </section>`;
+
+        // Les photos d'abord : la fenêtre n'entre dans la page qu'une fois
+        // ses images et ses polices prêtes, pour que rien ne surgisse à moitié.
+        await charger(overlay);
+
+        // Pendant le chargement, la page a pu changer de pool, ouvrir une
+        // autre fenêtre ou passer en arrière-plan : la soirée n'est pas
+        // marquée vue, elle reviendra.
+        if (FZPool.get() !== pool) { ouverte = false; verifier(); return; }
+        if (autreFenetreOuverte()) { ouverte = false; presenter(corps, pool); return; }
+        if (document.hidden) {
+            ouverte = false;
+            document.addEventListener('visibilitychange', function retour() {
+                if (document.hidden) return;
+                document.removeEventListener('visibilitychange', retour);
+                if (FZPool.get() === pool) presenter(corps, pool);
+            });
+            return;
+        }
+
+        noterVu(pool, corps.jour);
+        const focusAvant = document.activeElement;
         document.body.appendChild(overlay);
         document.documentElement.classList.add('fzb-lock');
 
         const $ = sel => overlay.querySelector(sel);
         const sheet = $('.fzb-sheet');
+        const defilant = $('.fzb-body');
         const rail = $('.fzb-rail');
-        const piste = $('.fzb-track');
-        const nav = $('.fzb-rail-nav');
+        const cartes = [...rail.children];
         const segments = [...overlay.querySelectorAll('.fzb-seg')];
-        const tallyN = $('.fzb-tally-n');
+        const barre = $('.fzb-mix');
         const tally = $('.fzb-tally');
+        const tallyN = $('.fzb-tally-n');
+        const precedent = $('.fzb-rail-btn.is-prev');
+        const suivant = $('.fzb-rail-btn.is-next');
 
         let total = 0;                  // ce que le compteur affiche
         let arreterCompteur = () => {};
         let avancer = null;             // termine l'attente de la carte en cours
         let fini = false;
         let etapeEnCours = -1;          // l'étape dont les points volent
-        let posees = 0;                 // cartes déjà dans le carrousel
         const volants = new Map();      // pastille → son animation
 
         function afficherTotal(v) {
             arreterCompteur();
             total = v;
-            tallyN.textContent = fmt(v);
+            tallyN.textContent = nombre(v);
         }
 
         function animerTotal(cible, ms) {
@@ -465,22 +583,29 @@
             if (reduit() || ms <= 0 || depart === cible) { afficherTotal(cible); return; }
             arreterCompteur = interpoler(ms, (e, termine) => {
                 total = termine ? cible : depart + (cible - depart) * e;
-                tallyN.textContent = fmt(total);
+                tallyN.textContent = nombre(total);
             });
             tally.classList.remove('is-bump');
             void tally.offsetWidth;
             tally.classList.add('is-bump');
         }
 
+        /** La part d'un joueur dans la barre du total. */
+        function remplirBarre(i) {
+            const part = barre && barre.querySelector(`[data-etape="${i}"]`);
+            if (part) part.classList.add('is-on');
+        }
+
         /**
-         * Les points de la carte filent jusqu'au total, puis il grimpe. Un vol
-         * qui finit après sa carte (passée d'un toucher) ne touche plus au
-         * total : il comptait vers celui d'une étape déjà close.
+         * Les points de la carte filent jusqu'au total, puis il grimpe et la
+         * barre prend sa part. Un vol qui finit après sa carte (passée d'un
+         * toucher) ne touche plus au total : il comptait vers celui d'une
+         * étape déjà close.
          */
-        function envoyerPoints(carte, points, cible) {
+        function envoyerPoints(carte, points, cible, i) {
             const mienne = etapeEnCours;
             const source = carte.querySelector('.fzb-card-pts-v');
-            if (!points || !source || reduit() || !source.animate) { animerTotal(cible, 420); return; }
+            if (!points || !source || reduit() || !source.animate) { animerTotal(cible, 420); remplirBarre(i); return; }
             const de = source.getBoundingClientRect();
             const a = tallyN.getBoundingClientRect();
             const volant = document.createElement('span');
@@ -493,14 +618,14 @@
             const dy = (a.top + a.height / 2) - (de.top + de.height / 2);
             const vol = volant.animate([
                 { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-                { transform: `translate(calc(-50% + ${dx * 0.55}px), calc(-50% + ${dy * 0.35}px)) scale(1.15)`, opacity: 1, offset: 0.45 },
+                { transform: `translate(calc(-50% + ${dx * 0.35}px), calc(-50% + ${dy * 0.55}px)) scale(1.15)`, opacity: 1, offset: 0.45 },
                 { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.55)`, opacity: 0.2 }
-            ], { duration: 560, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' });
+            ], { duration: 600, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' });
             volants.set(volant, vol);
             vol.onfinish = () => {
                 volant.remove();
                 volants.delete(volant);
-                if (!fini && mienne === etapeEnCours) animerTotal(cible, 420);
+                if (!fini && mienne === etapeEnCours) { animerTotal(cible, 420); remplirBarre(i); }
             };
         }
 
@@ -522,68 +647,48 @@
             });
         }
 
-        // ---- Le carrousel ----
-        // Pendant le spectacle, la piste est poussée contre le bord droit par
-        // une translation : la dernière carte posée touche le total, et la
-        // piste glisse d'une carte vers la gauche à chaque joueur. Tant que
-        // les cartes tiennent toutes, elles se rangent à droite. À la fin, la
-        // piste devient un défilement ordinaire, calé au même endroit.
+        // ---- La liste ----
+        // Toutes les cartes sont dans la page dès l'ouverture, invisibles :
+        // la fenêtre a sa taille finale, rien ne saute quand elles
+        // apparaissent. La carte du moment est gardée en vue — la rangée
+        // glisse sur ordinateur, la liste défile sur téléphone, sous le total
+        // qui reste en haut.
 
-        function libre() {
-            return rail.classList.contains('is-libre');
+        function reveler(carte, anime) {
+            if (!carte.classList.contains('is-attente')) return;
+            carte.classList.remove('is-attente');
+            carte.classList.add(anime && !reduit() ? 'is-entree' : 'is-posee');
         }
 
-        function caler(anime) {
-            if (libre()) return;
-            const x = rail.clientWidth - piste.offsetWidth;
-            piste.classList.toggle('is-instant', !anime || reduit());
-            piste.style.transform = `translateX(${x}px)`;
-            rail.classList.toggle('has-gauche', x < 0);
+        function montrer(carte) {
+            const comportement = reduit() ? 'auto' : 'smooth';
+            const c = carte.getBoundingClientRect();
+            if (rail.scrollWidth > rail.clientWidth + 1) {
+                const r = rail.getBoundingClientRect();
+                const bord = r.right - (parseFloat(getComputedStyle(rail).paddingRight) || 0);
+                if (c.right > bord + 1) rail.scrollBy({ left: c.right - bord, behavior: comportement });
+            }
+            const b = defilant.getBoundingClientRect();
+            if (c.bottom > b.bottom - 12) defilant.scrollBy({ top: c.bottom - b.bottom + 12, behavior: comportement });
         }
 
-        function poserCarte(html, anime) {
-            const gabarit = document.createElement('template');
-            gabarit.innerHTML = html.trim();
-            const carte = gabarit.content.firstElementChild;
-            if (anime && !reduit()) carte.classList.add('is-entering');
-            piste.appendChild(carte);
-            posees++;
-            return carte;
-        }
-
-        /** La piste devient un carrousel qu'on feuillette, sans bouger d'un pixel. */
-        function libererRail() {
-            if (libre()) return;
-            rail.classList.add('is-libre');
-            rail.removeAttribute('title');
-            delete rail.dataset.action;
-            rail.tabIndex = 0;
-            piste.style.transform = '';
-            rail.scrollLeft = rail.scrollWidth;
-            rail.addEventListener('scroll', majFleches, { passive: true });
-            majFleches();
-        }
-
+        /** Les flèches n'arrivent qu'à la fin : pendant le spectacle, la rangée suit seule. */
         function majFleches() {
             const max = rail.scrollWidth - rail.clientWidth;
-            nav.classList.toggle('is-on', libre() && max > 1);
-            nav.querySelector('[data-action="precedent"]').disabled = rail.scrollLeft <= 1;
-            nav.querySelector('[data-action="suivant"]').disabled = rail.scrollLeft >= max - 1;
-            rail.classList.toggle('has-gauche', rail.scrollLeft > 1);
+            const deborde = max > 1;
+            precedent.hidden = suivant.hidden = !deborde || !fini;
+            precedent.classList.toggle('is-off', rail.scrollLeft <= 1);
+            suivant.classList.toggle('is-off', rail.scrollLeft >= max - 1);
+            rail.classList.toggle('has-gauche', deborde && rail.scrollLeft > 1);
+            rail.classList.toggle('has-droite', deborde && rail.scrollLeft < max - 1);
         }
 
         /** Une carte de plus ou de moins, d'une flèche. */
         function feuilleter(sens) {
-            const carte = piste.firstElementChild;
-            const ecart = parseFloat(getComputedStyle(piste).columnGap) || 0;
+            const carte = cartes[0];
+            const ecart = parseFloat(getComputedStyle(rail).columnGap) || 0;
             const pas = carte ? carte.getBoundingClientRect().width + ecart : rail.clientWidth;
             rail.scrollBy({ left: sens * pas, behavior: reduit() ? 'auto' : 'smooth' });
-        }
-
-        /** Fenêtre redimensionnée (téléphone tourné) : la piste se recale. */
-        function recaler() {
-            if (libre()) majFleches();
-            else caler(false);
         }
 
         async function jouer() {
@@ -601,17 +706,19 @@
                 cumul += etape.points;
                 // Le dernier pas retombe exactement sur le total du serveur.
                 const cible = i === etapes.length - 1 ? corps.total : cumul;
-                const carte = poserCarte(etape.html, true);
-                caler(true);
-                // Les points partent une fois la piste arrêtée : la carte est
-                // alors à sa place, contre le total.
-                const envoi = setTimeout(() => { if (!fini) envoyerPoints(carte, etape.points, cible); }, reduit() ? 0 : 600);
+                const carte = cartes[i];
+                reveler(carte, true);
+                montrer(carte);
+                // Les points partent une fois la carte posée et la liste
+                // arrêtée : la pastille part de là où on la voit.
+                const envoi = setTimeout(() => { if (!fini) envoyerPoints(carte, etape.points, cible, i); }, reduit() ? 0 : 650);
                 await attendre(duree);
                 clearTimeout(envoi);
                 if (fini) return;
                 // Une carte passée d'un toucher : son total tombe sans attendre le vol.
                 viderVolants();
                 afficherTotal(cible);
+                remplirBarre(i);
             }
             conclure();
         }
@@ -623,17 +730,17 @@
          */
         function animerDuel(zone) {
             const scores = [...zone.querySelectorAll('.fzb-duel-score')];
-            const fin = () => scores.forEach(s => { s.textContent = fmt(Number(s.dataset.a)); });
+            const fin = () => scores.forEach(s => { s.textContent = nombre(Number(s.dataset.a)); });
             if (reduit()) { fin(); return; }
             let arret = () => {};
             setTimeout(() => {
                 if (!overlay.isConnected) return;
                 arret = interpoler(1100, (e, termine) => scores.forEach(s => {
                     const de = Number(s.dataset.de), a = Number(s.dataset.a);
-                    s.textContent = fmt(termine ? a : de + (a - de) * e);
+                    s.textContent = nombre(termine ? a : de + (a - de) * e);
                 }));
-            }, 350);
-            setTimeout(() => { arret(); fin(); }, 350 + 1100 + 250);
+            }, 200);
+            setTimeout(() => { arret(); fin(); }, 200 + 1100 + 250);
         }
 
         function conclure() {
@@ -641,38 +748,78 @@
             fini = true;
             if (avancer) avancer();
             viderVolants();
-            // « Passer » : les cartes qui restaient se posent d'un coup, et
-            // le carrousel les garde toutes, la dernière contre le total.
-            for (let i = posees; i < etapes.length; i++) poserCarte(etapes[i].html, false);
-            libererRail();
+            // « Passer » : les cartes qui restaient se posent d'un coup.
+            cartes.forEach(c => reveler(c, false));
+            etapes.forEach((e, i) => remplirBarre(i));
+            if (barre) barre.classList.add('is-full');
             afficherTotal(corps.total);
             segments.forEach(s => { s.classList.remove('is-active'); s.classList.add('is-done'); });
 
-            // La conclusion se pose sous le total ; le carrousel reste en place.
-            const resultat = $('.fzb-result');
-            resultat.innerHTML = enH2H ? duelHTML(corps.duel) : rangHTML(corps.rang);
-            resultat.hidden = !resultat.innerHTML.trim();
+            rail.classList.remove('is-show');
+            rail.removeAttribute('title');
+            delete rail.dataset.action;
             $('.fzb-skip').hidden = true;
-            $('.fzb-detail').hidden = false;
-            $('.fzb-done').hidden = false;
-            if (enH2H) animerDuel(resultat);
+            $('.fzb-list-aside').hidden = false;
 
-            const resume = [`Total de la soirée : ${fmt(corps.total)} points.`];
-            if (!enH2H && corps.rang && corps.rang.apres) {
-                const r = resultat.querySelector('.fzb-rank-sub');
-                if (r) resume.push(r.textContent);
+            // La conclusion : le rang d'après la soirée, ou le duel qui monte.
+            const resume = [`Total de la soirée : ${nombre(corps.total)} points.`];
+            const rang = $('.fzb-rank');
+            if (rang) {
+                const r = corps.rang;
+                const chiffre = $('.fzb-rank-n');
+                if (r.apres !== r.avant) {
+                    chiffre.innerHTML = ordinal(r.apres);
+                    if (!reduit()) chiffre.classList.add('is-change');
+                }
+                rang.classList.remove('is-attente');
+                const gain = r.avant - r.apres;
+                const mouvement = gain > 0 ? `${gain} place${gain > 1 ? 's' : ''} de gagnée${gain > 1 ? 's' : ''}`
+                    : gain < 0 ? `${-gain} place${gain < -1 ? 's' : ''} de perdue${gain < -1 ? 's' : ''}`
+                    : 'même place';
+                resume.push(`Au classement : ${chiffre.textContent}${r.equipes ? ` sur ${r.equipes}` : ''}, ${mouvement}.`);
             }
-            if (enH2H && corps.duel) {
-                const s = resultat.querySelector('.fzb-duel-status');
-                if (s) resume.push(s.textContent);
+            const duel = $('.fzb-duel');
+            if (duel) {
+                duel.classList.remove('is-attente');
+                animerDuel(duel);
+                resume.push(`${duel.querySelector('.fzb-move-txt').textContent}.`);
             }
             $('.fzb-sr').textContent = resume.join(' ');
+            majFleches();
+
             // « Passer » vient de disparaître sous le doigt ou le clavier : le
             // focus passe à l'action. Sinon il reste sur la fenêtre.
-            const skip = $('.fzb-skip');
-            if (document.activeElement === skip || sheet.contains(document.activeElement) === false) {
+            if (document.activeElement === $('.fzb-skip') || !sheet.contains(document.activeElement)) {
                 $('.fzb-detail').focus({ preventScroll: true });
             }
+        }
+
+        // ---- Tirer le panneau vers le bas pour le fermer (téléphone) ----
+
+        function glisser() {
+            const zone = $('.fzb-top');
+            let y0 = null, dy = 0, t0 = 0;
+            zone.addEventListener('pointerdown', e => {
+                if (!telephone() || e.button !== 0 || e.target.closest('button, a')) return;
+                y0 = e.clientY; dy = 0; t0 = performance.now();
+                zone.setPointerCapture(e.pointerId);
+                sheet.classList.add('is-drag');
+            });
+            zone.addEventListener('pointermove', e => {
+                if (y0 === null) return;
+                dy = Math.max(0, e.clientY - y0);
+                sheet.style.transform = dy ? `translateY(${dy}px)` : '';
+            });
+            const lacher = () => {
+                if (y0 === null) return;
+                y0 = null;
+                sheet.classList.remove('is-drag');
+                const vitesse = dy / Math.max(1, performance.now() - t0);
+                if (dy > 110 || (dy > 30 && vitesse > 0.6)) fermer();
+                else sheet.style.transform = '';
+            };
+            zone.addEventListener('pointerup', lacher);
+            zone.addEventListener('pointercancel', lacher);
         }
 
         function arreter() {
@@ -681,7 +828,7 @@
             viderVolants();
             arreterCompteur();
             document.removeEventListener('keydown', clavier, true);
-            window.removeEventListener('resize', recaler);
+            window.removeEventListener('resize', majFleches);
         }
 
         function retirer() {
@@ -691,9 +838,10 @@
         }
 
         function fermer() {
+            if (overlay.classList.contains('is-leaving')) return;
             arreter();
             overlay.classList.add('is-leaving');
-            setTimeout(retirer, reduit() ? 0 : 200);
+            setTimeout(retirer, reduit() ? 0 : 240);
             if (focusAvant && typeof focusAvant.focus === 'function') focusAvant.focus({ preventScroll: true });
         }
 
@@ -705,10 +853,9 @@
                 return;
             }
             if (e.key !== 'Tab') return;
-            // La touche Tab reste dans la fenêtre. Les flèches du carrousel
-            // gardent leur place, invisibles, tant qu'il n'y a rien à feuilleter.
-            const cibles = [...sheet.querySelectorAll('button:not([hidden]):not(:disabled), a[href]:not([hidden]), [tabindex="0"]')]
-                .filter(el => el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden');
+            // La touche Tab reste dans la fenêtre.
+            const cibles = [...sheet.querySelectorAll('button:not([hidden]), a[href]:not([hidden])')]
+                .filter(el => el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden' && !el.classList.contains('is-off'));
             if (!cibles.length) return;
             const premier = cibles[0], dernier = cibles[cibles.length - 1];
             if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
@@ -728,11 +875,12 @@
         // La page change : rien à animer, et un retour arrière (cache de
         // navigation) ne doit pas retrouver la fenêtre ouverte.
         $('.fzb-detail').addEventListener('click', () => { arreter(); retirer(); });
+        rail.addEventListener('scroll', majFleches, { passive: true });
         document.addEventListener('keydown', clavier, true);
-        window.addEventListener('resize', recaler);
+        window.addEventListener('resize', majFleches);
+        glisser();
 
-        // La piste part du bord droit : la première carte y entre en glissant.
-        caler(false);
+        majFleches();
         sheet.focus({ preventScroll: true });
         jouer();
     }
