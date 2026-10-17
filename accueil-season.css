@@ -24,9 +24,6 @@ body.fz-season-page { background:var(--bg); }
 .fzs .fzs-cta { display:inline-flex; gap:24px; background:var(--primary); color:var(--on-primary); padding:10px 20px; margin-top:16px; border-radius:6px; font-weight:700; text-transform:uppercase; }
 .fzs-dot { display:inline-block; width:11px; height:11px; border-radius:50%; background:var(--primary); box-shadow:0 0 14px rgba(var(--primary-rgb),.33); flex-shrink:0; }
 .fzs-rank { grid-column:span 4; position:relative; }
-.fzs-number { display:block; font:600 34px/1.2 'Oswald',sans-serif; margin:8px 0; }
-.fzs-number small { font-size:24px; }
-.fzs-number sup { font-size:18px; }
 .fzs .fzs-green { color:var(--success); }
 .fzs .fzs-red { color:var(--primary-text); }
 .fzs-rank p span { color:#A1A1A6; font-size:13px; }
@@ -64,7 +61,7 @@ body.fz-season-page { background:var(--bg); }
  .fzs .fzs-hero { grid-column:1/-1; order:0; min-height:225px; padding:20px; }
  .fzs-hero-copy { max-width:75%; }.fzs h1 { font-size:34px; max-width:250px; }.fzs-cover { right:-15%; width:80%; opacity:.7; }.fzs-hero p { max-width:210px; }
  .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }.fzs-player-list { display:flex; overflow-x:auto; scroll-snap-type:x proximity; gap:12px; padding-bottom:5px; }.fzs-player { flex:0 0 205px; display:grid; grid-template-columns:48px 1fr; border:1px solid #38383A; border-radius:8px; padding:10px; scroll-snap-align:start; gap:8px; }.fzs-player:last-child { border:1px solid #38383A; }.fzs-player .fzd-off-face { width:48px; height:48px; }.fzs-player-stats { grid-column:1/-1; }.fzs-player > .fzd-team-logo { display:none; }.fzs-player-stats small { text-align:center; border-top:1px solid #38383A; padding-top:6px; }
- .fzs-rank { grid-column:span 1; order:2; }.fzs-total { grid-column:span 1; order:3; }.fzs-number { font-size:30px; }.fzs-number small { font-size:22px; }.fzs-rank .fzs-head a { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
+ .fzs-rank { grid-column:span 1; order:2; }.fzs-total { grid-column:span 1; order:3; }.fzs-rank .fzs-head a { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
  .fzs h2 { font-size:13px; }.fzs-head { gap:8px; }.fzs-head a { font-size:13px; }.fzs .fzd-cal-games { display:flex; }.fzs .fzd-game-card { flex:0 0 85%; }.fzs .fzd-cal-strip { display:flex; overflow-x:auto; }.fzs .fzd-day-chip { flex:0 0 64px; }.fzs-stat { grid-template-columns:80px 25px 1fr; }
 }
 @media(prefers-reduced-motion:reduce) { .fzs * { scroll-behavior:auto!important; } }
@@ -177,59 +174,136 @@ html[data-theme="light"] .fzs-pc.is-live .fzs-pc-foot { background:#FDECEC; colo
  #fzSeasonHome #fzdOffWatch, #fzSeasonHome .fzh-al { grid-column:1/-1; }
 }
 
-/* ---- Ma position : le rang, sa semaine, les points par période ----
-   Les jetons --fzh-* (accueil-palette.css) suivent le thème d'eux-mêmes. */
-.fzs .fzs-rank { container-type:inline-size; display:flex; flex-direction:column; }
-.fzs-rank-main { display:grid; gap:10px 24px; margin-bottom:14px; }
-.fzs-rank-now { min-width:0; }
-@container (min-width:500px) {
- .fzs-rank-main { grid-template-columns:minmax(150px,auto) minmax(0,1fr); align-items:center; }
+/* ==== Ma position et Ce soir (maquette « Ma Position Card Redesign ») ====
+   Les jetons --fzh-* (accueil-palette.css) suivent le thème d'eux-mêmes ;
+   les tuiles sont un creux du panneau en sombre, un gris en clair. */
+.fzs :is(.fzs-rank, .fzs-total) {
+    --fzs-faint: color-mix(in srgb, var(--fzh-muted) 62%, var(--fzh-panel));
+    --fzs-inset: color-mix(in srgb, var(--fzh-page) 55%, var(--fzh-panel));
+    --fzs-bar: color-mix(in srgb, var(--fzh-ink) 9%, var(--fzh-panel));
+    --fzs-bar-ahead: color-mix(in srgb, var(--fzh-ink) 22%, var(--fzh-panel));
+    display:flex; flex-direction:column; padding:16px 18px 18px; border-radius:16px;
 }
-.fzs-week { margin:0; min-width:0; }
-.fzs-week-cap { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:8px; font-size:13px; color:var(--fzh-muted); }
-.fzs-week-cap b { font-size:13px; font-weight:700; }
-.fzs-week-cap b:not(.fzs-green):not(.fzs-red) { color:var(--fzh-muted); }
-.fzs-week-empty { display:flex; align-items:center; min-height:94px; margin:0 !important; font-size:14px; color:var(--fzh-muted) !important; }
-/* 72 px de tracé, 20 px pour les jours ; à gauche, la place des repères. */
-.fzs-week-plot { position:relative; height:94px; margin-left:30px; }
-.fzs-week-plot svg { position:absolute; left:0; top:0; width:100%; height:72px; overflow:visible; }
-.fzs-week-line { fill:none; stroke:var(--fzh-accent-fill); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke; }
-.fzs-week-grid { stroke:var(--fzh-border); stroke-width:1; vector-effect:non-scaling-stroke; }
-.fzs-week-tick { position:absolute; left:-30px; top:calc(var(--y) * .72px); transform:translateY(-50%); font-size:11px; line-height:1; color:var(--fzh-muted); font-variant-numeric:tabular-nums; }
-.fzs-week-col { position:absolute; top:0; bottom:0; left:calc(var(--i) * 100% / 7); width:calc(100% / 7); }
-.fzs-week-pt { position:absolute; left:50%; top:calc(var(--y) * .72px); width:8px; height:8px; border-radius:50%; background:var(--fzh-accent-fill); box-shadow:0 0 0 2px var(--fzh-panel); transform:translate(-50%,-50%); transition:transform .2s cubic-bezier(.4,0,.2,1); }
-.fzs-week-col.is-now .fzs-week-pt { width:12px; height:12px; }
-.fzs-week-col:hover .fzs-week-pt { transform:translate(-50%,-50%) scale(1.3); }
-.fzs-week-day { position:absolute; left:0; right:0; bottom:0; text-align:center; font-size:12px; line-height:16px; color:var(--fzh-muted); }
-.fzs-week-col.is-now .fzs-week-day { color:var(--fzh-ink); font-weight:700; }
-.fzs-week-tip { position:absolute; z-index:2; left:50%; top:calc(var(--y, 50) * .72px - 12px); transform:translate(-50%,-100%); padding:3px 8px; border-radius:6px; background:var(--fzh-ink); color:var(--fzh-panel); font:600 12px/1.3 'Barlow Condensed',sans-serif; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; }
-/* Aux deux bouts, la bulle s'aligne sur le bord au lieu de déborder du panneau. */
-.fzs-week-col.is-first .fzs-week-tip { left:0; transform:translateY(-100%); }
-.fzs-week-col.is-now .fzs-week-tip { left:auto; right:0; transform:translateY(-100%); }
-.fzs-week-col:hover .fzs-week-tip { opacity:1; }
-.fzs-sr { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
-.fzs-periods { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:auto 0 0; padding-top:12px; border-top:1px solid var(--fzh-border); }
-.fzs-periods > div { min-width:0; padding:0 14px; border-left:1px solid var(--fzh-border); }
-.fzs-periods > div:first-child { padding-left:0; border-left:0; }
-.fzs-periods dt { font:500 12px/1.2 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.45px; color:var(--fzh-muted); }
-.fzs-periods dd { margin:4px 0 0; font-size:14px; color:var(--fzh-muted); white-space:nowrap; }
-.fzs-periods dd b { font:600 24px/1.15 'Oswald',sans-serif; color:var(--fzh-ink); }
-.fzs-periods.is-loading dd b { color:var(--fzh-muted); }
+html[data-theme="light"] .fzs :is(.fzs-rank, .fzs-total) { --fzs-inset:var(--fzh-raised); }
+.fzs :is(.fzs-rank, .fzs-total) .fzs-head { margin-bottom:6px; }
+.fzs :is(.fzs-rank, .fzs-total) h2 { font:700 14px/1.2 'Barlow Condensed',sans-serif; letter-spacing:.12em; color:var(--fzh-muted); }
+.fzs .fzs-rank .fzs-head a { display:flex; align-items:center; gap:6px; margin:-6px -10px; padding:6px 10px; border-radius:8px; font:600 14px/1 'Barlow Condensed',sans-serif; }
+.fzs .fzs-rank .fzs-head a:hover { background:var(--fzh-tint); }
+.fzs .fzs-rank .fzs-head a span { margin:0; font-size:18px; line-height:1; }
+.fzs-head-meta { font:400 13px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); white-space:nowrap; }
 
-/* ---- Total ce soir : avant, pendant, après les matchs, ou relâche ---- */
-.fzs .fzs-total { display:flex; flex-direction:column; }
-.fzs .fzs-total .fzs-total-start { color:var(--fzh-muted); font-size:15px; }
-.fzs-total-start b { color:var(--fzh-ink); font-weight:700; font-variant-numeric:tabular-nums; }
-.fzs .fzs-total .fzs-total-status { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 4px; }
-.fzs-total-status span { display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border-radius:100px; background:var(--fzh-raised); color:var(--fzh-ink); font-size:13px; font-weight:600; }
+/* -- Le rang en grand, mes points à droite -- */
+.fzs-pos-top { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-top:4px; }
+/* En ligne, pas en flex : un écart de flex séparerait le « 2 » de son « e ». */
+.fzs-pos-rank { display:block; font:700 76px/.9 'Barlow Condensed',sans-serif; letter-spacing:-.02em; color:var(--fzh-ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fzs-pos-rank sup { position:relative; top:.32em; margin-left:2px; font-size:30px; line-height:1; vertical-align:top; letter-spacing:0; }
+.fzs-pos-rank small { margin-left:8px; font:600 24px/1 'Barlow Condensed',sans-serif; letter-spacing:0; color:var(--fzs-faint); }
+.fzs-pos-score { display:flex; flex-direction:column; align-items:flex-end; gap:6px; padding-bottom:6px; min-width:0; }
+.fzs-pos-pts { font:500 15px/1 'Barlow Condensed',sans-serif; color:var(--fzh-muted); white-space:nowrap; }
+.fzs-pos-pts b { font-size:28px; font-weight:700; color:var(--fzh-ink); font-variant-numeric:tabular-nums; }
+.fzs-pos-score .fzs-live-pts { margin:0; vertical-align:0; font-size:14px; padding:3px 10px 3px 8px; }
+.fzs-pos-score .fzs-live-pts::before { width:7px; height:7px; animation:fzs-live-pouls 1.8s infinite; }
+@keyframes fzs-live-pouls {
+    0%   { box-shadow:0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent); }
+    70%  { box-shadow:0 0 0 7px transparent; }
+    100% { box-shadow:0 0 0 0 transparent; }
+}
+.fzs-pos-day { font:600 13px/1.2 'Barlow Condensed',sans-serif; white-space:nowrap; }
+
+/* -- Le pool en une bande : une barre par équipe -- */
+.fzs-pos-strip { display:grid; grid-template-columns:repeat(var(--n), minmax(0,1fr)); gap:4px; margin:14px 0 0; padding:0; list-style:none; }
+.fzs-pos-strip li { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+.fzs-pos-strip i { width:100%; height:6px; border-radius:3px; background:var(--fzs-bar); }
+.fzs-pos-strip .is-ahead i { background:var(--fzs-bar-ahead); }
+.fzs-pos-strip .is-me i { background:var(--fzh-accent-fill); }
+.fzs-pos-strip span { font:500 11px/1 'Barlow Condensed',sans-serif; color:var(--fzs-faint); font-variant-numeric:tabular-nums; }
+.fzs-pos-strip .is-me span { font-weight:700; color:var(--fzh-ink); }
+.fzs-pos-strip.is-dense { gap:2px; }
+.fzs-pos-strip.is-dense li:not(.is-me):not(.is-end) span { visibility:hidden; }
+
+/* -- La semaine du rang -- */
+.fzs-week { --plot-h:104px; margin:16px 0 0; padding-top:14px; min-width:0; border-top:1px solid var(--fzh-border); }
+.fzs-week-cap { display:flex; align-items:baseline; justify-content:space-between; gap:8px; font:400 13px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); }
+.fzs-week-cap > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fzs-week-cap .fzs-week-sel { font-weight:600; color:var(--fzh-ink); }
+.fzs-week-cap > b { flex:none; font:600 14px/1.2 'Barlow Condensed',sans-serif; }
+.fzs-week-cap > b:not(.fzs-green):not(.fzs-red) { color:var(--fzh-muted); }
+.fzs-week-empty { display:flex; align-items:center; min-height:94px; margin:0 !important; font-size:14px; color:var(--fzh-muted) !important; }
+/* Le tracé en haut, la rangée des jours dessous. */
+.fzs-week-plot { position:relative; height:calc(var(--plot-h) + 24px); margin-top:8px; }
+.fzs-week-plot svg { position:absolute; left:0; top:0; width:100%; height:var(--plot-h); overflow:visible; }
+.fzs-week-grid { stroke:var(--fzh-border); stroke-width:1; stroke-dasharray:2 4; vector-effect:non-scaling-stroke; }
+.fzs-week-grid.is-edge { stroke-dasharray:none; }
+.fzs-week-fill-top { stop-color:var(--fzh-accent-fill); stop-opacity:.28; }
+.fzs-week-fill-bottom { stop-color:var(--fzh-accent-fill); stop-opacity:0; }
+.fzs-week-area { fill:url(#fzsWeekFill); }
+.fzs-week-line { fill:none; stroke:var(--fzh-accent-fill); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+/* Le guide vertical du jour choisi (--sel, posé par fzsChoisirJour). */
+.fzs-week-guide { position:absolute; top:0; left:calc((var(--sel, 6) + .5) * 100% / 7); width:1px; height:var(--plot-h); background:var(--fzs-bar-ahead); transition:left .15s ease; pointer-events:none; }
+.fzs-week-tick { position:absolute; left:0; top:calc(var(--y) * var(--plot-h) / 100); transform:translateY(-50%); padding-right:4px; background:var(--fzh-panel); font:500 11px/1 'Barlow Condensed',sans-serif; color:var(--fzs-faint); font-variant-numeric:tabular-nums; pointer-events:none; }
+.fzs-week-cols { position:absolute; inset:0; display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); }
+.fzs .fzs-week-col { position:relative; height:100%; margin:0; padding:0; border:0; border-radius:8px; background:transparent; color:inherit; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fzs .fzs-week-col:focus-visible { outline:2px solid var(--fzh-accent-fill); outline-offset:-2px; }
+.fzs-week-pt { position:absolute; left:50%; top:calc(var(--y) * var(--plot-h) / 100); width:9px; height:9px; border-radius:50%; background:var(--fzh-panel); box-shadow:inset 0 0 0 2.5px var(--fzh-accent-fill); transform:translate(-50%,-50%); transition:width .15s ease, height .15s ease, background .15s ease; }
+.fzs-week-col.is-sel .fzs-week-pt { width:14px; height:14px; background:var(--fzh-accent-fill); }
+.fzs-week-day { position:absolute; left:0; right:0; bottom:0; text-align:center; font:500 12px/18px 'Barlow Condensed',sans-serif; color:var(--fzs-faint); }
+.fzs-week-col.is-sel .fzs-week-day { font-weight:700; color:var(--fzh-ink); }
+
+/* -- 24 h, 7 jours, 30 jours : trois tuiles -- */
+.fzs-periods { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:16px 0 0; padding:0; }
+.fzs-periods > div { min-width:0; padding:10px 12px; border-radius:10px; background:var(--fzs-inset); }
+.fzs-periods dt { font:600 12px/1.2 'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.1em; color:var(--fzh-muted); }
+.fzs-periods dd { margin:2px 0 0; font:500 13px/1.1 'Barlow Condensed',sans-serif; color:var(--fzh-muted); white-space:nowrap; }
+.fzs-periods dd b { font:700 26px/1.1 'Barlow Condensed',sans-serif; color:var(--fzh-ink); font-variant-numeric:tabular-nums; }
+.fzs-periods .is-zero dd, .fzs-periods .is-zero dd b, .fzs-periods.is-loading dd b { color:var(--fzs-faint); }
+
+/* -- Ce soir : avant, pendant, après les matchs, ou relâche -- */
+.fzs-ce-main { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:4px 0 16px; }
+.fzs-ce-lead { display:flex; flex-direction:column; min-width:0; }
+.fzs-ce-label { font:400 13px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); }
+.fzs-ce-count { display:block; margin-top:2px; font:700 48px/1 'Barlow Condensed',sans-serif; color:var(--fzh-ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fzs-ce-count small { font-size:20px; font-weight:500; color:var(--fzh-muted); }
+.fzs-ce-count.is-up, .fzs-ce-main.is-started .fzs-ce-count { color:var(--success); }
+/* L'anneau : la dernière heure avant la mise au jeu, l'heure du match au centre. */
+.fzs-ce-ring { flex:none; display:grid; place-items:center; width:56px; height:56px; border-radius:50%; background:conic-gradient(var(--fzh-accent-fill) calc(var(--p, 0) * 100%), var(--fzh-border) 0); }
+.fzs-ce-ring > span { display:grid; place-items:center; width:46px; height:46px; border-radius:50%; background:var(--fzh-panel); font:700 13px/1 'Barlow Condensed',sans-serif; color:var(--fzh-muted); white-space:nowrap; }
+.fzs-ce-main.is-started .fzs-ce-ring { background:var(--success); }
+.fzs-ce-live { display:inline-flex; align-items:center; gap:6px; font:600 13px/1 'Barlow Condensed',sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--fzh-accent); }
+.fzs-ce-live i { width:7px; height:7px; border-radius:50%; background:var(--fzh-accent-fill); animation:fzs-ce-pouls 1.8s infinite; }
+@keyframes fzs-ce-pouls {
+    0%   { box-shadow:0 0 0 0 rgba(var(--primary-rgb), .55); }
+    70%  { box-shadow:0 0 0 7px rgba(var(--primary-rgb), 0); }
+    100% { box-shadow:0 0 0 0 rgba(var(--primary-rgb), 0); }
+}
+.fzs .fzs-total .fzs-total-start { margin:0 0 10px; font:400 14px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); }
+.fzs-total-start b { color:var(--fzh-ink); font-weight:600; font-variant-numeric:tabular-nums; }
+.fzs .fzs-total .fzs-total-status { display:flex; flex-wrap:wrap; gap:6px; margin:-6px 0 14px; }
+.fzs-total-status span { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:100px; background:var(--fzs-inset); color:var(--fzh-ink); font:600 13px/1.2 'Barlow Condensed',sans-serif; }
 .fzs-total-status .fzs-dot { width:7px; height:7px; box-shadow:none; }
-.fzs-tonight { list-style:none; margin:12px 0 0; padding:0; border-top:1px solid var(--fzh-border); }
-.fzs-tonight li { display:grid; grid-template-columns:auto auto minmax(0,1fr); align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--fzh-border); font-size:14px; }
-.fzs-tonight li:last-child { border-bottom:0; }
-.fzs-tonight time { min-width:46px; font-weight:700; color:var(--fzh-ink); font-variant-numeric:tabular-nums; }
-.fzs-tonight-match { display:inline-flex; align-items:center; gap:5px; font-weight:600; color:var(--fzh-ink); }
-.fzs-tonight-match i { font-style:normal; font-size:12px; color:var(--fzh-muted); }
-.fzs .fzs-tonight .fzd-team-logo { width:20px; height:20px; }
-.fzs-tonight-who { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; color:var(--fzh-muted); }
-.fzs .fzs-total .fzs-tonight-more { margin:6px 0 0; font-size:13px; color:var(--fzh-muted); }
-@media(prefers-reduced-motion:reduce) { .fzs-week-pt, .fzs-week-tip { transition:none; } }
+
+/* Une tuile par match à venir : l'heure, les deux clubs, mes joueurs. */
+.fzs-tonight { display:grid; gap:6px; margin:0 -8px; padding:0; list-style:none; }
+.fzs .fzs-tonight .fzs-tonight-game { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; background:var(--fzs-inset); color:var(--fzh-ink); text-decoration:none; transition:background .15s ease; }
+#fzDashSection .fzs .fzs-tonight a.fzs-tonight-game { color:var(--fzh-ink); }
+.fzs .fzs-tonight a.fzs-tonight-game:hover { background:color-mix(in srgb, var(--fzh-ink) 6%, var(--fzs-inset)); }
+.fzs-tonight time { flex:none; min-width:52px; font:700 16px/1 'Barlow Condensed',sans-serif; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fzs-tonight-match { display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
+.fzs-tonight-match i { font:400 13px/1 'Barlow',sans-serif; font-style:normal; color:var(--fzs-faint); }
+.fzs-club { flex:none; display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:color-mix(in srgb, var(--club) 30%, var(--fzh-raised)); }
+.fzs-club img { width:20px; height:20px; object-fit:contain; }
+.fzs-club img + span { display:none; }
+.fzs-club > span { font:700 11px/1 'Barlow Condensed',sans-serif; color:var(--fzh-ink); }
+.fzs-tonight-who { display:flex; flex-direction:column; align-items:flex-end; min-width:0; text-align:right; }
+.fzs-tonight-who small { font:500 11px/1.3 'Barlow',sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--fzs-faint); white-space:nowrap; }
+.fzs-tonight-who b { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 16px/1.2 'Barlow Condensed',sans-serif; color:var(--fzh-ink); }
+.fzs .fzs-total .fzs-tonight-more { margin:8px 0 0; font:400 13px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); }
+
+@media (max-width:768px) {
+ .fzs :is(.fzs-rank, .fzs-total) { padding:14px 14px 16px; border-radius:14px; }
+ .fzs-pos-rank { font-size:68px; }
+ .fzs-tonight { margin:0 -6px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .fzs-week-pt, .fzs-week-guide { transition:none; }
+ .fzs-pos-score .fzs-live-pts::before, .fzs-ce-live i { animation:none; }
+}

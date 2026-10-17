@@ -92,16 +92,15 @@
                     </section>
                     <section class="fzs-rank fzs-panel ask-panel" style="--i:2">
                         <div class="fzs-head"><h2>Ma position</h2>${mat('ask-link')}</div>
-                        <div class="fzs-rank-main">
-                            <div class="fzs-rank-now">${os('ask-number')}${mat('ask-sub')}</div>
-                            <div class="fzs-week">${mat('ask-week-cap')}${mat('ask-week')}</div>
-                        </div>
+                        <div class="fzs-pos-top">${os('ask-rank')}<span class="ask-pos-score">${os('ask-pts')}${mat('ask-sub')}</span></div>
+                        <div class="ask-strip"></div>
+                        <div class="fzs-week">${mat('ask-week-cap')}${mat('ask-week')}</div>
                         <div class="fzs-periods">${repete(3, () => `<div>${mat('ask-period-l')}${os('ask-period-v')}</div>`)}</div>
                     </section>
                     <section class="fzs-total fzs-panel ask-panel" style="--i:3">
-                        <div class="fzs-head"><h2>Total ce soir</h2></div>
-                        ${os('ask-number')}${mat('ask-sub is-long')}
-                        <div class="ask-tonight">${repete(3, i => `<span class="ask-tonight-row">${mat('ask-tonight-l')}${mat('ask-tonight-r', `${[34, 22, 28][i]}%`)}</span>`)}</div>
+                        <div class="fzs-head"><h2>Ce soir</h2>${mat('ask-sub')}</div>
+                        <div class="fzs-ce-main"><span class="fzs-ce-lead">${mat('ask-sub is-long')}${os('ask-count')}</span>${mat('ask-ring is-round')}</div>
+                        <div class="ask-tonight">${repete(2, () => `<span class="ask-tonight-row">${mat('ask-tonight-l')}${mat('ask-tonight-r', '24%')}</span>`)}</div>
                     </section>
                     ${panneauListe('Activité de la ligue', 'ask-half')}
                     ${panneauAlignements('ask-half')}

@@ -109,6 +109,39 @@ describe('« Ma position » : la semaine du rang et les points par période', ()
         assert.equal(fzsDans(depart, avant(-3)), 'en cours');
     });
 
+    test('le grand compte à rebours : heures et minutes, puis minutes et secondes la dernière heure', () => {
+        const { fzsCompte } = chargerFonctions('accueil-season.js', ['fzsCompte']);
+        const depart = '2026-10-06T23:00:00Z';
+        const avant = s => Date.parse(depart) - s * 1000;
+        assert.equal(fzsCompte(depart, avant(134 * 60)), '2 h 14');
+        assert.equal(fzsCompte(depart, avant(3600)), '1 h 00');
+        assert.equal(fzsCompte(depart, avant(3599)), '59:59');
+        assert.equal(fzsCompte(depart, avant(178)), '02:58');
+        assert.equal(fzsCompte(depart, avant(0)), 'En cours');
+    });
+
+    test('l’anneau se remplit pendant la dernière heure seulement', () => {
+        const { fzsAnneauPart } = chargerFonctions('accueil-season.js', ['fzsAnneauPart']);
+        const depart = '2026-10-06T23:00:00Z';
+        const avant = min => Date.parse(depart) - min * 60000;
+        assert.equal(fzsAnneauPart(depart, avant(180)), 0);
+        assert.equal(fzsAnneauPart(depart, avant(30)), 0.5);
+        assert.equal(fzsAnneauPart(depart, avant(-5)), 1);
+    });
+
+    test('la bande du pool : une barre par équipe, la mienne et celles qui me devancent marquées', () => {
+        const { fzsBandeRangHTML } = chargerFonctions('accueil-season.js', ['fzsOrdinal', 'fzsBandeRangHTML'], { escapeHTML: s => String(s) });
+        const equipes = n => Array.from({ length: n }, (_, i) => ({ teamName: `É${i + 1}`, score: 100 - i }));
+        const html = fzsBandeRangHTML(equipes(7), 1);
+        assert.equal(html.split('<li').length - 1, 7);
+        assert.match(html, /<li class="is-ahead is-end" title="1re · É1 · 100 pts">/);
+        assert.match(html, /<li class="is-me" title="2e · É2 · 99 pts">/);
+        assert.match(html, /aria-label="2e sur 7 équipes"/);
+        assert.doesNotMatch(html, /is-dense/);
+        assert.match(fzsBandeRangHTML(equipes(16), 4), /is-dense/, 'au-delà de 12, seuls les bouts et mon rang gardent leur numéro');
+        assert.equal(fzsBandeRangHTML(equipes(30), 4), '', 'au-delà de 24 équipes, pas de bande');
+    });
+
     test('entre deux lectures, seule une période qui finit aujourd’hui prend les points du soir', () => {
         const fzsPoints = {
             activeName: 'P', live: 2,
@@ -130,7 +163,8 @@ describe('« Total ce soir » avant, pendant et sans matchs', () => {
     const AUJ = '2026-10-06';
     const clubs = { 'Auston Matthews': 'TOR', 'Cole Caufield': 'MTL', 'Connor McDavid': 'EDM' };
     function charger(jours) {
-        return chargerFonctions('accueil-season.js', ['fzsDans', 'fzsJoueursDuJour', 'fzsProchainSoir', 'fzsMatchsHTML', 'fzsTotalHTML'], {
+        return chargerFonctions('accueil-season.js', ['fzsDans', 'fzsCompte', 'fzsAnneauPart', 'fzsAnneauHTML', 'fzsClubHTML',
+            'fzsJoueursDuJour', 'fzsProchainSoir', 'fzsMatchsHTML', 'fzsTotalHTML'], {
             escapeHTML: s => String(s),
             fzsHeading: t => `<h2>${t}</h2>`,
             gameTimeLabel: iso => iso.slice(11, 16),
@@ -154,10 +188,11 @@ describe('« Total ce soir » avant, pendant et sans matchs', () => {
         const { fzsTotalHTML } = charger([{ date: AUJ, ...match('TOR', 'MTL') }]);
         const html = fzsTotalHTML({ lines: [], avant, names, playing: 0, total: 0 });
         assert.match(html, /is-before/);
-        assert.match(html, /2 <small>joueurs<\/small>/);
-        assert.match(html, /dans 1 match/);
-        assert.match(html, new RegExp(`data-fzs-depart="${depart}">dans 3 h 00<`));
-        assert.match(html, /Matthews, Caufield/);
+        assert.match(html, /2 joueurs · 1 match/);
+        assert.match(html, new RegExp(`data-fzs-compte="${depart}">3 h 00<`));
+        assert.match(html, /data-fzs-anneau=/);
+        assert.match(html, /<small>Mes joueurs<\/small><b>Matthews, Caufield<\/b>/);
+        assert.match(html, /href="match\.html\?id=1"/, 'la tuile du match ouvre sa feuille de match');
         assert.doesNotMatch(html, /0 pts/);
     });
 
@@ -175,7 +210,7 @@ describe('« Total ce soir » avant, pendant et sans matchs', () => {
         const { fzsTotalHTML } = charger([{ date: AUJ, ...match('TOR', 'MTL') }]);
         const lignes = [{ playerName: 'Auston Matthews' }, { playerName: 'Connor McDavid' }];
         const enCours = fzsTotalHTML({ lines: lignes, avant: avant.slice(1), names, playing: 1, total: 3 });
-        assert.match(enCours, /3 pts/);
+        assert.match(enCours, /\+3 <small>pts<\/small>/);
         assert.match(enCours, /1 en jeu/);
         assert.match(enCours, /1 à venir/);
         assert.match(enCours, /1 terminé</);

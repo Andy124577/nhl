@@ -6,8 +6,8 @@ function fzsReset() {
     document.body.classList.remove('fz-season-page');
 }
 
-function fzsHeading(title, link, label = 'Voir tout') {
-    return `<header class="fzs-head"><h2>${title}</h2>${link ? `<a href="${escapeHTML(link)}">${label} <span aria-hidden="true">→</span></a>` : ''}</header>`;
+function fzsHeading(title, link, label = 'Voir tout', fleche = '→') {
+    return `<header class="fzs-head"><h2>${title}</h2>${link ? `<a href="${escapeHTML(link)}">${label} <span aria-hidden="true">${fleche}</span></a>` : ''}</header>`;
 }
 
 /* ---- Ma position ----
@@ -39,17 +39,43 @@ function fzsRangHTML(activeName, movement) {
     fzsRangContexte = { activeName, movement, live: soirMoi };
     const neuf = avant !== null && soirMoi > avant ? ' is-new' : '';
     const live = soirMoi ? `<b class="fzs-live-pts${neuf}">+${soirMoi.toLocaleString('fr-CA')} ce soir</b>` : '';
+    const ecart = Math.abs(delta || 0);
+    const journee = delta
+        ? `<span class="fzs-pos-day ${delta > 0 ? 'fzs-green' : 'fzs-red'}" title="Depuis le début de la journée">${delta > 0 ? '↑' : '↓'} ${ecart} place${ecart > 1 ? 's' : ''} aujourd’hui</span>`
+        : '';
     const semaine = fzsSemaineRang(movement?.history, rangActuel ?? (rank >= 0 ? rank + 1 : null), todayISO());
-    return `${fzsHeading('♜ &nbsp; Ma position', `classement.html?pool=${encodeURIComponent(activeName)}`, 'Voir le classement')}
-            <div class="fzs-rank-main">
-                <div class="fzs-rank-now">
-                    <strong class="fzs-number">${rank >= 0 ? `${ordinalHTML(rank + 1)} <small>/ ${ranking.length}</small>` : '—'}</strong>
-                    <p>${mine ? `${Number(mine.score).toLocaleString('fr-CA')} pts ${live}` : 'Classement à venir'}</p>
-                    ${delta ? `<p class="${delta > 0 ? 'fzs-green' : 'fzs-red'}">${delta > 0 ? '↑ +' : '↓ '}${delta} <span>depuis le début de la journée</span></p>` : ''}
+    // Le rang en grand à gauche, mes points et ceux du soir à droite ; dessous,
+    // le pool en une bande, la semaine du rang et les trois périodes.
+    return `${fzsHeading('Ma position', `classement.html?pool=${encodeURIComponent(activeName)}`, 'Classement', '›')}
+            <div class="fzs-pos-top">
+                <strong class="fzs-pos-rank">${rank >= 0 ? `${ordinalHTML(rank + 1)}<small>/ ${ranking.length}</small>` : '—'}</strong>
+                <div class="fzs-pos-score">
+                    ${mine ? `<span class="fzs-pos-pts"><b>${Number(mine.score).toLocaleString('fr-CA')}</b> pts</span>${live}${journee}`
+                        : '<span class="fzs-pos-pts">Classement à venir</span>'}
                 </div>
-                ${fzsCourbeRangHTML(semaine, ranking.length)}
             </div>
+            ${rank >= 0 ? fzsBandeRangHTML(ranking, rank) : ''}
+            ${fzsCourbeRangHTML(semaine, ranking.length)}
             ${fzsPeriodesHTML(fzsValeursPeriodes(activeName, soirMoi))}`;
+}
+
+/**
+ * Le pool d'un coup d'œil : une barre par équipe, la mienne en rouge, celles
+ * qui me devancent plus claires que celles qui me suivent. Au-delà de 12
+ * équipes, seuls le premier, le dernier et mon rang gardent leur numéro ;
+ * au-delà de 24, la bande serait un peigne illisible et s'efface.
+ */
+function fzsBandeRangHTML(ranking, rank) {
+    const n = ranking.length;
+    if (n < 2 || n > 24) return '';
+    const esc = escapeHTML;
+    const barres = ranking.map((t, i) => {
+        const cls = [i === rank ? 'is-me' : i < rank ? 'is-ahead' : '', i === 0 || i === n - 1 ? 'is-end' : '']
+            .filter(Boolean).join(' ');
+        const dit = `${fzsOrdinal(i + 1)} · ${t.teamName} · ${Number(t.score || 0).toLocaleString('fr-CA')} pts`;
+        return `<li${cls ? ` class="${cls}"` : ''} title="${esc(dit)}"><i></i><span>${i + 1}</span></li>`;
+    }).join('');
+    return `<ol class="fzs-pos-strip${n > 12 ? ' is-dense' : ''}" style="--n:${n}" aria-label="${esc(`${fzsOrdinal(rank + 1)} sur ${n} équipes`)}">${barres}</ol>`;
 }
 
 function fzsActualiserRang() {
@@ -87,17 +113,23 @@ function fzsSemaineRang(history, rangActuel, aujourdhui) {
 const fzsOrdinal = n => `${n}${n === 1 ? 're' : 'e'}`;
 
 /**
- * La semaine du rang : une ligne, le 1er rang en haut. Les points sont des
- * <span> posés en pourcentage sur la colonne de leur jour — nets à toute
- * largeur — ; seule la ligne est un SVG étiré, d'un trait qui ne s'étire pas.
- * Le survol d'une colonne dit son rang ; la liste masquée le dit aux
- * lecteurs d'écran.
+ * Le jour choisi dans la semaine du rang (0 à 6), d'un toucher ou d'un clic :
+ * il survit au redessin que provoque chaque point du soir. null : maintenant.
+ */
+let fzsJourChoisi = null;
+
+/**
+ * La semaine du rang : une ligne sur son aire, le 1er rang en haut, un filet
+ * par rang. Les points sont des <span> posés en pourcentage sur la colonne
+ * de leur jour — nets à toute largeur — ; seuls la ligne et l'aire sont un
+ * SVG étiré, d'un trait qui ne s'étire pas. Chaque colonne est un bouton :
+ * le survol, le toucher ou le clavier choisit un jour, et la légende dit son
+ * rang (fzsChoisirJour).
  */
 function fzsCourbeRangHTML(jours, taille) {
     const vus = jours.filter(j => j.rang != null);
-    const titre = '<figcaption class="fzs-week-cap"><span>7 derniers jours</span>';
     if (vus.length < 2) {
-        return `<figure class="fzs-week">${titre}</figcaption>
+        return `<figure class="fzs-week"><figcaption class="fzs-week-cap"><span>7 derniers jours</span></figcaption>
             <p class="fzs-week-empty">Votre courbe se dessine soir après soir.</p></figure>`;
     }
     const gain = vus[0].rang - vus[vus.length - 1].rang;
@@ -115,37 +147,96 @@ function fzsCourbeRangHTML(jours, taille) {
     }
     const y = r => (bas === haut ? 50 : 8 + (r - haut) / (bas - haut) * 84);
     const x = i => (i + 0.5) / jours.length * 100;
-    // La ligne s'interrompt sur un soir sans instantané.
-    let trace = '';
-    let enCours = false;
+    const f = n => n.toFixed(2);
+    // La ligne et son aire s'interrompent sur un soir sans instantané.
+    const troncons = [];
+    let troncon = [];
     jours.forEach((j, i) => {
-        if (j.rang == null) { enCours = false; return; }
-        trace += `${enCours ? 'L' : 'M'}${x(i).toFixed(2)} ${y(j.rang).toFixed(2)} `;
-        enCours = true;
+        if (j.rang == null) { if (troncon.length) troncons.push(troncon); troncon = []; return; }
+        troncon.push([x(i), y(j.rang)]);
     });
+    if (troncon.length) troncons.push(troncon);
+    const trace = troncons.map(t => t.map(([a, b], k) => `${k ? 'L' : 'M'}${f(a)} ${f(b)}`).join(' ')).join(' ');
+    const aire = troncons.filter(t => t.length > 1)
+        .map(t => `M${f(t[0][0])} 100 ${t.map(([a, b]) => `L${f(a)} ${f(b)}`).join(' ')} L${f(t[t.length - 1][0])} 100 Z`).join(' ');
+    // Un filet par rang tant qu'il y en a peu ; sinon le haut et le bas seulement.
+    const filets = bas === haut ? [haut] : bas - haut <= 10
+        ? Array.from({ length: bas - haut + 1 }, (_, k) => haut + k) : [haut, bas];
+
     const jourCourt = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { weekday: 'short', timeZone: 'UTC' });
     const jourLong = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' });
-    const dit = j => `${j.maintenant ? 'Maintenant' : jourLong(j.date)} · ${j.rang == null ? 'aucun relevé' : fzsOrdinal(j.rang)}`;
+    const rangDe = j => (j.rang == null ? 'aucun relevé' : fzsOrdinal(j.rang));
+    const dit = j => `${j.maintenant ? 'Maintenant' : jourLong(j.date)} · ${rangDe(j)}`;
+    const legende = j => `${j.maintenant ? 'Aujourd’hui' : jourCourt(j.date)} : ${rangDe(j)}`;
+    // Par défaut, le dernier jour relevé — maintenant, presque toujours.
+    const dernier = jours.reduce((k, j, i) => (j.rang != null ? i : k), jours.length - 1);
+    const choisi = fzsJourChoisi != null && fzsJourChoisi < jours.length ? fzsJourChoisi : dernier;
     const colonnes = jours.map((j, i) => `
-        <span class="fzs-week-col${i === 0 ? ' is-first' : ''}${j.maintenant ? ' is-now' : ''}" style="--i:${i}${j.rang == null ? '' : `;--y:${y(j.rang).toFixed(2)}`}">
+        <button type="button" class="fzs-week-col${i === choisi ? ' is-sel' : ''}${j.maintenant ? ' is-now' : ''}"
+                style="--i:${i}${j.rang == null ? '' : `;--y:${f(y(j.rang))}`}" data-i="${i}"
+                data-cap="${escapeHTML(legende(j))}" aria-label="${escapeHTML(dit(j))}" aria-pressed="${i === choisi}">
             ${j.rang == null ? '' : '<i class="fzs-week-pt"></i>'}
-            <span class="fzs-week-tip">${escapeHTML(dit(j))}</span>
             <span class="fzs-week-day">${j.maintenant ? 'Auj.' : escapeHTML(jourCourt(j.date))}</span>
-        </span>`).join('');
-    const repere = (r, cote) => `<span class="fzs-week-tick is-${cote}" style="--y:${y(r).toFixed(2)}">${fzsOrdinal(r)}</span>`;
-    return `<figure class="fzs-week">${titre}${tendance}</figcaption>
-        <div class="fzs-week-plot" aria-hidden="true">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
-                <line class="fzs-week-grid" x1="0" x2="100" y1="${y(haut).toFixed(2)}" y2="${y(haut).toFixed(2)}"></line>
-                ${bas !== haut ? `<line class="fzs-week-grid" x1="0" x2="100" y1="${y(bas).toFixed(2)}" y2="${y(bas).toFixed(2)}"></line>` : ''}
-                <path class="fzs-week-line" d="${trace.trim()}"></path>
+        </button>`).join('');
+    const repere = r => `<span class="fzs-week-tick" style="--y:${f(y(r))}">${fzsOrdinal(r)}</span>`;
+    return `<figure class="fzs-week" style="--sel:${choisi}">
+        <figcaption class="fzs-week-cap"><span>7 derniers jours · <b class="fzs-week-sel">${escapeHTML(legende(jours[choisi]))}</b></span>${tendance}</figcaption>
+        <div class="fzs-week-plot">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                <defs><linearGradient id="fzsWeekFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" class="fzs-week-fill-top"></stop><stop offset="1" class="fzs-week-fill-bottom"></stop>
+                </linearGradient></defs>
+                ${filets.map(r => `<line class="fzs-week-grid${r === haut || r === bas ? ' is-edge' : ''}" x1="0" x2="100" y1="${f(y(r))}" y2="${f(y(r))}"></line>`).join('')}
+                ${aire ? `<path class="fzs-week-area" d="${aire}"></path>` : ''}
+                <path class="fzs-week-line" d="${trace}"></path>
             </svg>
-            ${repere(haut, 'top')}${bas !== haut ? repere(bas, 'bottom') : ''}
-            ${colonnes}
+            <span class="fzs-week-guide" aria-hidden="true"></span>
+            ${repere(haut)}${bas !== haut ? repere(bas) : ''}
+            <div class="fzs-week-cols" role="group" aria-label="Mon rang, soir après soir">${colonnes}</div>
         </div>
-        <ul class="fzs-sr">${jours.map(j => `<li>${escapeHTML(dit(j))}</li>`).join('')}</ul>
     </figure>`;
 }
+
+/**
+ * Choisit un jour de la semaine du rang sans redessiner : la colonne
+ * s'allume, le guide s'y place, la légende dit son rang. `garder` : un
+ * toucher, un clic ou le clavier, qui reste choisi ; le survol de la souris
+ * n'est qu'un aperçu, rendu au jour gardé quand elle sort du tracé.
+ */
+function fzsChoisirJour(col, garder) {
+    const figure = col.closest('.fzs-week');
+    if (!figure) return;
+    figure.style.setProperty('--sel', col.dataset.i);
+    figure.querySelectorAll('.fzs-week-col').forEach(c => {
+        c.classList.toggle('is-sel', c === col);
+        c.setAttribute('aria-pressed', String(c === col));
+    });
+    const legende = figure.querySelector('.fzs-week-sel');
+    if (legende) legende.textContent = col.dataset.cap;
+    if (garder) fzsJourChoisi = Number(col.dataset.i);
+}
+
+document.addEventListener('pointerover', e => {
+    if (e.pointerType !== 'mouse') return;
+    const col = e.target.closest?.('.fzs-week-col');
+    if (col) fzsChoisirJour(col, false);
+});
+document.addEventListener('pointerout', e => {
+    if (e.pointerType !== 'mouse') return;
+    const groupe = e.target.closest?.('.fzs-week-cols');
+    if (!groupe || groupe.contains(e.relatedTarget)) return;
+    const cols = groupe.querySelectorAll('.fzs-week-col');
+    const garde = fzsJourChoisi != null ? cols[fzsJourChoisi] : groupe.querySelector('.fzs-week-col.is-now');
+    if (garde) fzsChoisirJour(garde, false);
+});
+document.addEventListener('click', e => {
+    const col = e.target.closest?.('.fzs-week-col');
+    if (col) fzsChoisirJour(col, true);
+});
+document.addEventListener('focusin', e => {
+    const col = e.target.closest?.('.fzs-week-col');
+    if (col && col.matches(':focus-visible')) fzsChoisirJour(col, true);
+});
 
 /* ---- Mes points sur 24 h, 7 et 30 jours (/pool-my-points) ----
    Lus après le premier rendu : ils ne retardent pas l'accueil. Entre deux
@@ -161,11 +252,12 @@ const FZS_POINTS_RELIRE_MS = 5 * 60 * 1000;
 let fzsPoints = null; // { activeName, data, lu, jour, live, enVol }
 let fzsBasculeMinuteur = null;
 
+/** Trois tuiles ; une période à zéro s'éteint, pour que l'œil aille aux autres. */
 function fzsPeriodesHTML(valeurs) {
     const pts = n => `${n > 0 ? '+' : ''}${Number(n).toLocaleString('fr-CA', { maximumFractionDigits: 1 })}`;
     const cellules = FZS_PERIODES.map(([jours, libelle, titre]) => {
         const v = valeurs ? valeurs[jours] : null;
-        return `<div title="${escapeHTML(titre)}"><dt>${libelle}</dt><dd>${v == null ? '<b>—</b>' : `<b>${pts(v)}</b> pts`}</dd></div>`;
+        return `<div${v === 0 ? ' class="is-zero"' : ''} title="${escapeHTML(titre)}"><dt>${libelle}</dt><dd>${v == null ? '<b>—</b>' : `<b>${pts(v)}</b> pts`}</dd></div>`;
     });
     return `<dl class="fzs-periods${valeurs ? '' : ' is-loading'}">${cellules.join('')}</dl>`;
 }
@@ -344,11 +436,11 @@ function fzsCarteHTML(c, href) {
     </a>`;
 }
 
-/* ---- Total ce soir ----
-   Avant les matchs, un total de zéro ne dit rien : le panneau dit plutôt
-   combien de mes joueurs jouent, dans combien de temps commence le premier
-   match et qui joue dans quel match. Un soir sans aucun de mes joueurs, il
-   dit quand ils rejouent. */
+/* ---- Ce soir (le total du soir) ----
+   Avant les matchs, un total de zéro ne dit rien : le panneau compte à
+   rebours jusqu'au premier match, dit combien de mes joueurs jouent et qui
+   joue dans quel match. Un soir sans aucun de mes joueurs, il dit quand ils
+   rejouent. */
 
 /** « dans 2 h 14 », « dans 12 min », puis « en cours ». */
 function fzsDans(iso, maintenant = Date.now()) {
@@ -356,6 +448,38 @@ function fzsDans(iso, maintenant = Date.now()) {
     if (!Number.isFinite(min) || min <= 0) return 'en cours';
     if (min < 60) return `dans ${min} min`;
     return `dans ${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
+}
+
+/** Le grand compte à rebours : « 2 h 14 », puis « 14:05 » à la seconde pendant la dernière heure. */
+function fzsCompte(iso, maintenant = Date.now()) {
+    const s = Math.ceil((Date.parse(iso) - maintenant) / 1000);
+    if (!Number.isFinite(s) || s <= 0) return 'En cours';
+    if (s < 3600) return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    const min = Math.ceil(s / 60);
+    return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`;
+}
+
+/**
+ * L'anneau autour de l'heure du match se remplit pendant la dernière heure,
+ * comme une minuterie — au moment où le compte passe aux secondes. Plus tôt,
+ * il reste vide : seule l'heure s'y lit.
+ */
+function fzsAnneauPart(iso, maintenant = Date.now()) {
+    const reste = Date.parse(iso) - maintenant;
+    if (!Number.isFinite(reste)) return 0;
+    return Math.min(1, Math.max(0, 1 - reste / (60 * 60 * 1000)));
+}
+
+function fzsAnneauHTML(iso) {
+    const heure = gameTimeLabel(iso).replace(/ h 00$/, ' h');
+    return `<span class="fzs-ce-ring" data-fzs-anneau="${escapeHTML(iso)}" style="--p:${fzsAnneauPart(iso).toFixed(3)}" aria-hidden="true"><span>${escapeHTML(heure)}</span></span>`;
+}
+
+/** Un club en pastille ronde : son logo sur un voile de sa couleur, son sigle si le logo manque. */
+function fzsClubHTML(abbrev) {
+    const esc = escapeHTML;
+    const couleur = typeof getTeamColors === 'function' ? getTeamColors(abbrev)[0] : '#3A414D';
+    return `<span class="fzs-club" style="--club:${esc(couleur)}" title="${esc(abbrev)}"><img src="teams/${esc(abbrev)}.png" alt="${esc(abbrev)}" loading="lazy" onerror="this.remove()"><span aria-hidden="true">${esc(abbrev)}</span></span>`;
 }
 
 /** Combien de mes joueurs jouent ce jour-là, d'après le calendrier de la semaine (calData). */
@@ -375,23 +499,31 @@ function fzsProchainSoir(names) {
     return { libelle, n: fzsJoueursDuJour(jour, names) };
 }
 
-/** Les matchs à venir de mes joueurs, du plus proche au plus lointain. */
+/**
+ * Les matchs à venir de mes joueurs, du plus proche au plus lointain : une
+ * tuile par match, qui ouvre sa feuille de match.
+ */
 function fzsMatchsHTML(avant, max) {
     const esc = escapeHTML;
     const parMatch = new Map();
     avant.forEach(a => {
-        if (!parMatch.has(a.gameId)) parMatch.set(a.gameId, { depart: a.depart, away: a.away, home: a.home, joueurs: [] });
+        if (!parMatch.has(a.gameId)) parMatch.set(a.gameId, { id: a.gameId, depart: a.depart, away: a.away, home: a.home, joueurs: [] });
         parMatch.get(a.gameId).joueurs.push(a.name.split(' ').slice(1).join(' ') || a.name);
     });
     const matchs = [...parMatch.values()];
     const qui = noms => noms.length > 2 ? `${noms.slice(0, 2).join(', ')} +${noms.length - 2}` : noms.join(', ');
     const reste = matchs.length - max;
-    return `<ul class="fzs-tonight">${matchs.slice(0, max).map(m => `
-            <li>
+    const tuiles = matchs.slice(0, max).map(m => {
+        const balise = m.id ? 'a' : 'div';
+        const lien = m.id ? ` href="match.html?id=${encodeURIComponent(m.id)}"` : '';
+        return `
+            <li><${balise} class="fzs-tonight-game"${lien}>
                 <time datetime="${esc(m.depart)}">${esc(gameTimeLabel(m.depart))}</time>
-                <span class="fzs-tonight-match">${teamLogoImg(esc(m.away))}${esc(m.away)}<i>@</i>${esc(m.home)}${teamLogoImg(esc(m.home))}</span>
-                <span class="fzs-tonight-who" title="${esc(m.joueurs.join(', '))}">${esc(qui(m.joueurs))}</span>
-            </li>`).join('')}</ul>
+                <span class="fzs-tonight-match">${fzsClubHTML(m.away)}<i>@</i>${fzsClubHTML(m.home)}</span>
+                <span class="fzs-tonight-who" title="${esc(m.joueurs.join(', '))}"><small>${m.joueurs.length > 1 ? 'Mes joueurs' : 'Mon joueur'}</small><b>${esc(qui(m.joueurs))}</b></span>
+            </${balise}></li>`;
+    }).join('');
+    return `<ul class="fzs-tonight">${tuiles}</ul>
         ${reste > 0 ? `<p class="fzs-tonight-more">+ ${reste} autre${reste > 1 ? 's' : ''} match${reste > 1 ? 's' : ''}</p>` : ''}`;
 }
 
@@ -399,16 +531,22 @@ function fzsTotalHTML(soiree) {
     const { lines, avant, names, playing, total } = soiree;
     const esc = escapeHTML;
     const pts = n => Number(n || 0).toLocaleString('fr-CA', { maximumFractionDigits: 2 });
-    const ouvrir = etat => `<section class="fzs-total fzs-panel ${etat}">${fzsHeading('▥ &nbsp; Total ce soir')}`;
     const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
+    const ouvrir = (etat, meta) => `<section class="fzs-total fzs-panel ${etat}">
+        <header class="fzs-head"><h2>Ce soir</h2>${meta ? `<span class="fzs-head-meta">${meta}</span>` : ''}</header>`;
 
-    // Avant le premier match : qui joue, et quand.
+    // Avant le premier match : le compte à rebours, et qui joue dans quel match.
     if (!lines.length && avant.length) {
         const matchs = new Set(avant.map(a => a.gameId)).size;
-        return `${ouvrir('is-before')}
-            <strong class="fzs-number">${avant.length} <small>joueur${avant.length > 1 ? 's' : ''}</small></strong>
-            <p>en action ce soir, dans ${pluriel(matchs, 'match')}</p>
-            <p class="fzs-total-start">Premier match <b class="fzs-countdown" data-fzs-depart="${esc(avant[0].depart)}">${fzsDans(avant[0].depart)}</b></p>
+        const depart = avant[0].depart;
+        return `${ouvrir('is-before', `${pluriel(avant.length, 'joueur')} · ${pluriel(matchs, 'match')}`)}
+            <div class="fzs-ce-main">
+                <div class="fzs-ce-lead">
+                    <span class="fzs-ce-label" data-parti="Premier match">Premier match dans</span>
+                    <strong class="fzs-ce-count" data-fzs-compte="${esc(depart)}">${fzsCompte(depart)}</strong>
+                </div>
+                ${fzsAnneauHTML(depart)}
+            </div>
             ${fzsMatchsHTML(avant, 3)}
         </section>`;
     }
@@ -418,8 +556,12 @@ function fzsTotalHTML(soiree) {
     if (!lines.length && fzsJoueursDuJour(aujourdhui, names) === 0) {
         const prochain = fzsProchainSoir(names);
         return `${ouvrir('is-off')}
-            <strong class="fzs-number">Relâche</strong>
-            <p>Aucun de vos joueurs ne joue ce soir.</p>
+            <div class="fzs-ce-main">
+                <div class="fzs-ce-lead">
+                    <span class="fzs-ce-label">Aucun de vos joueurs ne joue ce soir</span>
+                    <strong class="fzs-ce-count">Relâche</strong>
+                </div>
+            </div>
             ${prochain ? `<p class="fzs-total-start">Prochain match <b>${esc(prochain.libelle)}</b> · ${pluriel(prochain.n, 'joueur')}</p>` : ''}
         </section>`;
     }
@@ -432,33 +574,54 @@ function fzsTotalHTML(soiree) {
         avant.length ? `<span>${avant.length} à venir</span>` : '',
         finis && !termine ? `<span>${pluriel(finis, 'terminé')}</span>` : ''
     ].filter(Boolean).join('');
-    return `${ouvrir(termine ? 'is-done' : 'is-live')}
-        <strong class="fzs-number">${pts(total)} pts</strong>
-        <p>${termine ? 'Soirée terminée · ' : ''}${fzdPoolH2H() ? 'Points fantasy de votre équipe' : 'Points de vos joueurs (buts + aides, gardiens)'}</p>
+    const meta = termine ? 'Soirée terminée' : playing ? '<span class="fzs-ce-live"><i></i>En direct</span>' : '';
+    const libelle = fzdPoolH2H() ? 'Points fantasy de votre équipe' : 'Points de vos joueurs';
+    const detail = fzdPoolH2H() ? 'Barème fantasy du tête-à-tête' : 'Buts + aides, et les points des gardiens';
+    return `${ouvrir(termine ? 'is-done' : 'is-live', meta)}
+        <div class="fzs-ce-main">
+            <div class="fzs-ce-lead" title="${esc(detail)}">
+                <span class="fzs-ce-label">${libelle}</span>
+                <strong class="fzs-ce-count${total > 0 ? ' is-up' : ''}">${total > 0 ? '+' : ''}${pts(total)} <small>pts</small></strong>
+            </div>
+        </div>
         ${etats ? `<p class="fzs-total-status">${etats}</p>` : ''}
         ${avant.length ? `<p class="fzs-total-start">Prochain départ <b class="fzs-countdown" data-fzs-depart="${esc(avant[0].depart)}">${fzsDans(avant[0].depart)}</b></p>${fzsMatchsHTML(avant, 2)}` : ''}
     </section>`;
 }
 
-/* Le compte à rebours, à la minute près et sans réseau. À la mise au jeu,
-   la soirée se relit et son suivi démarre (fzsReglerSuiviSoiree). */
-const FZS_COMPTE_MS = 20 * 1000;
+/* Le compte à rebours, à la seconde et sans réseau : le grand compte passe
+   aux secondes dans la dernière heure, et l'anneau s'y remplit. À la mise
+   au jeu, la soirée se relit et son suivi démarre (fzsReglerSuiviSoiree). */
+const FZS_COMPTE_MS = 1000;
+const FZS_REPERES_COMPTE = '#fzSeasonHome :is([data-fzs-depart], [data-fzs-compte], [data-fzs-anneau])';
 let fzsCompteMinuteur = null;
 
 function fzsReglerCompteARebours() {
-    const actif = !!document.querySelector('#fzSeasonHome [data-fzs-depart]');
+    const actif = !!document.querySelector(FZS_REPERES_COMPTE);
     if (actif && !fzsCompteMinuteur) fzsCompteMinuteur = setInterval(fzsCompteARebours, FZS_COMPTE_MS);
     else if (!actif && fzsCompteMinuteur) { clearInterval(fzsCompteMinuteur); fzsCompteMinuteur = null; }
 }
 
 function fzsCompteARebours() {
-    const reperes = document.querySelectorAll('#fzSeasonHome [data-fzs-depart]');
+    const reperes = document.querySelectorAll(FZS_REPERES_COMPTE);
     if (!reperes.length) { fzsReglerCompteARebours(); return; }
     let commence = false;
+    const maintenant = Date.now();
     reperes.forEach(el => {
-        const depart = el.getAttribute('data-fzs-depart');
-        el.textContent = fzsDans(depart);
-        if (Date.parse(depart) <= Date.now()) commence = true;
+        const depart = el.getAttribute('data-fzs-depart') || el.getAttribute('data-fzs-compte') || el.getAttribute('data-fzs-anneau');
+        const parti = Date.parse(depart) <= maintenant;
+        if (parti) commence = true;
+        if (el.hasAttribute('data-fzs-depart')) {
+            el.textContent = fzsDans(depart, maintenant);
+        } else if (el.hasAttribute('data-fzs-compte')) {
+            el.textContent = fzsCompte(depart, maintenant);
+            const bloc = el.closest('.fzs-ce-main');
+            bloc?.classList.toggle('is-started', parti);
+            const libelle = bloc?.querySelector('.fzs-ce-label[data-parti]');
+            if (libelle && parti) libelle.textContent = libelle.dataset.parti;
+        } else {
+            el.style.setProperty('--p', fzsAnneauPart(depart, maintenant).toFixed(3));
+        }
     });
     if (commence && !fzsSoireeMinuteur) {
         fzsReglerSuiviSoiree(calTonight);
