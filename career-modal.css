@@ -186,6 +186,8 @@
   #careerStatsModal .cmh-mini-lbl { font-size:9px; letter-spacing:.1em; }
   #careerStatsModal .cm-sk-table { min-width:660px; }
   #careerStatsModal #careerStatsTable table { min-width:660px; font-size:14px; }
+  #careerStatsModal #careerStatsTable { margin-inline:-12px; border-inline:0; border-radius:0; }
+  #careerStatsModal #careerStatsTable :is(.season-col, .career-totals-label) { padding-left:12px; }
   #careerStatsModal #careerStatsTable td, #careerStatsModal #careerStatsTable th { padding-inline:12px; }
 }
 @media (prefers-reduced-motion:reduce) {
