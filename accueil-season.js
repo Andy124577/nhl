@@ -756,21 +756,23 @@ function renderSeasonHome({ tonight, movement, activeName }) {
     const empty = text => `<p class="fzs-empty">${text}</p>`;
     const estH2H = fzdPoolH2H();
     const soiree = fzsSoireeHTML(tonight, activeName);
-    // De haut en bas : les histoires du haut de page (accueil.js), mes joueurs
-    // ce soir, ma position et le total du soir côte à côte, mon duel en
-    // tête-à-tête, les meilleurs joueurs de la LNH (statsTopPlayers.js), À
-    // surveiller et les alignements des 32 clubs (fzhLinesHTML,
-    // accueil-draft.js). Le calendrier reste rendu
-    // hors de l'écran : son horaire du jour nourrit les joueurs à venir et
-    // ses buts du jour, les cartes de but des histoires.
+    // De haut en bas : ma position et le total du soir côte à côte, le
+    // carrousel des matchs du jour (#storiesSection, accueil.js), mes joueurs
+    // ce soir, mon duel en tête-à-tête, les meilleurs joueurs de la LNH
+    // (statsTopPlayers.js), À surveiller, les alignements des 32 clubs
+    // (fzhLinesHTML, accueil-draft.js) et, tout en bas, les actualités. Le
+    // calendrier reste rendu hors de l'écran : son horaire du jour nourrit
+    // les joueurs à venir et ses buts du jour, les cartes de but des histoires.
     root.innerHTML = `
-        ${soiree.joueurs}
         <section class="fzs-rank fzs-panel">${fzsRangHTML(activeName, movement)}</section>
         ${soiree.total}
+        <div class="fzs-slot" data-fz-bloc="histoires"></div>
+        ${soiree.joueurs}
         ${estH2H ? `<section class="fzs-duel fzs-panel" id="fzsDuel" aria-live="polite">${heading('⚔ &nbsp; Mon duel', `classement.html?pool=${encodeURIComponent(activeName)}&h2h=duel`, 'Voir le duel')}<div class="fzs-duel-body">${empty('Chargement du duel…')}</div></section>` : ''}
         <div class="fzs-slot" data-fz-bloc="meilleurs"></div>
         <div class="fzs-slot" data-fz-bloc="surveiller"></div>
-        ${typeof fzhLinesHTML === 'function' ? fzhLinesHTML() : ''}`;
+        ${typeof fzhLinesHTML === 'function' ? fzhLinesHTML() : ''}
+        <div class="fzs-slot" data-fz-bloc="actualites"></div>`;
     fzdPlaceCalendar();
     renderCalendar();
     // Le bloc « surveiller » devient l'activité de la ligue une fois le

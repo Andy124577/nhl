@@ -1,7 +1,7 @@
 ﻿/* Draft home: Apple dark-ladder panels, condensed type, red actions. The hero
    on top has its own sheet (accueil-draft-hero.css). */
 body.fz-draft-page { background:var(--bg); }
-.fz-draft-page #storiesSection { display:none!important; }
+.fz-draft-page :is(#storiesSection, #fzHomeNews) { display:none!important; }
 #fzDashSection.is-drafting { padding:16px 22px 24px; background:var(--bg); }
 .is-drafting .fz-dash { max-width:1500px; --fzd-bg:#1C1C1E; --fzd-bg-alt:#2C2C2E; --fzd-surface:#1C1C1E; --fzd-ink:#F5F5F7; --fzd-text:#F5F5F7; --fzd-text-muted:#A1A1A6; --fzd-border:#38383A; --fzd-border-soft:#38383A; --fzd-accent:var(--primary-text); --fzd-solid:var(--primary); --fzd-on-solid:var(--on-primary); }
 .is-drafting .fz-dash > :not(#fzDraftHome) { display:none!important; }

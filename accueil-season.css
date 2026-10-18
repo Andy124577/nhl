@@ -150,13 +150,17 @@ html[data-theme="light"] .fzs-pc.is-live .fzs-pc-foot { background:#FDECEC; colo
 @media(max-width:768px) { .fzs-pc { flex-basis:160px; width:160px; } }
 
 /* ---- Disposition de saison (de haut en bas) ----
-   Les histoires du haut de page (accueil.js), puis : mes joueurs ce soir ;
-   ma position et le total du soir côte à côte ; mon duel (tête-à-tête) ;
-   À surveiller ; les alignements des 32 clubs (.fzh-al, accueil-draft.css). */
-.fzs .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }
-.fzs .fzs-rank { grid-column:span 6; order:2; }
-.fzs .fzs-total { grid-column:span 6; order:3; }
+   Ma position et le total du soir côte à côte ; le carrousel des matchs du
+   jour (#storiesSection, accueil.js) ; mes joueurs ce soir ; mon duel
+   (tête-à-tête) ; les meilleurs joueurs ; À surveiller ; les alignements des
+   32 clubs (.fzh-al, accueil-draft.css) ; les actualités, tout en bas. */
+.fzs .fzs-rank { grid-column:span 6; order:1; }
+.fzs .fzs-total { grid-column:span 6; order:2; }
+#fzSeasonHome #storiesSection { grid-column:1/-1; order:3; min-width:0; padding:0; }
+#fzSeasonHome #storiesSection .section-container { max-width:none; }
+.fzs .fzs-players { grid-column:1/-1; grid-row:auto; order:4; }
 .fzs .fzs-duel { grid-column:1/-1; order:4; }
+#fzSeasonHome #fzHomeNews { grid-column:1/-1; order:7; margin:0; }
 /* À surveiller et les alignements côte à côte, comme à l'accueil de
    repêchage : en pleine largeur, les 32 tuiles deviendraient des pavés. */
 #fzSeasonHome #fzdOffWatch { grid-column:span 6; order:5; }

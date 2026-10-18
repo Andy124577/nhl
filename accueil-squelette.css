@@ -50,16 +50,17 @@ html.fz-home-pending .fz-home-sk { display: block; }
 .ask-al-caption { width: 62%; height: 11px; margin-top: 20px; }
 
 /* ==================== SAISON ====================
-   Les histoires (#storiesSection) puis la grille .fzs. */
+   La grille .fzs, le carrousel des matchs sous ma position et ce soir. */
+.ask-season .ask-stories { grid-column: 1 / -1; order: 3; min-width: 0; padding: 0; }
+.ask-season .ask-stories .section-container { max-width: none; }
 .ask-stories .stories-chip { cursor: default; }
 .ask-chip-l { width: var(--w); height: 10px; }
-.ask-stories .stories-chip-news { padding-left: 4px; }
 .ask-story { display: block; }
 .ask-story-cap { position: absolute; left: 16px; right: 16px; bottom: 26px; display: flex; flex-direction: column; gap: 10px; }
 .ask-story-badge { width: 92px; height: 24px; border-radius: 999px; }
 .ask-story-src { width: 120px; height: 10px; }
 .ask-story-title { width: min(560px, 88%); height: 20px; border-radius: 5px; }
-.ask-track { max-width: 1200px; height: 3px; margin: 10px auto 0; border-radius: 100px; background: var(--border-light); }
+.ask-track { max-width: none; height: 3px; margin: 10px auto 0; border-radius: 100px; background: var(--border-light); }
 
 .ask-season { padding: 18px 20px 48px; }
 .ask-season .fzs { max-width: 1500px; margin: 0 auto; }
