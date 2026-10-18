@@ -85,14 +85,14 @@
     <link rel="stylesheet" href="index.css?v=20260926b">
     <link rel="stylesheet" href="accueil.css?v=20261015a">
     <link rel="stylesheet" href="career-modal.css?v=20261003a">
-    <link rel="stylesheet" href="accueil-dash.css?v=20261003a">
-    <link rel="stylesheet" href="accueil-mobile.css?v=20260930a">
+    <link rel="stylesheet" href="accueil-dash.css?v=20261018a">
+    <link rel="stylesheet" href="accueil-mobile.css?v=20261018a">
     <link rel="stylesheet" href="demos.css?v=20260926b">
     <!-- Landing des visiteurs (html.fz-anon) : remplace l'ancien héros
          « aréna » (hero.css). Voir LANDING.md. -->
     <link rel="stylesheet" href="landing.css?v=20260926b">
-    <link rel="stylesheet" href="accueil-season.css?v=20261016a">
-    <link rel="stylesheet" href="accueil-draft.css?v=20260930a">
+    <link rel="stylesheet" href="accueil-season.css?v=20261018a">
+    <link rel="stylesheet" href="accueil-draft.css?v=20261018a">
     <link rel="stylesheet" href="accueil-draft-hero.css?v=20260927f">
     <link rel="stylesheet" href="accueil-watch.css?v=20260926b">
     <!-- « Meilleurs joueurs » : le composant de la page Stats, puis son
@@ -109,7 +109,7 @@
     <link rel="stylesheet" href="accueil-light.css?v=20261006a">
     <!-- Squelettes : les os partagés, puis celui de l'accueil d'un membre. -->
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
-    <link rel="stylesheet" href="accueil-squelette.css?v=20261016a">
+    <link rel="stylesheet" href="accueil-squelette.css?v=20261018a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -122,11 +122,12 @@
 
     <!-- ============================================================ -->
     <!-- STORIES — today's real NHL games (start time before the puck  -->
-    <!-- drops, live score/events after; each opens match.html) and    -->
-    <!-- real news (signings, trades), auto-advancing. Pinned to the   -->
-    <!-- top of the page (member-only, active pool required — see      -->
-    <!-- maybeLoadStories in accueil.js) so it stays visible above the -->
-    <!-- dashboard below.                                              -->
+    <!-- drops, live score/events after; each opens match.html),       -->
+    <!-- auto-advancing. Member-only, active pool required (see        -->
+    <!-- maybeLoadStories in accueil.js). The news it used to carry    -->
+    <!-- now sits at the bottom of the dashboard (#fzHomeNews).        -->
+    <!-- BLOC PARTAGÉ : the season home moves it right under « Ma      -->
+    <!-- position » and « Ce soir » (data-fz-bloc="histoires").        -->
     <!-- Hidden whenever there is nothing real to show — never a       -->
     <!-- placeholder.                                                   -->
     <!-- ============================================================ -->
@@ -633,13 +634,25 @@
                 </div>
                 <div class="actual-content players-grid" id="topPlayersList" style="display:none;"><!-- Filled by statsTopPlayers.js --></div>
             </section>
+
+            <!-- Actualités LNH — membre avec un pool, tout en bas de l'accueil :
+                 le carrousel du haut (#storiesSection) ne porte plus que les
+                 matchs. Même lecture que lui (GET /nhl-news, une seule fois
+                 par loadStories, accueil.js), rendue par renderHomeNews().
+                 Masqué tant qu'il n'y a aucun article.
+                 BLOC PARTAGÉ : l'accueil de saison l'appelle dans son
+                 emplacement data-fz-bloc="actualites" (accueil-dash.js). -->
+            <section class="fz-home-news" id="fzHomeNews" hidden aria-labelledby="fzHomeNewsTitle">
+                <h2 class="fzd-section-title" id="fzHomeNewsTitle">Actualités</h2>
+                <ul class="fz-home-news-list" id="fzHomeNewsList"><!-- Filled by accueil.js --></ul>
+            </section>
         </div>
         <!-- Squelette de l'accueil, le temps que la disposition soit choisie
              (html.fz-home-pending) : la dernière vue par ce navigateur —
              saison, repêchage ou sans pool. Dessiné avant le premier rendu,
              retiré par fzdRevelerAccueil (accueil-dash.js). -->
         <div class="fz-home-sk" id="fzHomeSkeleton" aria-busy="true"></div>
-        <script src="accueilSquelette.js?v=20261016a"></script>
+        <script src="accueilSquelette.js?v=20261018a"></script>
     </section>
 
     <!-- ============================================================ -->
@@ -779,7 +792,7 @@
     <script defer src="lib/pointsEnDirect.js?v=20261002b"></script>
     <script defer src="pointsDirect.js?v=20261002a"></script>
     <script defer src="lib/duelAccueil.js?v=20260922"></script>
-    <script defer src="accueil.js?v=20261015a"></script>
+    <script defer src="accueil.js?v=20261018a"></script>
     <!-- « A faire maintenant » : une seule reponse serveur, la meme bande
          au bureau et au telephone. Doit preceder accueil-dash.js, qui
          l'appelle au chargement. -->
@@ -794,10 +807,10 @@
     <!-- Meilleurs joueurs : lit BASE_URL et escapeHTML (accueil.js) et ouvre
          la fiche par fzhOpenPlayerCareer (accueil-watch.js, juste avant). -->
     <script defer src="statsTopPlayers.js?v=20261015a"></script>
-    <script defer src="accueil-dash.js?v=20261015a"></script>
+    <script defer src="accueil-dash.js?v=20261018a"></script>
     <script defer src="instantDraft.js?v=20261003a"></script>
     <script defer src="accueil-mobile.js?v=20261015a"></script>
-    <script defer src="accueil-season.js?v=20261016a"></script>
+    <script defer src="accueil-season.js?v=20261018a"></script>
     <script defer src="accueil-draft-hero.js?v=20260928b"></script>
     <script defer src="accueil-draft.js?v=20261015a"></script>
     <script defer src="demos.js"></script>

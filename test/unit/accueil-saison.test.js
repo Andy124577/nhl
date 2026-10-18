@@ -37,15 +37,18 @@ describe('accueil de saison', () => {
         assert.doesNotMatch(SAISON, /fzsLoadNews|fzmNewsWrap/);
     });
 
-    test('de haut en bas : joueurs du soir, position et total, meilleurs joueurs, À surveiller, alignements des 32 clubs', () => {
+    test('de haut en bas : position et total, matchs du jour, joueurs du soir, meilleurs joueurs, À surveiller, alignements des 32 clubs, actualités', () => {
         const rendu = corpsRendu();
-        const ordre = ['soiree.joueurs', 'fzsRangHTML', 'soiree.total', 'data-fz-bloc="meilleurs"', 'data-fz-bloc="surveiller"', 'fzhLinesHTML']
+        const ordre = ['fzsRangHTML', 'soiree.total', 'data-fz-bloc="histoires"', 'soiree.joueurs', 'data-fz-bloc="meilleurs"', 'data-fz-bloc="surveiller"', 'fzhLinesHTML', 'data-fz-bloc="actualites"']
             .map(cle => rendu.indexOf(cle));
         ordre.forEach((pos, i) => assert.ok(pos >= 0, `bloc ${i} absent`));
         assert.deepEqual([...ordre].sort((x, y) => x - y), ordre, 'les blocs doivent suivre cet ordre');
         // Ce qui a quitté l'accueil de saison.
         assert.doesNotMatch(rendu, /fzs-hero|soiree\.repartition|data-fz-bloc="(calendrier|mouvements)"/);
         assert.match(lire('accueil.js'), /fetchNhlNews/, 'le bandeau d’histoires lit toujours les actualités');
+        // Le carrousel ne porte plus que les matchs ; les actualités ont leur liste.
+        assert.doesNotMatch(lire('accueil.js'), /type: 'news', article/);
+        assert.match(lire('accueil.js'), /renderHomeNews\(news\)/);
     });
 
     test('le sélecteur d’histoires précède la carte', () => {

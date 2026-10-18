@@ -36,7 +36,9 @@ const BLOCS = {
     horssaison: 'fzdOffCount',
     mouvements: 'fzdOffMoves',
     surveiller: 'fzdOffWatch',
-    meilleurs: 'fzTopPlayers'
+    meilleurs: 'fzTopPlayers',
+    histoires: 'storiesSection',
+    actualites: 'fzHomeNews'
 };
 
 describe('accueil — blocs partagés', () => {

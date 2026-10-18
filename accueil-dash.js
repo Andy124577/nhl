@@ -1163,7 +1163,9 @@ const FZD_BLOCS = [
     { cle: 'horssaison', id: 'fzdOffCount' },
     { cle: 'mouvements', id: 'fzdOffMoves' },
     { cle: 'surveiller', id: 'fzdOffWatch' },
-    { cle: 'meilleurs', id: 'fzTopPlayers' }
+    { cle: 'meilleurs', id: 'fzTopPlayers' },
+    { cle: 'histoires', id: 'storiesSection' },
+    { cle: 'actualites', id: 'fzHomeNews' }
 ];
 let fzdBlocsMaison = null;
 

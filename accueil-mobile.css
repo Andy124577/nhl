@@ -179,6 +179,8 @@ html[data-theme="dark"] .fz-mobile-home {
 /* Accueil téléphone : actualités et préparation, ou repêchage en vedette. */
 @media (max-width: 768px) {
     body:has(#fzMobileHome[data-mode]) #storiesSection { display: none !important; }
+    /* La home téléphone a sa propre liste d'actualités (#fzmNewsWrap). */
+    body:has(#fzMobileHome[data-mode]) #fzHomeNews { display: none !important; }
     /* Libellé posé sur un aplat --primary : blanc (4,55:1) dans les deux
        thèmes. Le calendrier déplacé ici repose sur la page (#F5F5F7), où
        le secondaire d'Apple tient 4,66:1 : plus de gris à reprendre. */

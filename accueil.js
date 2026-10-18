@@ -170,8 +170,8 @@ function maybeLoadStories() {
 }
 
 // ============================================================
-// STORIES — auto-advancing real NHL live-game / news slides, above
-// "Mes classements". One image area, one progress bar underneath;
+// STORIES — auto-advancing real NHL live-game slides (the news has
+// its own list, renderHomeNews above). One image area, one progress bar underneath;
 // when it fills, the slide advances. Never a placeholder: a slide
 // type with nothing real to show is simply left out, and the whole
 // section stays hidden when there's nothing at all (see /live-games
@@ -242,13 +242,13 @@ async function loadStories() {
     const liveGames = matchs ? matchs.games : [];
     liveGames.forEach(g => storyRecu(g, 0));
 
-    // Les matchs du jour d'abord — en direct, puis à venir dans l'ordre des
-    // mises au jeu —, les actualités ensuite.
+    // Les matchs du jour seulement — en direct, puis à venir dans l'ordre des
+    // mises au jeu. Les actualités ont leur propre bloc, en bas de l'accueil.
     storySlides = [
         ...liveGames.map(game => ({ type: 'live', game })),
-        ...(matchs ? matchs.upcoming : []).map(game => ({ type: 'pre', game })),
-        ...news.map(article => ({ type: 'news', article }))
+        ...(matchs ? matchs.upcoming : []).map(game => ({ type: 'pre', game }))
     ];
+    renderHomeNews(news);
 
     // Always show the section once a member has a pool — a quiet "nothing
     // right now" beats vanishing outright, which reads as broken rather
@@ -779,6 +779,27 @@ async function fetchNhlNews() {
         console.warn('Could not load NHL news:', err);
         return [];
     }
+}
+
+/**
+ * Les actualités LNH, en liste au bas de l'accueil (#fzHomeNews, index.html).
+ * Lues par loadStories avec les matchs : aucune requête de plus. Masquées
+ * tant qu'il n'y a aucun article — jamais de panneau creux.
+ */
+function renderHomeNews(articles) {
+    const section = document.getElementById('fzHomeNews');
+    const list = document.getElementById('fzHomeNewsList');
+    if (!section || !list) return;
+    section.hidden = !articles.length;
+    const quand = iso => (iso && typeof relativeTimeFr === 'function') ? ` · ${relativeTimeFr(iso)}` : '';
+    list.innerHTML = articles.slice(0, 5).map(a => `
+        <li><a class="fz-home-news-row" href="${escapeHTML(a.url)}" target="_blank" rel="noopener noreferrer">
+            ${a.image ? `<img class="fz-home-news-img" src="${escapeHTML(a.image)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}
+            <span class="fz-home-news-copy">
+                <strong>${escapeHTML(a.title)}</strong>
+                <small>${escapeHTML(a.source || 'LNH')}${quand(a.publishedAt)}</small>
+            </span>
+        </a></li>`).join('');
 }
 
 const STORY_STRENGTH_LABEL = { pp: 'AN', sh: 'DN' };
