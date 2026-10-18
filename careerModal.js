@@ -16,9 +16,6 @@
     const paths = {
         star: 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z',
         plus: 'M12 4v16M4 12h16',
-        goals: 'M19 5 5 19M5 5l14 14M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10',
-        assists: 'M16 21v-2a6 6 0 0 0-12 0v2M10 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M17 3a4 4 0 0 1 0 8M20 21v-2a6 6 0 0 0-3-5.2',
-        points: 'M3 14h4v8H3ZM10 9h4v13h-4ZM17 3h4v19h-4Z',
         person: 'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8M4 22v-3a8 8 0 0 1 16 0v3'
     };
     // Les filigranes du bandeau et du portrait restent sur fond sombre dans les
@@ -28,7 +25,7 @@
     const crest = code => crestsClairs.includes(code) ? `teams/dark/${code}.svg` : `teams/${code}.png`;
     const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"></path></svg>`;
     const el = id => document.getElementById(id);
-    let request = 0, active = null, previousFocus = null, previousOverflow = '';
+    let request = 0, active = null, previousFocus = null, previousOverflow = '', vue = 'career';
 
     function teamCode(value) {
         const name = String(value || '').trim();
@@ -66,9 +63,13 @@
                     <div class="cmh-injury" id="careerInjuryBanner" hidden></div>
                 </div>
                 <div class="career-filters" id="careerFilters" hidden>
-                    <div class="filter-group-career"><label for="viewFilter">Vue</label><select id="viewFilter"><option value="career">Carrière</option></select></div>
-                    <div class="filter-group-career"><label for="leagueFilter">Ligue</label><select id="leagueFilter"><option value="nhl">NHL seulement</option><option value="all">Toutes les ligues</option><option value="other">Autres ligues</option></select></div>
-                    <div class="filter-group-career"><label for="gameTypeFilter">Type de saison</label><select id="gameTypeFilter"><option value="regular">Saison régulière</option><option value="playoffs">Séries éliminatoires</option><option value="all">Tous</option></select></div>
+                    <div class="cm-stats-head"><h3 class="cmh-section-title">Statistiques</h3>
+                        <div class="cm-seg" role="group" aria-label="Vue"><button type="button" class="cm-seg-btn" id="careerViewCareer" data-vue="career" aria-pressed="true">Carrière</button><button type="button" class="cm-seg-btn" id="careerViewGames" data-vue="gamelog" aria-pressed="false">Par match</button></div>
+                    </div>
+                    <div class="cm-pills" id="careerPills">
+                        <div class="filter-group-career"><label class="fz-sk-sr" for="leagueFilter">Ligue</label><select id="leagueFilter"><option value="nhl">NHL seulement</option><option value="all">Toutes les ligues</option><option value="other">Autres ligues</option></select></div>
+                        <div class="filter-group-career"><label class="fz-sk-sr" for="gameTypeFilter">Type de saison</label><select id="gameTypeFilter"><option value="regular">Saison régulière</option><option value="playoffs">Séries éliminatoires</option><option value="all">Tous</option></select></div>
+                    </div>
                 </div>
                 <div class="stats-count-badge" id="statsCountBadge" role="status"></div>
                 <div id="careerStatsTable" tabindex="0" role="region" aria-label="Statistiques du joueur"></div>
@@ -88,7 +89,7 @@
         });
         el('leagueFilter').addEventListener('change', () => window.filterCareerStats());
         el('gameTypeFilter').addEventListener('change', () => window.filterCareerStats());
-        el('viewFilter').addEventListener('change', changerVue);
+        for (const id of ['careerViewCareer', 'careerViewGames']) el(id).addEventListener('click', event => changerVue(event.currentTarget.dataset.vue));
         el('careerFavorite').addEventListener('click', toggleFavorite);
         el('careerPick').addEventListener('click', () => {
             if (!active || !canPick()) return;
@@ -223,19 +224,20 @@
             return sum;
         }, {}) : null;
         const values = current || fallback;
-        const tiles = data.isGoalie ? [['Victoires', 'wins', 'goals'], ['Blanchissages', 'shutouts', 'assists'], ['Matchs joués', 'gamesPlayed', 'points']]
-            : [['Buts', 'goals', 'goals'], ['Aides', 'assists', 'assists'], ['Points', 'points', 'points']];
+        const tiles = data.isGoalie ? [['Victoires', 'wins'], ['Blanchissages', 'shutouts'], ['Matchs joués', 'gamesPlayed']]
+            : [['Buts', 'goals'], ['Aides', 'assists'], ['Points', 'points']];
         const container = el('careerSeasonHighlight');
-        container.innerHTML = `<div class="cmh-season-label"><span class="cmh-mini-lbl">${stats?.season ? 'Saison actuelle' : 'Dernière saison NHL'}</span><strong></strong><span>NHL – Saison régulière</span></div>`
-            + tiles.map(([label, key, symbol]) => {
+        container.innerHTML = `<div class="cmh-season-head"><h3 class="cmh-section-title">Saison <span></span></h3><span class="cmh-season-meta">${stats?.season ? 'NHL · Saison régulière' : 'Dernière saison NHL'}</span></div>`
+            + tiles.map(([label, key]) => {
                 const value = values ? (values[key] ?? (key === 'gamesPlayed' ? values.gp : null) ?? '—') : '—';
                 const ranked = current && Number.isFinite(current[key]) ? pool.filter(p => Number.isFinite(p[key])) : [];
                 const rank = ranked.filter(p => p[key] > value).length + 1;
                 const tied = ranked.filter(p => p[key] === value).length > 1;
-                const rankText = ranked.length ? `${tied ? 'Égalité – ' : ''}${rank}${rank === 1 ? 'er' : 'e'}` : 'Rang indisponible';
-                return `<div class="cmh-season-tile">${icon(symbol)}<div><span class="cmh-mini-lbl">${label}</span><strong class="cmh-season-val">${value}</strong><span class="cmh-season-rank">${rankText}</span></div></div>`;
+                const rankText = ranked.length ? `${rank}${rank === 1 ? 'er' : 'e'}${tied ? ' (ég.)' : ''}` : '—';
+                const rankLabel = ranked.length ? `Rang dans la NHL : ${rank}${rank === 1 ? 'er' : 'e'}${tied ? ', à égalité' : ''}` : 'Rang indisponible';
+                return `<div class="cmh-season-tile"><strong class="cmh-season-val">${value}</strong><span class="cmh-mini-lbl">${label}</span><span class="cmh-season-rank" title="${rankLabel}">${rankText}</span></div>`;
             }).join('');
-        container.querySelector('.cmh-season-label strong').textContent = season || '—';
+        container.querySelector('.cmh-season-head h3 span').textContent = season || '—';
         el('careerStatsTable').dataset.season = season;
     }
 
@@ -277,7 +279,6 @@
         updateFavorite();
         el('careerPick').disabled = !canPick();
         el('careerPick').title = canPick() ? '' : 'Disponible pendant votre tour au repêchage, pour un joueur non sélectionné.';
-        if (el('viewFilter').options.length === 1) el('viewFilter').add(new Option('Historique de match', 'gamelog'));
     }
 
     /*
@@ -286,11 +287,15 @@
      * Lu à la demande (/player-gamelog), jamais à l'ouverture de la fiche.
      */
     let renderCarriere = null;
-    function changerVue() {
-        const matchs = el('viewFilter').value === 'gamelog';
-        el('leagueFilter').parentElement.style.display = matchs ? 'none' : '';
-        el('gameTypeFilter').parentElement.style.display = matchs ? 'none' : '';
-        if (matchs) return afficherMatchs(activeId, id => active && String(activeId) === String(id) && el('viewFilter').value === 'gamelog');
+    function poserVue(next) {
+        vue = next;
+        for (const id of ['careerViewCareer', 'careerViewGames']) el(id).setAttribute('aria-pressed', String(el(id).dataset.vue === vue));
+        el('careerPills').hidden = vue === 'gamelog';
+    }
+    function changerVue(next) {
+        if (next === vue) return;
+        poserVue(next);
+        if (vue === 'gamelog') return afficherMatchs(activeId, id => active && String(activeId) === String(id) && vue === 'gamelog');
         (renderCarriere || window.filterCareerStats)();
     }
 
@@ -346,7 +351,7 @@
      * valeur, au même endroit : rien ne bouge à l'arrivée. Os et reflet :
      * fzSquelette.css ; mesures : career-modal.css (.is-loading).
      */
-    const CONTROLES = ['careerFavorite', 'careerPick', 'viewFilter', 'leagueFilter', 'gameTypeFilter'];
+    const CONTROLES = ['careerFavorite', 'careerPick', 'careerViewCareer', 'careerViewGames', 'leagueFilter', 'gameTypeFilter'];
     const os = (cls, largeur) => `<span class="fz-bone ${cls}"${largeur ? ` style="--w:${largeur}"` : ''}></span>`;
 
     function tableauSquelette() {
@@ -379,9 +384,9 @@
             .forEach(([id, largeur]) => { el(id).innerHTML = os('cm-sk-val', largeur); });
         el('playerWeight').textContent = '';
         el('careerSeasonHighlight').innerHTML =
-            `<div class="cmh-season-label">${os('cm-sk-mini')}${os('cm-sk-season')}${os('cm-sk-mini is-long')}</div>`
+            `<div class="cmh-season-head">${os('cm-sk-season')}${os('cm-sk-mini is-long')}</div>`
             + Array.from({ length: 3 }, () =>
-                `<div class="cmh-season-tile">${os('cm-sk-icon')}<div>${os('cm-sk-mini')}${os('cm-sk-big')}${os('cm-sk-mini is-rank')}</div></div>`).join('');
+                `<div class="cmh-season-tile">${os('cm-sk-big')}${os('cm-sk-mini')}${os('cm-sk-mini is-rank')}</div>`).join('');
         el('careerInjuryBanner').hidden = true;
         el('careerStatsTable').innerHTML = tableauSquelette();
         CONTROLES.forEach(id => { el(id).disabled = true; });
@@ -425,8 +430,7 @@
         el('careerPlayerName').textContent = playerName || 'Fiche du joueur';
         el('careerWatchBanner').hidden = true;
         el('careerActions').hidden = repechageTermine();
-        el('viewFilter').value = 'career'; el('leagueFilter').value = 'nhl'; el('gameTypeFilter').value = 'regular';
-        el('leagueFilter').parentElement.style.display = ''; el('gameTypeFilter').parentElement.style.display = '';
+        poserVue('career'); el('leagueFilter').value = 'nhl'; el('gameTypeFilter').value = 'regular';
         poserSquelette(playerName);
         modal.querySelector('.close-modal').focus();
         try {
