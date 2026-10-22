@@ -51,6 +51,8 @@ function monter(app, ctx) {
         }
         return bassin;
     }
+    // Le repêchage automatique se joue au départ, dans routes/pools.js.
+    ctx.bassinTrousse = bassinTrousse;
 
     /**
      * Ce qu'un choix laisse derrière lui, dans SA transaction : l'activité,

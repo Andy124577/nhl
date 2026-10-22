@@ -652,7 +652,7 @@
             if (jeSuisCreateur) {
                 depart = `
                         <button type="button" class="rp-btn primary" id="rpStart"${pret ? '' : ' disabled'}>
-                            ${libelleDepart(etat)}
+                            ${libelleDepart(etat, pool.data.draftAuto === true)}
                         </button>`;
             } else if (pret && !etat.prevuLe) {
                 depart = `<p class="rp-wait-admin" role="status">En attente du lancement par ${echapper(createur || "l'admin du pool")}.</p>`;
@@ -679,7 +679,8 @@
                 ${entete(pool, pret ? 'Prêt' : 'En attente', pret ? 'pret' : 'attente')}
                 <div class="rp-body">
                     <p class="rp-lead">${lead}</p>
-                    ${instantane ? '' : blocDate(etat, jeSuisCreateur)}
+                    ${instantane ? '' : blocAuto(pool)}
+                    ${instantane ? '' : blocDate(etat, jeSuisCreateur, pool.data.draftAuto === true)}
                     <div data-fz-alertes="carte" hidden></div>
                     ${barre}
                     ${rendreInscrits(pool, etat, createur)}
@@ -724,11 +725,29 @@
     // (routes/pools.js, demarrerRepechagesPrevus). Jusqu'au départ, elle peut
     // fixer, déplacer ou retirer la date d'ici.
 
-    function libelleDepart(etat) {
+    function libelleDepart(etat, auto = false) {
+        if (auto) return etat.prevuLe ? 'Lancer maintenant' : 'Lancer le repêchage automatique';
         return etat.prevuLe ? 'Commencer maintenant' : 'Commencer le repêchage';
     }
 
-    function blocDate(etat, jeSuisCreateur) {
+    // Repêchage automatique (`draftAuto`, choisi à la création) : au départ,
+    // le serveur joue tous les tours d'un coup (routes/pools.js,
+    // repecherDOffice). Le salon l'annonce, pour que personne ne s'attende à
+    // choisir.
+    function blocAuto(pool) {
+        if (pool.data.draftAuto !== true) return '';
+        return `
+                    <section class="rp-date" aria-label="Repêchage automatique">
+                        <span class="rp-date-ico" aria-hidden="true">${icone('bolt', 20)}</span>
+                        <div class="rp-date-txt">
+                            <span class="rp-date-label">Repêchage automatique</span>
+                            <span class="rp-date-sub">Au départ, Fantazy choisit pour toutes les équipes, du premier
+                                au dernier tour : le meilleur joueur disponible selon les projections. Personne n’a besoin d’être là.</span>
+                        </div>
+                    </section>`;
+    }
+
+    function blocDate(etat, jeSuisCreateur, auto = false) {
         if (etat.prevuLe) {
             const delai = FZPool.timeUntil(etat.prevuLe);
             // Une seule équipe, ou un nombre impair en tête-à-tête : à l'heure
@@ -753,7 +772,7 @@
                             <button type="button" class="rp-date-btn" id="rpDateRetirer">Retirer</button>` : ''}
                         </div>
                     </section>
-                    <p class="rp-note">3 minutes par choix : passé ce délai, Fantazy prend le meilleur joueur disponible.</p>
+                    ${auto ? '' : '<p class="rp-note">3 minutes par choix : passé ce délai, Fantazy prend le meilleur joueur disponible.</p>'}
                     ${condition}`;
         }
         if (!jeSuisCreateur) return '';
@@ -982,6 +1001,12 @@
                     if (bouton) { bouton.disabled = false; bouton.textContent = libelle; }
                     await FZPool.refresh();
                     rendre();
+                    return;
+                }
+                // Repêchage automatique : tout est déjà joué, on va voir le résultat.
+                if (donnees.draftComplet) {
+                    localStorage.setItem('draftClan', nomPool);
+                    window.location.href = 'draftFini.html';
                     return;
                 }
             }

@@ -323,6 +323,9 @@ function monter(app, ctx) {
                 teams
             };
             if (datePrevue.date) poolData.draftScheduledAt = datePrevue.date;
+            // Repêchage automatique : au départ, Fantazy choisit pour tout le
+            // monde, du premier au dernier tour (repecherDOffice).
+            if (req.body?.draftAuto === true) poolData.draftAuto = true;
             if (protection) {
                 poolData.passwordHash = protection.passwordHash;
                 if (protection.passwordSecret) poolData.passwordSecret = protection.passwordSecret;
@@ -709,11 +712,47 @@ function monter(app, ctx) {
                 recipient: membre,
                 poolId,
                 type: evenements.NOTIFICATION.REPECHAGE_DEMARRE,
-                subject: { poolName: nom },
+                subject: { poolName: nom, ...(data.draftAuto === true ? { auto: true } : {}) },
                 dedupKey: evenements.clesNotification.repechageDemarre(poolId)
             });
         }
+        // Un repêchage automatique se joue d'un coup (repecherDOffice) : aucun
+        // tour n'attend personne.
+        if (data.draftAuto === true) return;
         for (const alerte of evenements.alertesTour({ data, poolId, poolName: nom, maintenant })) journal.notifier(alerte);
+    }
+
+    /**
+     * Repêchage automatique (`draftAuto`, choisi à la création) : juste après
+     * le départ, dans la même transaction, Fantazy joue tous les tours pour
+     * toutes les équipes (poolOps.repecherToutDOffice). Renvoie true quand le
+     * repêchage est terminé, pour que l'appelant annonce la fin après le
+     * COMMIT (terminerApresCommit).
+     */
+    function repecherDOffice({ data, poolId, journal, nom, maintenant = Date.now() }) {
+        if (data.draftAuto !== true) return false;
+        const resultat = poolOps.repecherToutDOffice(data, { bassin: ctx.bassinTrousse(), maintenant });
+        if (!resultat.ok) return false;
+        if (resultat.draftComplet) {
+            journal.evenement({
+                poolId,
+                type: evenements.ACTIVITE.REPECHAGE_TERMINE,
+                actorUserId: null,
+                subject: { poolName: nom, auto: true },
+                dedupKey: evenements.clesActivite.repechageTermine(poolId)
+            });
+        }
+        logger.log(`Repêchage automatique (${nom}) : ${resultat.choix} choix, ${resultat.sautes} tour(s) passé(s)`);
+        return resultat.draftComplet;
+    }
+
+    /** Après le COMMIT d'un repêchage automatique terminé : comme la fin d'un repêchage joué. */
+    function terminerApresCommit(nom, data) {
+        diffusion.versPool(nom, 'draftComplete', { clanName: nom });
+        if (data.poolMode === 'head-to-head' && data.h2hData && ctx.construireCalendrierH2H) {
+            ctx.construireCalendrierH2H(nom).catch(erreur =>
+                logger.error('Construction du calendrier impossible :', erreur.message));
+        }
     }
 
     /**
@@ -843,7 +882,8 @@ function monter(app, ctx) {
                         const resultat = poolOps.demarrerRepechagePrevu(data, { maintenant, melanger });
                         if (resultat.ok) {
                             annoncerDepart({ data, poolId, journal, nom, equipes: resultat.equipes, maintenant });
-                            return { valeur: { demarre: true, premierTour: data.draftOrder[0] } };
+                            const termine = repecherDOffice({ data, poolId, journal, nom, maintenant });
+                            return { valeur: { demarre: true, premierTour: data.draftOrder[0], termine } };
                         }
 
                         const createur = authz.createurDuPool(data);
@@ -866,6 +906,7 @@ function monter(app, ctx) {
                 }
                 if (valeur.demarre) {
                     diffusion.versPool(nom, 'draftDemarre', { poolName: nom, premierTour: valeur.premierTour });
+                    if (valeur.termine) terminerApresCommit(nom, (await store.lire(nom)).data);
                     logger.log(`Repêchage démarré à l'heure prévue : ${nom}`);
                 } else if (valeur.raison === 'manque') {
                     logger.log(`Repêchage prévu non démarré (${nom}) : ${valeur.message}`);
@@ -903,18 +944,23 @@ function monter(app, ctx) {
                     if (!resultat.ok) throw refus(resultat);
 
                     annoncerDepart({ data, poolId, journal, nom, equipes: resultat.equipes, acteur: req.auth.userId });
+                    const termine = repecherDOffice({ data, poolId, journal, nom });
 
-                    return { valeur: { draftOrder: data.draftOrder, premierTour: data.draftOrder[0] } };
+                    return { valeur: { draftOrder: data.draftOrder, premierTour: data.draftOrder[0], termine } };
                 }
             });
 
             const frais = await store.lire(nom);
             diffusion.poolMisAJour(nom, frais.data, frais.revision);
             diffusion.versPool(nom, 'draftDemarre', { poolName: nom, premierTour: valeur.premierTour });
+            if (valeur.termine) terminerApresCommit(nom, frais.data);
 
             res.json({
-                message: "Repêchage démarré avec l'ordre en serpentin.",
+                message: valeur.termine
+                    ? "Repêchage automatique terminé : toutes les équipes sont complètes."
+                    : "Repêchage démarré avec l'ordre en serpentin.",
                 draftOrder: valeur.draftOrder,
+                draftComplet: !!valeur.termine,
                 revision: valeur.revision
             });
         } catch (erreur) {
@@ -969,7 +1015,7 @@ function monter(app, ctx) {
             const { valeur } = await store.muterPool(nom, {
                 scope: 'pool:ordre-aleatoire',
                 userId: req.auth.userId,
-                appliquer: async ({ data }) => {
+                appliquer: async ({ data, poolId, journal }) => {
                     if (!authz.peutAdministrer(data, { username: req.auth.username, isAdmin: req.auth.isAdmin })) {
                         throw new ErreurMetier(403, "Seule la personne qui a créé le pool peut tirer l'ordre.");
                     }
@@ -977,12 +1023,14 @@ function monter(app, ctx) {
                     if (!resultat.ok) throw refus(resultat);
                     data.turnStartedAt = Date.now();
                     data.saisonRepechage = seasonIdForDate(new Date());
-                    return { valeur: { draftOrder: data.draftOrder } };
+                    const termine = repecherDOffice({ data, poolId, journal, nom });
+                    return { valeur: { draftOrder: data.draftOrder, termine } };
                 }
             });
 
             const frais = await store.lire(nom);
             diffusion.poolMisAJour(nom, frais.data, frais.revision);
+            if (valeur.termine) terminerApresCommit(nom, frais.data);
 
             res.json({ message: "Ordre de repêchage tiré en serpentin.", draftOrder: valeur.draftOrder, revision: valeur.revision });
         } catch (erreur) {
