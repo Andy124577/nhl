@@ -580,6 +580,103 @@ html body.fz-draft .recent-feed-count {
         text-transform: none;
     }
 
+    /* « Choisir pour … » (tour sauté) : sa propre rangée sous les onglets,
+       pleine largeur, au lieu d'écraser les libellés à côté. */
+    html body.fz-draft .panel-tabs-band { flex-wrap: wrap; }
+    html body.fz-draft .panel-tabs-band .panel-tabs { flex: 1 1 100%; min-width: 0; }
+    html body.fz-draft .panel-tabs-band .turn-skip-btn:not([hidden]) {
+        display: flex;
+        flex: 1 1 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-color: var(--s-red);
+        color: var(--s-ink);
+    }
+
+    /* ---- Favoris : pastille « ★ Favoris » + liste à la place du tableau ---- */
+    html body.fz-draft .fzd-pos-chip.fzd-fav-chip { gap: 4px; }
+    html body.fz-draft .fzd-fav-chip > span[aria-hidden] { color: var(--s-red); }
+    html body.fz-draft .fzd-fav-chip.is-active > span[aria-hidden] { color: inherit; }
+    html body.fz-draft .fzd-fav-chip-count:empty { display: none; }
+    html body.fz-draft .fzd-fav-chip-count { font-weight: 500; opacity: .7; }
+    html body.fz-draft .fz-fav-tel { display: none; }
+    html body.fz-draft.fz-voir-favoris .fz-fav-tel { display: block; }
+    html body.fz-draft.fz-voir-favoris #playerTableWrapper,
+    html body.fz-draft.fz-voir-favoris .player-selection-card .pagination,
+    html body.fz-draft.fz-voir-favoris .player-selection-card #loadMore { display: none !important; }
+    html body.fz-draft .fz-fav-tel-head { padding: 12px 12px 4px; }
+    html body.fz-draft .fz-fav-tel-head h2 {
+        margin: 0;
+        font: 800 17px/1 'Saira Condensed', var(--fzd-font);
+        text-transform: uppercase;
+        color: var(--s-ink);
+    }
+    html body.fz-draft #fzFavTelList .fzd-side-empty {
+        margin: 6px 12px 14px;
+        font: 500 13px/1.45 var(--fzd-font);
+        color: var(--s-dim);
+    }
+    html body.fz-draft #fzFavTelList .fzd-fav-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        padding: 9px 12px;
+        border-top: 1px solid var(--s-line2);
+    }
+    html body.fz-draft #fzFavTelList .fzd-fav-row button.favorite-btn {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        min-height: 30px;
+        padding: 0;
+        border: 1px solid var(--s-line);
+        border-radius: 999px;
+        background: none;
+        color: var(--s-red);
+        font-size: 14px;
+    }
+    /* Même règle que le tableau : à mon tour, pas d'étoile, juste le choix. */
+    html body.fz-draft #fzFavTelList .fzd-fav-row:has(.select-button) button.favorite-btn { display: none; }
+    html body.fz-draft #fzFavTelList .fzd-fav-photo {
+        flex: none;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: var(--s-raise);
+    }
+    html body.fz-draft #fzFavTelList .fzd-fav-photo img { width: 100%; height: 100%; object-fit: cover; }
+    html body.fz-draft #fzFavTelList .fzd-fav-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    html body.fz-draft #fzFavTelList .fzd-fav-name {
+        font: 600 14px/1.2 var(--fzd-font);
+        color: var(--s-ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    html body.fz-draft #fzFavTelList .fzd-fav-meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    html body.fz-draft #fzFavTelList .fzd-fav-line {
+        font: 500 12px/1.2 var(--fzd-font);
+        color: var(--s-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    html body.fz-draft #fzFavTelList .fzd-fav-action { flex: none; }
+    html body.fz-draft #fzFavTelList .fzd-fav-action button.select-button {
+        width: 34px;
+        height: 34px;
+        min-height: 34px;
+        padding: 0;
+        border: 0;
+        border-radius: 11px;
+        background: var(--s-ink);
+        color: var(--s-bg);
+        font: 600 22px/1 var(--fzd-font);
+    }
+
     /* Le carrousel garde son style ; il se pose seulement sous les onglets. */
     html body.fz-draft .recent-picks-card { margin-top: 8px; }
 
@@ -882,6 +979,9 @@ html body.fz-draft .recent-feed-count {
    BUREAU — 1100px et plus
    ============================================================ */
 @media (min-width: 1100px) {
+    /* Les favoris ont leur rail : pas de pastille ni de liste téléphone. */
+    html body.fz-draft #fzFavChip,
+    html body.fz-draft .fz-fav-tel { display: none !important; }
     /* Le compte est déjà dans l'en-tête du rail. */
     html body.fz-draft .fzd-rail-picker-count { display: none; }
     html body.fz-draft .fzd-rail-picker .fzd-rail-select { padding-right: 36px; }

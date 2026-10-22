@@ -142,7 +142,9 @@ function fzDeskMonterPastilles(filtres) {
         });
         groupe.addEventListener('click', e => {
             const bouton = e.target.closest('.fzd-pos-chip');
-            if (!bouton || bouton.disabled || select.value === bouton.dataset.valeur) return;
+            if (!bouton || bouton.id === 'fzFavChip') return;
+            if (document.body.classList.contains('fz-voir-favoris')) fzDeskVoirFavoris(false);
+            if (bouton.disabled || select.value === bouton.dataset.valeur) return;
             select.value = bouton.dataset.valeur;
             select.dispatchEvent(new Event('change', { bubbles: true }));
         });
@@ -160,9 +162,10 @@ function fzDeskMonterPastilles(filtres) {
 function fzDeskSyncPastilles() {
     const select = document.getElementById('playerFilter');
     if (!select) return;
-    document.querySelectorAll('#fzdPosChips .fzd-pos-chip').forEach(bouton => {
+    const favoris = document.body.classList.contains('fz-voir-favoris');
+    document.querySelectorAll('#fzdPosChips .fzd-pos-chip:not(#fzFavChip)').forEach(bouton => {
         const option = [...select.options].find(o => o.value === bouton.dataset.valeur);
-        const actif = select.value === bouton.dataset.valeur;
+        const actif = !favoris && select.value === bouton.dataset.valeur;
         bouton.hidden = !option;
         bouton.disabled = !option || option.disabled;
         bouton.classList.toggle('is-active', actif);
@@ -545,19 +548,67 @@ function fzDeskBuildFavori(f) {
 
 function fzDeskRenderFavoris() {
     const zone = document.getElementById('fzdSideFavoris');
-    if (!zone) return;
+    const zoneTel = document.getElementById('fzFavTelList');
+    if (!zone && !zoneTel) return;
 
     const favoris = fzDeskFavoris();
-    zone.replaceChildren();
-    if (!favoris.length) {
-        zone.appendChild(fzDeskCoteVide(
-            'Aucun favori. L’étoile de la liste des joueurs en ajoute.'));
-    } else {
-        favoris.forEach(f => zone.appendChild(fzDeskBuildFavori(f)));
-    }
+    [zone, zoneTel].filter(Boolean).forEach(cible => {
+        cible.replaceChildren();
+        if (!favoris.length) {
+            cible.appendChild(fzDeskCoteVide(
+                'Aucun favori. L’étoile de la liste des joueurs en ajoute.'));
+        } else {
+            favoris.forEach(f => cible.appendChild(fzDeskBuildFavori(f)));
+        }
+    });
     // La liste ne porte plus que du repêchable : sa longueur EST le
     // chiffre qu'on regarde pendant qu'on repêche.
     fzDeskCoteCompte('fzdSideCountFavoris', favoris.length);
+    const compteTel = document.getElementById('fzFavChipCount');
+    if (compteTel) compteTel.textContent = favoris.length ? String(favoris.length) : '';
+}
+
+/* ---- Favoris sous 1100px ----------------------------------------
+   Le rail de gauche (favoris/choix) n'existe que sur bureau. Au
+   téléphone, une pastille « ★ Favoris » en tête des positions bascule
+   la liste des joueurs sur celle des favoris — mêmes rangées que le
+   rail (fzDeskBuildFavori), donc l'étoile pour retirer et, à son tour,
+   le bouton pour repêcher directement. Un clic sur une position revient
+   à la liste. */
+function fzDeskMonterFavorisTel() {
+    const groupe = document.getElementById('fzdPosChips');
+    const carte = document.querySelector('.player-selection-card');
+    if (!groupe || !carte) return;
+
+    if (!document.getElementById('fzFavChip')) {
+        const puce = document.createElement('button');
+        puce.type = 'button';
+        puce.id = 'fzFavChip';
+        puce.className = 'fzd-pos-chip fzd-fav-chip';
+        puce.setAttribute('aria-pressed', 'false');
+        puce.innerHTML = '<span aria-hidden="true">★</span> Favoris <span class="fzd-fav-chip-count" id="fzFavChipCount"></span>';
+        puce.addEventListener('click', () => fzDeskVoirFavoris(!document.body.classList.contains('fz-voir-favoris')));
+        groupe.prepend(puce);
+    }
+    if (!document.getElementById('fzFavTel')) {
+        const liste = document.createElement('div');
+        liste.id = 'fzFavTel';
+        liste.className = 'fz-fav-tel';
+        liste.innerHTML = '<div class="fz-fav-tel-head"><h2>Mes favoris</h2></div><div class="fz-fav-tel-list" id="fzFavTelList"></div>';
+        const tableau = document.getElementById('playerTableWrapper');
+        carte.insertBefore(liste, tableau || null);
+    }
+}
+
+function fzDeskVoirFavoris(on) {
+    document.body.classList.toggle('fz-voir-favoris', !!on);
+    const puce = document.getElementById('fzFavChip');
+    if (puce) {
+        puce.classList.toggle('is-active', !!on);
+        puce.setAttribute('aria-pressed', String(!!on));
+    }
+    fzDeskSyncPastilles();
+    if (on) fzDeskRenderFavoris();
 }
 
 /* ---- Choix ------------------------------------------------------ */
@@ -1448,6 +1499,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Les pastilles de position servent aussi sous 1100px (maquette
     // Repêchage) : sous la recherche, à la place du sélecteur.
     try { fzDeskMonterPastilles(document.getElementById('listFiltersSidebar')); } catch (e) {}
+    try { fzDeskMonterFavorisTel(); } catch (e) { console.error('[téléphone] favoris :', e); }
     try { fzDeskWatchRail(); } catch (e) {}
     try { fzDeskWatchTable(); } catch (e) {}
     try { window.fzRefreshDeskUI(); } catch (e) {}
