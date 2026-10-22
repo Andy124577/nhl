@@ -1,0 +1,148 @@
+/* ============================================================
+   ACCUEIL SANS POOL — maquette « Accueil · nouveau » (langage 6b Éditorial)
+   ------------------------------------------------------------
+   Le mot d'accueil, la carte du repêchage instantané (sombre dans les deux
+   thèmes, comme les héros des autres accueils), les deux chemins
+   (rejoindre, créer) et « Comment ça marche ». Rien d'autre : le calendrier
+   et les actualités attendent le premier pool.
+   Jetons --s-* : accueil-season.css (body.fz-onboard-page).
+   La file du repêchage instantané garde sa logique (instantDraft.js) ; on
+   n'habille ici que ses sièges, sa ligne d'état et son bouton.
+   ============================================================ */
+#fzDashSection.is-poolless { background: var(--s-bg); padding: 0 0 calc(96px + env(safe-area-inset-bottom)); }
+.is-poolless .fz-dash { max-width: 1040px; padding: 0; }
+.fz-onboard-page .is-poolless .fz-dash > :not(#fzDashOnboard),
+.fz-onboard-page #storiesSection { display: none !important; }
+.fz-onboard-page { background: var(--s-bg); }
+
+#fzDashOnboard {
+    gap: 0; max-width: none; margin: 0; padding: 0 0 8px;
+    color: var(--s-ink); font: 400 14px/1.35 'Saira', 'Barlow', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+#fzDashOnboard :is(h2, h3, p) { margin: 0; }
+#fzDashOnboard a { color: inherit; text-decoration: none; }
+#fzDashOnboard :is(a, button):focus-visible { outline: 2px solid var(--s-red); outline-offset: 3px; }
+
+/* ---- Mot d'accueil ---- */
+#fzDashOnboard .fzn-intro { display: flex; flex-direction: column; gap: 10px; padding: 24px 20px 4px; }
+#fzDashOnboard .fzn-welcome { font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: var(--s-faint); }
+#fzDashOnboard .fzn-titre { font: 800 34px/34px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; text-wrap: balance; color: var(--s-ink); }
+#fzDashOnboard .fzn-sub { font: 400 14px/20px 'Saira', sans-serif; color: var(--s-mute); text-wrap: pretty; }
+
+/* ---- Repêchage instantané ---- */
+#fzDashOnboard .fzn-instant {
+    --fzo-line: #3A3A40; --fzo-faint: #C9C7C4; --fzo-muted: #4A4A50;
+    --fzo-fill: #F3F1EE; --fzo-on-fill: #0B0B0C;
+    position: relative; isolation: isolate; overflow: hidden;
+    display: flex; flex-direction: column; gap: 16px;
+    margin: 16px 10px 0; padding: 18px 16px 16px; border-radius: 24px;
+    color: #F3F1EE;
+    background:
+        radial-gradient(90% 120% at 0% 100%, rgba(240, 64, 48, .5) 0%, rgba(240, 64, 48, 0) 62%),
+        radial-gradient(70% 90% at 100% 0%, rgba(255, 90, 70, .18) 0%, rgba(255, 90, 70, 0) 60%),
+        linear-gradient(135deg, #2A1213 0%, #171214 55%, #100E10 100%);
+}
+#fzDashOnboard .fzn-instant::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(160deg, transparent 22%, rgba(255, 72, 56, .6) 23%, transparent 31%, transparent 38%, rgba(255, 72, 56, .38) 39.5%, transparent 50%);
+}
+#fzDashOnboard .fzn-instant::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 62%; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(rgba(255, 255, 255, .13) 1px, transparent 1.5px);
+    background-size: 9px 9px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+}
+html[data-theme="light"] #fzDashOnboard .fzn-instant { box-shadow: 0 10px 28px rgba(60, 20, 18, .18); }
+#fzDashOnboard .fzn-instant-copie { display: flex; flex-direction: column; gap: 8px; }
+#fzDashOnboard .fzn-puce {
+    align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
+    height: 24px; padding: 0 9px; border-radius: 999px;
+    background: rgba(229, 55, 43, .2); color: #FF8A80;
+    font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1.2px; text-transform: uppercase;
+}
+#fzDashOnboard .fzn-instant h3 { font: 800 28px/28px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; color: #F3F1EE; }
+#fzDashOnboard .fzn-instant-copie p { font: 400 13px/18px 'Saira', sans-serif; color: #C9C7C4; text-wrap: pretty; }
+#fzDashOnboard .fzo-seats { gap: 10px; }
+#fzDashOnboard .fzo-seat { width: 52px; height: 52px; font: 800 13px/1 'Saira Condensed', sans-serif; letter-spacing: 0; }
+#fzDashOnboard .fzo-seat.is-free { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .1); background: rgba(10, 10, 11, .5); }
+#fzDashOnboard .fzo-seat-ring { inset: 16px; border-width: 2px; }
+#fzDashOnboard .fzo-start-status { font: 600 13px/1.2 'Saira', sans-serif; color: #F3F1EE; }
+#fzDashOnboard .fzo-start-button {
+    width: 100%; height: 48px; padding: 0 16px; border-radius: 13px;
+    background: #F3F1EE; color: #0B0B0C; font: 600 15px/1 'Saira', sans-serif;
+}
+#fzDashOnboard .fzo-start-button:hover { background: #fff; }
+#fzDashOnboard .fzo-start-button:active { transform: scale(.98); }
+#fzDashOnboard .fzo-start-button[data-instant-action="quitter"] { background: rgba(255, 255, 255, .1); color: #C9C7C4; }
+#fzDashOnboard .fzo-start-button[data-instant-action="aller"] { background: #7FD49B; color: #0B0B0C; }
+
+/* ---- Rejoindre, créer ---- */
+#fzDashOnboard .fzn-chemins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 10px 0; }
+#fzDashOnboard .fzn-chemin {
+    display: flex; flex-direction: column; gap: 10px; min-height: 118px; padding: 14px; box-sizing: border-box;
+    border-radius: 18px; background: var(--s-card); border: 1px solid var(--s-line2);
+}
+#fzDashOnboard .fzn-chemin:hover { border-color: var(--s-line); background: var(--s-me); }
+#fzDashOnboard .fzn-chemin-ico { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: var(--s-chip); color: var(--s-red); }
+#fzDashOnboard .fzn-chemin strong { display: block; font: 600 15px/1.15 'Saira', sans-serif; }
+#fzDashOnboard .fzn-chemin small { display: block; margin-top: 4px; font: 400 12px/16px 'Saira', sans-serif; color: var(--s-faint); }
+
+/* ---- Comment ça marche ---- */
+#fzDashOnboard .fzn-comment { margin-top: 26px; }
+#fzDashOnboard .fzn-tete { display: flex; align-items: center; gap: 10px; margin: 0 16px; font: 800 18px/20px 'Saira Condensed', 'Barlow Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-ink); }
+#fzDashOnboard .fzn-tete svg { flex: none; color: var(--s-red); }
+#fzDashOnboard .fzn-etapes {
+    display: flex; gap: 10px; margin: 0; padding: 12px 10px 2px; list-style: none;
+    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 10px; scrollbar-width: none;
+}
+#fzDashOnboard .fzn-etapes::-webkit-scrollbar { display: none; }
+#fzDashOnboard .fzn-etape { flex: none; width: 262px; scroll-snap-align: start; border-radius: 18px; background: var(--s-card); border: 1px solid var(--s-line2); overflow: hidden; }
+#fzDashOnboard .fzn-etape > p { display: flex; flex-direction: column; gap: 5px; padding: 12px 14px 14px; }
+#fzDashOnboard .fzn-etape strong { font: 600 15px/1.1 'Saira', sans-serif; }
+#fzDashOnboard .fzn-etape strong span { color: var(--s-red); }
+#fzDashOnboard .fzn-etape small { font: 400 12px/16px 'Saira', sans-serif; color: var(--s-faint); }
+#fzDashOnboard .fzn-art { height: 112px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, var(--s-raise), var(--s-card)); }
+#fzDashOnboard .fzn-art-cartes { align-items: flex-end; }
+#fzDashOnboard .fzn-art-cartes > span {
+    position: relative; width: 70px; height: 92px; margin: 0 -6px; border-radius: 12px; overflow: hidden;
+    display: flex; align-items: flex-end; justify-content: center;
+    background: var(--club); border: 1.5px solid #2A2A2F;
+    transform: rotate(var(--rot)) translateY(var(--y));
+}
+#fzDashOnboard .fzn-art-cartes > span.is-vedette { z-index: 1; border-color: #E5372B; }
+#fzDashOnboard .fzn-art-cartes img { height: 78px; width: auto; }
+#fzDashOnboard .fzn-art-cartes b { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 0; background: linear-gradient(0deg, rgba(0, 0, 0, .75), transparent); font: 700 9px/1 'Saira', sans-serif; letter-spacing: .4px; text-align: center; color: #fff; }
+#fzDashOnboard .fzn-art-groupe { gap: 10px; }
+#fzDashOnboard .fzn-art-groupe > span { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--s-chip); color: var(--s-mute); }
+#fzDashOnboard .fzn-art-groupe > span.is-moi { width: 46px; height: 46px; background: var(--s-ink); color: var(--s-bg); font: 800 13px/1 'Saira Condensed', sans-serif; }
+#fzDashOnboard .fzn-art-rang { flex-direction: column; align-items: stretch; gap: 5px; padding: 0 16px; }
+#fzDashOnboard .fzn-art-rang > span { display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 10px; border-radius: 7px; background: var(--s-chip); font: 600 11px/1 'Saira', sans-serif; color: var(--s-ink2); }
+#fzDashOnboard .fzn-art-rang > span.is-un { background: var(--s-red-soft); color: var(--s-ink); }
+#fzDashOnboard .fzn-art-rang i { width: 10px; font-style: normal; color: var(--s-faint); }
+#fzDashOnboard .fzn-art-rang .is-un i { color: var(--s-red-ink); }
+#fzDashOnboard .fzn-art-rang b { margin-left: auto; font-weight: 600; }
+
+/* ---- Bureau : la même colonne, plus large, les étapes côte à côte ---- */
+@media (min-width: 900px) {
+    #fzDashSection.is-poolless { padding: 32px 24px 56px; }
+    #fzDashOnboard .fzn-intro { padding: 8px 4px 4px; }
+    #fzDashOnboard .fzn-titre { font-size: 48px; line-height: 46px; }
+    #fzDashOnboard .fzn-sub { font-size: 15px; }
+    #fzDashOnboard .fzn-instant { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 32px; margin: 20px 0 0; padding: 26px; }
+    #fzDashOnboard .fzn-instant-copie { grid-column: 1; grid-row: 1 / span 3; }
+    #fzDashOnboard .fzn-instant h3 { font-size: 34px; line-height: 34px; }
+    #fzDashOnboard .fzn-instant > :is(.fzo-seats, .fzo-start-status, .fzo-start-button) { grid-column: 2; }
+    #fzDashOnboard .fzo-start-button { width: 260px; }
+    #fzDashOnboard .fzn-chemins { margin: 12px 0 0; gap: 12px; }
+    #fzDashOnboard .fzn-chemin { flex-direction: row; align-items: center; min-height: 0; padding: 18px; gap: 14px; }
+    #fzDashOnboard .fzn-chemin small { margin-top: 3px; }
+    #fzDashOnboard .fzn-comment { margin-top: 32px; }
+    #fzDashOnboard .fzn-tete { margin: 0 4px; }
+    #fzDashOnboard .fzn-etapes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 12px 0 0; overflow: visible; }
+    #fzDashOnboard .fzn-etape { width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #fzDashOnboard .fzo-start-button:active { transform: none; }
+}

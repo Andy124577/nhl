@@ -109,55 +109,13 @@ html[data-theme="dark"] .fz-dash {
 }
 
 /* ------------------------------------------------------------ */
-/* Canvas-3: first pool welcome and live instant-draft queue. */
+/* Accueil sans pool : la charpente. Son habit vit dans accueil-nouveau.css. */
 .fz-dash-onboard { display:none; flex-direction:column; gap:26px; width:100%; max-width:944px; margin:0 auto 36px; padding:56px 32px 48px; color:var(--fzd-ink); font-family:'Barlow',system-ui,sans-serif; }
 .fz-dash-onboard *, .fz-dash-onboard *::before, .fz-dash-onboard *::after { box-sizing:border-box; }
-.fzo-intro { display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center; }
-.fzo-welcome { margin:0; font:700 11px/1.4 'Barlow Condensed',sans-serif; letter-spacing:.24em; text-transform:uppercase; color:var(--fzd-text-muted); }
-.fzo-headline { margin:0; max-width:17ch; font:700 clamp(38px,6vw,74px)/.92 'Barlow Condensed',sans-serif; letter-spacing:-.005em; text-transform:uppercase; color:var(--fzd-ink); text-wrap:balance; }
-.fzo-sub { margin:0; max-width:38ch; font-size:16px; line-height:1.4; color:var(--fzd-text); text-wrap:pretty; }
-/* Repêchage instantané : la carte vit dans instantDraft.css, partagée avec
-   Rejoindre un pool. Ici, seulement son fond de puits en thème sombre. */
-html[data-theme="dark"] #fzDashSection .fzo-start { --fzo-well:var(--fzd-tile-bg); }
-.fzo-paths { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-.fz-dash-onboard .fzo-path { display:flex; align-items:center; gap:14px; padding:16px; border:1px solid var(--fzd-border); border-radius:12px; background:var(--fzd-surface); color:var(--fzd-ink); text-decoration:none; }
-.fz-dash-onboard .fzo-path:hover { border-color:var(--fzd-border-strong); background:var(--fzd-bg-alt); }
-.fzo-path-icon { display:grid; place-items:center; width:38px; height:38px; flex:none; border-radius:9px; background:var(--fzd-tile-bg); color:var(--fzd-accent); font-size:24px; }
-.fzo-path strong { display:block; font-size:15px; }
-.fzo-path small { display:block; margin-top:2px; color:var(--fzd-text-muted); font-size:12.5px; line-height:1.4; }
-.fzo-chevron { margin-left:auto; color:var(--fzd-text-muted); font-size:18px; }
-.fzo-explainer { display:flex; flex-direction:column; gap:14px; margin-top:8px; }
-.fzo-section-label { display:flex; align-items:center; gap:12px; }
-.fzo-section-label h3 { margin:0; font:700 11px/1.4 'Barlow Condensed',sans-serif; letter-spacing:.2em; text-transform:uppercase; color:var(--fzd-text-muted); }
-.fzo-section-label > span { height:1px; flex:1; background:var(--fzd-border); }
-.fzo-features { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-.fzo-feature { overflow:hidden; border:1px solid var(--fzd-border); border-radius:12px; background:var(--fzd-surface); }
-.fzo-art { display:flex; align-items:center; justify-content:center; height:120px; overflow:hidden; background:var(--fzd-surface); }
-.fzo-mini-player { display:flex; flex-direction:column; justify-content:flex-end; width:56px; height:80px; padding:4px; border:1px solid var(--fzd-border); border-radius:7px; background:var(--fzd-bg-alt); transform:rotate(-8deg); }
-.fzo-mini-player.is-featured { width:60px; height:90px; margin:0 2px; border-color:var(--fzd-accent-fill); background:var(--fzd-tile-bg); transform:none; z-index:1; box-shadow:0 8px 18px rgba(0,0,0,.18); }
-.fzo-mini-player:last-child { transform:rotate(8deg); }
-.fzo-mini-player img { width:100%; height:52px; object-fit:contain; }
-.fzo-mini-player strong { color:var(--fzd-text); font:700 10px/1.1 'Barlow Condensed',sans-serif; }
-.fzo-mini-player.is-featured strong { color:var(--fzd-ink); font-size:11px; }
-.fzo-mini-player small { margin-top:2px; color:var(--fzd-accent); font:500 8px/1.2 'Barlow Condensed',sans-serif; letter-spacing:.12em; }
-.fzo-art-pools { gap:10px; }
-.fzo-pool-dot { display:grid; place-items:center; width:32px; height:32px; border:1px solid var(--fzd-border); border-radius:50%; background:var(--fzd-tile-bg); color:var(--fzd-text-muted); }
-.fzo-pool-dot.is-me { width:40px; height:40px; border-color:var(--fzd-border-strong); background:var(--fzd-accent-tint); color:var(--fzd-accent); }
-.fzo-art-season { padding:12px; }
-.fzo-mini-standings { display:flex; flex-direction:column; gap:5px; width:100%; }
-.fzo-mini-standings > div { display:flex; align-items:center; gap:8px; padding:5px 9px; border:1px solid var(--fzd-border); border-radius:6px; background:var(--fzd-bg-alt); color:var(--fzd-text); }
-.fzo-mini-standings > div:first-child { background:var(--fzd-accent-tint); border-color:var(--fzd-border-strong); color:var(--fzd-ink); }
-.fzo-mini-standings > div:last-child { color:var(--fzd-text-muted); }
-.fzo-mini-standings span { width:10px; font:700 11px/1.2 'Barlow Condensed',sans-serif; }
-.fzo-mini-standings strong { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11.5px; font-weight:600; }
-.fzo-mini-standings b { font:700 12px/1.2 'Barlow Condensed',sans-serif; }
-.fzo-feature-copy { padding:14px; border-top:1px solid var(--fzd-border-soft); }
-.fzo-feature h3 { margin:0 0 5px; color:var(--fzd-ink); font:700 14px/1.3 'Barlow',sans-serif; }
-.fzo-feature p { margin:0; color:var(--fzd-text-muted); font-size:12.5px; line-height:1.4; text-wrap:pretty; }
 .fz-dash-onboard :is(a,button):focus-visible { outline:2px solid var(--fzd-accent); outline-offset:4px; }
 @media (max-width:1000px) { .fzd-off-card { flex-basis:264px; width:264px; } }
-@media (max-width:760px) { .fz-dash-onboard { padding:32px 20px; gap:20px; } .fzo-features { grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); } }
-@media (max-width:580px) { .fz-dash-onboard { padding:24px 14px 32px; gap:18px; } .fzo-headline { font-size:clamp(38px,9vw,52px); } .fzo-sub { font-size:14px; } .fzo-paths { grid-template-columns:minmax(0,1fr); } }
+@media (max-width:760px) { .fz-dash-onboard { padding:32px 20px; gap:20px; } }
+@media (max-width:580px) { .fz-dash-onboard { padding:24px 14px 32px; gap:18px; } }
 
 /* ------------------------------------------------------------ */
 /* Hero — pool actif, bannière d'état (Canvas-9, Tour 2 : 2A bureau).*/
