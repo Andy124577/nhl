@@ -2,6 +2,8 @@
 
 La page d'accueil des visiteurs (`index.html`, `<main class="fzl">`, visible avec `html.fz-anon`). Styles : `landing.css`. Mouvement : `landing.js`.
 
+> **Habillage du 22 oct. 2026** : maquette « Fantazy Landing » d'andy, langage 6b Éditorial (jetons `--s-*` d'`accueil-season.css`, Saira / Saira Condensed). Titre « Tout pour ton pool. Rien de compliqué. », une phrase sous le titre, une carte de repêchage en direct à la place du téléphone, scènes sans pastilles, 32 clubs en grille (défilement au doigt au téléphone), FAQ plus courte (« aucune mise » gardé), dernier appel en carte. Le corps suit le thème clair/sombre ; le héros, le dernier appel et les cartes de club restent sombres. Les sections 3 à 5 ci-dessous décrivent l'ancienne version pour l'historique.
+
 Ce document adapte à Fantazy le processus de landing page utilisé pour CompuSport : même logique (comprendre en 5 secondes → reconnaître son problème → voir la solution → voir le produit en action → avoir confiance → passer à l'action), contenu propre à Fantazy.
 
 ## 1. Vision, mission, comment

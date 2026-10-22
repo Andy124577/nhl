@@ -1,321 +1,287 @@
 /* ================================================================
    LANDING — accueil des visiteurs (html.fz-anon)
    ----------------------------------------------------------------
-   Une page courte, parce que Fantazy se vend sur sa simplicité
-   (LANDING.md) :
+   Maquette « Fantazy Landing », langage 6b Éditorial (le même que
+   l'accueil de saison et le repêchage). Une page courte, parce que
+   Fantazy se vend sur sa simplicité (LANDING.md) :
 
-     Héros       titre, un bouton, le téléphone        bandeau noir et rouge
-     Scènes      trois idées, le visuel d'abord        fond de la fiche joueur
-     Clubs       les 32 clubs qui défilent
+     Héros       titre, une phrase, un bouton, le repêchage en direct
+     Scènes      01 favoris, 02 classement, 03 échanges
+     Clubs       les 32 clubs
      Questions   quatre, repliées
-     Dernier appel                                     bandeau noir et rouge
+     Dernier appel, puis le pied de page légal (navbar.js)
 
-   Le « bandeau » reprend le haut de la fiche joueur (career-modal.css,
-   .cmh-name-banner) : un aplat, un filigrane incliné, deux bandes en
-   biais, une trame fine et un filet de couleur. Ici en noir et rouge,
-   avec le mot-symbole Fantazy à la place de l'écusson d'un club. Le
-   fond des scènes reprend le corps de la même fiche.
+   Couleurs : les jetons --s-* d'accueil-season.css (html.fz-anon body),
+   dans les deux thèmes. Le héros, le dernier appel et les cartes de club
+   restent sombres dans les deux : ce sont des décors, comme la carte
+   « Ma position » de l'accueil de saison.
 
-   Tout reste sombre dans les deux thèmes : ce sont des décors.
-
-   Téléphone d'abord : les règles de base décrivent le téléphone, les
-   requêtes min-width enrichissent (768px, 1024px — voir DESIGN.md).
+   Téléphone d'abord ; les requêtes min-width enrichissent (720px, 1024px).
    ================================================================ */
 
 html.fz-auth .fzl { display: none; }
 /* La page porte sa propre démonstration : l'ancienne section « Comment
-   ça marche » ne sert plus qu'aux membres sans pool, qui la déplient
-   depuis leur tableau de bord (fzo-revealed). */
+   ça marche » ne sert plus qu'aux membres sans pool. */
 html.fz-anon #comment-ca-marche { display: none; }
-/* Le dernier bandeau touche le pied de page : sans ça, la marge du pied
-   (navbar.css) laisse une bande de fond entre les deux. */
-html.fz-anon .site-legal-footer { margin-top: 0; }
+
+html.fz-anon body {
+    /* Couleurs de position (draftReskin.css), en triplets RGB. */
+    --s-pos-c: 156, 201, 255;
+    --s-pos-ag: 127, 212, 155;
+    --s-pos-ad: 232, 178, 106;
+    --s-pos-d: 201, 162, 255;
+    --s-pos-g: 255, 138, 128;
+    --s-pos-n: 201, 199, 196;
+    --s-silver: #C9C7C4;
+    --s-bronze: #D99A5E;
+}
+html[data-theme="light"].fz-anon body {
+    --s-pos-c: 38, 104, 186;
+    --s-pos-ag: 29, 128, 72;
+    --s-pos-ad: 160, 98, 18;
+    --s-pos-d: 120, 76, 196;
+    --s-pos-g: 186, 52, 40;
+    --s-pos-n: 94, 92, 89;
+    --s-silver: #6E6C69;
+    --s-bronze: #A0622E;
+}
+/* Les décors sombres reprennent l'échelle sombre, quel que soit le thème. */
+.fzl-banner,
+.fzl-trade-card,
+.fzl-teams li {
+    --s-card: #111113;
+    --s-raise: #1B1B1E;
+    --s-line: #26262B;
+    --s-line2: #1F1F23;
+    --s-ink: #F3F1EE;
+    --s-ink2: #C9C7C4;
+    --s-mute: #A8A6A3;
+    --s-faint: #7E7C79;
+    --s-red-ink: #FF8A80;
+    --s-green: #7FD49B;
+    --s-face: #0B0B0C;
+    --s-pos-c: 156, 201, 255;
+    --s-pos-ad: 232, 178, 106;
+    color: var(--s-ink);
+}
 
 .fzl {
-    /* L'échelle sombre d'Apple, dans les deux thèmes (décor). */
-    --fzl-ink: #000000;
-    --fzl-body-bg: #000000;
-    --fzl-panel: #1C1C1E;
-    --fzl-panel-2: #2C2C2E;
-    --fzl-hair: #38383A;
-    --fzl-white: #F5F5F7;
-    --fzl-dim: #A1A1A6;
-    /* 4,70:1 sur --fzl-panel, mais 3,85:1 sur --fzl-panel-2 : jamais de
-       texte en --fzl-dim-2 sur le palier surélevé. */
-    --fzl-dim-2: #86868B;
-    --fzl-gold: #FFD60A;
-    --fzl-silver: #C6CCD3;
-    --fzl-bronze: #D38C5F;
-    --fzl-green: #30D158;
-    /* Le rouge signal. --fzl-brick et --fzl-red sont l'aplat (--primary) ;
-       le rouge EN TEXTE garde la valeur sombre #FF5C66 même en thème clair,
-       car la page reste sombre (--primary-text y donnerait #D70015). */
-    --fzl-brick: var(--primary);
-    --fzl-red: var(--primary);
-    --fzl-red-text: #FF5C66;
-    --fzl-red-rgb: 230, 32, 48;
-    /* Le bandeau : l'équivalent des couleurs d'équipe de la fiche joueur. */
-    --fzl-banner: #150A0B;
-
-    --fzl-gutter: 16px;
+    --fzl-gutter: 18px;
     --fzl-max: 1200px;
-    --fzl-display: 'Bebas Neue', Impact, 'Arial Narrow', sans-serif;
-    --fzl-body: 'Archivo', 'Segoe UI', system-ui, sans-serif;
-    --fzl-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --fzl-cond: 'Saira Condensed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
     --fzl-ease: cubic-bezier(.4, 0, .2, 1);
-
     display: block;
-    font-family: var(--fzl-body);
-    color: var(--fzl-white);
-    line-height: 1.5;
+    color: var(--s-ink);
+    font: 400 14px/1.4 'Saira', 'Barlow', system-ui, sans-serif;
     overflow-x: clip;
     -webkit-font-smoothing: antialiased;
 }
-@media (min-width: 768px) { .fzl { --fzl-gutter: 24px; } }
-@media (min-width: 1024px) { .fzl { --fzl-gutter: 32px; } }
+@media (min-width: 720px) { .fzl { --fzl-gutter: 28px; } }
 
-/* :where() — spécificité nulle, pour que les composants (boutons) gardent
-   leur propre couleur. */
 :where(.fzl) img { display: block; max-width: 100%; }
-:where(.fzl) a { color: inherit; }
-:where(.fzl) ol, :where(.fzl) ul { list-style: none; }
-:where(.fzl) :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 4px; }
+:where(.fzl) a { color: inherit; text-decoration: none; }
+:where(.fzl) ol, :where(.fzl) ul { list-style: none; margin: 0; padding: 0; }
+:where(.fzl) p { margin: 0; }
+:where(.fzl) :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 6px; }
 .fzl-sr {
     position: absolute !important; width: 1px; height: 1px; overflow: hidden;
     clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
-.fzl-wrap { max-width: var(--fzl-max); margin: 0 auto; }
+.fzl-wrap { max-width: var(--fzl-max); margin: 0 auto; padding: 0 var(--fzl-gutter); box-sizing: content-box; }
 
-.fzl-sec { position: relative; padding: 72px var(--fzl-gutter); }
-@media (min-width: 1024px) { .fzl-sec { padding-top: 104px; padding-bottom: 104px; } }
-
-/* ---- Typographie commune ---- */
+/* ---- Typographie ---- */
 .fzl-h2 {
-    font: 400 clamp(2.5rem, 8vw, 4.4rem)/.94 var(--fzl-display);
-    letter-spacing: .01em;
-    text-transform: uppercase;
     margin: 0;
+    font: 800 30px/1 var(--fzl-cond);
+    text-transform: uppercase;
+    text-wrap: balance;
 }
-.fzl-h2 em { font-style: normal; color: var(--fzl-red-text); }
-.fzl-h3 {
-    font: 800 clamp(1.6rem, 4.4vw, 2.5rem)/1.08 var(--fzl-body);
-    letter-spacing: -.015em;
-    margin: 12px 0 14px;
-}
+.fzl-h2 em { font-style: normal; color: var(--s-red-ink); }
+@media (min-width: 1024px) { .fzl-h2 { font-size: 40px; } }
 .fzl-tag {
+    align-self: flex-start;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
-    border: 1px solid color-mix(in srgb, var(--fzl-brick) 45%, transparent);
+    height: 26px;
+    padding: 0 10px;
     border-radius: 999px;
-    color: var(--fzl-red-text);
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .14em;
+    background: var(--s-red-soft);
+    color: var(--s-red-ink);
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
 }
-.fzl-tag b { font-family: var(--fzl-mono); font-weight: 700; letter-spacing: 0; }
+.fzl-tag b { font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* ---- Boutons ---- */
+/* Couleur de position : texte, ou pastille quand c'est un <b>. */
+.fzl-pos { --pc: var(--s-pos-n); color: rgb(var(--pc)); }
+.fzl-pos.is-c { --pc: var(--s-pos-c); }
+.fzl-pos.is-ag { --pc: var(--s-pos-ag); }
+.fzl-pos.is-ad { --pc: var(--s-pos-ad); }
+.fzl-pos.is-d { --pc: var(--s-pos-d); }
+.fzl-pos.is-g { --pc: var(--s-pos-g); }
+
+/* ---- Bouton : aplat clair sur décor sombre ---- */
 .fzl-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    min-height: 56px;
-    padding: 14px 26px;
-    border-radius: 12px;
-    border: 2px solid transparent;
-    font: 800 1.05rem/1.2 var(--fzl-body);
-    text-decoration: none;
-    transition: transform .2s var(--fzl-ease), background-color .2s var(--fzl-ease);
+    gap: 8px;
+    height: 52px;
+    padding: 0 26px;
+    border-radius: 14px;
+    background: #F3F1EE;
+    color: #0B0B0C;
+    font: 700 16px/1 'Saira', sans-serif;
+    transition: background-color .2s var(--fzl-ease), transform .2s var(--fzl-ease);
 }
-.fzl-btn:hover { transform: translateY(-2px); }
-.fzl-btn:active { transform: translateY(0); }
-.fzl-btn .fzl-arrow { transition: transform .2s var(--fzl-ease); }
-.fzl-btn:hover .fzl-arrow { transform: translateX(3px); }
-/* Aplat rouge, libellé blanc (4,55:1) : le survol fonce, jamais ne s'éclaircit (DESIGN.md). */
-.fzl-btn-primary { background: var(--fzl-brick); color: var(--on-primary); }
-.fzl-btn-primary:hover { background: var(--primary-deep); }
+.fzl-btn:hover { background: #FFFFFF; color: #0B0B0C; }
+.fzl-btn:active { transform: scale(.98); }
+.fzl-btn svg { transition: transform .2s var(--fzl-ease); }
+.fzl-btn:hover svg { transform: translateX(3px); }
+
+/* Visage rond (photo LNH) et nom sur deux lignes. */
+.fzl-face { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--s-face, #0B0B0C); overflow: hidden; }
+.fzl-face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.fzl-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fzl-who strong { font: 600 13px/1.1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzl-who small { display: flex; align-items: center; gap: 5px; font-size: 10px; line-height: 1.2; color: var(--s-faint); }
 
 /* ================================================================
-   BANDEAU — le haut de la fiche joueur, en noir et rouge
-   (career-modal.css, .cmh-name-banner et ses ::before / ::after).
+   BANDEAU — le fond sombre et rouge du héros et du dernier appel :
+   deux halos, deux reflets en biais et une trame de points.
    ================================================================ */
 .fzl-banner {
     position: relative;
     isolation: isolate;
     overflow: hidden;
     background:
-        linear-gradient(100deg, #ffffff09, transparent 45%, #0005),
-        radial-gradient(80% 110% at 100% 0%, rgba(var(--fzl-red-rgb), .30), transparent 70%),
-        var(--fzl-banner);
+        radial-gradient(90% 70% at 0% 100%, rgba(240, 64, 48, .4) 0%, rgba(240, 64, 48, 0) 62%),
+        radial-gradient(70% 60% at 100% 0%, rgba(255, 90, 70, .16) 0%, rgba(255, 90, 70, 0) 60%),
+        linear-gradient(160deg, #2A1213 0%, #141214 55%, #0B0B0C 100%);
 }
-/* Le filigrane : sur la fiche, l'écusson du club, surdimensionné et
-   rogné ; ici, le mot-symbole Fantazy. */
 .fzl-banner::before {
     content: '';
     position: absolute;
-    z-index: -2;
-    top: 50%; right: -18%;
-    width: min(1100px, 150vw);
-    aspect-ratio: 268 / 73;
-    background: url("Icons/fantazy.png") center / contain no-repeat;
-    opacity: .07;
-    transform: translateY(-50%) rotate(-13deg);
+    inset: 0;
+    z-index: -1;
     pointer-events: none;
+    background: linear-gradient(160deg, rgba(255, 72, 56, 0) 20%, rgba(255, 72, 56, .45) 21%, rgba(255, 72, 56, 0) 28%,
+        rgba(255, 72, 56, 0) 36%, rgba(255, 72, 56, .25) 37.5%, rgba(255, 72, 56, 0) 46%);
 }
-/* Deux panneaux en biais — une bande sombre, une bande rouge — et la
-   trame tissée, comme sur la fiche. */
 .fzl-banner::after {
     content: '';
     position: absolute;
+    top: 0; right: 0;
     z-index: -1;
-    inset: 0;
+    width: 62%;
+    height: 60%;
     pointer-events: none;
-    background:
-        linear-gradient(132deg, transparent 71%, #0003 71% 76%, transparent 76%),
-        linear-gradient(132deg, transparent 86%, rgba(var(--fzl-red-rgb), .16) 86%, transparent 96%),
-        repeating-linear-gradient(24deg, #ffffff03 0 1px, transparent 1px 4px);
-    box-shadow: inset 0 1px #ffffff17;
+    background-image: radial-gradient(rgba(255, 255, 255, .12) 1px, rgba(255, 255, 255, 0) 1.5px);
+    background-size: 9px 9px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 70%);
+    mask-image: linear-gradient(90deg, transparent, #000 70%);
 }
 
 /* ================================================================
-   HÉROS — le titre, un bouton, le téléphone
+   HÉROS
    ================================================================ */
-.fzl-hero {
-    padding: 40px var(--fzl-gutter) 0;
-    border-bottom: 3px solid var(--fzl-red);
-}
-.fzl-hero-grid {
-    display: grid;
-    gap: 40px;
-    max-width: 1280px;
-    margin: 0 auto;
-}
-.fzl-hero-copy {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 28px;
-}
+.fzl-hero { padding: 28px 0 24px; }
+.fzl-hero-grid { display: grid; gap: 18px; }
+.fzl-hero-copy { display: flex; flex-direction: column; gap: 18px; }
 .fzl-h1 {
-    font: 400 clamp(3.4rem, 16vw, 6.6rem)/.9 var(--fzl-display);
-    letter-spacing: .005em;
-    text-transform: uppercase;
     margin: 0;
+    font: 800 52px/48px var(--fzl-cond);
+    text-transform: uppercase;
+    text-wrap: balance;
 }
-.fzl-h1 span { display: block; color: var(--fzl-red-text); }
-/* « casse-tête » ne se coupe jamais à son trait d'union. */
-.fzl-h1 .nw { display: inline; color: inherit; white-space: nowrap; }
-.fzl-hero-copy .fzl-btn { width: 100%; }
-@media (min-width: 480px) {
-    .fzl-hero-copy .fzl-btn { width: auto; }
+.fzl-h1 span { color: #FF5A4E; }
+.fzl-lead { font-size: 15px; line-height: 21px; color: var(--s-ink2); text-wrap: pretty; max-width: 46ch; }
+.fzl-stage { margin: 0; min-width: 0; }
+@media (min-width: 720px) {
+    .fzl-hero { padding: 48px 0 44px; }
+    .fzl-h1 { font-size: 72px; line-height: 66px; }
+    .fzl-lead { font-size: 17px; line-height: 25px; }
+    .fzl-hero-copy .fzl-btn { align-self: flex-start; }
+    .fzl-stage { max-width: 440px; }
 }
-/* Au téléphone, l'appareil sort par le bas du bandeau : on voit le haut
-   de la salle de repêchage, le reste se devine. */
-.fzl-stage { position: relative; margin: 0; max-height: 470px; overflow: hidden; }
 @media (min-width: 1024px) {
-    .fzl-hero { padding: 64px var(--fzl-gutter) 72px; }
-    .fzl-hero-grid {
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
-        align-items: center;
-        gap: 48px;
-        min-height: min(640px, calc(100vh - 210px));
-    }
-    .fzl-stage { max-height: none; overflow: visible; }
-    .fzl-stage .fzl-phone { margin-right: 0; }
+    .fzl-hero { padding: 72px 0 80px; }
+    .fzl-hero-grid { grid-template-columns: minmax(0, 1fr) 420px; align-items: center; gap: 64px; }
+    .fzl-hero-copy { gap: 24px; }
+    .fzl-h1 { font-size: 92px; line-height: 84px; }
+    .fzl-h1 span { display: block; }
+    .fzl-stage { max-width: none; }
 }
 
-/* ---- Le téléphone : la vraie salle de repêchage, en HTML ---- */
-.fzl-phone {
-    position: relative;
-    width: min(100%, 372px);
-    margin: 0 auto;
-    padding: 10px;
-    border-radius: 40px;
-    background: linear-gradient(145deg, #3A3A3C, #161617 30%, #000000 70%, #2C2C2E);
-    border: 1px solid #636366;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, .6), inset 0 0 0 1px rgba(255, 255, 255, .04);
-}
-.fzl-phone::before {
-    content: '';
-    position: absolute;
-    top: 18px; left: 50%;
-    width: 72px; height: 20px;
-    margin-left: -36px;
-    border-radius: 12px;
-    background: var(--fzl-ink);
-    z-index: 2;
-}
-.fzl-screen {
-    position: relative;
-    overflow: hidden;
-    border-radius: 31px;
-    background: var(--fzl-ink);
-    padding: 44px 12px 16px;
-    font-size: 12px;
-    color: var(--fzl-white);
+/* ---- La carte du repêchage en direct (landing.js l'anime) ---- */
+.fzl-live-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 22px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    box-shadow: 0 24px 50px -20px rgba(0, 0, 0, .9);
 }
 .fzl-ph-top {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 10px;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: .12em;
+    align-items: center;
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    color: var(--fzl-dim);
+    color: var(--s-faint);
 }
-.fzl-live { display: inline-flex; align-items: center; gap: 6px; color: var(--fzl-white); }
+.fzl-ph-top #fzlPhPick { font-variant-numeric: tabular-nums; }
+.fzl-live { display: inline-flex; align-items: center; gap: 6px; color: var(--s-red-ink); }
 .fzl-live::before {
     content: '';
-    width: 8px; height: 8px;
+    width: 6px; height: 6px;
     border-radius: 50%;
-    background: var(--fzl-brick);
-    box-shadow: 0 0 0 0 rgba(var(--fzl-red-rgb), .6);
-    animation: fzlLive 1.8s infinite;
+    background: #E5372B;
+    animation: fzlPulse 1.2s infinite;
 }
-@keyframes fzlLive {
-    0% { box-shadow: 0 0 0 0 rgba(var(--fzl-red-rgb), .55); }
-    70% { box-shadow: 0 0 0 8px rgba(var(--fzl-red-rgb), 0); }
-    100% { box-shadow: 0 0 0 0 rgba(var(--fzl-red-rgb), 0); }
-}
-.fzl-ph-top .fzl-mono { font-family: var(--fzl-mono); letter-spacing: 0; font-weight: 500; }
+@keyframes fzlPulse { 50% { opacity: .3; } }
 
-/* Bandeau de tour — même trois états que draftActif : ton tour, attente, confirmé. */
+/* Bandeau de tour — ton tour (rouge), choix confirmé et attente (vert). */
 .fzl-ph-banner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 10px;
-    min-height: 52px;
-    padding: 10px 14px;
-    margin-bottom: 10px;
-    border-radius: 12px;
-    border: 1px solid var(--fzl-hair);
-    background: var(--fzl-panel);
+    min-height: 54px;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(127, 212, 155, .08);
+    border: 1px solid rgba(127, 212, 155, .35);
     transition: background-color .35s var(--fzl-ease), border-color .35s var(--fzl-ease);
 }
-.fzl-ph-banner[data-state="turn"] {
-    border-color: var(--fzl-brick);
-    background: rgba(var(--fzl-red-rgb), .16);
-    box-shadow: 0 0 0 3px rgba(var(--fzl-red-rgb), .12);
-}
-.fzl-ph-banner[data-state="done"] { border-color: rgba(48, 209, 88, .5); background: rgba(48, 209, 88, .1); }
-.fzl-ph-label { font: 400 1.35rem/1 var(--fzl-display); letter-spacing: .04em; }
-.fzl-ph-label small { display: block; margin-top: 3px; font: 600 10px/1.3 var(--fzl-body); letter-spacing: .02em; color: var(--fzl-dim); }
+.fzl-ph-banner[data-state="turn"] { background: rgba(229, 55, 43, .14); border-color: rgba(229, 55, 43, .6); }
+.fzl-ph-banner[data-state="done"] { background: rgba(127, 212, 155, .14); border-color: rgba(127, 212, 155, .55); }
+.fzl-ph-label { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fzl-ph-label strong { font: 800 17px/1 var(--fzl-cond); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzl-ph-label small { font-size: 11px; line-height: 1.1; color: var(--s-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Le chrono : chiffres cuivrés, comme celui de la salle de repêchage. */
 .fzl-ph-clock {
     flex: none;
-    font: 700 13px/1 var(--fzl-mono);
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: rgba(0, 0, 0, .35);
+    padding: 6px 9px;
+    border-radius: 9px;
+    background: rgba(10, 10, 11, .8);
+    box-shadow: inset 0 0 0 1px rgba(217, 154, 94, .8);
+    font: 700 14px/1 'Saira', sans-serif;
+    font-variant-numeric: tabular-nums;
+    background-image: linear-gradient(160deg, #F6D2A8, #D99A5E 30%, #A8622E 55%, #E7B07A 75%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
-.fzl-ph-stripwrap { overflow: hidden; margin: 0 -2px 12px; padding: 4px 2px; }
+
+/* Les choix : quatre cartes visibles ; la bande glisse d'une carte
+   quand l'ordre revient en serpent. */
+.fzl-ph-stripwrap { overflow: hidden; }
 .fzl-ph-strip {
     display: grid;
     grid-auto-flow: column;
@@ -324,387 +290,451 @@ html.fz-anon .site-legal-footer { margin-top: 0; }
     transition: transform .6s var(--fzl-ease);
 }
 .fzl-ph-strip.is-shifted { transform: translateX(calc(-1 * ((100% - 18px) / 4 + 6px))); }
-
-/* ---- Carte de choix — couleurs du club du joueur repêché ---- */
 .fzl-pk {
-    --c1: #2C2C2E; --c2: #3A3A3C;
+    --club: #1B1B1E;
     position: relative;
-    isolation: isolate;
+    height: 86px;
+    border-radius: 11px;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--club) 0%, #141416 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+.fzl-pk-no { position: absolute; top: 5px; left: 6px; z-index: 1; font: 700 10px/1 'Saira', sans-serif; }
+.fzl-pk-face { height: 72px; width: auto; max-width: none !important; }
+.fzl-pk-txt {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    aspect-ratio: 3 / 4;
-    min-width: 0;
-    padding: 6px;
-    border-radius: 9px;
-    overflow: hidden;
-    color: #fff;
-    background: linear-gradient(165deg,
-        color-mix(in srgb, var(--c1) 80%, #0B0D10) 0%,
-        color-mix(in srgb, var(--c1) 40%, #06070A) 100%);
-    box-shadow: inset 0 -3px 0 var(--c2);
+    gap: 2px;
+    padding: 12px 5px 5px;
+    background: linear-gradient(0deg, rgba(0, 0, 0, .85), rgba(0, 0, 0, 0));
 }
-.fzl-pk::after {
-    content: '';
-    position: absolute; inset: 0;
-    z-index: 0;
-    background: linear-gradient(180deg, transparent 38%, rgba(0, 0, 0, .78) 88%);
-}
-.fzl-pk-no {
-    position: absolute; top: 5px; left: 6px;
-    z-index: 1;
-    font: 700 9px/1 var(--fzl-mono);
-    opacity: .9;
-}
-.fzl-pk-logo { position: absolute; top: 4px; right: 4px; z-index: 1; width: 18px; height: 18px; object-fit: contain; }
-.fzl-pk-face {
-    position: absolute;
-    left: 50%; bottom: 16%;
-    width: 96%;
-    max-width: none !important;
-    transform: translateX(-50%);
-    z-index: 0;
-}
-.fzl-pk-name, .fzl-pk-meta { position: relative; z-index: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fzl-pk-name { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; }
-.fzl-pk-meta { font: 500 8.5px/1.3 var(--fzl-mono); opacity: .85; }
-.fzl-pk.is-empty { background: var(--fzl-panel); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
-.fzl-pk.is-empty::after { display: none; }
+.fzl-pk-name { font: 700 9px/1 'Saira', sans-serif; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzl-pk-meta { font: 600 8px/1 'Saira', sans-serif; white-space: nowrap; }
+.fzl-pk.is-empty { background: var(--s-raise); box-shadow: inset 0 0 0 1px var(--s-line); }
 .fzl-pk.is-empty::before {
     content: '?';
     position: absolute; inset: 0;
     display: grid; place-items: center;
-    font: 400 2.2rem/1 var(--fzl-display);
-    color: rgba(255, 255, 255, .16);
+    font: 800 30px/1 var(--fzl-cond);
+    color: rgba(255, 255, 255, .14);
 }
-.fzl-pk.is-current { box-shadow: inset 0 0 0 2px var(--fzl-brick); animation: fzlTurn 2.4s var(--fzl-ease) infinite; }
-@keyframes fzlTurn {
-    0%, 100% { box-shadow: inset 0 0 0 2px var(--fzl-brick), 0 0 0 0 rgba(var(--fzl-red-rgb), .45); }
-    60% { box-shadow: inset 0 0 0 2px var(--fzl-brick), 0 0 0 6px rgba(var(--fzl-red-rgb), 0); }
-}
-/* Révélation : la carte arrive désaturée, la couleur monte, puis le nom.
-   Un vrai moment de célébration : le rebond y est permis (DESIGN.md). */
-.fzl-pk.is-revealing { animation: fzlReveal 1s cubic-bezier(.34, 1.56, .64, 1) both; }
-.fzl-pk.is-revealing .fzl-pk-name, .fzl-pk.is-revealing .fzl-pk-meta { animation: fzlRise .5s var(--fzl-ease) .45s both; }
+.fzl-pk.is-current { box-shadow: inset 0 0 0 2px #E5372B; animation: fzlTurn 2.4s var(--fzl-ease) infinite; }
+@keyframes fzlTurn { 50% { box-shadow: inset 0 0 0 2px rgba(229, 55, 43, .35); } }
+/* Révélation : la carte arrive désaturée, la couleur monte, puis le nom. */
+.fzl-pk.is-revealing { animation: fzlReveal .9s cubic-bezier(.34, 1.56, .64, 1) both; }
+.fzl-pk.is-revealing .fzl-pk-txt { animation: fzlRise .45s var(--fzl-ease) .4s both; }
 @keyframes fzlReveal {
     0% { transform: scale(.9); filter: saturate(0) brightness(.55); }
-    55% { filter: saturate(.7) brightness(.9); }
-    100% { transform: scale(1); filter: none; }
+    100% { transform: none; filter: none; }
 }
 @keyframes fzlRise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* Joueurs disponibles */
-.fzl-ph-head {
-    display: flex;
-    justify-content: space-between;
-    margin: 0 2px 6px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--fzl-dim-2);
-}
-.fzl-ph-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.fzl-ph-list { display: flex; flex-direction: column; gap: 6px; }
 .fzl-ph-row {
-    display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) auto auto;
+    display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 8px 6px 6px;
-    border-radius: 10px;
-    background: var(--fzl-panel);
-    border: 1px solid var(--fzl-hair);
-    transition: opacity .4s var(--fzl-ease), transform .4s var(--fzl-ease), border-color .3s var(--fzl-ease);
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: var(--s-raise);
+    border: 1px solid #34343A;
+    transition: opacity .4s var(--fzl-ease), background-color .3s var(--fzl-ease), border-color .3s var(--fzl-ease);
 }
-.fzl-ph-face { position: relative; width: 38px; height: 38px; border-radius: 8px; background: var(--fzl-panel-2); overflow: hidden; }
-.fzl-ph-face img { width: 100%; height: 100%; object-fit: cover; }
-.fzl-ph-who { min-width: 0; }
-.fzl-ph-who strong { display: block; font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fzl-ph-who small { display: block; font-size: 10px; color: var(--fzl-dim-2); }
-.fzl-ph-pts { font: 700 13px/1 var(--fzl-mono); text-align: right; }
-.fzl-ph-pts small { display: block; margin-top: 3px; font: 500 8.5px/1 var(--fzl-body); letter-spacing: .08em; color: var(--fzl-dim-2); }
+.fzl-ph-pts { font: 700 15px/1 'Saira', sans-serif; font-variant-numeric: tabular-nums; }
 .fzl-ph-pick {
-    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 10px;
     border-radius: 8px;
-    background: var(--fzl-brick);
-    color: var(--on-primary);
-    font-size: 10.5px;
-    font-weight: 800;
-    transition: transform .15s var(--fzl-ease), filter .15s var(--fzl-ease);
+    background: #F3F1EE;
+    color: #0B0B0C;
+    font: 600 11px/1 'Saira', sans-serif;
+    transition: transform .15s var(--fzl-ease);
 }
-.fzl-ph-row:not(:first-child) .fzl-ph-pick { background: transparent; color: var(--fzl-dim); box-shadow: inset 0 0 0 1px var(--fzl-hair); }
-.fzl-ph-row.is-armed .fzl-ph-pick { background: var(--fzl-brick); color: var(--on-primary); box-shadow: none; }
-.fzl-ph-row.is-armed { border-color: rgba(var(--fzl-red-rgb), .6); }
-.fzl-ph-row.is-pressing .fzl-ph-pick { transform: scale(.9); filter: brightness(1.15); }
-.fzl-ph-row.is-taken { opacity: .38; border-color: var(--fzl-hair); }
-.fzl-ph-row.is-taken .fzl-ph-pick { background: transparent; color: var(--fzl-dim); box-shadow: inset 0 0 0 1px var(--fzl-hair); }
-.fzl-ph-prog { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; font-size: 10.5px; color: var(--fzl-dim); }
-.fzl-ph-bar { height: 6px; border-radius: 3px; background: var(--fzl-panel-2); overflow: hidden; }
-.fzl-ph-bar i { display: block; height: 100%; width: 100%; background: var(--fzl-brick); transform: scaleX(var(--p, 0)); transform-origin: left; transition: transform .5s var(--fzl-ease); }
-.fzl-ph-prog b { font: 700 11px/1 var(--fzl-mono); color: var(--fzl-white); }
+.fzl-ph-row.is-armed { border-color: rgba(229, 55, 43, .6); }
+.fzl-ph-row.is-pressing .fzl-ph-pick { transform: scale(.9); }
+.fzl-ph-row.is-taken { opacity: .45; background: transparent; border-color: var(--s-line2); }
+.fzl-ph-row.is-taken .fzl-ph-pick { background: var(--s-line2); color: #6E6C69; }
 
 /* ================================================================
-   SCÈNES — une idée chacune, sur le fond de la fiche joueur
+   SCÈNES
    ================================================================ */
-.fzl-product,
-.fzl-faq {
-    background:
-        linear-gradient(132deg, transparent 0 54%, #ffffff02 54% 62%, transparent 62%),
-        repeating-linear-gradient(126deg, #ffffff01 0 1px, transparent 1px 5px),
-        var(--fzl-body-bg);
-    color: var(--fzl-white);
-}
-.fzl-product { padding-top: 16px; }
-@media (min-width: 1024px) { .fzl-product { padding-top: 24px; } }
-.fzl-scene {
-    display: grid;
-    gap: 24px;
-    padding: 48px 0;
-}
-.fzl-scene + .fzl-scene { border-top: 1px solid var(--fzl-hair); }
-.fzl-scene-copy p { margin: 0; color: var(--fzl-dim); font-size: 1.05rem; line-height: 1.6; max-width: 40ch; }
-.fzl-facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; }
-.fzl-facts li {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 7px 12px;
-    border-radius: 8px;
-    background: var(--fzl-panel);
-    border: 1px solid var(--fzl-hair);
-    font-size: .86rem;
-    color: var(--fzl-dim);
-}
-.fzl-facts b { font: 700 .92rem/1 var(--fzl-mono); color: var(--fzl-white); }
-.fzl-visual {
-    position: relative;
+.fzl-feats { display: flex; flex-direction: column; }
+.fzl-feat { display: grid; gap: 14px; padding-top: 36px; }
+.fzl-feat-copy { display: flex; flex-direction: column; gap: 12px; }
+.fzl-feat-copy p { font-size: 14px; line-height: 20px; color: var(--s-mute); text-wrap: pretty; max-width: 44ch; }
+.fzl-panel {
     min-width: 0;
-    padding: 18px;
-    border-radius: 18px;
-    background: var(--fzl-panel);
-    border: 1px solid var(--fzl-hair);
+    margin: 0 -8px;
+    border-radius: 20px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line2);
+    overflow: hidden;
+}
+@media (min-width: 720px) {
+    .fzl-feat-copy p { font-size: 16px; line-height: 24px; }
+    .fzl-panel { margin: 0; max-width: 560px; }
 }
 @media (min-width: 1024px) {
-    .fzl-scene { grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr); align-items: center; gap: 64px; padding: 72px 0; }
-    .fzl-scene.is-flip .fzl-scene-copy { order: 2; }
-    .fzl-visual { padding: 24px; }
+    .fzl-feat {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: center;
+        gap: 72px;
+        padding-top: 96px;
+    }
+    .fzl-feat:nth-child(even) .fzl-feat-copy { order: 2; }
+    .fzl-feat:nth-child(odd) .fzl-panel { justify-self: end; width: 100%; }
 }
 
-/* 02 · Le classement — des totaux calculés, pas inventés */
-.fzl-standings { display: flex; flex-direction: column; }
-.fzl-standings-head, .fzl-standings li {
-    display: grid;
-    grid-template-columns: 34px minmax(0, 1fr) auto 56px;
-    align-items: center;
-    gap: 12px;
-}
-.fzl-standings-head {
-    padding: 0 12px 10px;
-    font-size: .68rem;
-    font-weight: 700;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--fzl-dim-2);
-}
-.fzl-standings-head span:nth-child(n+3) { text-align: right; }
-.fzl-standings li { padding: 14px 12px; border-top: 1px solid var(--fzl-hair); }
-.fzl-standings li.is-me { background: rgba(var(--fzl-red-rgb), .10); border-radius: 10px; }
-.fzl-standings .rk { font: 400 1.9rem/1 var(--fzl-display); color: var(--fzl-dim-2); }
-.fzl-standings li:nth-child(1) .rk { color: var(--fzl-gold); }
-.fzl-standings li:nth-child(2) .rk { color: var(--fzl-silver); }
-.fzl-standings li:nth-child(3) .rk { color: var(--fzl-bronze); }
-.fzl-standings .nm { min-width: 0; }
-.fzl-standings .nm strong { display: block; font-weight: 800; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fzl-standings .nm small { display: block; font-size: .78rem; color: var(--fzl-dim-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fzl-standings .pts { font: 700 1.25rem/1 var(--fzl-mono); text-align: right; }
-.fzl-standings .gap { font: 500 .82rem/1 var(--fzl-mono); color: var(--fzl-dim-2); text-align: right; }
-.fzl-note { margin: 14px 0 0; font-size: .78rem; line-height: 1.5; color: var(--fzl-dim-2); }
-/* Sur la rangée teintée et le palier surélevé, --fzl-dim-2 passe sous
-   4,5:1 : le gris secondaire prend le relais. */
-.fzl-standings li.is-me small,
-.fzl-standings li.is-me .gap,
-.fzl-help-list .fzl-ph-who small { color: var(--fzl-dim); }
-
-/* 03 · Échange */
-.fzl-trade { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
-.fzl-trade-card {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    padding: 12px;
-    border-radius: 14px;
-    background: linear-gradient(165deg, color-mix(in srgb, var(--c1) 70%, #0B0D10), color-mix(in srgb, var(--c1) 30%, #06070A));
-    box-shadow: inset 0 -3px 0 var(--c2);
-    min-height: 196px;
+/* 01 · Favoris */
+.fzl-fav-next {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-}
-.fzl-trade-card::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, .8) 85%); }
-.fzl-trade-card img.face { position: absolute; left: 50%; bottom: 30%; width: 88%; max-width: 150px !important; transform: translateX(-50%); z-index: -2; }
-.fzl-trade-card img.logo { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; object-fit: contain; }
-.fzl-trade-card .owner { position: absolute; top: 10px; left: 12px; right: 42px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .64rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .9; }
-.fzl-trade-card strong { font-weight: 800; font-size: .98rem; line-height: 1.15; }
-.fzl-trade-card small { font: 500 .72rem/1.4 var(--fzl-mono); opacity: .85; }
-.fzl-trade-mid { display: grid; justify-items: center; gap: 10px; }
-.fzl-trade-mid svg { color: var(--fzl-red-text); }
-.fzl-trade-status { position: relative; display: grid; margin: 16px auto 0; width: max-content; }
-.fzl-trade-status span {
-    grid-area: 1 / 1;
-    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 999px;
-    font-size: .78rem;
-    font-weight: 800;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    transition: opacity .35s var(--fzl-ease), transform .35s var(--fzl-ease);
-}
-.fzl-trade-status .sent { background: rgba(255, 214, 10, .14); color: var(--fzl-gold); }
-.fzl-trade-status .done { background: rgba(48, 209, 88, .14); color: var(--fzl-green); opacity: 0; transform: translateY(6px); }
-.fzl-trade-status.is-done .sent { opacity: 0; transform: translateY(-6px); }
-.fzl-trade-status.is-done .done { opacity: 1; transform: none; }
-
-/* 01 · Ton avantage — l'aide au repêchage */
-.fzl-help-fav {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px;
+    gap: 10px;
     padding: 12px 14px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    border: 1px solid var(--fzl-brick);
-    background: rgba(var(--fzl-red-rgb), .12);
-    font-size: .74rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--fzl-dim);
+    background: linear-gradient(90deg, var(--s-red-soft), transparent);
 }
-.fzl-help-fav strong { display: block; margin-top: 3px; font-size: 1rem; letter-spacing: 0; text-transform: none; color: var(--fzl-white); }
-.fzl-help-fav .st, .fzl-help-list .is-fav .st { color: var(--fzl-gold); }
-.fzl-help-head, .fzl-help-list li {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 44px 44px 22px;
+.fzl-fav-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fzl-fav-who small { font: 600 10px/1 'Saira', sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: var(--s-mute); }
+.fzl-fav-who strong { font: 600 15px/1 'Saira', sans-serif; }
+.fzl-chipbtn {
+    display: flex;
     align-items: center;
-    gap: 8px;
-}
-.fzl-help-head {
-    padding: 0 8px 8px;
-    font-size: .66rem;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--fzl-dim-2);
-}
-.fzl-help-head span:nth-child(2), .fzl-help-head span:nth-child(3) { text-align: right; }
-.fzl-help-list { display: flex; flex-direction: column; gap: 6px; }
-.fzl-help-list li {
-    grid-template-columns: 38px minmax(0, 1fr) 44px 44px 22px;
-    padding: 6px 8px 6px 6px;
+    height: 32px;
+    padding: 0 12px;
     border-radius: 10px;
-    background: var(--fzl-panel-2);
-    border: 1px solid var(--fzl-hair);
+    background: var(--s-ink);
+    color: var(--s-bg);
+    font: 600 12px/1 'Saira', sans-serif;
 }
-.fzl-help-head { grid-template-columns: minmax(0, 1fr) 44px 44px 22px; padding-left: 54px; }
-.fzl-help-list li.is-fav { border-color: rgba(255, 214, 10, .45); }
-.fzl-help-list .n { font: 700 .88rem/1 var(--fzl-mono); text-align: right; color: var(--fzl-dim); }
-.fzl-help-list .n.is-proj { color: var(--fzl-white); }
-.fzl-help-list .st { color: var(--fzl-dim-2); display: grid; place-items: center; }
-.fzl-help-need {
+.fzl-star { flex: none; color: var(--s-dim); }
+.fzl-star.is-on { color: var(--s-gold); }
+.fzl-fav-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--s-line2);
+}
+.fzl-fav-list .fzl-face { width: 34px; height: 34px; }
+.fzl-who small b.fzl-pos {
+    height: 16px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: rgba(var(--pc), .16);
+    font: 700 9px/16px 'Saira', sans-serif;
+}
+.fzl-proj { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font: 700 15px/1 'Saira', sans-serif; font-variant-numeric: tabular-nums; }
+.fzl-proj small { font: 600 8px/1 'Saira', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--s-faint); }
+.fzl-needs {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-    margin-top: 14px;
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--fzl-dim-2);
+    padding: 10px 14px 12px;
+    border-top: 1px solid var(--s-line2);
 }
-.fzl-help-need span { margin-right: 4px; }
-.fzl-help-need b { padding: 5px 8px; border-radius: 6px; background: var(--fzl-panel-2); font: 700 .72rem/1 var(--fzl-mono); letter-spacing: 0; color: var(--fzl-white); }
+.fzl-needs span { margin-right: 2px; font: 600 10px/1 'Saira', sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: var(--s-faint); }
+.fzl-needs b {
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 6px;
+    background: rgba(var(--pc), .16);
+    font: 700 10px/22px 'Saira', sans-serif;
+}
 
-/* Les 32 clubs — la seule chroma libre du système, rattachée à son club. */
-.fzl-sub-h { font: 800 1.3rem/1.2 var(--fzl-body); margin: 0; }
-.fzl-sub-p { margin: 8px 0 0; color: var(--fzl-dim); max-width: 60ch; }
-.fzl-clubs { margin: 24px calc(-1 * var(--fzl-gutter)) 0; padding: 64px 0 8px; border-top: 1px solid var(--fzl-hair); }
-.fzl-clubs-copy { padding: 0 var(--fzl-gutter); max-width: calc(var(--fzl-max) + 2 * var(--fzl-gutter)); margin: 0 auto 28px; }
-.fzl-marquee { overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
-.fzl-marquee + .fzl-marquee { margin-top: 10px; }
-.fzl-marquee-track { display: flex; width: max-content; animation: fzlCrawl 70s linear infinite; }
-@keyframes fzlCrawl { to { transform: translateX(-50%); } }
-.fzl-marquee.is-rev .fzl-marquee-track { animation-direction: reverse; animation-duration: 80s; }
-.fzl-marquee:hover .fzl-marquee-track { animation-play-state: paused; }
-.fzl-marquee ul { display: flex; gap: 10px; padding-right: 10px; flex: none; }
-.fzl-marquee li {
+/* 02 · Classement — des totaux calculés, pas inventés */
+.fzl-rank-head, .fzl-rank li {
     display: grid;
-    place-items: center;
-    width: 88px; height: 88px;
-    border-radius: 16px;
-    background: linear-gradient(150deg, color-mix(in srgb, var(--c1) 55%, #0B0D10), color-mix(in srgb, var(--c1) 18%, #07080A));
-    box-shadow: inset 0 -3px 0 var(--c2), inset 0 0 0 1px rgba(255, 255, 255, .06);
-}
-.fzl-marquee li img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .45)); }
-
-/* ---- Questions fréquentes ---- */
-.fzl-faq { padding-top: 0; }
-.fzl-faq-grid { display: grid; gap: 28px; padding-top: 72px; border-top: 1px solid var(--fzl-hair); }
-@media (min-width: 1024px) {
-    .fzl-faq-grid { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 64px; padding-top: 104px; }
-}
-.fzl-qa { border-top: 2px solid var(--fzl-white); }
-.fzl-qa details { border-bottom: 1px solid var(--fzl-hair); }
-.fzl-qa summary {
-    display: flex;
-    justify-content: space-between;
+    grid-template-columns: 28px minmax(0, 1fr) 64px 40px;
+    gap: 8px;
     align-items: center;
-    gap: 16px;
-    min-height: 56px;
-    padding: 14px 0;
+    padding: 0 14px;
+}
+.fzl-rank-head {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background: var(--s-head);
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--s-faint);
+}
+.fzl-rank-head span:nth-child(n+3) { text-align: right; }
+.fzl-rank li { padding-top: 11px; padding-bottom: 11px; border-top: 1px solid var(--s-line2); }
+.fzl-rank li.is-me { background: var(--s-red-soft); }
+.fzl-rank .rk { font: 700 18px/1 'Saira', sans-serif; color: var(--s-faint); }
+.fzl-rank li:nth-child(1) .rk { color: var(--s-gold); }
+.fzl-rank li:nth-child(2) .rk { color: var(--s-silver); }
+.fzl-rank li:nth-child(3) .rk { color: var(--s-bronze); }
+.fzl-rank .nm { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fzl-rank .nm strong { font: 600 14px/1.1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzl-rank .nm small { font-size: 11px; line-height: 1.1; color: var(--s-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzl-rank .pts { text-align: right; font: 700 16px/1 'Saira', sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fzl-rank .gap { text-align: right; font: 500 12px/1 'Saira', sans-serif; color: var(--s-faint); }
+.fzl-note { padding: 10px 14px 12px; border-top: 1px solid var(--s-line2); font-size: 11px; line-height: 15px; color: var(--s-faint); }
+
+/* 03 · Échanges */
+.fzl-trade { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
+.fzl-trade-cards { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: center; gap: 6px; }
+.fzl-trade-card {
+    --club: #1B1B1E;
+    position: relative;
+    height: 170px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--club) 0%, #141416 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+.fzl-trade-card .logo { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; object-fit: contain; }
+.fzl-trade-card .owner {
+    position: absolute;
+    top: 10px; left: 10px; right: 40px;
+    font: 600 9px/1 'Saira', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--s-ink2);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fzl-trade-card .face { height: 140px; width: auto; max-width: none !important; }
+.fzl-trade-card .txt {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 24px 10px 10px;
+    background: linear-gradient(0deg, rgba(0, 0, 0, .85), rgba(0, 0, 0, 0));
+}
+.fzl-trade-card strong { font: 700 14px/1 'Saira', sans-serif; }
+.fzl-trade-card small { font: 500 10px/1 'Saira', sans-serif; color: var(--s-ink2); }
+.fzl-trade-mid { display: flex; justify-content: center; color: #FF5A4E; }
+.fzl-trade-btn {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--s-ink);
+    background: transparent;
+    color: var(--s-ink);
+    font: 600 13px/1 'Saira', sans-serif;
     cursor: pointer;
-    list-style: none;
-    font-weight: 800;
-    font-size: 1.02rem;
+    transition: background-color .25s var(--fzl-ease), border-color .25s var(--fzl-ease), color .25s var(--fzl-ease);
 }
-.fzl-qa summary::-webkit-details-marker { display: none; }
-.fzl-qa summary::after {
-    content: '+';
-    flex: none;
-    display: grid; place-items: center;
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    border: 1px solid var(--fzl-hair);
-    font: 500 1.1rem/1 var(--fzl-mono);
-    color: var(--fzl-red-text);
-    transition: transform .25s var(--fzl-ease);
+.fzl-trade-btn:hover { background: var(--s-raise); }
+.fzl-trade-btn .is-done { display: none; }
+.fzl-trade-btn[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--s-green) 14%, transparent);
+    border-color: color-mix(in srgb, var(--s-green) 40%, transparent);
+    color: var(--s-green);
 }
-.fzl-qa details[open] summary::after { transform: rotate(45deg); }
-.fzl-qa summary:hover { color: var(--fzl-red-text); }
-.fzl-qa details p { margin: 0 0 18px; color: var(--fzl-dim); line-height: 1.65; max-width: 62ch; }
+.fzl-trade-btn[aria-pressed="true"] .is-send { display: none; }
+.fzl-trade-btn[aria-pressed="true"] .is-done { display: block; }
+@media (min-width: 720px) {
+    .fzl-trade-card { height: 210px; }
+    .fzl-trade-card .face { height: 176px; }
+}
 
 /* ================================================================
-   DERNIER APPEL — le même bandeau que le héros
+   LES 32 CLUBS — deux rangées qui défilent au doigt au téléphone,
+   toutes visibles au bureau.
    ================================================================ */
-.fzl-cta {
-    padding: 80px var(--fzl-gutter) 88px;
-    border-top: 3px solid var(--fzl-red);
-    text-align: center;
+.fzl-clubs { padding-top: 40px; }
+.fzl-clubs > p { margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--s-mute); max-width: 52ch; }
+.fzl-teams {
+    display: grid;
+    grid-template-rows: repeat(2, 64px);
+    grid-auto-flow: column;
+    grid-auto-columns: 64px;
+    gap: 8px;
+    margin: 14px calc(8px - var(--fzl-gutter)) 0;
+    padding: 0 8px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
-.fzl-cta .fzl-wrap { display: flex; flex-direction: column; align-items: center; gap: 28px; }
-.fzl-cta-alt { margin: 0; color: var(--fzl-dim); font-size: .95rem; }
-.fzl-cta-alt a { color: var(--fzl-white); font-weight: 700; text-underline-offset: 3px; }
-.fzl-cta-alt a:hover { color: var(--fzl-red-text); }
-@media (min-width: 1024px) { .fzl-cta { padding: 112px var(--fzl-gutter) 120px; } }
+.fzl-teams::-webkit-scrollbar { display: none; }
+.fzl-teams li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: linear-gradient(160deg, var(--club) 0%, #141416 120%);
+    border: 1px solid rgba(255, 255, 255, .06);
+}
+.fzl-teams img { width: 40px; height: 40px; object-fit: contain; }
+@media (min-width: 720px) {
+    .fzl-clubs > p { font-size: 16px; line-height: 24px; }
+}
+@media (min-width: 1024px) {
+    .fzl-clubs { padding-top: 96px; }
+    .fzl-teams {
+        grid-template-rows: none;
+        grid-auto-flow: row;
+        grid-template-columns: repeat(16, minmax(0, 1fr));
+        margin: 20px 0 0;
+        padding: 0;
+        overflow: visible;
+    }
+    .fzl-teams li { aspect-ratio: 1; }
+    .fzl-teams img { width: 58%; height: 58%; }
+}
+
+/* ================================================================
+   QUESTIONS FRÉQUENTES — <details>, sans script
+   ================================================================ */
+.fzl-faq { padding-top: 40px; }
+.fzl-faq .fzl-h2 { margin-bottom: 12px; }
+.fzl-qa details { border-top: 1px solid var(--s-line); }
+.fzl-qa summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0;
+    cursor: pointer;
+    list-style: none;
+    font: 600 15px/20px 'Saira', sans-serif;
+}
+.fzl-qa summary::-webkit-details-marker { display: none; }
+/* Le rond : un « + » qui perd sa barre verticale à l'ouverture. */
+.fzl-qa summary::after {
+    content: '';
+    flex: none;
+    width: 30px; height: 30px;
+    margin-left: auto;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 1px solid var(--s-switch);
+    background:
+        linear-gradient(var(--s-ink2), var(--s-ink2)) center / 12px 1.6px no-repeat,
+        linear-gradient(var(--s-ink2), var(--s-ink2)) center / 1.6px 12px no-repeat;
+}
+.fzl-qa details[open] summary::after {
+    background: linear-gradient(var(--s-ink2), var(--s-ink2)) center / 12px 1.6px no-repeat;
+}
+.fzl-qa summary:hover { color: var(--s-red-ink); }
+.fzl-qa details p { padding: 0 42px 16px 0; font-size: 14px; line-height: 20px; color: var(--s-mute); text-wrap: pretty; }
+@media (min-width: 1024px) {
+    .fzl-faq {
+        display: grid;
+        grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+        gap: 72px;
+        padding-top: 96px;
+    }
+    .fzl-qa summary { font-size: 17px; line-height: 24px; padding: 20px 0; }
+    .fzl-qa details p { font-size: 15px; line-height: 23px; }
+    .fzl-qa details:last-child { border-bottom: 1px solid var(--s-line); }
+}
+
+/* ================================================================
+   DERNIER APPEL — le fond du héros, en carte
+   ================================================================ */
+.fzl-cta-wrap { padding-top: 40px; }
+.fzl-cta {
+    margin: 0 -8px;
+    padding: 30px 18px 26px;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+    background:
+        radial-gradient(90% 120% at 0% 100%, rgba(240, 64, 48, .5) 0%, rgba(240, 64, 48, 0) 62%),
+        radial-gradient(70% 90% at 100% 0%, rgba(255, 90, 70, .18) 0%, rgba(255, 90, 70, 0) 60%),
+        linear-gradient(135deg, #2A1213 0%, #171214 55%, #100E10 100%);
+}
+.fzl-cta::after { height: 100%; }
+.fzl-cta-h { margin: 0; font: 800 34px/34px var(--fzl-cond); text-transform: uppercase; text-wrap: balance; }
+.fzl-cta .fzl-btn { align-self: stretch; }
+.fzl-cta-alt { font-size: 14px; color: var(--s-ink2); }
+.fzl-cta-alt a { font-weight: 600; color: var(--s-ink); text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 720px) {
+    .fzl-cta { margin: 0; padding: 56px 32px 48px; gap: 22px; }
+    .fzl-cta-h { font-size: 52px; line-height: 50px; max-width: 16ch; }
+    .fzl-cta .fzl-btn { align-self: center; min-width: 280px; }
+}
+@media (min-width: 1024px) { .fzl-cta-wrap { padding-top: 112px; } }
+
+/* ================================================================
+   EN-TÊTE ET PIED DE PAGE — ceux du site (navbar.js), habillés comme
+   la maquette pour le visiteur.
+   ================================================================ */
+html.fz-anon .navbar {
+    background: color-mix(in srgb, var(--s-bg) 92%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--s-line2);
+}
+html.fz-anon .navbar-guest { height: 58px; padding: 0 12px 0 16px; }
+html.fz-anon .navbar-guest-actions { gap: 8px; }
+html.fz-anon .navbar-guest :is(.btn-nav-login, .btn-nav-signup) {
+    min-height: 0;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 11px;
+    box-shadow: none;
+    font: 600 13px/1 'Saira', sans-serif;
+    transform: none;
+}
+html.fz-anon .navbar-guest .btn-nav-login { border: 1px solid var(--s-switch); background: transparent; color: var(--s-ink2); }
+html.fz-anon .navbar-guest .btn-nav-login:hover { border-color: var(--s-mute); background: transparent; color: var(--s-ink); }
+html.fz-anon .navbar-guest .btn-nav-signup { background: var(--s-ink); color: var(--s-bg); }
+html.fz-anon .navbar-guest .btn-nav-signup:hover { background: var(--s-ink2); color: var(--s-bg); }
+html.fz-anon .navbar-guest .btn-nav-signup::before,
+html.fz-anon .navbar-guest .btn-signup-arrow { display: none; }
+html.fz-anon .navbar-guest .theme-toggle-btn { border-color: var(--s-switch); color: var(--s-ink2); }
+@media (min-width: 720px) {
+    html.fz-anon .navbar-guest { height: 64px; padding: 0 var(--fzl-gutter, 28px); max-width: 1256px; }
+    html.fz-anon .navbar-guest :is(.btn-nav-login, .btn-nav-signup) { height: 40px; padding: 0 16px; font-size: 14px; }
+}
+
+html.fz-anon .site-legal-footer {
+    margin-top: 32px;
+    padding: 22px 20px 40px;
+    border-top: 1px solid var(--s-line2);
+    background: transparent;
+    text-align: left;
+    font-family: 'Saira', sans-serif;
+}
+html.fz-anon .site-legal-footer .legal-disclaimer {
+    max-width: 1200px;
+    margin: 0 auto 12px;
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--s-faint);
+    text-wrap: pretty;
+}
+html.fz-anon .site-legal-footer .legal-disclaimer strong { color: inherit; font-weight: inherit; }
+html.fz-anon .site-legal-footer .legal-links {
+    max-width: 1200px;
+    margin: 0 auto;
+    justify-content: flex-start;
+    gap: 6px 16px;
+    font-size: 12px;
+}
+html.fz-anon .site-legal-footer .legal-links > span[aria-hidden] { display: none; }
+html.fz-anon .site-legal-footer .legal-links a { padding: 4px 0; font-weight: 500; color: var(--s-mute); }
+html.fz-anon .site-legal-footer .legal-copy { flex-basis: 100%; font-size: 11px; color: var(--s-dim); }
+@media (min-width: 720px) {
+    html.fz-anon .site-legal-footer { margin-top: 56px; padding: 28px 28px 48px; }
+    html.fz-anon .site-legal-footer .legal-copy { flex-basis: auto; margin-left: auto; }
+}
 
 /* ================================================================
    Mouvement réduit : tout est montré dans son état final.
    ================================================================ */
 @media (prefers-reduced-motion: reduce) {
     .fzl *, .fzl *::before, .fzl *::after { animation: none !important; transition: none !important; }
-    .fzl-marquee { overflow-x: auto; }
 }
