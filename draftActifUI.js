@@ -493,7 +493,9 @@ function fzMajOngletsMeta() {
         ? draftData.picksHistory.length : null;
 
     const textes = {
-        joueurs: libres == null ? '' : libres + ' libre' + (libres > 1 ? 's' : ''),
+        // Plus de « 902 libres » sous « Joueurs » (demande d'andy) : le
+        // nombre n'aide pas à choisir et prenait la place du libellé.
+        joueurs: '',
         equipe: compteEquipe ? compteEquipe.textContent.trim() : '',
         choix: faits == null ? '' : faits + ' fait' + (faits > 1 ? 's' : '')
     };
