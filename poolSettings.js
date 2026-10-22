@@ -19,14 +19,16 @@
 
    Les onglets de la page :
 
-     Aperçu   — tout le pool d'un coup d'œil : où en est le repêchage, le
-                format, l'accès, toutes les équipes. La personne qui a créé
-                le pool y relit et change son mot de passe.
-     Participants — une personne, une équipe : qui est là, sous quel nom,
-                avec quels choix. On y renomme la sienne.
+     Aperçu   — tout le pool d'un coup d'œil : où en est la saison ou le
+                repêchage, toutes les équipes avec leurs points, et le lien
+                d'invitation tant qu'il reste des places.
+     Équipes  — une personne, une équipe : qui est là, sous quel nom,
+                avec quels choix, chaque alignement dépliable. On y renomme
+                la sienne. Le menu l'appelle « Mon pool ».
      Règles   — la configuration figée à la création, en lecture seule,
                 l'historique des saisons, et pour la personne qui a créé
-                le pool, l'ouverture d'une nouvelle saison.
+                le pool, le mot de passe et l'ouverture d'une nouvelle
+                saison.
      Inviter  — chercher un compte et l'inviter ; les invitations en
                 attente. Réservé à la personne qui a créé le pool.
      Identité — le nom du pool et sa vignette. Réservé à la personne qui a
@@ -51,7 +53,7 @@
 
     const ONGLETS = [
         { cle: 'apercu',   titre: 'Aperçu' },
-        { cle: 'equipes',  titre: 'Participants' },
+        { cle: 'equipes',  titre: 'Équipes' },
         { cle: 'regles',   titre: 'Règles' },
         { cle: 'inviter',  titre: 'Inviter', inviteursSeulement: true },
         { cle: 'identite', titre: 'Identité', createurSeulement: true }
@@ -150,12 +152,66 @@
             : `<img src="Icons/grayUser.png" class="ps-member-img" alt="">`;
     }
 
+    /** La ligne « Repêchage » des Règles : l'état, en un mot. */
+    const LIBELLE_REPECHAGE = {
+        attente: 'En attente',
+        pret:    'Prêt',
+        encours: 'En cours',
+        termine: 'Terminé'
+    };
+
+    /** « 21 oct. 2026 » : la date de création, dans les Règles. */
+    function dateCourte(iso) {
+        const date = new Date(iso);
+        if (!iso || Number.isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // Les pictogrammes de la page, au trait (même facture que l'accueil).
+    const MP_ICONES = {
+        groupe:     '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        ajout:      '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
+        classement: '<path d="M6 20v-6M12 20V4M18 20v-10"/>',
+        echange:    '<path d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4"/>',
+        cadenas:    '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+        ouvert:     '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.75-1.4"/>',
+        calendrier: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+        jour:       '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>',
+        horloge:    '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        eclair:     '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+        admin:      '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+        hockey:     '<path d="M7 3v13a3 3 0 0 0 3 3h6"/><circle cx="19" cy="19" r="2"/>',
+        fleche:     '<path d="M5 12h14M13 6l6 6-6 6"/>',
+        droite:     '<path d="m9 6 6 6-6 6"/>',
+        bas:        '<path d="m6 9 6 6 6-6"/>',
+        copier:     '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+        coche:      '<path d="M20 6 9 17l-5-5"/>',
+        crayon:     '<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
+        info:       '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'
+    };
+
+    function mpIcone(nom, taille) {
+        return `<svg class="mp-ico" width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${MP_ICONES[nom] || ''}</svg>`;
+    }
+
+    /** La pastille d'une équipe : ses deux premières lettres, claire pour la sienne. */
+    function initiales(nom, mienne, classe) {
+        const lettres = String(nom || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2).toUpperCase() || '?';
+        return `<span class="mp-av${mienne ? ' is-mine' : ''}${classe ? ` ${classe}` : ''}" aria-hidden="true">${echapper(lettres)}</span>`;
+    }
+
+    /** Une ligne de la fiche des Règles : pictogramme, libellé, valeur. */
+    function ligneFait(icon, etiquette, valeur) {
+        return `
+                <li class="mp-fact"><div class="mp-fact-row">${mpIcone(icon, 19)}<span class="mp-fact-k">${echapper(etiquette)}</span><strong>${echapper(valeur)}</strong></div></li>`;
+    }
+
     // ==================== ÉTAT ====================
 
     let poolOuvert = null;      // nom du pool affiché, ou null
     let ongletActif = 'apercu';
     let racine = null;          // l'ossature de la page, posée une fois
-    // L'équipe à montrer en ouvrant « Participants » depuis l'aperçu.
+    // L'équipe à montrer en ouvrant « Équipes » depuis l'aperçu.
     let equipeVisee = null;
 
     /**
@@ -181,50 +237,41 @@
 
     // ==================== FRAGMENTS ====================
 
+    /**
+     * Règles : la configuration figée à la création, en lecture seule. Pour
+     * la personne qui a créé le pool, la ligne « Accès » devient celle du
+     * mot de passe (blocAcces).
+     */
     function blocRegles(nom, donnees) {
-        const config = donnees.config || {};
-        const valeur = (cle, defaut) => (config[cle] != null ? config[cle] : defaut);
-        const banc = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(donnees) : 0;
-        const selections = ['numOffensive', 'numDefensive', 'numGoalies', 'numRookies', 'numTeams']
-            .reduce((somme, cle) => somme + (config[cle] || 0), 0) + banc;
         const etat = FZPool.draftState(donnees);
-        const mode = (donnees.poolMode || 'cumulative') === 'head-to-head'
-            ? 'Head-to-Head' : 'Cumulatif';
+        const mode = (donnees.poolMode || 'cumulative') === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif';
         const createur = createurDuPool(donnees);
+        const creeLe = dateCourte(donnees.createdAt);
+        const cases = casesAlignement(donnees);
+        const total = cases.reduce((somme, c) => somme + c.nombre, 0);
 
-        const ligne = (etiquette, val) =>
-            `<li><span>${echapper(etiquette)}</span><strong>${echapper(val)}</strong></li>`;
+        const lignes = [
+            ligneFait('classement', 'Pointage', mode),
+            ligneFait('groupe', 'Participants', `${etat.inscrits} (max. ${etat.max})`),
+            ligneFait('echange', 'Échanges', donnees.allowTrades !== false ? 'Autorisés' : 'Désactivés'),
+            blocAcces(nom, donnees),
+            ligneFait('calendrier', 'Repêchage', LIBELLE_REPECHAGE[etat.etat]),
+            etat.prevuLe && etat.etat !== 'termine' ? ligneFait('horloge', 'Date du repêchage', FZPool.draftDate(etat.prevuLe)) : '',
+            donnees.instant === true ? ligneFait('eclair', 'Type', 'Pool rapide') : '',
+            createur ? ligneFait('admin', 'Créé par', createur) : '',
+            creeLe ? ligneFait('jour', 'Créé le', creeLe) : ''
+        ].join('');
 
         return `
-            <div class="ps-pane" data-pane="regles">
-                <section class="ps-block">
-                    <h3 class="ps-block-title">Format</h3>
-                    <ul class="ps-facts">
-                        ${ligne('Mode de pointage', mode)}
-                        ${ligne('Participants', `${etat.inscrits} (max. ${etat.max})`)}
-                        ${ligne('Échanges', donnees.allowTrades !== false ? 'Autorisés' : 'Désactivés')}
-                        ${ligne('Accès', donnees.hasPassword ? 'Mot de passe' : 'Libre')}
-                        ${ligne('Repêchage', LIBELLE_ETAT[etat.etat])}
-                        ${etat.prevuLe ? ligne('Date du repêchage', FZPool.draftDate(etat.prevuLe)) : ''}
-                        ${createur ? ligne('Créé par', createur) : ''}
-                    </ul>
-                </section>
+            <div class="ps-pane mp-pane" data-pane="regles">
+                <ul class="mp-card mp-facts">${lignes}</ul>
 
-                <section class="ps-block">
-                    <h3 class="ps-block-title">Sélections par équipe</h3>
-                    <ul class="ps-facts">
-                        ${ligne('Attaquants', valeur('numOffensive', 6))}
-                        ${ligne('Défenseurs', valeur('numDefensive', 4))}
-                        ${ligne('Gardiens', valeur('numGoalies', 1))}
-                        ${ligne('Recrues', valeur('numRookies', 1))}
-                        ${ligne('Équipes LNH', valeur('numTeams', 1))}
-                        ${banc ? ligne('Banc (tête-à-tête)', banc) : ''}
-                    </ul>
-                    <p class="ps-total"><span>Total</span><strong>${selections} sélections</strong></p>
-                </section>
-
-                <p class="ps-note">Les règles sont fixées à la création du pool et ne
-                    changent plus : les effectifs déjà repêchés en dépendent.</p>
+                <header class="mp-sh"><h2>Alignement</h2><span class="mp-sh-hot">${total} choix / équipe</span></header>
+                <div class="mp-slots" style="--n:${cases.length}">
+                    ${cases.map(c => `
+                        <div class="mp-slot mp-pos-${c.cle}"><strong>${c.nombre}</strong><span>${c.tag}</span></div>`).join('')}
+                </div>
+                <p class="mp-note">${mpIcone('info', 16)}<span>Les règles sont fixées à la création et ne changent plus : les équipes repêchées en dépendent.</span></p>
 
                 ${blocSaisons(donnees)}
                 ${estCreateur(donnees) && etat.etat === 'termine' ? blocNouvelleSaison() : ''}
@@ -268,16 +315,32 @@
                 </section>`;
     }
 
+    /**
+     * Les groupes d'un alignement, dans l'ordre de la maquette. Le banc
+     * n'existe qu'en tête-à-tête ; une catégorie vide disparaît.
+     */
     const CATEGORIES = [
-        { cle: 'offensive', titre: 'Attaquants' },
-        { cle: 'defensive', titre: 'Défenseurs' },
-        { cle: 'rookie',    titre: 'Recrues' },
-        { cle: 'goalie',    titre: 'Gardiens' },
-        { cle: 'teams',     titre: 'Équipes LNH' }
+        { cle: 'offensive', tag: 'ATT',  classe: 'att',   config: 'numOffensive', defaut: 6 },
+        { cle: 'defensive', tag: 'DÉF',  classe: 'def',   config: 'numDefensive', defaut: 4 },
+        { cle: 'goalie',    tag: 'GAR',  classe: 'gar',   config: 'numGoalies',   defaut: 1 },
+        { cle: 'rookie',    tag: 'REC',  classe: 'rec',   config: 'numRookies',   defaut: 1 },
+        { cle: 'teams',     tag: 'ÉQ',   classe: 'eq',    config: 'numTeams',     defaut: 1 },
+        { cle: 'bench',     tag: 'BANC', classe: 'banc' }
     ];
 
+    /** Les cases d'un alignement (Règles) : combien de choix par position. */
+    function casesAlignement(donnees) {
+        const config = donnees.config || {};
+        const banc = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(donnees) : 0;
+        return CATEGORIES.map(c => ({
+            cle: c.classe,
+            tag: c.tag,
+            nombre: c.cle === 'bench' ? banc : (config[c.config] != null ? config[c.config] : c.defaut)
+        })).filter(c => c.nombre > 0);
+    }
+
     /**
-     * Les choix d'une équipe, par catégorie.
+     * Les choix d'une équipe, par position.
      *
      * Une équipe sans son effectif n'est qu'un nom : savoir qui joue dans le
      * pool sert surtout à voir ce que les autres ont pris. Rien avant le
@@ -285,88 +348,60 @@
      */
     function blocChoix(equipe) {
         const remplies = CATEGORIES.filter(c => (equipe[c.cle] || []).length > 0);
-        if (remplies.length === 0) return '';
-        return `
-            <div class="ps-picks">
-                ${remplies.map(c => `
-                    <div class="ps-pick-cat">
-                        <span class="ps-pick-label">${c.titre}</span>
-                        <span class="ps-pick-names">${(equipe[c.cle] || []).map(echapper).join(' · ')}</span>
-                    </div>`).join('')}
-            </div>`;
+        if (remplies.length === 0) return '<p class="mp-roster-empty">Aucun choix pour l’instant : l’alignement se remplit au repêchage.</p>';
+        return remplies.map(c => `
+                    <div class="mp-roster-row">
+                        <span class="mp-pos mp-pos-${c.classe}">${c.tag}</span>
+                        <span class="mp-roster-names">${(equipe[c.cle] || []).map(echapper).join(' · ')}</span>
+                    </div>`).join('');
     }
 
+    /** Les équipes à alignement déplié, d'un redessin à l'autre. */
+    let equipesOuvertes = { pool: null, cles: new Set() };
+
     function blocEquipes(nom, donnees) {
-        const moi = utilisateur();
-        const teams = donnees.teams || {};
-        const etat = FZPool.draftState(donnees);
-        const repechageCommence = !!etat.commence;
-
-        const monEquipe = Object.entries(teams).find(
-            ([, equipe]) => (equipe.members || []).includes(moi)
-        );
-        const cleMonEquipe = monEquipe ? monEquipe[0] : null;
-
-        // Une personne, une équipe : seules comptent les équipes de ceux qui
-        // sont là. La sienne d'abord — c'est pour elle qu'on ouvre l'onglet.
         const createur = createurDuPool(donnees);
-        const entrees = Object.entries(teams)
-            .filter(([, equipe]) => (equipe.members || []).length > 0)
-            .sort((a, b) => (a[0] === cleMonEquipe ? -1 : b[0] === cleMonEquipe ? 1 : a[0].localeCompare(b[0], 'fr')));
+        const entrees = equipesTriees(donnees);
+        const cleMonEquipe = (entrees.find(e => e.mienne) || {}).cle || null;
 
-        const cartes = entrees.map(([cle, equipe]) => {
-            const membres = equipe.members || [];
-            const estMienne = cle === cleMonEquipe;
+        // À la première ouverture, sa propre équipe est dépliée — c'est pour
+        // elle qu'on vient. Depuis l'aperçu, c'est l'équipe touchée.
+        if (equipesOuvertes.pool !== nom) {
+            equipesOuvertes = { pool: nom, cles: new Set(cleMonEquipe ? [cleMonEquipe] : []) };
+        }
+        if (equipeVisee) equipesOuvertes.cles.add(equipeVisee);
+
+        const cartes = entrees.map(({ cle, equipe, membres, mienne, choix }, i) => {
+            const ouverte = equipesOuvertes.cles.has(cle);
             const affiche = nomAffiche(cle, membres);
-
-            const compte = categorie => (equipe[categorie] || []).length;
-            const total = compte('offensive') + compte('defensive') +
-                compte('goalie') + compte('rookie') + compte('teams');
-
-            const listeMembres = membres.length
-                ? `<ul class="ps-members">${membres.map(membre => `
-                        <li>
-                            ${typeof avatarHtml === 'function'
-                                ? avatarHtml(membre, 24)
-                                : '<img src="Icons/grayUser.png" class="ps-member-img" alt="">'}
-                            <span>${echapper(membre)}</span>
-                        </li>`).join('')}</ul>`
-                : '<p class="ps-empty">Place libre</p>';
-
+            const role = mienne ? ' · ton équipe' : (createur && membres.includes(createur) ? ' · admin' : '');
             // Le crayon ne s'affiche que sur sa propre équipe : le serveur
             // refuse tout autre renommage (/rename-team), autant ne pas
             // proposer un geste qui finirait en message d'erreur.
-            const crayon = estMienne ? `
-                <button type="button" class="ps-icon-btn" data-renommer-equipe="${echapper(cle)}"
-                        title="Renommer mon équipe" aria-label="Renommer mon équipe">
-                    ${icone('pencil', 14)}
-                </button>` : '';
-
+            const crayon = mienne ? `
+                            <button type="button" class="mp-edit" data-renommer-equipe="${echapper(cle)}"
+                                    title="Renommer mon équipe" aria-label="Renommer mon équipe">${mpIcone('crayon', 16)}</button>` : '';
             return `
-                <article class="ps-team${estMienne ? ' is-mine' : ''}" data-equipe="${echapper(cle)}">
-                    <header class="ps-team-head">
-                        <h4 class="ps-team-name">
-                            <span class="ps-team-label">${echapper(affiche)}</span>${crayon}
-                        </h4>
-                        <div class="ps-team-badges">
-                            ${estMienne ? '<span class="ps-badge is-mine">Votre équipe</span>' : ''}
-                            ${createur && membres.includes(createur) ? '<span class="ps-badge">Admin</span>' : ''}
-                            ${total ? `<span class="ps-badge">${total} choix</span>` : ''}
-                        </div>
-                    </header>
-                    ${listeMembres}
-                    ${blocChoix(equipe)}
+                <article class="mp-card mp-team${mienne ? ' is-mine' : ''}${ouverte ? ' is-open' : ''}" data-equipe="${echapper(cle)}">
+                    <div class="mp-team-head">
+                        ${initiales(affiche, mienne, 'is-lg')}
+                        <span class="mp-team-txt">
+                            <span class="ps-team-name mp-team-name"><span class="ps-team-label">${echapper(affiche)}</span>${crayon}</span>
+                            <span class="mp-team-meta">${echapper(membres.join(', '))}${role}</span>
+                        </span>
+                        <span class="mp-team-count">${choix} choix</span>
+                        <button type="button" class="mp-team-toggle" data-deplier="${echapper(cle)}"
+                                aria-expanded="${ouverte}" aria-controls="mpRoster${i}"
+                                aria-label="Alignement de ${echapper(affiche)}">${mpIcone('bas', 22)}</button>
+                    </div>
+                    <div class="mp-roster" id="mpRoster${i}"${ouverte ? '' : ' hidden'}>${blocChoix(equipe)}</div>
                 </article>`;
         }).join('');
 
-        const avis = `<p class="ps-note">Chaque participant dirige sa propre équipe.
-                   ${cleMonEquipe ? 'Renommez la vôtre avec le crayon, à tout moment.' : ''}
-                   ${repechageCommence ? '' : `${entrees.length} équipe${entrees.length > 1 ? 's' : ''} inscrite${entrees.length > 1 ? 's' : ''} sur ${etat.max} au maximum.`}</p>`;
-
         return `
-            <div class="ps-pane" data-pane="equipes">
-                ${avis}
-                <div class="ps-teams">${cartes}</div>
+            <div class="ps-pane mp-pane" data-pane="equipes">
+                <div class="mp-teams">${cartes || '<p class="mp-empty">Aucune équipe pour l’instant.</p>'}</div>
+                ${cleMonEquipe ? `<p class="mp-note">${mpIcone('info', 16)}<span>Chaque participant dirige sa propre équipe. Renomme la tienne avec le crayon, à tout moment.</span></p>` : ''}
             </div>`;
     }
 
@@ -405,6 +440,64 @@
     }
 
     /**
+     * Les équipes du pool, une entrée par équipe occupée. Avec les points
+     * de la saison : dans l'ordre du classement ; sinon la sienne d'abord,
+     * puis par nom.
+     */
+    function equipesTriees(donnees) {
+        const moi = utilisateur();
+        const scores = pointsDuPool(poolOuvert);
+        const entrees = Object.entries(donnees.teams || {})
+            .filter(([, equipe]) => (equipe.members || []).length > 0)
+            .map(([cle, equipe]) => {
+                const membres = equipe.members || [];
+                const score = scores ? scores.get(cle) : null;
+                return {
+                    cle, equipe, membres,
+                    mienne: membres.includes(moi),
+                    choix: CATEGORIES.reduce((somme, c) => somme + (equipe[c.cle] || []).length, 0),
+                    rang: score ? score.rang : null,
+                    points: score ? score.points : null
+                };
+            });
+        return entrees.sort((a, b) => {
+            if (a.rang != null && b.rang != null && a.rang !== b.rang) return a.rang - b.rang;
+            if (a.mienne !== b.mienne) return a.mienne ? -1 : 1;
+            return a.cle.localeCompare(b.cle, 'fr');
+        });
+    }
+
+    /**
+     * Les points de la saison, par équipe : le Total du classement, servi
+     * par /pool-rank-movement (déjà lu par l'accueil). Une requête par pool
+     * et par visite, seulement une fois le repêchage terminé.
+     */
+    let points = { pool: null, equipes: null, enCours: false };
+
+    function pointsDuPool(nom) {
+        return points.pool === nom ? points.equipes : null;
+    }
+
+    function chargerPoints(nom, etat) {
+        if (etat.etat !== 'termine' || points.pool === nom) return;
+        points = { pool: nom, equipes: null, enCours: true };
+        fetch(`${BASE_URL}/pool-rank-movement/${encodeURIComponent(nom)}`)
+            .then(reponse => (reponse.ok ? reponse.json() : null))
+            .catch(() => null)
+            .then(resultat => {
+                if (points.pool !== nom) return;
+                const parEquipe = new Map(((resultat && resultat.teams) || [])
+                    .filter(t => t.rankNow != null)
+                    .map(t => [t.teamName, { rang: t.rankNow, points: Number(t.pointsNow) || 0 }]));
+                points = { pool: nom, equipes: parEquipe.size ? parEquipe : null, enCours: false };
+                if (parEquipe.size && poolOuvert === nom && !saisieEnCours()) rendre();
+            });
+    }
+
+    const pts = valeur => Math.round(valeur).toLocaleString('fr-CA');
+    const ordinal = rang => `${rang}${rang === 1 ? 'er' : 'e'}`;
+
+    /**
      * Où en est le pool, et le prochain geste qui a du sens.
      *
      * Un seul bouton au plus : l'aperçu répond à « qu'est-ce qui se passe
@@ -413,8 +506,13 @@
     function blocEtat(nom, donnees, etat) {
         const lien = page => `${page}?pool=${encodeURIComponent(nom)}`;
         const createur = createurDuPool(donnees);
+        const entrees = equipesTriees(donnees);
+        const parEquipe = casesAlignement(donnees).reduce((somme, c) => somme + c.nombre, 0);
+        const mode = (donnees.poolMode || 'cumulative') === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif';
+        const equipes = `${entrees.length}/${etat.max}`;
         let detail = '';
         let action = '';
+        let stats;
 
         if (etat.etat === 'encours') {
             const auTour = etat.equipeAuTour
@@ -422,46 +520,62 @@
                 : null;
             const pourcent = etat.choixTotal ? Math.round((etat.choixFait / etat.choixTotal) * 100) : 0;
             detail = `
-                <p class="ps-state-line">Choix <strong>${etat.choixFait + 1}</strong> sur ${etat.choixTotal}${auTour ? ` · au tour de <strong>${echapper(auTour)}</strong>` : ''}</p>
-                <div class="ps-progress" role="progressbar" aria-label="Avancement du repêchage"
+                <p class="mp-hero-line">Choix <strong>${etat.choixFait + 1}</strong> sur ${etat.choixTotal}${auTour ? ` · au tour de <strong>${echapper(auTour)}</strong>` : ''}</p>
+                <div class="mp-progress" role="progressbar" aria-label="Avancement du repêchage"
                      aria-valuenow="${etat.choixFait}" aria-valuemin="0" aria-valuemax="${etat.choixTotal}">
                     <i style="width:${pourcent}%"></i>
                 </div>`;
-            action = `<a class="ps-primary" href="${lien('draftActif.html')}">Ouvrir la salle de repêchage</a>`;
+            stats = [[`${etat.choixFait}/${etat.choixTotal}`, 'Choix faits'], [equipes, 'Équipes'], [parEquipe, 'Par équipe'], [mode, 'Pointage']];
+            action = `<a class="mp-cta" href="${lien('draftActif.html')}">Ouvrir la salle de repêchage${mpIcone('fleche', 20)}</a>`;
         } else if (etat.etat === 'pret') {
             const depart = etat.prevuLe
                 ? `Il commencera tout seul le ${echapper(FZPool.draftDate(etat.prevuLe))}`
-                : `Le repêchage peut partir quand ${estCreateur(donnees) ? 'vous le lancez' : `${echapper(createur || 'l’administration')} le lance`}`;
-            detail = `<p class="ps-state-line">${etat.inscrits} participant${etat.inscrits > 1 ? 's' : ''} inscrit${etat.inscrits > 1 ? 's' : ''}. ${depart}.</p>`;
-            if (estCreateur(donnees)) action = `<a class="ps-primary" href="${lien('repechage.html')}">Préparer le repêchage</a>`;
+                : `Le repêchage peut partir quand ${estCreateur(donnees) ? 'tu le lances' : `${echapper(createur || 'l’administration')} le lance`}`;
+            detail = `<p class="mp-hero-line">${etat.inscrits} participant${etat.inscrits > 1 ? 's' : ''} inscrit${etat.inscrits > 1 ? 's' : ''}. ${depart}.</p>`;
+            stats = [[equipes, 'Équipes'], [parEquipe, 'Choix'], [mode, 'Pointage'], [donnees.allowTrades !== false ? 'Oui' : 'Non', 'Échanges']];
+            if (estCreateur(donnees)) action = `<a class="mp-cta" href="${lien('repechage.html')}">Préparer le repêchage${mpIcone('fleche', 20)}</a>`;
         } else if (etat.etat === 'attente') {
             const raison = donnees.instant === true
                 ? 'Le pool rapide part dès qu’il est plein.'
                 : (RAISON_ATTENTE[etat.raison] || 'En attente de participants.');
             const prevu = etat.prevuLe ? ` Repêchage prévu le ${echapper(FZPool.draftDate(etat.prevuLe))}.` : '';
-            detail = `<p class="ps-state-line">${raison}${prevu}</p>`;
+            detail = `<p class="mp-hero-line">${raison}${prevu}</p>`;
+            stats = [[equipes, 'Équipes'], [parEquipe, 'Choix'], [mode, 'Pointage'], [donnees.allowTrades !== false ? 'Oui' : 'Non', 'Échanges']];
         } else {
             const h2h = donnees.poolMode === 'head-to-head' && donnees.h2hData && donnees.h2hData.currentWeek;
-            detail = `<p class="ps-state-line">Repêchage terminé${h2h ? ` · semaine ${echapper(donnees.h2hData.currentWeek)}` : ''}. Les points s’accumulent chaque soir de match.</p>`;
-            action = `<a class="ps-primary" href="${lien('classement.html')}">Voir le classement</a>`;
+            const moi = entrees.find(e => e.mienne);
+            detail = `<p class="mp-hero-line">Repêchage terminé${h2h ? ` · semaine ${echapper(donnees.h2hData.currentWeek)}` : ''}. Les points s’accumulent chaque soir de match.</p>`;
+            stats = [
+                [moi && moi.rang != null ? ordinal(moi.rang) : '—', 'Ton rang', 'is-hot'],
+                [moi && moi.points != null ? pts(moi.points) : '—', 'Points'],
+                [equipes, 'Équipes'],
+                [parEquipe, 'Choix']
+            ];
+            action = `<a class="mp-cta" href="${lien('classement.html')}">Voir le classement${mpIcone('fleche', 20)}</a>`;
         }
 
         return `
-            <section class="ps-state-card">
-                <span class="ps-state ps-state-${etat.etat}">${LIBELLE_ETAT[etat.etat]}</span>
-                ${detail}
-                ${action ? `<div class="ps-state-actions">${action}</div>` : ''}
+            <section class="mp-hero">
+                <span class="mp-hero-txt">
+                    <span class="mp-pill mp-pill-${etat.etat}">${mpIcone(etat.etat === 'termine' ? 'hockey' : etat.etat === 'encours' ? 'horloge' : 'groupe', 13)}${LIBELLE_ETAT[etat.etat]}</span>
+                    ${detail}
+                </span>
+                <span class="mp-stats">
+                    ${stats.map(([valeur, etiquette, classe]) => `
+                        <span class="mp-stat"><strong class="${classe || ''}">${echapper(valeur)}</strong><small>${etiquette}</small></span>`).join('')}
+                </span>
+                ${action}
             </section>`;
     }
 
     /**
-     * L'accès au pool. Pour la personne qui l'a créé : le mot de passe, à
-     * relire, copier, changer ou retirer. Pour les autres : un simple fait.
+     * L'accès au pool, une ligne des Règles. Pour la personne qui l'a créé :
+     * le mot de passe, à relire, copier, changer ou retirer. Pour les
+     * autres : un simple fait.
      */
     function blocAcces(nom, donnees) {
         if (!estCreateur(donnees)) {
-            return `
-                <li><span>Accès</span><strong>${donnees.hasPassword ? 'Protégé par mot de passe' : 'Libre'}</strong></li>`;
+            return ligneFait(donnees.hasPassword ? 'cadenas' : 'ouvert', 'Accès', donnees.hasPassword ? 'Mot de passe' : 'Libre');
         }
 
         const etat = mdp && mdp.pool === nom ? mdp : null;
@@ -498,15 +612,16 @@
                     ${aUnMotDePasse ? '<button type="button" class="ps-link-btn is-danger" data-mdp="retirer">Retirer le mot de passe</button>' : ''}</p>` : '';
 
         const avis = etat && etat.hasPassword && !etat.recuperable && !etat.edition
-            ? `<p class="ps-note">Ce mot de passe a été choisi avant qu’on puisse le relire ici. Choisissez-en un nouveau pour le retrouver à tout moment.</p>`
+            ? `<p class="ps-note">Ce mot de passe a été choisi avant qu’on puisse le relire ici. Choisis-en un nouveau pour le retrouver à tout moment.</p>`
             : '';
         const message = etat && etat.message
             ? `<p class="ps-msg${etat.erreur ? ' is-error' : ''}" role="alert">${echapper(etat.message)}</p>` : '';
 
         return `
-                <li class="ps-fact-access">
-                    <div class="ps-access-row">
-                        <span>Mot de passe</span>
+                <li class="mp-fact mp-fact-access">
+                    <div class="mp-fact-row">
+                        ${mpIcone(aUnMotDePasse ? 'cadenas' : 'ouvert', 19)}
+                        <span class="mp-fact-k">Mot de passe</span>
                         ${valeur}
                     </div>
                     <div class="ps-access-tools">${boutons}</div>
@@ -514,106 +629,63 @@
                 </li>`;
     }
 
-    /** Toutes les équipes du pool, en une ligne chacune. */
-    function blocListeEquipes(donnees) {
-        const moi = utilisateur();
+    /** Toutes les équipes du pool, en une ligne chacune : un clic ouvre son alignement. */
+    function blocListeEquipes(donnees, etat) {
         const createur = createurDuPool(donnees);
-        const config = donnees.config || {};
-        const parEquipe = ['numOffensive', 'numDefensive', 'numGoalies', 'numRookies', 'numTeams']
-            .reduce((somme, cle) => somme + (config[cle] || 0), 0) +
-            (typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(donnees) : 0);
-
-        const entrees = Object.entries(donnees.teams || {})
-            .filter(([, equipe]) => (equipe.members || []).length > 0)
-            .sort((a, b) => {
-                const aMoi = (a[1].members || []).includes(moi);
-                const bMoi = (b[1].members || []).includes(moi);
-                return aMoi !== bMoi ? (aMoi ? -1 : 1) : a[0].localeCompare(b[0], 'fr');
-            });
-
+        const entrees = equipesTriees(donnees);
         if (entrees.length === 0) return '';
+        const avecPoints = entrees.some(e => e.points != null);
 
-        const lignes = entrees.map(([cle, equipe]) => {
-            const membres = equipe.members || [];
-            const choix = ['offensive', 'defensive', 'goalie', 'rookie', 'teams', 'bench']
-                .reduce((somme, c) => somme + (equipe[c] || []).length, 0);
-            const mienne = membres.includes(moi);
+        const lignes = entrees.map(({ cle, membres, mienne, choix, rang, points: total }) => {
+            const affiche = nomAffiche(cle, membres);
             return `
                 <li>
-                    <button type="button" class="ps-team-row${mienne ? ' is-mine' : ''}" data-voir-equipe="${echapper(cle)}">
-                        ${avatar(membres[0], 30)}
-                        <span class="ps-team-row-txt">
-                            <span class="ps-team-row-name">${echapper(nomAffiche(cle, membres))}</span>
-                            <span class="ps-team-row-meta">${echapper(membres.join(', '))}</span>
+                    <button type="button" class="mp-row${mienne ? ' is-mine' : ''}" data-voir-equipe="${echapper(cle)}">
+                        ${avecPoints ? `<span class="mp-rank${rang === 1 ? ' is-first' : ''}">${rang != null ? rang : '—'}</span>` : ''}
+                        ${initiales(affiche, mienne)}
+                        <span class="mp-row-txt">
+                            <span class="mp-row-name"><span>${echapper(affiche)}</span>${mienne ? '<span class="mp-tag">Toi</span>' : ''}${createur && membres.includes(createur) ? `<span class="mp-admin" title="Admin">${mpIcone('admin', 15)}</span>` : ''}</span>
+                            <span class="mp-row-meta">${echapper(membres.join(', '))} · ${choix} choix</span>
                         </span>
-                        <span class="ps-team-row-badges">
-                            ${mienne ? '<span class="ps-badge is-mine">Vous</span>' : ''}
-                            ${createur && membres.includes(createur) ? '<span class="ps-badge">Admin</span>' : ''}
-                            ${parEquipe ? `<span class="ps-team-row-count">${choix}/${parEquipe}</span>` : ''}
-                        </span>
+                        ${avecPoints ? `<span class="mp-row-pts"><strong>${total != null ? pts(total) : '—'}</strong><small>PTS</small></span>` : ''}
+                        ${mpIcone('droite', 20)}
                     </button>
                 </li>`;
         }).join('');
 
         return `
-            <section class="ps-block">
-                <h3 class="ps-block-title">Équipes (${entrees.length})</h3>
-                <ul class="ps-team-rows">${lignes}</ul>
-            </section>`;
+            <header class="mp-sh">${mpIcone('groupe', 22)}<h2>Équipes</h2><span class="mp-sh-count">${entrees.length} / ${etat.max}</span></header>
+            <ul class="mp-card mp-rows">${lignes}</ul>`;
+    }
+
+    /**
+     * Inviter, sous les équipes : le lien de la page Rejoindre, filtrée sur
+     * ce pool (comme le bouton Inviter de l'accueil), tant qu'il reste des
+     * places. Le pool n'a pas de code : son nom en tient lieu.
+     */
+    function blocInvitation(nom, donnees, etat) {
+        if (!peutInviter(donnees) || etat.commence || etat.inscrits >= etat.max) return '';
+        const invitations = (donnees.invitations || []).length;
+        const enAttente = invitations ? `${invitations} invitation${invitations > 1 ? 's' : ''} en attente` : 'Inviter un compte';
+        return `
+            <header class="mp-sh">${mpIcone('ajout', 22)}<h2>Inviter</h2></header>
+            <div class="mp-card mp-invite">
+                <span class="mp-invite-txt">
+                    <small>Lien d’invitation</small>
+                    <strong>${echapper(nom)}</strong>
+                </span>
+                <button type="button" class="mp-copy" id="mpCopierLien">${mpIcone('copier', 18)}<span>Copier</span></button>
+            </div>
+            <button type="button" class="mp-more" data-aller="inviter">${enAttente}${mpIcone('droite', 18)}</button>`;
     }
 
     function blocApercu(nom, donnees) {
         const etat = FZPool.draftState(donnees);
-        const config = donnees.config || {};
-        const banc = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(donnees) : 0;
-        const selections = ['numOffensive', 'numDefensive', 'numGoalies', 'numRookies', 'numTeams']
-            .reduce((somme, cle) => somme + (config[cle] || 0), 0) + banc;
-        const mode = (donnees.poolMode || 'cumulative') === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif';
-        const createur = createurDuPool(donnees);
-        const creeLe = dateLongue(donnees.createdAt);
-        const ligne = (etiquette, val) =>
-            `<li><span>${echapper(etiquette)}</span><strong>${echapper(val)}</strong></li>`;
-
-        const tuile = (valeur, etiquette) => `
-            <div class="ps-tile"><strong>${echapper(valeur)}</strong><span>${echapper(etiquette)}</span></div>`;
-
-        const invitations = (donnees.invitations || []).length;
-        const rappelInvitations = estCreateur(donnees) && invitations > 0 ? `
-            <button type="button" class="ps-callout" data-aller="inviter">
-                <span>${invitations} invitation${invitations > 1 ? 's' : ''} en attente</span>
-                <span aria-hidden="true">→</span>
-            </button>` : '';
-
-        // Deux colonnes sur un écran large : ce qui se passe et qui joue à
-        // gauche, la fiche du pool à droite. Une seule colonne sur téléphone,
-        // dans cet ordre.
         return `
-            <div class="ps-pane ps-apercu" data-pane="apercu">
-                <div class="ps-col-main">
-                    ${blocEtat(nom, donnees, etat)}
-
-                    <div class="ps-tiles">
-                        ${tuile(`${etat.inscrits}/${etat.max}`, 'Participants')}
-                        ${tuile(selections, 'Choix par équipe')}
-                        ${tuile(mode, 'Pointage')}
-                        ${tuile(donnees.allowTrades !== false ? 'Ouverts' : 'Fermés', 'Échanges')}
-                    </div>
-
-                    ${blocListeEquipes(donnees)}
-                </div>
-
-                <aside class="ps-col-side">
-                    ${rappelInvitations}
-                    <section class="ps-block">
-                        <h3 class="ps-block-title">Le pool</h3>
-                        <ul class="ps-facts">
-                            ${createur ? ligne('Créé par', createur) : ''}
-                            ${creeLe ? ligne('Créé le', creeLe) : ''}
-                            ${donnees.instant === true ? ligne('Type', 'Pool rapide') : ''}
-                            ${blocAcces(nom, donnees)}
-                        </ul>
-                    </section>
-                </aside>
+            <div class="ps-pane mp-pane" data-pane="apercu">
+                ${blocEtat(nom, donnees, etat)}
+                ${blocListeEquipes(donnees, etat)}
+                ${blocInvitation(nom, donnees, etat)}
             </div>`;
     }
 
@@ -705,17 +777,16 @@
         racine = hote();
         if (!racine) return null;
         racine.innerHTML = `
-            <header class="pp-hero">
-                <img src="Icons/grayGroup.png" class="pp-hero-img" id="psHeadImg" alt=""
-                     onerror="this.src='Icons/grayGroup.png'">
-                <div class="pp-hero-txt">
-                    <p class="pp-eyebrow" id="psHeadLabel">Pool actif</p>
-                    <h1 class="pp-title" id="psTitre"></h1>
-                    <p class="pp-sub" id="psHeadSub"></p>
-                </div>
+            <header class="mp-head">
+                <span class="mp-logo" id="psHeadImg" aria-hidden="true"></span>
+                <span class="mp-head-txt">
+                    <span class="mp-eyebrow" id="psHeadLabel">Pool actif</span>
+                    <h1 class="mp-title" id="psTitre"></h1>
+                    <span class="mp-head-sub" id="psHeadSub"></span>
+                </span>
             </header>
-            <nav class="ps-tabs pp-tabs" id="psTabs" role="tablist" aria-label="Sections du pool"></nav>
-            <div class="pp-body" id="psBody" role="tabpanel"></div>`;
+            <nav class="mp-tabs" id="psTabs" role="tablist" aria-label="Sections du pool"></nav>
+            <div class="mp-body" id="psBody" role="tabpanel"></div>`;
         return racine;
     }
 
@@ -739,6 +810,7 @@
         const cible = hote();
         if (!cible) return;
         racine = null;
+        cible.dataset.vue = 'accueil';
         document.title = 'Pools – Fantazy';
 
         if (localStorage.getItem('isLoggedIn') !== 'true') {
@@ -791,6 +863,7 @@
         if (!donnees) { rendreAccueil(); return; }
 
         construireCoquille();
+        hote().dataset.vue = 'pool';
         const createur = estCreateur(donnees);
         const inviteur = peutInviter(donnees);
         const visibles = ONGLETS.filter(o =>
@@ -798,21 +871,32 @@
         if (!visibles.some(o => o.cle === ongletActif)) ongletActif = visibles[0].cle;
 
         const etat = FZPool.draftState(donnees);
+        chargerPoints(poolOuvert, etat);
         const mode = (donnees.poolMode || 'cumulative') === 'head-to-head' ? 'Tête-à-tête' : 'Cumulatif';
         const createurNom = createurDuPool(donnees);
-        document.title = `${poolOuvert} – Fantazy`;
+        const equipes = Object.values(donnees.teams || {}).filter(t => (t.members || []).length > 0).length;
+        document.title = `Mon pool · ${poolOuvert} – Fantazy`;
         document.getElementById('psTitre').textContent = poolOuvert;
-        document.getElementById('psHeadLabel').textContent =
-            poolOuvert === FZPool.get() ? 'Pool actif' : 'Pool';
-        document.getElementById('psHeadSub').textContent = [
-            mode,
-            `${etat.inscrits} participant${etat.inscrits > 1 ? 's' : ''} sur ${etat.max}`,
-            createurNom ? `créé par ${createurNom}` : null
-        ].filter(Boolean).join(' · ');
-        document.getElementById('psHeadImg').src = FZPool.image(donnees);
+        const actif = poolOuvert === FZPool.get();
+        const surtitre = document.getElementById('psHeadLabel');
+        surtitre.textContent = actif ? 'Pool actif' : 'Pool';
+        surtitre.classList.toggle('is-active', actif);
+        document.getElementById('psHeadSub').innerHTML =
+            (donnees.hasPassword ? `<span class="mp-lock" title="Protégé par mot de passe">${mpIcone('cadenas', 14)}</span>` : '') +
+            echapper([
+                mode,
+                `${equipes}/${etat.max} équipe${etat.max > 1 ? 's' : ''}`,
+                createurNom ? `par ${createurNom}` : null
+            ].filter(Boolean).join(' · '));
+        // La vignette du pool s'il en a une ; sinon sa première lettre.
+        const logo = document.getElementById('psHeadImg');
+        logo.innerHTML = donnees.imageUrl
+            ? `<img src="${echapper(FZPool.image(donnees))}" alt="" onerror="this.remove()">`
+            : '';
+        logo.dataset.lettre = (String(poolOuvert).match(/[\p{L}\p{N}]/u) || ['?'])[0].toUpperCase();
 
         document.getElementById('psTabs').innerHTML = visibles.map(onglet => `
-            <button type="button" class="ps-tab${onglet.cle === ongletActif ? ' is-active' : ''}"
+            <button type="button" class="mp-tab${onglet.cle === ongletActif ? ' is-active' : ''}"
                     role="tab" aria-selected="${onglet.cle === ongletActif}"
                     data-onglet="${onglet.cle}">${onglet.titre}</button>`).join('');
 
@@ -840,13 +924,10 @@
             }
         }
 
-        // Les avatars arrivent après coup : on redessine l'onglet une fois le
-        // cache rempli, plutôt que de retarder l'affichage de la page.
-        if (typeof prefetchAvatars === 'function' && !rendre.avatarsDemandes) {
-            const noms = [
-                ...Object.values(donnees.teams || {}).flatMap(t => t.members || []),
-                ...(donnees.invitations || []).map(inv => inv.username)
-            ];
+        // Les avatars ne servent plus qu'aux invitations (les équipes portent
+        // leurs initiales) : on ne les demande que là où ils s'affichent.
+        if (ongletActif === 'inviter' && typeof prefetchAvatars === 'function' && !rendre.avatarsDemandes) {
+            const noms = (donnees.invitations || []).map(inv => inv.username);
             if (noms.length > 0) {
                 rendre.avatarsDemandes = true;
                 prefetchAvatars(noms).then(() => { if (poolOuvert && !saisieEnCours()) rendre(); });
@@ -871,7 +952,7 @@
         url.searchParams.set('onglet', onglet);
         history.replaceState(null, '', url.toString());
         rendre();
-        // « Participants » dans le tiroir du téléphone mène ici sans
+        // « Mon pool » dans le tiroir du téléphone mène ici sans
         // rechargement : le tiroir se referme, et le rail suit l'onglet.
         if (window.FZNav) { FZNav.closeDrawer(); FZNav.render(); }
         // Un autre onglet se lit depuis son début — sauf pour aller montrer
@@ -883,7 +964,7 @@
     }
 
     function brancher(corps, donnees) {
-        document.getElementById('psTabs').querySelectorAll('.ps-tab').forEach(bouton => {
+        document.getElementById('psTabs').querySelectorAll('.mp-tab').forEach(bouton => {
             bouton.addEventListener('click', () => allerA(bouton.dataset.onglet));
         });
 
@@ -897,6 +978,29 @@
                 allerA('equipes');
             });
         });
+
+        // Déplier un alignement ne redessine rien : la carte bascule sur place.
+        corps.querySelectorAll('[data-deplier]').forEach(bouton => {
+            const carte = bouton.closest('.mp-team');
+            const alignement = carte.querySelector('.mp-roster');
+            const basculer = () => {
+                const ouverte = !carte.classList.contains('is-open');
+                carte.classList.toggle('is-open', ouverte);
+                bouton.setAttribute('aria-expanded', String(ouverte));
+                alignement.hidden = !ouverte;
+                if (ouverte) equipesOuvertes.cles.add(bouton.dataset.deplier);
+                else equipesOuvertes.cles.delete(bouton.dataset.deplier);
+            };
+            bouton.addEventListener('click', basculer);
+            // Toute la ligne déplie, sauf le crayon et le champ de renommage.
+            carte.querySelector('.mp-team-head').addEventListener('click', e => {
+                if (e.target.closest('button, input')) return;
+                basculer();
+            });
+        });
+
+        const copier = document.getElementById('mpCopierLien');
+        if (copier) copier.addEventListener('click', () => copierLien(copier));
 
         corps.querySelectorAll('[data-mdp]').forEach(bouton => {
             bouton.addEventListener('click', () => actionMotDePasse(bouton.dataset.mdp, bouton));
@@ -940,6 +1044,30 @@
 
         const fichier = document.getElementById('psFichierImage');
         if (fichier) fichier.addEventListener('change', () => televerserImage(fichier));
+    }
+
+    /**
+     * Le lien de la page Rejoindre, filtrée sur ce pool, dans le
+     * presse-papiers ; refusé (page non sécurisée, permission), il
+     * s'affiche avec son propre bouton Copier.
+     */
+    async function copierLien(bouton) {
+        const lien = new URL(`rejoindre-pool.html?q=${encodeURIComponent(poolOuvert)}`, window.location.href).href;
+        try {
+            await navigator.clipboard.writeText(lien);
+        } catch (erreur) {
+            if (typeof fzCopy === 'function') {
+                fzCopy({ title: 'Lien d’invitation', message: 'Envoie ce lien : il mène directement à ton pool.', value: lien });
+            }
+            return;
+        }
+        bouton.classList.add('is-done');
+        bouton.innerHTML = `${mpIcone('coche', 18)}<span>Copié</span>`;
+        clearTimeout(bouton._retour);
+        bouton._retour = setTimeout(() => {
+            bouton.classList.remove('is-done');
+            bouton.innerHTML = `${mpIcone('copier', 18)}<span>Copier</span>`;
+        }, 1500);
     }
 
     function message(id, texte, estErreur) {
