@@ -50,55 +50,31 @@ html.fz-home-pending .fz-home-sk { display: block; }
 .ask-al-caption { width: 62%; height: 11px; margin-top: 20px; }
 
 /* ==================== SAISON ====================
-   La grille .fzs, le carrousel des matchs sous ma position et ce soir. */
-.ask-season .ask-stories { grid-column: 1 / -1; order: 3; min-width: 0; padding: 0; }
-.ask-season .ask-stories .section-container { max-width: none; }
-.ask-stories .stories-chip { cursor: default; }
-.ask-chip-l { width: var(--w); height: 10px; }
-.ask-story { display: block; }
-.ask-story-cap { position: absolute; left: 16px; right: 16px; bottom: 26px; display: flex; flex-direction: column; gap: 10px; }
-.ask-story-badge { width: 92px; height: 24px; border-radius: 999px; }
-.ask-story-src { width: 120px; height: 10px; }
-.ask-story-title { width: min(560px, 88%); height: 20px; border-radius: 5px; }
-.ask-track { max-width: none; height: 3px; margin: 10px auto 0; border-radius: 100px; background: var(--border-light); }
-
-.ask-season { padding: 18px 20px 48px; }
-.ask-season .fzs { max-width: 1500px; margin: 0 auto; }
-.ask-season .fzs-head { min-height: 30px; }
-.ask-season .fzs-players { min-height: 297px; }
-/* Mesurées sur les vraies cartes : rang, bande, semaine et tuiles. */
-.ask-season :is(.fzs-rank, .fzs-total) { min-height: 440px; }
-.ask-season .ask-half { grid-column: span 6; order: 5; min-height: 369px; }
-.ask-season .ask-al { order: 6; }
-.ask-number { width: 96px; height: 34px; margin: 12px 0 10px; border-radius: 5px; }
-.ask-sub { width: 56px; height: 12px; }
-.ask-sub.is-long { width: 72%; }
-/* Ma position : le rang, la bande du pool, la semaine et les trois tuiles
-   (accueil-season.css en donne la grille) ; Ce soir : le compte à rebours,
-   l'anneau et les tuiles des matchs à venir. */
-.ask-rank { width: 92px; height: 64px; border-radius: 8px; }
-.ask-pos-score { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding-bottom: 6px; }
-.ask-pts { width: 74px; height: 24px; border-radius: 5px; }
-.ask-strip { height: 6px; margin: 14px 0 16px; border-radius: 3px; background: var(--fz-bone); }
-.ask-week-cap { width: 160px; height: 11px; margin: 3px 0 12px; }
-.ask-week { height: 128px; border-radius: 8px; }
-.ask-period-l { width: 46px; height: 10px; margin: 3px 0 9px; }
-.ask-period-v { width: 58px; height: 24px; border-radius: 5px; }
-.ask-count { width: 120px; height: 44px; margin-top: 6px; border-radius: 6px; }
-.ask-ring { width: 56px; height: 56px; }
-.ask-tonight { display: grid; gap: 6px; }
-.ask-tonight-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 54px; padding: 0 14px; border-radius: 12px; background: var(--fzs-inset); }
-.ask-tonight-l { width: 128px; height: 12px; }
-.ask-tonight-r { width: var(--w); height: 10px; }
-
-/* Les cartes des joueurs du soir (.fzs-pc), sans la couleur du club. */
-.ask-pc .fzs-pc-top { display: flex; justify-content: center; padding-top: 28px; background: var(--fz-bone); }
-.ask-pc-time { position: absolute; left: 8px; top: 8px; width: 42px; height: 18px; }
-.ask-pc-face { width: 66px; height: 66px; }
-.ask-pc .fzs-pc-body { gap: 9px; padding-top: 14px; }
-.ask-pc-name { width: var(--w); height: 13px; }
-.ask-pc-season { width: 62px; height: 10px; }
-.ask-pc-foot { width: 70%; height: 11px; margin: 2px auto; }
+   La charpente de accueil-season.css : une colonne au téléphone, deux au
+   bureau ; la carte de position, des rails de cartes et des listes. */
+.ask-s { display: flex; flex-direction: column; gap: 14px; padding: 8px 10px calc(96px + env(safe-area-inset-bottom)); }
+.ask-s-col { display: contents; }
+.ask-s-hero { order: 1; display: flex; align-items: center; gap: 16px; min-height: 132px; padding: 18px; border-radius: 24px; }
+.ask-s-games { order: 2; }
+.ask-s-mine { order: 3; }
+.ask-s-top { order: 4; }
+.ask-s-act { order: 5; }
+.ask-s-rank { flex: none; width: 96px; height: 96px; border-radius: 24px; }
+.ask-s-big { width: 60%; height: 34px; border-radius: 6px; }
+.ask-s-sec { padding: 0; border-radius: 18px; }
+.ask-s-head { display: flex; align-items: center; gap: 10px; padding: 18px 16px 8px; }
+.ask-s-head h2 { font: 800 18px/20px 'Saira Condensed', 'Barlow Condensed', sans-serif; letter-spacing: .8px; }
+.ask-s-ico { flex: none; width: 22px; height: 22px; border-radius: 6px; }
+.ask-s .ask-row { padding: 10px 16px; border-color: var(--fzh-border); }
+.ask-s .ask-row-av { width: 38px; height: 38px; }
+.ask-s-pts { flex: none; width: 26px; height: 16px; }
+.ask-s-rail { display: flex; gap: 10px; overflow: hidden; padding: 12px 16px 16px; }
+.ask-s-card { flex: none; width: 224px; height: 170px; border-radius: 18px; }
+.ask-s-top .ask-s-card { width: 168px; height: 214px; border-radius: 16px; }
+@media (min-width: 900px) {
+    .ask-s { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; max-width: 1240px; margin: 0 auto; padding: 24px 24px 56px; }
+    .ask-s-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+}
 
 /* ==================== REPÊCHAGE EN COURS ==================== */
 .ask-ticker {
@@ -174,13 +150,6 @@ html.fz-home-pending .fz-home-sk { display: block; }
 
 /* ==================== TÉLÉPHONE ==================== */
 @media (max-width: 768px) {
-    .ask-season { padding: 12px 12px calc(90px + env(safe-area-inset-bottom)); }
-    .ask-season .fzs-players { min-height: 291px; }
-    .ask-season .fzs-rank { min-height: 421px; }
-    .ask-season .fzs-total { min-height: 263px; }
-    .ask-season .ask-half { grid-column: 1 / -1; min-height: 200px; }
-    .ask-season .ask-al { min-height: 308px; }
-    .ask-season .ask-half .ask-row:nth-child(n + 4) { display: none; }
     .ask-number { width: 72px; height: 30px; }
     .ask-al-grid > span { height: 32px; border-radius: 6px; }
 

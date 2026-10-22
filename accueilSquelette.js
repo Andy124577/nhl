@@ -10,7 +10,7 @@
    Il prend la forme de la dernière disposition vue par ce navigateur
    (fzAccueilDisposition, notée par fzdRevelerAccueil dans accueil-dash.js) :
    saison, repêchage ou accueil sans pool. Les panneaux reprennent les
-   classes de l'accueil chargé (.fzs, .fzs-panel, .fzs-pc, .stories-card)
+   classes de l'accueil chargé (.fzh-panel, .stories-card ; ask-s-* pour la saison)
    et leurs titres réels ; des os prennent la place des données.
    fzdRevelerAccueil() retire le squelette. Styles : accueil-squelette.css.
 
@@ -61,51 +61,35 @@
     // ---- Saison ----
 
     function saison() {
-        // Les jetons du sélecteur : un par match du jour, plus « Auto ».
-        const puce = largeur => `<span class="stories-chip">${mat('ask-chip-l', `${largeur}px`)}</span>`;
-        const carte = i => `
-            <div class="fzs-pc ask-pc">
-                <div class="fzs-pc-top">${mat('ask-pc-time')}${os('ask-pc-face is-round')}</div>
-                <div class="fzs-pc-body">${os('ask-pc-name', `${[78, 92, 70, 86, 74, 96][i]}px`)}${mat('ask-pc-season')}</div>
-                <div class="fzs-pc-foot">${mat('ask-pc-foot')}</div>
+        // Même charpente que l'accueil de saison (accueil-season.js) : ma
+        // position, les matchs ce soir, mes joueurs, les meilleurs de la
+        // semaine et l'activité de la ligue ; deux colonnes au bureau.
+        const ligne = (i, n) => `
+            <div class="ask-row">
+                ${os('ask-row-av is-round')}
+                <span class="ask-row-txt">${os('ask-row-l1', ['58%', '46%', '52%', '40%', '55%', '48%'][i % 6])}${mat('ask-row-l2', ['36%', '30%', '42%', '34%', '28%', '38%'][i % 6])}</span>
+                ${n ? mat('ask-s-pts') : ''}
             </div>`;
-        // Même ordre que l'accueil de saison (accueil-season.js) : ma
-        // position et ce soir, le carrousel des matchs, mes joueurs.
-        const histoires = `
-            <section class="home-section stories-section ask-stories">
-                <div class="section-container">
-                    <div class="stories-picker">
-                        <span class="stories-chip">${mat('ask-chip-l', '30px')}</span>
-                        ${[118, 112, 122, 116].map(puce).join('')}
-                    </div>
-                    <div class="stories-card ask-story">
-                        <span class="ask-story-cap">${os('ask-story-badge')}${mat('ask-story-src')}${os('ask-story-title')}</span>
-                    </div>
-                    <div class="ask-track"></div>
-                </div>
+        const liste = (titre, n, cls, i) => `
+            <section class="ask-panel ask-s-sec ${cls}" style="--i:${i}">
+                <div class="ask-s-head">${mat('ask-s-ico')}<h2>${titre}</h2></div>
+                ${repete(n, k => ligne(k, cls === 'ask-s-mine'))}
+            </section>`;
+        const rail = (titre, n, cls, i) => `
+            <section class="ask-panel ask-s-sec ${cls}" style="--i:${i}">
+                <div class="ask-s-head"><h2>${titre}</h2></div>
+                <div class="ask-s-rail">${repete(n, () => '<span class="fz-bone-flat ask-s-card"></span>')}</div>
             </section>`;
         return `
-            <div class="ask-season">
-                <div class="fzs">
-                    <section class="fzs-rank fzs-panel ask-panel" style="--i:1">
-                        <div class="fzs-head"><h2>Ma position</h2>${mat('ask-link')}</div>
-                        <div class="fzs-pos-top">${os('ask-rank')}<span class="ask-pos-score">${os('ask-pts')}${mat('ask-sub')}</span></div>
-                        <div class="ask-strip"></div>
-                        <div class="fzs-week">${mat('ask-week-cap')}${mat('ask-week')}</div>
-                        <div class="fzs-periods">${repete(3, () => `<div>${mat('ask-period-l')}${os('ask-period-v')}</div>`)}</div>
-                    </section>
-                    <section class="fzs-total fzs-panel ask-panel" style="--i:2">
-                        <div class="fzs-head"><h2>Ce soir</h2>${mat('ask-sub')}</div>
-                        <div class="fzs-ce-main"><span class="fzs-ce-lead">${mat('ask-sub is-long')}${os('ask-count')}</span>${mat('ask-ring is-round')}</div>
-                        <div class="ask-tonight">${repete(2, () => `<span class="ask-tonight-row">${mat('ask-tonight-l')}${mat('ask-tonight-r', '24%')}</span>`)}</div>
-                    </section>
-                    ${histoires}
-                    <section class="fzs-players fzs-panel ask-panel" style="--i:3">
-                        <div class="fzs-head"><h2>Mes joueurs ce soir</h2>${mat('ask-link')}</div>
-                        <div class="fzs-player-list">${repete(6, carte)}</div>
-                    </section>
-                    ${panneauListe('Activité de la ligue', 'ask-half')}
-                    ${panneauAlignements('ask-half')}
+            <div class="ask-s">
+                <div class="ask-s-col">
+                    <div class="ask-panel ask-s-hero" style="--i:0">${os('ask-s-rank')}<span class="ask-row-txt">${mat('ask-row-l2', '40%')}${os('ask-s-big')}${mat('ask-row-l2', '30%')}</span></div>
+                    ${liste('Mes joueurs ce soir', 6, 'ask-s-mine', 2)}
+                    ${liste('Activité de la ligue', 3, 'ask-s-act', 4)}
+                </div>
+                <div class="ask-s-col">
+                    ${rail('Matchs ce soir', 3, 'ask-s-games', 1)}
+                    ${rail('Meilleurs de la semaine', 3, 'ask-s-top', 3)}
                 </div>
             </div>`;
     }

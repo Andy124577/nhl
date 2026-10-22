@@ -75,42 +75,11 @@ html[data-theme="light"] .fzh .fzd-off-face { background: var(--fzh-raised); }
    actif est un aplat --primary, le même dans les deux thèmes. */
 html[data-theme="light"] :is(.fzh, .fzs) .fzd-off-dot::after { background: var(--fzh-outline); }
 
-/* ─────────────────── 4. Accueil saison (.fzs) ─────────────────── */
-
-html[data-theme="light"] .fzs p,
-html[data-theme="light"] .fzs .fzm-activity-text { color: var(--fzh-text); }
-html[data-theme="light"] .fzs :is(.fzs-rank p span, .fzs-game footer, .fzs-player-name small) { color: var(--fzh-muted); }
-html[data-theme="light"] .fzs :is(.fzs-player-name strong, .fzm-news-row, .fzm-news-headline) { color: var(--fzh-ink); }
-html[data-theme="light"] .fzs .fzs-player-stats { color: var(--fzh-text); }
-/* Le héros garde sa glace, fondue dans le panneau clair plutôt que noir. */
-html[data-theme="light"] #fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #fff 5%, #ffffffd9 45%, transparent); }
-html[data-theme="light"] .fzs .fzs-ice { opacity: .18; }
-/* La règle `.fzs p` ci-dessus l'emporterait sur les deux couleurs d'écart. */
-html[data-theme="light"] .fzs .fzs-green { color: var(--success); }
-html[data-theme="light"] .fzs .fzs-red { color: var(--primary-text); }
-html[data-theme="light"] #fzDashSection .fzs-tag:not(.is-live) { color: var(--fzh-ink); }
-html[data-theme="light"] .fzs :is(.fzs-player, .fzs-stat) { border-bottom-color: var(--fzh-border); }
-html[data-theme="light"] .fzs .fzm-list-row { border-color: var(--fzh-border); }
-html[data-theme="light"] .fzs .fzs-stat > div { background: #E8E8ED; }
-html[data-theme="light"] .fzs .fzs-dots i { background: var(--fzh-outline); }
-html[data-theme="light"] .fzs .fzs-dots .is-on { background: var(--success); }
-@media (max-width: 768px) {
-    html[data-theme="light"] .fzs .fzs-player,
-    html[data-theme="light"] .fzs .fzs-player:last-child { border-color: var(--fzh-border); }
-    html[data-theme="light"] .fzs .fzs-player-stats small { border-top-color: var(--fzh-border); }
-}
+/* ─────────────────── 4. Accueil saison (.fzs) ───────────────────
+   Ses deux thèmes vivent dans accueil-season.css (jetons --s-*). */
 
 /* ─────────────── 5. Accueil sans pool, carte d'actualité ─────────────── */
 
 /* Le lien d'une carte à photo vit sur le voile sombre : il garde le rouge
    texte du thème sombre (#D70015 y ferait 3:1). */
 html[data-theme="light"] #fzDashSection .fzh .fzh-news:has(.fzh-news-image) .fzh-link { color: #FF5C66; }
-
-/* Mon duel (tête-à-tête) — accueil saison, thème clair. */
-html[data-theme="light"] .fzs .fzs-duel-side span { color: var(--fzh-muted); }
-html[data-theme="light"] .fzs .fzs-duel-side.is-me span { color: var(--fzh-ink); }
-html[data-theme="light"] .fzs .fzs-duel-side strong { color: var(--fzh-ink); }
-html[data-theme="light"] .fzs .fzs-duel-score.is-ahead .fzs-duel-side.is-me strong { color: var(--success); }
-html[data-theme="light"] .fzs .fzs-duel-score.is-behind .fzs-duel-side.is-me strong { color: var(--primary-text); }
-html[data-theme="light"] .fzs .fzs-duel-vs,
-html[data-theme="light"] .fzs .fzs-duel-prev { color: var(--fzh-muted); border-color: var(--fzh-border); }

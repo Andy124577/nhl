@@ -256,6 +256,9 @@ async function loadStories() {
     // live while this tab is open appears without a refresh.
     section.style.display = '';
 
+    // Les cartes « Matchs ce soir » de l'accueil de saison lisent le même direct.
+    if (typeof fzsActualiserMatchs === 'function') fzsActualiserMatchs();
+
     if (!storySlides.length) {
         storyPinnedKey = null;
         renderStoryPicker();
@@ -461,6 +464,7 @@ function appliquerStoryDirect(matchs, ageMs) {
     });
 
     updateStoryPickerScores();
+    if (typeof fzsActualiserMatchs === 'function') fzsActualiserMatchs();
 
     const courant = storySlides[storyIndex];
     if (courant && courant.type === 'live') patchStoryLive(courant.game);
@@ -473,6 +477,7 @@ function appliquerStoryMatch(g, ageMs) {
     if (!slide) { loadStories(); return; }
     slide.game = storyRecu(g, ageMs);
     updateStoryPickerScores();
+    if (typeof fzsActualiserMatchs === 'function') fzsActualiserMatchs();
     if (storySlides[storyIndex] === slide) patchStoryLive(slide.game);
 }
 
@@ -791,13 +796,13 @@ function renderHomeNews(articles) {
     const list = document.getElementById('fzHomeNewsList');
     if (!section || !list) return;
     section.hidden = !articles.length;
-    const quand = iso => (iso && typeof relativeTimeFr === 'function') ? ` · ${relativeTimeFr(iso)}` : '';
+    const quand = iso => (iso && typeof relativeTimeFr === 'function') ? `${relativeTimeFr(iso)} · ` : '';
     list.innerHTML = articles.slice(0, 5).map(a => `
         <li><a class="fz-home-news-row" href="${escapeHTML(a.url)}" target="_blank" rel="noopener noreferrer">
-            ${a.image ? `<img class="fz-home-news-img" src="${escapeHTML(a.image)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}
+            <span class="fz-home-news-pic">${a.image ? `<img class="fz-home-news-img" src="${escapeHTML(a.image)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
             <span class="fz-home-news-copy">
                 <strong>${escapeHTML(a.title)}</strong>
-                <small>${escapeHTML(a.source || 'LNH')}${quand(a.publishedAt)}</small>
+                <small>${quand(a.publishedAt)}${escapeHTML(a.source || 'LNH')}</small>
             </span>
         </a></li>`).join('');
 }

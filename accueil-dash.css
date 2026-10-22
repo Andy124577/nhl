@@ -1578,6 +1578,7 @@ button.fzd-mypools-more:empty { display: none; }
 .fz-home-news-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; color: var(--fzd-ink); text-decoration: none; }
 .fz-home-news-row:hover strong { text-decoration: underline; }
 .fz-home-news-row:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+.fz-home-news-pic { display: contents; }
 .fz-home-news-img { flex: none; width: 64px; height: 44px; border-radius: 6px; object-fit: cover; background: var(--fzd-tile-bg); }
 .fz-home-news-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .fz-home-news-copy strong { font: 600 15px/1.3 'Barlow', sans-serif; color: var(--fzd-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
