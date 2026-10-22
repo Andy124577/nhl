@@ -15,8 +15,8 @@
  * `fullPlayerData`, …) et `resolveHeadshotByName` (headshots.js) ; tout est
  * gardé par `typeof`.
  *
- * Ailleurs — l'accueil, dont la bannière rouvre le même récapitulatif — la
- * page fournit ses propres données par `window.fzSetDraftEndSource()` avant
+ * Ailleurs — l'accueil, dont la bannière rouvre le même récapitulatif, et le
+ * classement, où mène le repêchage automatique (?recap=1) — la page fournit ses propres données par `window.fzSetDraftEndSource()` avant
  * d'appeler `fzShowDraftEndPopup()`. L'auto-affichage, lui, reste réservé à
  * la salle de repêchage : charger ce fichier ailleurs n'ouvre rien.
  * draftFini.html, où arrive le repêchage automatique, l'ouvre elle-même par
@@ -328,6 +328,8 @@
     });
     overlay.querySelector("#fzEndClose").addEventListener("click", close);
     overlay.querySelector("#fzEndRanking").addEventListener("click", function () {
+      // Déjà sur le classement (repêchage automatique) : il est juste dessous.
+      if (/classement\.html/.test(window.location.pathname)) { close(); return; }
       window.location.href = "classement.html";
     });
     overlay.querySelector("#fzEndShare").addEventListener("click", sharePicks);

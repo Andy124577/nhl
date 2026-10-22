@@ -310,10 +310,52 @@ async function loadAllUserPools() {
         if (equipeDemandee && pool.data.teams && pool.data.teams[equipeDemandee]) {
             showTeamRoster(pool.name, equipeDemandee);
         }
+
+        ouvrirRecapitulatifDemande(pool);
     } catch (error) {
         console.error('Error loading pools:', error);
         showError('Erreur', 'Impossible de charger votre pool');
     }
+}
+
+/**
+ * ?recap=1 : le récapitulatif « Ton équipe est complète » (draftFinPopup.js)
+ * par-dessus le classement. C'est ici qu'arrive un repêchage automatique —
+ * lancé depuis repechage.js ou ouvert depuis sa notification — qui se joue
+ * en une requête, sans passer par la salle de repêchage qui le montre
+ * d'habitude au dernier choix. Le paramètre est retiré aussitôt : ni un
+ * rechargement ni un changement de pool ne le rouvrent.
+ */
+function ouvrirRecapitulatifDemande(pool) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('recap') !== '1') return;
+    url.searchParams.delete('recap');
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+
+    const equipe = FZPool.team();
+    if (!equipe || typeof window.fzShowDraftEndPopup !== 'function') return;
+
+    // Le bassin complet de la trousse, comme la salle de repêchage :
+    // nhl_filtered_stats.json (fullPlayerData) n'en contient qu'une partie.
+    const bassin = window.FZDraftKit ? FZDraftKit.pools('projection') : { skaters: [], goalies: [], teams: [] };
+    window.fzSetDraftEndSource({
+        draftData: pool.data,
+        teamName: equipe.name,
+        clanName: pool.name,
+        complete: true,
+        skaters: bassin.skaters,
+        goalies: bassin.goalies,
+        teams: bassin.teams,
+        // Les statistiques courantes d'abord ; un joueur qu'elles ne
+        // connaissent pas encore (une recrue sans match) prend
+        // l'identifiant de la trousse.
+        headshot: nom => {
+            const fiche = bassin.skaters.find(p => p.skaterFullName === nom)
+                || bassin.goalies.find(g => g.goalieFullName === nom);
+            return resolveHeadshotByName(nom) || (fiche ? buildHeadshotUrl(fiche.playerId, fiche.teamAbbrevs) : null);
+        }
+    });
+    window.fzShowDraftEndPopup();
 }
 
 // ==================== VIEW RENDERING ====================
@@ -1142,7 +1184,7 @@ async function renderPoolStandings(poolData, poolName) {
             const per = d => (byDays ? fmtPeriodPts(byDays[d].get(standing.teamName)) : '·');
             return `
                 <div class="st-mobile-row is-clickable${estMoi ? ' is-me' : ''}" tabindex="0" role="button" aria-label="Voir l'équipe de ${displayName}" data-team="${standing.teamName.replace(/"/g, '&quot;')}">
-                    <span class="st-mobile-rank">${standing.rank}</span>
+                    <span class="st-mobile-rank">${standing.rank <= 3 ? rankBadgeHTML(standing.rank) : standing.rank}</span>
                     <span class="st-mobile-logo">${getTeamLogoHTML(standing.nhlTeams, 28) || `<span class="st-avatar-fallback">${initialsFromName(displayName)}</span>`}</span>
                     <div class="st-mobile-info">
                         <span class="st-mobile-name"><span class="st-mobile-name-txt" title="${displayName}">${displayName}</span>${evoHTML}</span>

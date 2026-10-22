@@ -120,7 +120,7 @@ test('« Commencer » sur un pool automatique termine le repêchage dans la mêm
 
     const vue = evenements.vueNotification({ type: 'draft_started', poolName: 'Ligue', subject: departs[0].subject });
     assert.equal(vue.titre, 'Repêchage automatique terminé');
-    assert.equal(vue.href, 'draftFini.html?pool=Ligue');
+    assert.equal(vue.href, 'classement.html?pool=Ligue&recap=1');
 });
 
 test('à l’heure prévue, un pool automatique se repêche tout seul', async () => {

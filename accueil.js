@@ -1334,6 +1334,58 @@ function stopStoryTimer() {
 // ============================================================
 // BUILD TEAM SCORES  (from pool + stats data)
 // ============================================================
+
+/* Identifiants LNH de la trousse, par nom repêché — refaits quand la
+   trousse arrive (loadDashData la charge une fois le repêchage terminé). */
+let idsTrousse = { donnees: null, parNom: null, parCle: null };
+function idDansLaTrousse(nom) {
+    const kit = window.FZDraftKit && FZDraftKit.donnees;
+    if (!kit) return null;
+    if (idsTrousse.donnees !== kit) {
+        const parNom = new Map();
+        const parCle = new Map();
+        [...(kit.skaters || []), ...(kit.goalies || [])].forEach(p => {
+            if (!p.playerId) return;
+            if (!parNom.has(p.fullName)) parNom.set(p.fullName, p.playerId);
+            const cle = cleDeNom(p.fullName);
+            if (!parCle.has(cle)) parCle.set(cle, p.playerId);
+        });
+        idsTrousse = { donnees: kit, parNom, parCle };
+    }
+    return idsTrousse.parNom.get(nom)
+        || idsTrousse.parCle.get(cleDeNom(nom))
+        || idsTrousse.parCle.get(cleDeNom(FZDraftKit.nomCanonique(nom)))
+        || null;
+}
+
+/**
+ * La ligne du relevé de chaque joueur repêché, retrouvée comme la page de
+ * classement la retrouve (calculateTeamPoints, classement.js) : par
+ * l'identifiant LNH de la trousse d'abord, puis par le nom exact, puis sans
+ * accent ni ponctuation. Par le nom exact seul, « Yegor Chinakhov » (trousse)
+ * ne trouvait pas « Egor Chinakhov » (relevé), ni « Tim Stützle » « Tim
+ * Stutzle » : ils comptaient zéro ici, et l'accueil annonçait un autre rang
+ * que le classement. Les lignes mal étiquetées (FZ_IDS_ERRONES) ne se
+ * rapprochent jamais par le nom.
+ */
+function indexerReleve(lignes) {
+    const errones = new Set(window.FZ_IDS_ERRONES || []);
+    const parId = new Map();
+    const parNom = new Map();
+    const parCle = new Map();
+    lignes.forEach(p => {
+        if (p.playerId && !parId.has(Number(p.playerId))) parId.set(Number(p.playerId), p);
+        if (!p.playerName || errones.has(Number(p.playerId))) return;
+        if (!parNom.has(p.playerName)) parNom.set(p.playerName, p);
+        const cle = cleDeNom(p.playerName);
+        if (!parCle.has(cle)) parCle.set(cle, p);
+    });
+    return nom => {
+        const id = idDansLaTrousse(nom);
+        return (id && parId.get(Number(id))) || parNom.get(nom) || parCle.get(cleDeNom(nom)) || null;
+    };
+}
+
 function buildTeamScores(pool) {
     const teams  = pool.allTeams || {};
     const stats  = userData.statsData;
@@ -1349,32 +1401,36 @@ function buildTeamScores(pool) {
     // Les points du soir s'ajoutent aux totaux de minuit dès qu'ils tombent
     // (pointsDirect.js) ; `enDirect` garde la part de ce soir, pour l'afficher.
     const enDirect = lignes => (window.FZPointsDirect ? FZPointsDirect.joueurs(lignes) : lignes);
-    const playerPts = {};
-    const playerLive = {};
-    if (stats && stats.players && stats.seasonStarted !== false) {
-        enDirect(stats.players).forEach(p => {
-            const name = p.playerName;
-            if (!name) return;
-            // Formule partagée (lib/scoring.js), plus recopiée ici.
-            playerPts[name] = p.position === 'G' ? goaliePoolPoints(p) : (p.points || 0);
-            if (p.pointsEnDirect) playerLive[name] = p.pointsEnDirect;
-        });
-    }
+    const ligneDe = indexerReleve(stats && stats.players && stats.seasonStarted !== false
+        ? enDirect(stats.players) : []);
+    // Formule partagée (lib/scoring.js), plus recopiée ici.
+    const playerPts = n => {
+        const p = ligneDe(n);
+        return p ? (p.position === 'G' ? goaliePoolPoints(p) : (p.points || 0)) : 0;
+    };
+    const playerLive = n => (ligneDe(n) || {}).pointsEnDirect || 0;
 
     // Le club repêché compte lui aussi (2×V + DP), comme sur la page de
     // classement et comme dans le rang enregistré par le serveur. Sans
     // lui, l'aperçu de la page d'accueil pouvait classer deux équipes
     // dans un autre ordre que le classement lui-même.
-    const clubPts = {};
-    const clubLive = {};
+    // Par clé de nom, et « Utah Mammoth » retrouve « Utah Hockey Club » : le
+    // même rapprochement que le classement (getCurrentTeamStats).
+    const clubs = new Map();
     if (!stats || stats.seasonStarted !== false) {
         const fiches = (userData.teamsData && userData.teamsData.teams) || [];
         (window.FZPointsDirect ? FZPointsDirect.clubs(fiches) : fiches).forEach(t => {
             if (!t || !t.teamFullName) return;
-            clubPts[t.teamFullName] = clubPoolPoints(t);
-            if (t.pointsEnDirect) clubLive[t.teamFullName] = t.pointsEnDirect;
+            const cle = cleDeNom(t.teamFullName);
+            if (!clubs.has(cle)) clubs.set(cle, t);
         });
     }
+    const clubDe = n => {
+        const cle = cleDeNom(n);
+        return clubs.get(cle) || clubs.get(CLUBS_RENOMMES[cle]) || null;
+    };
+    const clubPts = n => { const t = clubDe(n); return t ? clubPoolPoints(t) : 0; };
+    const clubLive = n => (clubDe(n) || {}).pointsEnDirect || 0;
 
     // Compute each team's score
     const rows = Object.entries(teams).map(([teamName, td]) => {
@@ -1384,10 +1440,10 @@ function buildTeamScores(pool) {
             ...(td.goalie    || []),
             ...(td.rookie    || [])
         ];
-        const score = players.reduce((s, n) => s + (playerPts[n] || 0), 0)
-            + (td.teams || []).reduce((s, n) => s + (clubPts[n] || 0), 0);
-        const live = players.reduce((s, n) => s + (playerLive[n] || 0), 0)
-            + (td.teams || []).reduce((s, n) => s + (clubLive[n] || 0), 0);
+        const score = players.reduce((s, n) => s + playerPts(n), 0)
+            + (td.teams || []).reduce((s, n) => s + clubPts(n), 0);
+        const live = players.reduce((s, n) => s + playerLive(n), 0)
+            + (td.teams || []).reduce((s, n) => s + clubLive(n), 0);
         const isCurrentUser = !!td.members && td.members.includes(userData.username);
         return { teamName, score, live, isCurrentUser, memberCount: (td.members || []).length };
     });

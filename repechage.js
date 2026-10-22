@@ -1003,10 +1003,10 @@
                     rendre();
                     return;
                 }
-                // Repêchage automatique : tout est déjà joué, on va voir le résultat.
+                // Repêchage automatique : tout est déjà joué, on va voir le
+                // classement, ses choix par-dessus (classement.js, ?recap=1).
                 if (donnees.draftComplet) {
-                    localStorage.setItem('draftClan', nomPool);
-                    window.location.href = 'draftFini.html';
+                    window.location.href = `classement.html?pool=${encodeURIComponent(nomPool)}&recap=1`;
                     return;
                 }
             }

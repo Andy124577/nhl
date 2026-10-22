@@ -186,9 +186,32 @@ body.fz-classement #standingsTable td.points-column {
 body.fz-classement .st-rank-badge {
   font: 700 14px/1 'Oswald', sans-serif;
 }
+/* Le podium : une médaille d'or, d'argent ou de bronze, dans la table H2H
+   comme dans la liste cumulative. Texte sombre sur les trois (contraste ≥ 4,5
+   même au bas du dégradé de bronze). */
 body.fz-classement .st-rank-badge.gold,
 body.fz-classement .st-rank-badge.silver,
-body.fz-classement .st-rank-badge.bronze { color: var(--fzc-accent); }
+body.fz-classement .st-rank-badge.bronze {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;                        /* la colonne de rang de la liste */
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  color: #1A1A1A;
+}
+body.fz-classement .st-rank-badge.gold {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, .35);
+}
+body.fz-classement .st-rank-badge.silver {
+  background: linear-gradient(135deg, #E6E6EB, #A8A8B3);
+  box-shadow: 0 2px 8px rgba(192, 192, 192, .35);
+}
+body.fz-classement .st-rank-badge.bronze {
+  background: linear-gradient(135deg, #CD7F32, #B87333);
+  box-shadow: 0 2px 8px rgba(205, 127, 50, .35);
+}
 body.fz-classement .st-rank-badge:not(.gold):not(.silver):not(.bronze) { color: var(--fzc-text-faint); }
 
 body.fz-classement .st-participant { gap: 10px; }
@@ -269,7 +292,6 @@ body.fz-classement .st-mobile-rank {
   color: var(--rr-muted);
   text-align: center;
 }
-body.fz-classement .st-mobile-row:nth-child(-n+3) .st-mobile-rank { color: var(--fzc-accent); }
 body.fz-classement .st-mobile-logo {
   width: 52px;
   height: 52px;

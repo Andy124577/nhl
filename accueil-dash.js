@@ -1357,9 +1357,14 @@ async function loadDashData() {
     const team = FZPool.team();
     const activeName = FZPool.get();
     if (!team || !activeName) return null;
+    // Repêchage terminé, la trousse donne l'identifiant LNH de chaque choix :
+    // c'est par lui que buildTeamScores (accueil.js) retrouve les joueurs que
+    // la trousse et le relevé n'écrivent pas pareil, comme le classement.
+    const repeche = FZPool.draftState(FZPool.data()).etat === 'termine';
     const [tonight, movement] = await Promise.all([
         fzdPrise('tonight') || fetchTonightBoxscores(),
-        fetchRankMovement(activeName)
+        fetchRankMovement(activeName),
+        repeche && window.FZDraftKit ? FZDraftKit.charger().catch(() => null) : null
     ]);
     return { tonight, movement, activeName };
 }
@@ -1511,10 +1516,10 @@ function fzdMonEffectifHref(activeName, teamName) {
    cartes, même mise en page. Il y lit des globales que l'accueil n'a pas,
    d'où la source explicite posée ici avant l'ouverture.
 
-   La trousse complète (position, équipe, photo de chaque joueur) n'est
-   chargée qu'au premier clic, et une seule fois : la home n'a aucune raison
-   de télécharger 1 Mo pour un bouton qu'on ne pressera peut-être jamais —
-   elle se contente sinon de draftkit-watchlist.json. */
+   La trousse complète (position, équipe, photo de chaque joueur) est
+   d'ordinaire déjà là : loadDashData la charge une fois le repêchage
+   terminé, pour le pointage. Sinon, elle part au premier clic, une seule
+   fois. */
 let fzdBassinJoueurs = null;
 let fzdBassinEnCours = null;
 
