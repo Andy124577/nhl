@@ -114,7 +114,7 @@ describe('les lignes du soir (/tonight-boxscores), sur le vrai match', () => {
     });
 });
 
-describe('l’accueil : ligne, total et répartition s’accordent', () => {
+describe('l’accueil : ligne et total s’accordent', () => {
     const lignes = lignesDuSoir({ matchs: [match], feuilles, nomDe: p => ({ [BOUCHARD]: 'Evan Bouchard', [LANKINEN]: 'Kevin Lankinen' }[p.playerId] || '') });
 
     function charger(poolMode) {
@@ -126,7 +126,7 @@ describe('l’accueil : ligne, total et répartition s’accordent', () => {
         const dash = chargerFonctions('accueil-dash.js', ['fzdPoolH2H', 'fzdPointsCeSoir'], globals);
         return {
             ...dash,
-            ...chargerFonctions('accueil-season.js', ['FZS_EN_DIRECT', 'fzsRepartition', 'fzsLignesDuSoir'], {
+            ...chargerFonctions('accueil-season.js', ['fzsLignesDuSoir'], {
                 ...globals,
                 ...dash,
                 activeRosterNames: () => ['Evan Bouchard', 'Kevin Lankinen']
@@ -134,27 +134,23 @@ describe('l’accueil : ligne, total et répartition s’accordent', () => {
         };
     }
 
-    test('cumulatif : 5 PTS pour Bouchard, total 7 (Bouchard 5 + Lankinen 2), répartition 3 + 2 + 2', () => {
-        const { fzdPointsCeSoir, fzsLignesDuSoir, fzsRepartition } = charger('cumulative');
+    test('cumulatif : 5 PTS pour Bouchard, total 7 (Bouchard 5 + Lankinen 2)', () => {
+        const { fzdPointsCeSoir, fzsLignesDuSoir } = charger('cumulative');
         const bouchard = lignes.find(l => l.playerId === BOUCHARD);
         assert.equal(fzdPointsCeSoir(bouchard), 5);
 
         const soir = fzsLignesDuSoir({ players: lignes, games: [{ id: match.id, state: 'OFF' }] });
         assert.equal(soir.lines.length, 2);
         assert.equal(soir.total, 7);
-        const repartition = Object.fromEntries(fzsRepartition(soir.lines));
-        assert.deepEqual(repartition, { 'Buts': 3, 'Aides': 2, 'Pts gardiens': 2 });
-        assert.equal(Object.values(repartition).reduce((a, b) => a + b, 0), soir.total,
-            'la répartition explique le total, sans reste');
         assert.equal(soir.lines.reduce((n, l) => n + fzdPointsCeSoir(l), 0), soir.total);
     });
 
-    test('tête-à-tête : les points fantasy, et la répartition garde tirs et arrêts', () => {
-        const { fzdPointsCeSoir, fzsLignesDuSoir, fzsRepartition } = charger('head-to-head');
+    test('tête-à-tête : les points fantasy', () => {
+        const { fzdPointsCeSoir, fzsLignesDuSoir } = charger('head-to-head');
         const bouchard = lignes.find(l => l.playerId === BOUCHARD);
         assert.equal(fzdPointsCeSoir(bouchard), 17);
         const soir = fzsLignesDuSoir({ players: lignes, games: [] });
-        assert.deepEqual([...fzsRepartition(soir.lines)].map(([label]) => label), ['Buts', 'Aides', 'Tirs', 'Arrêts']);
+        assert.equal(soir.total, soir.lines.reduce((n, l) => n + fzdPointsCeSoir(l), 0));
     });
 
     test('une ligne absente vaut 0', () => {

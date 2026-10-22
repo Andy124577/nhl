@@ -1,313 +1,341 @@
-﻿/* Reference-driven season skin, scoped away from draft and onboarding.
-   Apple dark-ladder values; accueil-light.css covers the light theme. */
-body.fz-season-page { background:var(--bg); }
-#fzDashSection.is-season { background:var(--bg); padding:18px 20px 48px; }
-.is-season .fz-dash { max-width:1500px; --fzd-bg:#1C1C1E; --fzd-bg-alt:#2C2C2E; --fzd-surface:#1C1C1E; --fzd-ink:#F5F5F7; --fzd-text:#F5F5F7; --fzd-text-muted:#A1A1A6; --fzd-border:#38383A; --fzd-border-soft:#38383A; --fzd-accent:var(--primary-text); --fzd-solid:var(--primary); --fzd-on-solid:var(--on-primary); }
-.is-season .fz-dash > :not(#fzSeasonHome) { display:none!important; }
-.fzs { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; color:#F5F5F7; font:400 16px/1.35 'Barlow Condensed',sans-serif; }
-.fzs .fzs-panel { min-width:0; padding:16px; border:1px solid #38383A; border-radius:11px; background:#1C1C1E; overflow:hidden; }
-.fzs .fzs-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
-.fzs h2 { margin:0; font:500 15px/1.25 'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.45px; }
-.fzs a { color:var(--primary-text); }
-.fzs a:hover { color:var(--primary-text); }
-.fzs a:focus-visible,.fzs button:focus-visible { outline:2px solid var(--primary); outline-offset:4px; }
-.fzs-head a { font-size:14px; white-space:nowrap; }
-.fzs-head a span { margin-left:6px; font-size:22px; }
-.fzs p { margin:5px 0; color:#F5F5F7; }
-.fzs .fzs-hero { grid-column:span 8; position:relative; min-height:218px; padding:24px; display:flex; align-items:center; isolation:isolate; }
-.fzs-ice { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.3; z-index:-3; }
-.fzs-hero:after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,#1C1C1E 5%,#1C1C1Eb8 45%,transparent); z-index:-1; }
-.fzs-cover { position:absolute; right:0; bottom:-28%; width:49%; height:140%; object-fit:contain; z-index:-2; }
-.fzs-hero-copy { max-width:70%; }
-.fzs-eyebrow { display:flex; align-items:center; gap:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; }
-.fzs h1 { font:900 italic clamp(32px,3vw,52px)/1.02 'Archivo',sans-serif; text-transform:uppercase; margin:20px 0 10px; letter-spacing:-1.5px; }
-.fzs .fzs-cta { display:inline-flex; gap:24px; background:var(--primary); color:var(--on-primary); padding:10px 20px; margin-top:16px; border-radius:6px; font-weight:700; text-transform:uppercase; }
-.fzs-dot { display:inline-block; width:11px; height:11px; border-radius:50%; background:var(--primary); box-shadow:0 0 14px rgba(var(--primary-rgb),.33); flex-shrink:0; }
-.fzs-rank { grid-column:span 4; position:relative; }
-.fzs .fzs-green { color:var(--success); }
-.fzs .fzs-red { color:var(--primary-text); }
-.fzs-rank p span { color:#A1A1A6; font-size:13px; }
-.fzs .fzd-team-logo { width:30px; height:30px; object-fit:contain; }
-.fzs-tag { display:inline-block; border-radius:3px; padding:1px 6px; background:#2C2C2E; color:#F5F5F7; font-size:11px; font-weight:700; text-transform:uppercase; width:max-content; }
-.fzs-tag.is-live { background:var(--primary); color:var(--on-primary); } /* blanc dessus : 4,55:1 */
-.fzs-players { grid-column:span 6; grid-row:span 2; }
-.fzs-player { display:grid; grid-template-columns:55px 1.15fr 1.4fr 30px; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #38383A; }
-.fzs-player:last-child { border:0; }
-.fzs .fzd-off-face { width:55px; height:55px; border-radius:50%; background:#2C2C2E; flex-shrink:0; }
-.fzs-player-name { min-width:0; }.fzs-player-name strong { color:#F5F5F7; font-size:16px; }
-.fzs-player-name small { display:block; color:#A1A1A6; margin:2px 0 4px; font-size:13px; }
-.fzs-player-stats { display:flex; flex-wrap:wrap; justify-content:space-between; gap:5px; color:#F5F5F7; font-size:12px; }
-.fzs-player-stats b,.fzs-player-stats strong { font-size:20px; }.fzs-player-stats small { flex-basis:100%; font-size:12px; }
-.fzs-total { grid-column:span 4; }
-.fzs-dots { display:flex; gap:6px; flex-wrap:wrap; margin-top:15px; }.fzs-dots i { width:13px; height:13px; border-radius:50%; background:#38383A; }.fzs-dots .is-on { background:var(--success); }
-.fzs-breakdown { grid-column:span 6; }.fzs-stat { display:grid; grid-template-columns:115px 30px 1fr; align-items:center; gap:12px; border-bottom:1px solid #38383A; padding:7px 0; font-size:14px; }.fzs-stat > div { background:#2C2C2E; border-radius:10px; height:9px; overflow:hidden; }.fzs-stat i { display:block; height:100%; background:var(--primary); border-radius:10px; }
-/* Blocs partagés (accueil-dash.js) : l'accueil de saison ne leur donne que
-   leur place dans la grille et, pour « À surveiller », son fond de panneau —
-   le reste de leur mise en forme les suit d'un accueil à l'autre. */
-.fzs :is(#fzDashCalendarWrap, #fzdOffMoves) { grid-column:span 12; min-width:0; }
-/* Le fond et la bordure viennent des jetons --fzd-* que la palette remappe
-   pour cet accueil (accueil-palette.css) : ils suivent donc les deux thèmes. */
-/* Seul sur sa rangée depuis que « Actualités NHL » a quitté l'accueil de
-   saison : il la prend entière, comme « Mouvements récents ». */
-.fzs #fzdOffWatch { grid-column:span 12; min-width:0; padding:16px; border:1px solid var(--fzd-border); border-radius:11px; overflow:hidden; }
-.fzs #fzDashCalendarWrap { display:block!important; margin:0; padding:16px; border-radius:11px; }.fzs .fzd-cal-games { grid-template-columns:repeat(4,minmax(0,1fr)); }.fzs .fzd-game-players { display:none; }.fzs .fzd-cal-strip { margin-bottom:12px; }
-.fzs-activity { grid-column:span 4; }
-.fzs .fzm-news-list { display:grid; gap:10px; }.fzs .fzm-news-row { color:#F5F5F7; }.fzs .fzm-list-card { background:transparent; border:0; }.fzs .fzm-list-row { border-color:#38383A; }.fzs .fzm-activity-text { color:#F5F5F7; }.fzs-empty { padding:20px 0; font-size:15px; }
-@media(max-width:1100px) and (min-width:769px) { .fzs-player { grid-template-columns:42px 1fr; }.fzs-player-stats { grid-column:2; }.fzs-player > .fzd-team-logo { display:none; }.fzs .fzd-cal-games { grid-template-columns:repeat(2,minmax(0,1fr)); }.fzs-head a { font-size:12px; } }
-@media(max-width:768px) {
- #fzDashSection.is-season { padding:12px 12px calc(90px + env(safe-area-inset-bottom)); }
- .fzs { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; font-size:15px; }
- .fzs .fzs-panel { padding:13px; border-radius:10px; }
- .fzs .fzs-hero { grid-column:1/-1; order:0; min-height:225px; padding:20px; }
- .fzs-hero-copy { max-width:75%; }.fzs h1 { font-size:34px; max-width:250px; }.fzs-cover { right:-15%; width:80%; opacity:.7; }.fzs-hero p { max-width:210px; }
- .fzs-players { grid-column:1/-1; grid-row:auto; order:1; }.fzs-player-list { display:flex; overflow-x:auto; scroll-snap-type:x proximity; gap:12px; padding-bottom:5px; }.fzs-player { flex:0 0 205px; display:grid; grid-template-columns:48px 1fr; border:1px solid #38383A; border-radius:8px; padding:10px; scroll-snap-align:start; gap:8px; }.fzs-player:last-child { border:1px solid #38383A; }.fzs-player .fzd-off-face { width:48px; height:48px; }.fzs-player-stats { grid-column:1/-1; }.fzs-player > .fzd-team-logo { display:none; }.fzs-player-stats small { text-align:center; border-top:1px solid #38383A; padding-top:6px; }
- .fzs-rank { grid-column:span 1; order:2; }.fzs-total { grid-column:span 1; order:3; }.fzs-rank .fzs-head a { display:none; }.fzs #fzDashCalendarWrap { grid-column:1/-1; order:4; }.fzs #fzdOffMoves { grid-column:1/-1; order:5; }.fzs-breakdown { grid-column:1/-1; order:9; }.fzs-activity { grid-column:1/-1; order:10; }.fzs #fzdOffWatch { grid-column:1/-1; order:11; }
- .fzs h2 { font-size:13px; }.fzs-head { gap:8px; }.fzs-head a { font-size:13px; }.fzs .fzd-cal-games { display:flex; }.fzs .fzd-game-card { flex:0 0 85%; }.fzs .fzd-cal-strip { display:flex; overflow-x:auto; }.fzs .fzd-day-chip { flex:0 0 64px; }.fzs-stat { grid-template-columns:80px 25px 1fr; }
+﻿/* ============================================================
+   ACCUEIL DE SAISON — maquette « 6b Éditorial » (accueil-season.js)
+   ------------------------------------------------------------
+   Téléphone : une colonne, des sections à plat séparées d'un filet, comme
+   la maquette. Bureau (≥ 900 px) : deux colonnes de cartes, les alignements
+   et À lire sur toute la largeur.
+   Les deux thèmes passent par les jetons --s-* ci-dessous ; seule la carte
+   « Ma position » reste sombre dans les deux, comme une carte de membre.
+   ============================================================ */
+body.fz-season-page {
+    --s-bg: #0B0B0C;
+    --s-card: #141416;
+    --s-raise: #1B1B1E;
+    --s-line: #232327;
+    --s-line2: #1F1F23;
+    --s-chip: #1F1F23;
+    --s-head: #0F0F11;
+    --s-me: #1A1A1D;
+    --s-face: #0B0B0C;
+    --s-btn: #18181B;
+    --s-btn-line: #2A2A2F;
+    --s-switch: #34343A;
+    --s-ink: #F3F1EE;
+    --s-ink2: #C9C7C4;
+    --s-mute: #A8A6A3;
+    --s-faint: #7E7C79;
+    --s-dim: #5A5A60;
+    --s-red: #E5372B;
+    --s-red-soft: rgba(229, 55, 43, .16);
+    --s-red-ink: #FF8A80;
+    --s-green: #7FD49B;
+    --s-gold: #E8B26A;
+    --s-coral: #E08A80;
+    background: var(--s-bg);
 }
-@media(prefers-reduced-motion:reduce) { .fzs * { scroll-behavior:auto!important; } }
-.fzs { --fzm-bg:#000000; --fzm-panel:#1C1C1E; --fzm-surface:#1C1C1E; --fzm-ink:#F5F5F7; --fzm-ink-soft:#A1A1A6; --fzm-ink-faint:#A1A1A6; --fzm-border:#38383A; --fzm-red:var(--primary-text); --fzm-red-soft:rgba(var(--primary-rgb),.16); --fzm-green:var(--success); --fzm-solid:var(--primary); --fzm-on-solid:var(--on-primary); }
-
-/* Mon duel (tête-à-tête) : en cours, sinon à venir, sinon le dernier joué. */
-.fzs-duel { grid-column:span 4; }
-.fzs-duel-score { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; margin:6px 0 4px; }
-.fzs-duel-side { display:flex; flex-direction:column; gap:2px; min-width:0; }
-.fzs-duel-side:last-child { text-align:right; align-items:flex-end; }
-.fzs-duel-side span { font-size:14px; color:#A1A1A6; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
-.fzs-duel-side.is-me span { color:#F5F5F7; font-weight:700; }
-.fzs-duel-side strong { font:600 32px/1.1 'Oswald',sans-serif; font-variant-numeric:tabular-nums; }
-.fzs-duel-score.is-ahead .fzs-duel-side.is-me strong { color:var(--success); }
-.fzs-duel-score.is-behind .fzs-duel-side.is-me strong { color:var(--primary-text); }
-.fzs-duel-vs { font:600 13px/1 'Oswald',sans-serif; text-transform:uppercase; color:#A1A1A6; }
-.fzs-duel-status { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:14px; }
-.fzs-duel-prev { font-size:13px; color:#A1A1A6; border-top:1px solid #38383A; padding-top:8px; margin-top:10px !important; }
-@media (max-width:768px) {
- .fzs-duel { grid-column:1/-1; order:1; }
- .fzs-duel-side strong { font-size:28px; }
+html[data-theme="light"] body.fz-season-page {
+    --s-bg: #F3F2EF;
+    --s-card: #FFFFFF;
+    --s-raise: #F6F5F2;
+    --s-line: #E2E0DC;
+    --s-line2: #ECEAE6;
+    --s-chip: #EEECE8;
+    --s-head: #F7F6F3;
+    --s-me: #F4F2EE;
+    --s-face: #ECEAE6;
+    --s-btn: #F7F6F3;
+    --s-btn-line: #DDDAD5;
+    --s-switch: #CFCCC7;
+    --s-ink: #141416;
+    --s-ink2: #34343A;
+    --s-mute: #5E5C59;
+    --s-faint: #74716D;
+    --s-dim: #A29F9A;
+    --s-red: #D52B1E;
+    --s-red-soft: rgba(213, 43, 30, .1);
+    --s-red-ink: #B3241A;
+    --s-green: #1D8048;
+    --s-gold: #976111;
+    --s-coral: #B4372B;
 }
 
-/* ---- Points du soir, ajoutés au total dès qu'ils tombent (pointsDirect.js) ----
-   Un <b> et non un <span> : `.fzs-rank p span` teinte ses span en gris. */
-.fzs-live-pts {
-    display:inline-flex; align-items:center; gap:5px;
-    margin-left:8px; padding:2px 9px 2px 7px;
-    border-radius:100px;
-    background:color-mix(in srgb, var(--success) 15%, transparent);
-    color:var(--success);
-    font:600 13px/1.3 'Barlow Condensed',sans-serif; letter-spacing:.02em;
-    white-space:nowrap; vertical-align:2px;
+#fzDashSection.is-season { background: var(--s-bg); padding: 0 0 calc(96px + env(safe-area-inset-bottom)); }
+.is-season .fz-dash { max-width: 1240px; padding: 0; }
+.is-season .fz-dash > :not(#fzSeasonHome) { display: none !important; }
+.fzs-slot[hidden] { display: none !important; }
+
+.fzs {
+    --s-tile: var(--s-card);
+    display: flex;
+    flex-direction: column;
+    color: var(--s-ink);
+    font: 400 14px/1.35 'Saira', 'Barlow', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
-.fzs-live-pts::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
-.fzs-live-pts.is-new { animation:fzs-live-bump 1.6s ease-out; }
-@keyframes fzs-live-bump {
-    0%   { transform:scale(1.18); box-shadow:0 0 0 0 color-mix(in srgb, var(--success) 45%, transparent); }
-    60%  { transform:scale(1); box-shadow:0 0 0 8px transparent; }
-    100% { transform:scale(1); box-shadow:none; }
+.fzs-col { display: contents; }
+.fzs .fzs-hero { order: 1; }
+.fzs .fzs-games { order: 2; }
+.fzs .fzs-mine { order: 3; }
+.fzs .fzs-duel { order: 4; }
+.fzs .fzs-top { order: 5; }
+.fzs .fzs-activity { order: 6; }
+.fzs .fzs-ranks { order: 7; }
+.fzs .fzs-lines { order: 8; }
+.fzs .fzs-read { order: 9; }
+:where(.fzs) :is(h2, p) { margin: 0; }
+:where(.fzs) ul { margin: 0; padding: 0; list-style: none; }
+.fzs a { color: inherit; text-decoration: none; }
+.fzs :is(a, button, [role="button"]):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; border-radius: 8px; }
+:where(.fzs) button { font: inherit; color: inherit; cursor: pointer; }
+.fzs [role="button"] { cursor: pointer; }
+
+@keyframes fzsPulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* ---- Sections : un filet au téléphone, une carte au bureau ---- */
+.fzs-sec { margin-top: 30px; border-top: 1px solid var(--s-line); overflow: hidden; }
+.fzs-sh { display: flex; align-items: center; gap: 10px; margin: 0 16px; padding: 18px 0 8px; }
+.fzs-sh h2 { flex: 1; min-width: 0; font: 800 18px/20px 'Saira Condensed', 'Barlow Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase; }
+.fzs-ico { flex: none; color: var(--s-red); }
+.fzs-sh.is-plain { align-items: baseline; padding: 0; }
+.fzs-sh-link { flex: none; font: 600 13px/1 'Saira', sans-serif; color: var(--s-mute); }
+.fzs-sh-link:hover { color: var(--s-ink); }
+.fzs-chip { flex: none; height: 26px; padding: 0 10px; border-radius: 999px; background: var(--s-chip); font: 600 12px/26px 'Saira', sans-serif; color: var(--s-mute); white-space: nowrap; }
+.fzs-foot { display: flex; justify-content: center; align-items: center; width: 100%; height: 48px; border: 0; border-top: 1px solid var(--s-line2); background: none; font: 600 14px/1 'Saira', sans-serif; color: var(--s-ink2); }
+.fzs .fzs-foot:hover { color: var(--s-ink); background: var(--s-me); }
+.fzs-empty { padding: 12px 16px 18px; font-size: 13px; color: var(--s-faint); }
+.fzs-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--s-red); animation: fzsPulse 1.2s infinite; }
+
+/* Le défilement horizontal des cartes (matchs, meilleurs) */
+.fzs-rail { display: flex; gap: 10px; overflow-x: auto; padding: 12px 16px 2px; scroll-snap-type: x mandatory; scroll-padding: 0 16px; scrollbar-width: none; }
+.fzs-rail::-webkit-scrollbar { display: none; }
+.fzs-rail > li { flex: none; scroll-snap-align: start; }
+
+/* ---- Ma position ---- */
+.fzs-hero {
+    position: relative; isolation: isolate; overflow: hidden;
+    display: flex; align-items: center; gap: 16px;
+    margin: 8px 10px 0; padding: 18px; border-radius: 24px;
+    color: #F3F1EE;
+    background:
+        radial-gradient(90% 120% at 0% 100%, rgba(240, 64, 48, .5) 0%, rgba(240, 64, 48, 0) 62%),
+        radial-gradient(70% 90% at 100% 0%, rgba(255, 90, 70, .18) 0%, rgba(255, 90, 70, 0) 60%),
+        linear-gradient(135deg, #2A1213 0%, #171214 55%, #100E10 100%);
 }
-@media (prefers-reduced-motion: reduce) { .fzs-live-pts.is-new { animation:none; } }
-/* Joueur dont le match n'a pas commencé : l'heure de mise au jeu en pastille. */
-.fzs-tag.is-time { background:transparent; border:1px solid #48484A; color:#F5F5F7; text-transform:none; font-variant-numeric:tabular-nums; }
-.fzs-player.is-upcoming .fzs-player-stats small { color:#A1A1A6; }
-html[data-theme="light"] .fzs-tag.is-time { border-color:var(--fzh-outline); color:var(--fzh-muted); }
-
-/* ---- Mes joueurs en direct : carrousel de cartes (maquette Claude Design) ----
-   Le joueur en grand sur la couleur de son club, le logo du club en filigrane ;
-   ceux qui jouent sont à gauche, marqués EN DIRECT. */
-.fzs-players .fzs-player-list { display:flex; flex-direction:row; flex-wrap:nowrap; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding:0 0 6px; }
-.fzs-players .fzs-player-list::-webkit-scrollbar { display:none; }
-.fzs-pc, .fzs-pc:hover { text-decoration:none; }
-.fzs-pc { flex:none; width:172px; scroll-snap-align:start; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; border:1px solid #2E2E33; background:#232326; color:#F2F2F3; font-variant-numeric:tabular-nums; }
-.fzs-pc.is-live { border-color:#8A2A30; }
-.fzs-pc:hover { color:#F2F2F3; border-color:#55555C; }
-#fzDashSection .fzs-pc, #fzDashSection .fzs-pc:hover { color:#F2F2F3; }
-.fzs-pc-top { position:relative; height:112px; overflow:hidden; background:linear-gradient(180deg, color-mix(in srgb, var(--pc-team) 85%, #fff 5%) 0%, color-mix(in srgb, var(--pc-team) 45%, #0b0b0d) 100%); }
-/* Le logo du club en grand derrière le joueur, comme sur les fiches LNH. */
-.fzs-pc-logo { position:absolute; left:50%; top:50%; width:130%; height:130%; transform:translate(-50%,-50%); object-fit:contain; opacity:.2; filter:brightness(.6) saturate(.6); pointer-events:none; }
-/* La règle de palette (#fzDashSection … .fzd-off-face) pose un fond gris : la photo reste détourée sur la couleur du club. */
-#fzDashSection .fzs .fzs-pc .fzd-off-face { position:absolute; inset:6px 0 0; width:auto; height:auto; flex:none; border-radius:0; background:transparent; display:block; font-size:0; overflow:visible; }
-#fzDashSection .fzs .fzs-pc .fzd-off-face img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center bottom; background:transparent; transform:none; }
-#fzDashSection .fzs-pc-body { border-top:1px solid rgba(255,255,255,.08); }
-.fzs-pc-live { position:absolute; left:8px; top:8px; display:flex; align-items:center; gap:4px; height:18px; padding:0 6px; border-radius:4px; background:var(--primary); color:var(--on-primary); font:700 11px/1 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.06em; }
-.fzs-pc-time { position:absolute; left:8px; top:8px; z-index:1; display:flex; align-items:center; height:18px; padding:0 6px; border-radius:4px; background:rgba(0,0,0,.55); color:#fff; font:700 11px/1 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.06em; font-variant-numeric:tabular-nums; }
-.fzs-pc-live { z-index:1; }
-.fzs-pc-live i { width:5px; height:5px; border-radius:50%; background:#fff; }
-.fzs-pc-body { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; border-top:1px solid #2E2E33; min-height:70px; }
-.fzs-pc-name { display:flex; align-items:baseline; gap:4px; max-width:100%; }
-.fzs-pc-name strong { font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#F2F2F3; }
-.fzs-pc-name span { flex:none; font-size:11px; font-weight:700; color:#8A8A90; }
-.fzs-pc-season { display:flex; align-items:baseline; gap:6px; font-size:13px; color:#A3A3AA; }
-.fzs-pc-season b { font-weight:700; color:#8A8A90; }
-.fzs-pc-stats { display:flex; gap:10px; font:600 14px/1 'Barlow Condensed',Helvetica,sans-serif; color:#C9C9CF; }
-.fzs-pc-stats small { font-size:11px; color:#6F6F76; }
-.fzs-pc .is-up { color:var(--success); }
-.fzs-pc-stats .is-up small { color:inherit; }
-.fzs-pc-foot { margin-top:auto; padding:7px 8px; background:#1C1C1F; text-align:center; font:600 12.5px/1.2 'Barlow Condensed',Helvetica,sans-serif; letter-spacing:.03em; color:#8A8A90; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fzs-pc.is-live .fzs-pc-foot { background:#2B1C1D; color:#F2F2F3; }
-html[data-theme="light"] .fzs-pc { background:#fff; border-color:var(--fzh-outline); }
-html[data-theme="light"] .fzs-pc, html[data-theme="light"] .fzs-pc:hover, html[data-theme="light"] .fzs-pc-name strong { color:#1D1D1F; }
-html[data-theme="light"] .fzs-pc-body { border-color:var(--fzh-outline); }
-html[data-theme="light"] .fzs-pc-foot { background:#F5F5F7; }
-html[data-theme="light"] .fzs-pc.is-live .fzs-pc-foot { background:#FDECEC; color:#1D1D1F; }
-@media(max-width:768px) { .fzs-pc { flex-basis:160px; width:160px; } }
-
-/* ---- Disposition de saison (de haut en bas) ----
-   Ma position et le total du soir côte à côte ; le carrousel des matchs du
-   jour (#storiesSection, accueil.js) ; mes joueurs ce soir ; mon duel
-   (tête-à-tête) ; les meilleurs joueurs ; À surveiller ; les alignements des
-   32 clubs (.fzh-al, accueil-draft.css) ; les actualités, tout en bas. */
-.fzs .fzs-rank { grid-column:span 6; order:1; }
-.fzs .fzs-total { grid-column:span 6; order:2; }
-#fzSeasonHome #storiesSection { grid-column:1/-1; order:3; min-width:0; padding:0; }
-#fzSeasonHome #storiesSection .section-container { max-width:none; }
-.fzs .fzs-players { grid-column:1/-1; grid-row:auto; order:4; }
-.fzs .fzs-duel { grid-column:1/-1; order:4; }
-#fzSeasonHome #fzHomeNews { grid-column:1/-1; order:7; margin:0; }
-/* À surveiller et les alignements côte à côte, comme à l'accueil de
-   repêchage : en pleine largeur, les 32 tuiles deviendraient des pavés. */
-#fzSeasonHome #fzdOffWatch { grid-column:span 6; order:5; }
-#fzSeasonHome .fzh-al { grid-column:span 6; order:6; }
-#fzSeasonHome:has(#fzdOffWatch[hidden]) .fzh-al { grid-column:1/-1; }
-/* La palette teint en rouge tout lien de l'accueil de saison (#fzDashSection
-   .fzs a) : les tuiles gardent l'encre de leur club, le titre son blanc. */
-#fzDashSection #fzSeasonHome a.fzh-al-club { color:var(--encre); }
-#fzDashSection #fzSeasonHome a.fzh-al-lien { color:#fff; }
-@media(max-width:768px) {
- /* Pleine largeur : la semaine du rang et les matchs du soir ne tiennent
-    pas dans une demi-colonne de téléphone. */
- .fzs .fzs-rank, .fzs .fzs-total { grid-column:1/-1; }
- .fzs .fzs-rank .fzs-head a { display:inline; }
- #fzSeasonHome #fzdOffWatch, #fzSeasonHome .fzh-al { grid-column:1/-1; }
+.fzs-hero::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background:
+        linear-gradient(160deg, transparent 22%, rgba(255, 72, 56, .6) 23%, transparent 31%, transparent 38%, rgba(255, 72, 56, .38) 39.5%, transparent 50%),
+        linear-gradient(160deg, transparent 60%, rgba(255, 72, 56, .28) 62%, transparent 74%);
 }
-
-/* ==== Ma position et Ce soir (maquette « Ma Position Card Redesign ») ====
-   Les jetons --fzh-* (accueil-palette.css) suivent le thème d'eux-mêmes ;
-   les tuiles sont un creux du panneau en sombre, un gris en clair. */
-.fzs :is(.fzs-rank, .fzs-total) {
-    --fzs-faint: color-mix(in srgb, var(--fzh-muted) 62%, var(--fzh-panel));
-    --fzs-inset: color-mix(in srgb, var(--fzh-page) 55%, var(--fzh-panel));
-    --fzs-bar: color-mix(in srgb, var(--fzh-ink) 9%, var(--fzh-panel));
-    --fzs-bar-ahead: color-mix(in srgb, var(--fzh-ink) 22%, var(--fzh-panel));
-    display:flex; flex-direction:column; padding:16px 18px 18px; border-radius:16px;
+.fzs-hero::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 62%; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(rgba(255, 255, 255, .13) 1px, transparent 1.5px);
+    background-size: 9px 9px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
 }
-html[data-theme="light"] .fzs :is(.fzs-rank, .fzs-total) { --fzs-inset:var(--fzh-raised); }
-.fzs :is(.fzs-rank, .fzs-total) .fzs-head { margin-bottom:6px; }
-.fzs :is(.fzs-rank, .fzs-total) h2 { font:700 14px/1.2 'Barlow Condensed',sans-serif; letter-spacing:.12em; color:var(--fzh-muted); }
-.fzs .fzs-rank .fzs-head a { display:flex; align-items:center; gap:6px; margin:-6px -10px; padding:6px 10px; border-radius:8px; font:600 14px/1 'Barlow Condensed',sans-serif; }
-.fzs .fzs-rank .fzs-head a:hover { background:var(--fzh-tint); }
-.fzs .fzs-rank .fzs-head a span { margin:0; font-size:18px; line-height:1; }
-.fzs-head-meta { font:400 13px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); white-space:nowrap; }
-
-/* -- Le rang en grand, mes points à droite -- */
-.fzs-pos-top { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-top:4px; }
-/* En ligne, pas en flex : un écart de flex séparerait le « 2 » de son « e ». */
-.fzs-pos-rank { display:block; font:700 76px/.9 'Barlow Condensed',sans-serif; letter-spacing:-.02em; color:var(--fzh-ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
-.fzs-pos-rank sup { position:relative; top:.32em; margin-left:2px; font-size:30px; line-height:1; vertical-align:top; letter-spacing:0; }
-.fzs-pos-rank small { margin-left:8px; font:600 24px/1 'Barlow Condensed',sans-serif; letter-spacing:0; color:var(--fzs-faint); }
-.fzs-pos-score { display:flex; flex-direction:column; align-items:flex-end; gap:6px; padding-bottom:6px; min-width:0; }
-.fzs-pos-pts { font:500 15px/1 'Barlow Condensed',sans-serif; color:var(--fzh-muted); white-space:nowrap; }
-.fzs-pos-pts b { font-size:28px; font-weight:700; color:var(--fzh-ink); font-variant-numeric:tabular-nums; }
-.fzs-pos-score .fzs-live-pts { margin:0; vertical-align:0; font-size:14px; padding:3px 10px 3px 8px; }
-.fzs-pos-score .fzs-live-pts::before { width:7px; height:7px; animation:fzs-live-pouls 1.8s infinite; }
-@keyframes fzs-live-pouls {
-    0%   { box-shadow:0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent); }
-    70%  { box-shadow:0 0 0 7px transparent; }
-    100% { box-shadow:0 0 0 0 transparent; }
+/* .fzs a (couleur héritée) l'emporterait : la carte reste claire sur sombre. */
+.fzs .fzs-hero { color: #F3F1EE; }
+html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .18); }
+.fzs-hero-rank {
+    flex: none; width: 96px; height: 96px; border-radius: 24px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    background: rgba(10, 10, 11, .8); box-shadow: inset 0 0 0 1.5px rgba(217, 154, 94, .8);
 }
-.fzs-pos-day { font:600 13px/1.2 'Barlow Condensed',sans-serif; white-space:nowrap; }
-
-/* -- Le pool en une bande : une barre par équipe -- */
-.fzs-pos-strip { display:grid; grid-template-columns:repeat(var(--n), minmax(0,1fr)); gap:4px; margin:14px 0 0; padding:0; list-style:none; }
-.fzs-pos-strip li { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-.fzs-pos-strip i { width:100%; height:6px; border-radius:3px; background:var(--fzs-bar); }
-.fzs-pos-strip .is-ahead i { background:var(--fzs-bar-ahead); }
-.fzs-pos-strip .is-me i { background:var(--fzh-accent-fill); }
-.fzs-pos-strip span { font:500 11px/1 'Barlow Condensed',sans-serif; color:var(--fzs-faint); font-variant-numeric:tabular-nums; }
-.fzs-pos-strip .is-me span { font-weight:700; color:var(--fzh-ink); }
-.fzs-pos-strip.is-dense { gap:2px; }
-.fzs-pos-strip.is-dense li:not(.is-me):not(.is-end) span { visibility:hidden; }
-
-/* -- La semaine du rang -- */
-.fzs-week { --plot-h:104px; margin:16px 0 0; padding-top:14px; min-width:0; border-top:1px solid var(--fzh-border); }
-.fzs-week-cap { display:flex; align-items:baseline; justify-content:space-between; gap:8px; font:400 13px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); }
-.fzs-week-cap > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.fzs-week-cap .fzs-week-sel { font-weight:600; color:var(--fzh-ink); }
-.fzs-week-cap > b { flex:none; font:600 14px/1.2 'Barlow Condensed',sans-serif; }
-.fzs-week-cap > b:not(.fzs-green):not(.fzs-red) { color:var(--fzh-muted); }
-.fzs-week-empty { display:flex; align-items:center; min-height:94px; margin:0 !important; font-size:14px; color:var(--fzh-muted) !important; }
-/* Le tracé en haut, la rangée des jours dessous. */
-.fzs-week-plot { position:relative; height:calc(var(--plot-h) + 24px); margin-top:8px; }
-.fzs-week-plot svg { position:absolute; left:0; top:0; width:100%; height:var(--plot-h); overflow:visible; }
-.fzs-week-grid { stroke:var(--fzh-border); stroke-width:1; stroke-dasharray:2 4; vector-effect:non-scaling-stroke; }
-.fzs-week-grid.is-edge { stroke-dasharray:none; }
-.fzs-week-fill-top { stop-color:var(--fzh-accent-fill); stop-opacity:.28; }
-.fzs-week-fill-bottom { stop-color:var(--fzh-accent-fill); stop-opacity:0; }
-.fzs-week-area { fill:url(#fzsWeekFill); }
-.fzs-week-line { fill:none; stroke:var(--fzh-accent-fill); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke; }
-/* Le guide vertical du jour choisi (--sel, posé par fzsChoisirJour). */
-.fzs-week-guide { position:absolute; top:0; left:calc((var(--sel, 6) + .5) * 100% / 7); width:1px; height:var(--plot-h); background:var(--fzs-bar-ahead); transition:left .15s ease; pointer-events:none; }
-.fzs-week-tick { position:absolute; left:0; top:calc(var(--y) * var(--plot-h) / 100); transform:translateY(-50%); padding-right:4px; background:var(--fzh-panel); font:500 11px/1 'Barlow Condensed',sans-serif; color:var(--fzs-faint); font-variant-numeric:tabular-nums; pointer-events:none; }
-.fzs-week-cols { position:absolute; inset:0; display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); }
-.fzs .fzs-week-col { position:relative; height:100%; margin:0; padding:0; border:0; border-radius:8px; background:transparent; color:inherit; font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.fzs .fzs-week-col:focus-visible { outline:2px solid var(--fzh-accent-fill); outline-offset:-2px; }
-.fzs-week-pt { position:absolute; left:50%; top:calc(var(--y) * var(--plot-h) / 100); width:9px; height:9px; border-radius:50%; background:var(--fzh-panel); box-shadow:inset 0 0 0 2.5px var(--fzh-accent-fill); transform:translate(-50%,-50%); transition:width .15s ease, height .15s ease, background .15s ease; }
-.fzs-week-col.is-sel .fzs-week-pt { width:14px; height:14px; background:var(--fzh-accent-fill); }
-.fzs-week-day { position:absolute; left:0; right:0; bottom:0; text-align:center; font:500 12px/18px 'Barlow Condensed',sans-serif; color:var(--fzs-faint); }
-.fzs-week-col.is-sel .fzs-week-day { font-weight:700; color:var(--fzh-ink); }
-
-/* -- 24 h, 7 jours, 30 jours : trois tuiles -- */
-.fzs-periods { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:16px 0 0; padding:0; }
-.fzs-periods > div { min-width:0; padding:10px 12px; border-radius:10px; background:var(--fzs-inset); }
-.fzs-periods dt { font:600 12px/1.2 'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.1em; color:var(--fzh-muted); }
-.fzs-periods dd { margin:2px 0 0; font:500 13px/1.1 'Barlow Condensed',sans-serif; color:var(--fzh-muted); white-space:nowrap; }
-.fzs-periods dd b { font:700 26px/1.1 'Barlow Condensed',sans-serif; color:var(--fzh-ink); font-variant-numeric:tabular-nums; }
-.fzs-periods .is-zero dd, .fzs-periods .is-zero dd b, .fzs-periods.is-loading dd b { color:var(--fzs-faint); }
-
-/* -- Ce soir : avant, pendant, après les matchs, ou relâche -- */
-.fzs-ce-main { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:4px 0 16px; }
-.fzs-ce-lead { display:flex; flex-direction:column; min-width:0; }
-.fzs-ce-label { font:400 13px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); }
-.fzs-ce-count { display:block; margin-top:2px; font:700 48px/1 'Barlow Condensed',sans-serif; color:var(--fzh-ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
-.fzs-ce-count small { font-size:20px; font-weight:500; color:var(--fzh-muted); }
-.fzs-ce-count.is-up, .fzs-ce-main.is-started .fzs-ce-count { color:var(--success); }
-/* L'anneau : la dernière heure avant la mise au jeu, l'heure du match au centre. */
-.fzs-ce-ring { flex:none; display:grid; place-items:center; width:56px; height:56px; border-radius:50%; background:conic-gradient(var(--fzh-accent-fill) calc(var(--p, 0) * 100%), var(--fzh-border) 0); }
-.fzs-ce-ring > span { display:grid; place-items:center; width:46px; height:46px; border-radius:50%; background:var(--fzh-panel); font:700 13px/1 'Barlow Condensed',sans-serif; color:var(--fzh-muted); white-space:nowrap; }
-.fzs-ce-main.is-started .fzs-ce-ring { background:var(--success); }
-.fzs-ce-live { display:inline-flex; align-items:center; gap:6px; font:600 13px/1 'Barlow Condensed',sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--fzh-accent); }
-.fzs-ce-live i { width:7px; height:7px; border-radius:50%; background:var(--fzh-accent-fill); animation:fzs-ce-pouls 1.8s infinite; }
-@keyframes fzs-ce-pouls {
-    0%   { box-shadow:0 0 0 0 rgba(var(--primary-rgb), .55); }
-    70%  { box-shadow:0 0 0 7px rgba(var(--primary-rgb), 0); }
-    100% { box-shadow:0 0 0 0 rgba(var(--primary-rgb), 0); }
+.fzs-hero-rank b {
+    font: 700 52px/1 'Saira', sans-serif;
+    background: linear-gradient(160deg, #F6D2A8 0%, #D99A5E 28%, #A8622E 52%, #E7B07A 70%, #8A4A1F 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45));
 }
-.fzs .fzs-total .fzs-total-start { margin:0 0 10px; font:400 14px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); }
-.fzs-total-start b { color:var(--fzh-ink); font-weight:600; font-variant-numeric:tabular-nums; }
-.fzs .fzs-total .fzs-total-status { display:flex; flex-wrap:wrap; gap:6px; margin:-6px 0 14px; }
-.fzs-total-status span { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:100px; background:var(--fzs-inset); color:var(--fzh-ink); font:600 13px/1.2 'Barlow Condensed',sans-serif; }
-.fzs-total-status .fzs-dot { width:7px; height:7px; box-shadow:none; }
+.fzs-hero-rank sup { font-size: 21px; vertical-align: top; position: relative; top: 4px; }
+.fzs-hero-rank small { font: 600 11px/1 'Saira', sans-serif; color: #D9A072; text-transform: uppercase; }
+.fzs-hero-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.fzs-hero-pool { font: 600 11px/1.2 'Saira', sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: #A8A6A3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzs-hero-pts { font: 700 36px/1 'Saira', sans-serif; white-space: nowrap; text-shadow: 0 2px 14px rgba(229, 55, 43, .35); font-variant-numeric: tabular-nums; }
+.fzs-hero-pts small { font: 500 15px 'Saira', sans-serif; color: #8E8B88; text-shadow: none; }
+.fzs-hero-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font: 600 12px/1 'Saira', sans-serif; }
+.fzs-hero-live { height: 24px; padding: 0 9px; border-radius: 999px; background: rgba(229, 55, 43, .18); color: #FF8A80; display: inline-flex; align-items: center; gap: 5px; }
+.fzs-hero-live i { width: 5px; height: 5px; border-radius: 50%; background: #E5372B; animation: fzsPulse 1.2s infinite; }
+.fzs-hero-live.is-new { animation: fzsPulse .5s 3; }
+.fzs-hero-move.is-up { color: #7FD49B; }
+.fzs-hero-move.is-down { color: #FF8A80; }
+.fzs-hero > .fzs-ico { color: #6E6C69; transition: transform .15s; }
+.fzs-hero:hover > .fzs-ico { transform: translateX(3px); color: #F3F1EE; }
 
-/* Une tuile par match à venir : l'heure, les deux clubs, mes joueurs. */
-.fzs-tonight { display:grid; gap:6px; margin:0 -8px; padding:0; list-style:none; }
-.fzs .fzs-tonight .fzs-tonight-game { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; background:var(--fzs-inset); color:var(--fzh-ink); text-decoration:none; transition:background .15s ease; }
-#fzDashSection .fzs .fzs-tonight a.fzs-tonight-game { color:var(--fzh-ink); }
-.fzs .fzs-tonight a.fzs-tonight-game:hover { background:color-mix(in srgb, var(--fzh-ink) 6%, var(--fzs-inset)); }
-.fzs-tonight time { flex:none; min-width:52px; font:700 16px/1 'Barlow Condensed',sans-serif; font-variant-numeric:tabular-nums; white-space:nowrap; }
-.fzs-tonight-match { display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
-.fzs-tonight-match i { font:400 13px/1 'Barlow',sans-serif; font-style:normal; color:var(--fzs-faint); }
-.fzs-club { flex:none; display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:color-mix(in srgb, var(--club) 30%, var(--fzh-raised)); }
-.fzs-club img { width:20px; height:20px; object-fit:contain; }
-.fzs-club img + span { display:none; }
-.fzs-club > span { font:700 11px/1 'Barlow Condensed',sans-serif; color:var(--fzh-ink); }
-.fzs-tonight-who { display:flex; flex-direction:column; align-items:flex-end; min-width:0; text-align:right; }
-.fzs-tonight-who small { font:500 11px/1.3 'Barlow',sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--fzs-faint); white-space:nowrap; }
-.fzs-tonight-who b { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 16px/1.2 'Barlow Condensed',sans-serif; color:var(--fzh-ink); }
-.fzs .fzs-total .fzs-tonight-more { margin:8px 0 0; font:400 13px/1.3 'Barlow',sans-serif; color:var(--fzh-muted); }
-
-@media (max-width:768px) {
- .fzs :is(.fzs-rank, .fzs-total) { padding:14px 14px 16px; border-radius:14px; }
- .fzs-pos-rank { font-size:68px; }
- .fzs-tonight { margin:0 -6px; }
+/* ---- Matchs ce soir ---- */
+.fzs .fzs-games { margin: 20px 0 0; border: 0; overflow: visible; }
+.fzs-games .fzs-sh.is-plain { margin: 0 16px; }
+.fzs-game {
+    width: 224px; box-sizing: border-box; padding: 14px; border-radius: 18px;
+    background: var(--s-tile); border: 1px solid var(--s-line);
+    display: flex; flex-direction: column; gap: 14px;
 }
-@media(prefers-reduced-motion:reduce) {
- .fzs-week-pt, .fzs-week-guide { transition:none; }
- .fzs-pos-score .fzs-live-pts::before, .fzs-ce-live i { animation:none; }
+.fzs-game-st { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 8px; background: var(--s-chip); color: var(--s-ink2); font: 600 13px/1 'Saira', sans-serif; white-space: nowrap; }
+.fzs-game-st i { width: 6px; height: 6px; border-radius: 50%; background: var(--s-red); animation: fzsPulse 1.2s infinite; }
+.fzs-game.is-live .fzs-game-st { background: var(--s-red-soft); color: var(--s-red-ink); }
+.fzs-game.is-final .fzs-game-st { color: var(--s-mute); }
+.fzs-game-sc { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.fzs-game-team { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.fzs-game-team img { width: 36px; height: 36px; object-fit: contain; }
+.fzs-game-team b { font: 600 14px/1 'Saira', sans-serif; }
+.fzs-game-score { display: flex; align-items: center; gap: 10px; font: 700 26px/1 'Saira', sans-serif; font-variant-numeric: tabular-nums; }
+.fzs-game-score i { font: 500 18px/1 'Saira', sans-serif; font-style: normal; color: var(--s-dim); }
+.fzs-btn { height: 42px; box-sizing: border-box; border-radius: 12px; border: 1px solid var(--s-btn-line); background: var(--s-btn); display: flex; align-items: center; justify-content: center; font: 600 14px/1 'Saira', sans-serif; color: var(--s-ink); }
+.fzs .fzs-btn:hover { border-color: var(--s-ink2); }
+.fzs-games .fzs-empty { padding: 12px 16px 0; }
+
+/* ---- Lignes : mes joueurs, activité, classements ---- */
+.fzs-list > li + li { border-top: 1px solid var(--s-line2); }
+.fzs-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-width: 0; }
+.fzs-list > li[role="button"]:hover, .fzs a.fzs-row:hover { background: var(--s-me); }
+.fzs .fzd-off-face {
+    position: relative; flex: none; display: grid; place-items: center;
+    width: 38px; height: 38px; border-radius: 50%; overflow: hidden;
+    background: var(--s-face); color: var(--s-faint); font: 600 14px/1 'Saira', sans-serif;
+}
+.fzs .fzd-off-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; background: var(--s-face); }
+.fzs .fzd-off-face.is-icon { color: var(--s-mute); }
+.fzs-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.fzs-row-name { font: 600 14px/16px 'Saira', sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzs-row-name small { font: 500 11px 'Saira', sans-serif; color: var(--s-faint); }
+.fzs-row-sub { display: flex; align-items: center; gap: 5px; font: 400 12px/1.25 'Saira', sans-serif; color: var(--s-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fzs-row-sub.is-live { color: var(--s-ink2); }
+.fzs-row-sub.is-free { color: var(--s-green); }
+.fzs-row-sub.is-me { color: var(--s-ink); font-weight: 600; }
+.fzs-row-stat { flex: none; font: 500 12px/1 'Saira', sans-serif; color: var(--s-mute); white-space: nowrap; }
+.fzs-row-pts { flex: none; min-width: 30px; text-align: right; font: 700 18px/1 'Saira', sans-serif; color: var(--s-ink); font-variant-numeric: tabular-nums; }
+.fzs-row-pts.is-off { color: var(--s-dim); }
+
+/* Squelettes, le temps d'une lecture */
+.fzs .is-bone { animation: fzsPulse 1.4s ease-in-out infinite; }
+.fzs-row.is-bone .fzs-row-txt span { display: block; height: 10px; border-radius: 5px; background: var(--s-chip); width: 70%; }
+.fzs-row.is-bone .fzs-row-txt span + span { width: 45%; }
+
+/* ---- Meilleurs de la semaine ---- */
+.fzs-top .fzs-rail { padding-top: 14px; padding-bottom: 14px; }
+.fzs-top-card { width: 168px; border-radius: 16px; background: var(--s-tile); overflow: hidden; display: flex; flex-direction: column; }
+.fzs-top-card.is-bone { height: 214px; background: var(--s-chip); }
+.fzs-top-card[role="button"]:hover .fzs-top-mug { transform: scale(1.04); }
+.fzs-top-img { position: relative; height: 104px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; background: linear-gradient(180deg, var(--club, #3A414D) 0%, var(--s-tile) 100%); }
+.fzs-top-logo { position: absolute; width: 124px; top: -12px; left: 22px; opacity: .22; }
+.fzs-top-mug { position: relative; height: 98px; transition: transform .2s; transform-origin: bottom; }
+.fzs-top-rank { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0, 0, 0, .5); color: #fff; font: 700 12px/24px 'Saira', sans-serif; text-align: center; }
+.fzs-top-mine { position: absolute; top: 8px; right: 8px; height: 20px; padding: 0 7px; border-radius: 999px; background: #F3F1EE; color: #0B0B0C; font: 700 10px/20px 'Saira', sans-serif; }
+.fzs-top-body { padding: 10px 10px 12px; text-align: center; display: flex; flex-direction: column; gap: 5px; border-top: 1px solid var(--s-btn-line); }
+.fzs-top-name { font: 600 14px/16px 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzs-top-name small { font: 500 11px 'Saira', sans-serif; color: var(--s-faint); }
+.fzs-top-line { font: 400 12px/1 'Saira', sans-serif; color: var(--s-mute); }
+.fzs-top-body strong { font: 700 26px/1.1 'Saira', sans-serif; font-variant-numeric: tabular-nums; }
+
+/* ---- Activité de la ligue ---- */
+.fzs-act { padding-top: 12px; padding-bottom: 12px; }
+.fzs-act .fzs-row-txt { gap: 4px; }
+.fzs-act-tag { font: 600 11px/1 'Saira', sans-serif; letter-spacing: .6px; text-transform: uppercase; color: var(--s-mute); }
+.fzs-act-tag.is-gold { color: var(--s-gold); }
+.fzs-act-tag.is-green { color: var(--s-green); }
+.fzs-act-tag.is-ink { color: var(--s-ink); }
+.fzs-act-text { font: 500 14px/18px 'Saira', sans-serif; text-wrap: pretty; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fzs-act-cta { flex: none; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--s-btn-line); display: flex; align-items: center; font: 600 13px/1 'Saira', sans-serif; }
+.fzs a.fzs-act:hover .fzs-act-cta { border-color: var(--s-ink2); }
+
+/* ---- Classements de la semaine ---- */
+.fzs-tabs { display: flex; gap: 8px; padding: 14px 16px 0; }
+.fzs .fzs-tab { height: 36px; min-width: 58px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--s-btn-line); background: transparent; color: var(--s-mute); font: 600 14px/1 'Saira', sans-serif; }
+.fzs .fzs-tab[aria-pressed="true"] { border-color: var(--s-ink); color: var(--s-ink); }
+.fzs .fzs-toggle { width: 100%; border: 0; background: none; padding: 16px; display: flex; align-items: center; justify-content: space-between; color: var(--s-ink); font: 500 15px/1 'Saira', sans-serif; text-align: left; }
+.fzs-switch { flex: none; position: relative; width: 40px; height: 22px; border-radius: 11px; background: var(--s-switch); transition: background .15s; }
+.fzs-switch i { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
+.fzs-toggle[aria-pressed="true"] .fzs-switch { background: var(--s-green); }
+.fzs-toggle[aria-pressed="true"] .fzs-switch i { left: 21px; }
+.fzs-rank-head, .fzs-rank-row { display: grid; grid-template-columns: minmax(0, 1fr) 104px 34px; gap: 8px; align-items: center; padding: 10px 16px; }
+.fzs-rank-head { background: var(--s-head); font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1px; color: var(--s-faint); text-transform: uppercase; }
+.fzs-rank-head span:last-child, .fzs-rank-pts { text-align: right; }
+.fzs-ranks .fzs-list > li:first-child { border-top: 1px solid var(--s-line2); }
+.fzs-rank-row.is-me { background: var(--s-me); }
+.fzs-rank-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.fzs-rank-tonight { font: 400 12px/15px 'Saira', sans-serif; color: var(--s-mute); }
+.fzs-rank-pts { font: 700 17px/1 'Saira', sans-serif; font-variant-numeric: tabular-nums; }
+
+/* ---- Alignements des 32 clubs ---- */
+.fzs-lines-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; padding: 12px 16px 16px; }
+.fzs-club { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 0 7px; border-radius: 12px; background: var(--s-tile); border: 1px solid var(--s-line2); transition: border-color .15s, transform .15s; }
+.fzs-club img { width: 28px; height: 28px; object-fit: contain; }
+.fzs-club span { font: 600 10px/1 'Saira', sans-serif; letter-spacing: .3px; color: var(--s-mute); }
+.fzs .fzs-club:hover { border-color: var(--s-ink2); transform: translateY(-1px); }
+.fzs .fzs-club:hover span { color: var(--s-ink); }
+.fzs-club.is-sel { border-color: var(--s-red); }
+.fzs-club.is-sel span { color: var(--s-ink); }
+
+/* ---- À lire (#fzHomeNews, renderHomeNews dans accueil.js) ---- */
+.fzs .fzs-read { display: block; margin-top: 24px; }
+.fzs-read .fz-home-news { margin: 0; padding: 0; border: 0; border-radius: 0; background: none; }
+.fzs-read .fz-home-news .fzd-section-title { margin: 0 16px; padding: 0; font: 800 18px/20px 'Saira Condensed', 'Barlow Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-ink); }
+.fzs-read .fz-home-news-list { margin: 10px 8px 0; display: flex; flex-direction: column; gap: 8px; }
+.fzs-read .fz-home-news-list li + li { border: 0; }
+.fzs-read .fz-home-news-row { display: flex; gap: 12px; align-items: center; padding: 8px; border-radius: 16px; background: var(--s-tile); border: 1px solid var(--s-line2); color: var(--s-ink); }
+.fzs-read .fz-home-news-row:hover { border-color: var(--s-line); background: var(--s-me); }
+.fzs-read .fz-home-news-row:hover strong { text-decoration: none; }
+.fzs-read .fz-home-news-pic { display: block; flex: none; width: 104px; height: 76px; border-radius: 11px; overflow: hidden; background: var(--s-chip); }
+.fzs-read .fz-home-news-pic:empty { display: none; }
+.fzs-read .fz-home-news-img { width: 100%; height: 100%; border-radius: 0; object-fit: cover; }
+.fzs-read .fz-home-news-copy { gap: 6px; }
+.fzs-read .fz-home-news-copy strong { font: 600 14px/18px 'Saira', sans-serif; text-wrap: pretty; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fzs-read .fz-home-news-copy small { font: 400 12px/1 'Saira', sans-serif; color: var(--s-faint); }
+
+/* ---- Mon duel (tête-à-tête) ---- */
+.fzs-duel-body { padding: 6px 16px 16px; }
+.fzs-duel-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin: 6px 0 8px; }
+.fzs-duel-side { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fzs-duel-side:last-child { text-align: right; align-items: flex-end; }
+.fzs-duel-side span { font-size: 13px; color: var(--s-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.fzs-duel-side.is-me span { color: var(--s-ink); font-weight: 600; }
+.fzs-duel-side strong { font: 700 32px/1.1 'Saira', sans-serif; font-variant-numeric: tabular-nums; }
+.fzs-duel-score.is-ahead .fzs-duel-side.is-me strong { color: var(--s-green); }
+.fzs-duel-score.is-behind .fzs-duel-side.is-me strong { color: var(--s-red-ink); }
+.fzs-duel-vs { font: 600 12px/1 'Saira', sans-serif; text-transform: uppercase; color: var(--s-faint); }
+.fzs-duel-status, .fzs-duel-prev { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--s-mute); }
+.fzs-duel-prev { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--s-line2); }
+.fzs-tag { display: inline-block; padding: 2px 7px; border-radius: 6px; background: var(--s-chip); color: var(--s-ink); font: 600 11px/1.3 'Saira', sans-serif; text-transform: uppercase; }
+.fzs-tag.is-live { background: var(--s-red-soft); color: var(--s-red-ink); }
+
+/* ---- Bureau : deux colonnes de cartes ---- */
+@media (min-width: 900px) {
+    #fzDashSection.is-season { padding: 24px 24px 56px; }
+    .fzs {
+        --s-tile: var(--s-raise);
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 20px; align-items: start;
+    }
+    .fzs-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+    .fzs .fzs-sec, .fzs .fzs-games { margin: 0; border: 1px solid var(--s-line2); border-radius: 18px; background: var(--s-card); overflow: hidden; }
+    .fzs .fzs-hero { margin: 0; min-height: 132px; padding: 22px; }
+    .fzs-games .fzs-sh.is-plain { margin: 0 18px; padding: 18px 0 0; }
+    .fzs-games .fzs-rail { padding-bottom: 18px; }
+    .fzs-games .fzs-empty { padding: 12px 18px 18px; }
+    .fzs-sh { margin: 0 18px; }
+    .fzs-rail { padding-left: 18px; padding-right: 18px; scroll-padding: 0 18px; scrollbar-width: thin; }
+    .fzs-row, .fzs-rank-head, .fzs-rank-row { padding-left: 18px; padding-right: 18px; }
+    .fzs .fzs-lines, .fzs .fzs-read { grid-column: 1 / -1; }
+    .fzs-lines-grid { grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 8px; padding: 12px 18px 18px; }
+    .fzs-club img { width: 32px; height: 32px; }
+    .fzs .fzs-read { margin: 4px 0 0; border: 0; background: none; }
+    .fzs-read .fz-home-news .fzd-section-title { margin: 0 4px; }
+    .fzs-read .fz-home-news-list { margin: 12px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .fzs-read .fz-home-news-row { height: 100%; box-sizing: border-box; background: var(--s-card); }
+}
+@media (min-width: 900px) and (max-width: 1099px) {
+    .fzs-lines-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+    .fzs-read .fz-home-news-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Très petit téléphone : les tuiles des clubs gardent leur sigle lisible. */
+@media (max-width: 359px) {
+    .fzs-lines-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .fzs-hero-rank { width: 80px; height: 80px; }
+    .fzs-hero-rank b { font-size: 42px; }
+    .fzs-hero-pts { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .fzs *, .fzs *::before { animation: none !important; transition: none !important; }
+    .fzs-rail { scroll-behavior: auto; }
 }

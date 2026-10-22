@@ -2832,7 +2832,9 @@ function fzdRevelerAccueil(noter = true) {
  */
 const FZD_POLICES = [
     "400 16px 'Barlow Condensed'", "600 16px 'Barlow Condensed'", "700 16px 'Barlow Condensed'",
-    "500 16px 'Oswald'", "400 16px 'Barlow'", "700 16px 'Barlow'"
+    "500 16px 'Oswald'", "400 16px 'Barlow'", "700 16px 'Barlow'",
+    // Accueil de saison (accueil-season.css).
+    "400 16px 'Saira'", "600 16px 'Saira'", "700 16px 'Saira'", "800 16px 'Saira Condensed'"
 ];
 let fzdPolices = null;
 

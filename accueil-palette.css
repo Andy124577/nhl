@@ -37,7 +37,7 @@ html[data-theme="dark"] #fzDashSection .fz-dash,
     --fzd-accent-tint: var(--fzh-tint);
 }
 html[data-theme="dark"] #fzDashSection .fz-mobile-home,
-#fzDashSection :is(.fzh, .fzs) {
+#fzDashSection .fzh {
     --fzm-bg: var(--fzh-page);
     --fzm-panel: var(--fzh-panel);
     --fzm-surface: var(--fzh-panel);
@@ -50,28 +50,28 @@ html[data-theme="dark"] #fzDashSection .fz-mobile-home,
     --fzm-red-soft: var(--fzh-tint);
     color: var(--fzh-ink);
 }
-#fzDashSection :is(.fzh-panel, .fzs-panel) {
+#fzDashSection .fzh-panel {
     background: var(--fzh-panel);
     border-color: var(--fzh-outline);
     box-shadow: none;
 }
 /* Le filtre d'« À surveiller » n'est plus de la partie : il suit les jetons
    --fzd-* du panneau qui l'entoure, comme les onglets des mouvements. */
-#fzDashSection :is(.fzh-game, .fzs-game) {
+#fzDashSection .fzh-game {
     background: var(--fzh-panel);
     border-color: var(--fzh-border);
     color: var(--fzh-ink);
 }
 /* Le bouton contour « Classement » garde son contour : deux aplats rouges
    côte à côte, c'est deux actions principales. */
-#fzDashSection :is(.fzs-cta, .fzm-draft-cta),
+#fzDashSection .fzm-draft-cta,
 html[data-theme="dark"] #fzDashSection .fzd-hero-cta:not(.fzd-hero-cta--ghost) {
     background: var(--fzh-accent-fill);
     border-color: var(--fzh-accent-fill);
     color: var(--on-primary);
 }
 /* Survol : l'aplat fonce (--primary-deep), il ne s'éclaircit jamais. */
-#fzDashSection :is(.fzs-cta, .fzm-draft-cta):hover,
+#fzDashSection .fzm-draft-cta:hover,
 html[data-theme="dark"] #fzDashSection .fzd-hero-cta:not(.fzd-hero-cta--ghost):hover {
     background: var(--primary-deep);
     border-color: var(--primary-deep);
@@ -80,15 +80,13 @@ html[data-theme="dark"] #fzDashSection .fzd-hero-cta:not(.fzd-hero-cta--ghost):h
    passe à l'aplat d'encre, sinon il se fond dans le rouge. */
 html[data-theme="dark"] #fzDashSection .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta:not(.fzd-hero-cta--ghost) { background: #1D1D1F; border-color: #1D1D1F; }
 html[data-theme="dark"] #fzDashSection .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta:not(.fzd-hero-cta--ghost):hover { background: #2C2C2E; border-color: #2C2C2E; }
-#fzDashSection :is(.fzh-link, .fzs a:not(.fzs-cta)) { color: var(--fzh-accent); }
+#fzDashSection .fzh-link { color: var(--fzh-accent); }
 /* Le chevron garde le gris prévu pour l'aplat d'encre du thème clair : sur
    le rouge du thème sombre, il passe au blanc. */
 html[data-theme="dark"] #fzDashSection .fzd-hero-cta .fzd-hero-cta-chev { color: var(--on-primary); }
 /* Pastilles pleines portant du texte blanc : blanc sur --primary, 4,55:1
    dans les deux thèmes. */
-#fzDashSection :is(.fzh, .fzs) { --fzm-solid: var(--fzh-accent-fill); --fzm-on-solid: var(--on-primary); }
-#fzDashSection :is(.fzs-tag:not(.is-live), .fzs .fzd-off-face) { background: var(--fzh-raised); }
-#fzDashSection .fzs-hero::after { background: linear-gradient(90deg, #1C1C1E 5%, #1C1C1Eb8 45%, transparent); }
+#fzDashSection .fzh { --fzm-solid: var(--fzh-accent-fill); --fzm-on-solid: var(--on-primary); }
 html[data-theme="dark"] #fzDashSection :is(.fz-dash-hero, #fzmHeroSlot.is-draft) {
     background: var(--fzh-panel);
     border-color: var(--fzh-outline);
