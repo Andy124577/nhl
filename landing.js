@@ -5,8 +5,8 @@
    déjà dans le HTML (index.html, <main class="fzl">), tirés des
    vraies stats 2025–26. Ce fichier ne fait que les animer :
 
-     1. la salle de repêchage du téléphone, en boucle ;
-     2. l'échange qui passe de « proposé » à « accepté » ;
+     1. la carte du repêchage en direct, en boucle ;
+     2. le bouton d'échange, de « proposer » à « accepté » ;
      3. le compteur du classement.
 
    Le mouvement sert à montrer que la compétition est vivante :
@@ -26,10 +26,7 @@
         const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const anime = !reduit && 'IntersectionObserver' in window;
 
-        const boucles = [
-            boucleTelephone(),
-            boucleEchange()
-        ].filter(Boolean);
+        const boucles = [boucleTelephone()].filter(Boolean);
 
         if (anime) {
             boucles.forEach(b => surVisibilite(b.cible, vu => b.vue(vu), 0.3));
@@ -38,6 +35,7 @@
             boucles.forEach(b => b.etatFinal());
         }
 
+        boutonEchange();
         compteurClassement(anime);
     }
 
@@ -114,8 +112,6 @@
         const case5 = $('fzlPhSlot5');
         const ligne1 = $('fzlPhRow1');
         const ligne2 = $('fzlPhRow2');
-        const barre = $('fzlPhBar');
-        const compte = $('fzlPhCount');
         const numero = $('fzlPhPick');
         if (!banniere || !libelle || !horloge || !bande || !case4 || !case5 || !ligne1 || !ligne2) return null;
 
@@ -123,10 +119,12 @@
         let tic = null;
 
         function ecrireLibelle(texte, sous) {
-            libelle.textContent = texte;
+            libelle.textContent = '';
+            const fort = document.createElement('strong');
+            fort.textContent = texte;
             const petit = document.createElement('small');
             petit.textContent = sous;
-            libelle.appendChild(petit);
+            libelle.append(fort, petit);
         }
         function afficherHorloge() {
             const m = Math.floor(secondes / 60);
@@ -154,25 +152,23 @@
             const d = ligne.dataset;
             viderCase(carte, no, false);
             carte.className = 'fzl-pk is-revealing';
-            carte.style.setProperty('--c1', d.c1);
-            carte.style.setProperty('--c2', d.c2);
+            carte.style.setProperty('--club', d.club);
 
-            const logo = new Image(18, 18);
-            logo.className = 'fzl-pk-logo';
-            logo.alt = '';
-            logo.src = 'teams/' + d.club + '.png';
-            const face = new Image(80, 80);
+            const face = new Image(72, 72);
             face.className = 'fzl-pk-face';
             face.alt = '';
             face.src = d.face;
             face.onerror = () => { face.hidden = true; };
+            const texte = document.createElement('span');
+            texte.className = 'fzl-pk-txt';
             const nom = document.createElement('span');
             nom.className = 'fzl-pk-name';
             nom.textContent = d.name;
             const meta = document.createElement('span');
-            meta.className = 'fzl-pk-meta';
+            meta.className = 'fzl-pk-meta fzl-pos is-' + d.pos;
             meta.textContent = d.meta;
-            carte.append(logo, face, nom, meta);
+            texte.append(nom, meta);
+            carte.append(face, texte);
         }
         function marquerPris(ligne) {
             ligne.classList.remove('is-pressing', 'is-armed');
@@ -180,11 +176,6 @@
             const bouton = ligne.querySelector('.fzl-ph-pick');
             if (bouton) bouton.textContent = 'Choisi';
         }
-        function progression(n) {
-            barre.style.setProperty('--p', n / 6);
-            compte.textContent = n + '/6';
-        }
-
         function reinitialiser() {
             viderCase(case4, 4, true);
             viderCase(case5, 5, false);
@@ -197,8 +188,7 @@
             ligne1.classList.add('is-armed');
             banniere.dataset.state = 'turn';
             ecrireLibelle("C'est ton tour", 'Ronde 1 · Choix 4');
-            numero.textContent = '4/52';
-            progression(0);
+            numero.textContent = '4 / 52';
             chrono(5);
         }
 
@@ -210,12 +200,11 @@
                 banniere.dataset.state = 'done';
                 ecrireLibelle('Choix confirmé', 'Macklin Celebrini · San Jose');
                 clearInterval(tic);
-                progression(1);
             }],
             [1900, () => {
                 banniere.dataset.state = 'turn';
                 ecrireLibelle('Encore toi !', "Ronde 2 · l'ordre revient en serpent");
-                numero.textContent = '5/52';
+                numero.textContent = '5 / 52';
                 bande.classList.add('is-shifted');
                 case5.classList.add('is-current');
                 ligne2.classList.add('is-armed');
@@ -228,12 +217,11 @@
                 banniere.dataset.state = 'done';
                 ecrireLibelle('Choix confirmé', 'Mark Scheifele · Winnipeg');
                 clearInterval(tic);
-                progression(2);
             }],
             [2000, () => {
                 banniere.dataset.state = 'wait';
                 ecrireLibelle('Pool des boys choisit…', 'Ronde 2 · Choix 6');
-                numero.textContent = '6/52';
+                numero.textContent = '6 / 52';
                 chrono(0);
             }],
             [3400, reinitialiser]
@@ -246,18 +234,17 @@
     }
 
     /* ------------------------------------------------------------
-       2. L'échange — proposé, puis accepté.
+       2. L'échange — le visiteur le propose, l'autre gérant accepte.
        ------------------------------------------------------------ */
-    function boucleEchange() {
-        const statut = document.getElementById('fzlTradeStatus');
-        if (!statut) return null;
-        const etapes = [
-            [1800, () => statut.classList.add('is-done')],
-            [2600, () => statut.classList.remove('is-done')]
-        ];
-        return creerBoucle(statut, etapes,
-            () => statut.classList.remove('is-done'),
-            () => statut.classList.add('is-done'));
+    function boutonEchange() {
+        const bouton = document.getElementById('fzlTradeBtn');
+        const libelle = document.getElementById('fzlTradeLbl');
+        if (!bouton || !libelle) return;
+        bouton.addEventListener('click', () => {
+            const accepte = bouton.getAttribute('aria-pressed') !== 'true';
+            bouton.setAttribute('aria-pressed', String(accepte));
+            libelle.textContent = accepte ? 'Échange accepté' : "Proposer l'échange";
+        });
     }
 
     /* ------------------------------------------------------------

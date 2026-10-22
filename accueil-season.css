@@ -7,9 +7,11 @@
    Les deux thèmes passent par les jetons --s-* ci-dessous ; seule la carte
    « Ma position » reste sombre dans les deux, comme une carte de membre.
    Les accueils du repêchage (accueil-draft.css) et sans pool
-   (accueil-nouveau.css) reprennent les mêmes jetons.
+   (accueil-nouveau.css) et la landing des visiteurs (landing.css,
+   html.fz-anon) reprennent les mêmes jetons.
    ============================================================ */
-body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page) {
+body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page),
+html.fz-anon body {
     --s-bg: #0B0B0C;
     --s-card: #141416;
     --s-raise: #1B1B1E;
@@ -35,7 +37,8 @@ body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page) {
     --s-coral: #E08A80;
     background: var(--s-bg);
 }
-html[data-theme="light"] body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page) {
+html[data-theme="light"] body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page),
+html[data-theme="light"].fz-anon body {
     --s-bg: #F3F2EF;
     --s-card: #FFFFFF;
     --s-raise: #F6F5F2;
