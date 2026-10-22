@@ -8,7 +8,9 @@
     <link rel="apple-touch-icon" href="Icons/apple-touch-icon.png">
     <title>Créer un pool – Fantazy</title>
     <script src="theme.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Saira+Condensed:wght@800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="navbar.css?v=20261002b">
     <link rel="stylesheet" href="fzDialog.css?v=20260926b">
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
@@ -19,132 +21,153 @@
     <link rel="stylesheet" href="poolNav.css?v=20261003a">
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
+    <!-- Habillage « Fantazy Créer / Rejoindre » : en dernier, il a le mot de la fin. -->
+    <link rel="stylesheet" href="poolForm.css?v=20261022a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
     <script defer src="activePool.js?v=20260929n"></script>
 </head>
-<body>
+<body class="fz-pool-form">
     <nav class="navbar"></nav>
 
     <!-- ============================================================ -->
-    <!-- EN-TÊTE                                                       -->
+    <!-- CRÉER UN POOL — maquette « Fantazy Créer » (poolForm.css)     -->
+    <!-- Mêmes champs et mêmes identifiants qu'avant : createClan()    -->
+    <!-- (equipes.js) les lit tels quels. poolForm.js ne fait que      -->
+    <!-- l'habillage : boutons − / +, interrupteurs, bouton du bas.    -->
     <!-- ============================================================ -->
-    <header class="pool-hero">
-        <div class="pool-hero-spots">
-            <div class="ph-spot ph-sp1"></div>
-            <div class="ph-spot ph-sp2"></div>
-        </div>
-        <div class="pool-hero-inner">
-            <div class="pool-hero-badge"><span data-icon="plus" data-icon-size="16"></span> NOUVEAU POOL</div>
-            <h1 class="pool-hero-title">
-                Créez votre <span class="gradient-text">ligue de hockey.</span>
-            </h1>
-            <p class="pool-hero-sub">Vos règles, vos participants, votre repêchage. Vous rejoignez
-                automatiquement le pool que vous créez.</p>
-        </div>
-    </header>
+    <main class="fzp" id="clan-options">
+        <header class="fzp-intro">
+            <span class="fzp-kicker">Nouveau pool</span>
+            <h1 class="fzp-titre">Créer un pool</h1>
+            <p class="fzp-sub">Tu choisis les règles et tu rejoins automatiquement ton pool.</p>
+        </header>
 
-    <!-- ============================================================ -->
-    <!-- FORMULAIRE DE CRÉATION                                        -->
-    <!-- ============================================================ -->
-    <div class="pool-page-container">
-        <div id="clan-options" class="create-pool-container">
-
-            <!-- Infos du pool -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h2 class="form-card-title">Infos du pool</h2>
-                    <p class="form-card-desc">Donnez un nom unique à votre ligue</p>
-                </div>
-                <div class="form-group">
-                    <label for="clanName">Nom du pool</label>
-                    <input type="text" id="clanName" placeholder="Ex: Pool des champions 2025" required>
+        <!-- 01 · Infos du pool -->
+        <section class="fzp-sec" aria-labelledby="fzpInfos">
+            <h2 class="fzp-sh" id="fzpInfos"><span class="fzp-num">01</span>Infos du pool</h2>
+            <div class="fzp-card fzp-pad">
+                <div class="fzp-photo-row">
+                    <div class="fzp-photo pool-img-upload-area" id="poolImgUploadArea" role="button" tabindex="0"
+                         aria-label="Ajouter une photo du pool (optionnel)"
+                         onclick="document.getElementById('poolImageInput').click()"
+                         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+                        <img id="poolImgPreview" alt="" style="display:none;">
+                        <span id="poolImgUploadHint" class="fzp-photo-hint">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="15" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m18 15-4-4-8 8"/><line x1="20" y1="2" x2="20" y2="8"/><line x1="17" y1="5" x2="23" y2="5"/></svg>
+                            Photo
+                        </span>
+                        <input type="file" id="poolImageInput" accept="image/jpeg,image/png,image/webp" hidden onchange="previewPoolImage(this)">
+                    </div>
+                    <div class="fzp-field fzp-grow">
+                        <label for="clanName">Nom du pool</label>
+                        <input type="text" id="clanName" class="fzp-input" placeholder="Pool des champions" autocomplete="off" required>
+                    </div>
                 </div>
                 <!-- Une personne, une équipe : on nomme la sienne dès la
                      création, comme chaque participant le fera en entrant. -->
-                <div class="form-group">
+                <div class="fzp-field">
                     <label for="teamName">Nom de ton équipe</label>
-                    <input type="text" id="teamName" maxlength="20" autocomplete="off"
-                           placeholder="Ex: Les Castors" required>
-                    <p class="form-hint">C'est le nom que les autres verront au repêchage et au classement.
-                        Tu pourras le changer plus tard.</p>
+                    <input type="text" id="teamName" class="fzp-input" maxlength="20" autocomplete="off"
+                           placeholder="Les Castors" required>
+                    <p class="fzp-hint">Visible au repêchage et au classement. Modifiable plus tard.</p>
                 </div>
-                <div class="form-group">
-                    <label>Photo du pool <span style="opacity:.6;font-weight:400;">(optionnel)</span></label>
-                    <div class="pool-img-upload-area" id="poolImgUploadArea" onclick="document.getElementById('poolImageInput').click()">
-                        <img id="poolImgPreview" style="display:none;max-height:80px;border-radius:8px;margin-bottom:8px;">
-                        <div id="poolImgUploadHint">
-                            <span style="font-size:1.4rem;">🖼️</span>
-                            <span style="display:block;margin-top:4px;font-size:.9rem;color:var(--text-secondary);">Cliquez pour ajouter une image</span>
-                            <span style="font-size:.78rem;color:var(--text-secondary);opacity:.7;">JPEG, PNG ou WebP · max 8 Mo</span>
-                        </div>
-                        <input type="file" id="poolImageInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewPoolImage(this)">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="poolPassword">Mot de passe <span style="opacity:.6;font-weight:400;">(optionnel)</span></label>
-                    <div class="password-field">
-                        <input type="password" id="poolPassword" autocomplete="new-password"
-                               minlength="4" maxlength="72" placeholder="Laissez vide pour un pool ouvert">
+                <!-- Mot de passe : l'interrupteur ne fait que dévoiler le
+                     champ. Éteint, le champ est vidé : pool ouvert. -->
+                <div class="fzp-pw">
+                    <button type="button" class="fzp-toggle" id="fzpPwToggle" aria-pressed="false" aria-controls="fzpPwField">
+                        <span class="fzp-pw-ico" aria-hidden="true">
+                            <span class="is-off"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.8-1.2"/></svg></span>
+                            <span class="is-on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+                        </span>
+                        <span class="fzp-toggle-text" data-on="Protégé par mot de passe" data-off="Pool ouvert à tous">Pool ouvert à tous</span>
+                        <span class="fzp-switch" aria-hidden="true"></span>
+                    </button>
+                    <div class="fzp-field password-field" id="fzpPwField" hidden>
+                        <label for="poolPassword" class="fzp-sr">Mot de passe du pool</label>
+                        <input type="password" id="poolPassword" class="fzp-input" autocomplete="new-password"
+                               minlength="4" maxlength="72" placeholder="4 caractères minimum">
                         <button type="button" class="password-toggle" id="poolPasswordToggle"
                                 aria-label="Afficher le mot de passe"
                                 onclick="togglePoolPassword(this, 'poolPassword')"><span class="pw-eye" data-icon="eye" data-icon-size="17"></span><span class="pw-eye-off" data-icon="eye-off" data-icon-size="17"></span></button>
                     </div>
-                    <p class="form-hint">Sans mot de passe, n'importe qui peut rejoindre. Avec, il sera demandé à
-                        chaque nouvelle arrivée — 4 caractères minimum.</p>
                 </div>
             </div>
+        </section>
 
-            <!-- Configuration des sélections -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h2 class="form-card-title">Configuration des sélections</h2>
-                    <p class="form-card-desc">Définissez combien de joueurs chaque équipe doit sélectionner</p>
-                </div>
-                <div class="form-section">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="numOffensive">Attaquants</label>
-                            <input type="number" id="numOffensive" value="6" min="0" max="20">
-                        </div>
-                        <div class="form-group">
-                            <label for="numDefensive">Défenseurs</label>
-                            <input type="number" id="numDefensive" value="4" min="0" max="20">
-                        </div>
+        <!-- 02 · Alignement -->
+        <section class="fzp-sec" aria-labelledby="fzpAlign">
+            <h2 class="fzp-sh" id="fzpAlign"><span class="fzp-num">02</span>Alignement<span class="fzp-sh-aside" id="fzpTotal" aria-live="polite">13 choix / équipe</span></h2>
+            <div class="fzp-card fzp-rows">
+                    <div class="fzp-step-row">
+                        <span class="fzp-pos" data-pos="att">ATT</span>
+                        <label class="fzp-step-label" for="numOffensive">Attaquants</label>
+                        <span class="fzp-stepper" data-stepper>
+                            <button type="button" class="fzp-step-btn" data-step="-1" aria-label="Attaquants : un de moins"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <input type="number" id="numOffensive" class="fzp-step-val" value="6" min="0" max="20" inputmode="numeric">
+                            <button type="button" class="fzp-step-btn" data-step="1" aria-label="Attaquants : un de plus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </span>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="numGoalies">Gardiens</label>
-                            <input type="number" id="numGoalies" value="1" min="0" max="10">
-                        </div>
-                        <div class="form-group">
-                            <label for="numRookies">Rookies</label>
-                            <input type="number" id="numRookies" value="1" min="0" max="10">
-                        </div>
+                    <div class="fzp-step-row">
+                        <span class="fzp-pos" data-pos="def">DÉF</span>
+                        <label class="fzp-step-label" for="numDefensive">Défenseurs</label>
+                        <span class="fzp-stepper" data-stepper>
+                            <button type="button" class="fzp-step-btn" data-step="-1" aria-label="Défenseurs : un de moins"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <input type="number" id="numDefensive" class="fzp-step-val" value="4" min="0" max="20" inputmode="numeric">
+                            <button type="button" class="fzp-step-btn" data-step="1" aria-label="Défenseurs : un de plus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </span>
                     </div>
-                    <!-- Équipes NHL : de nouveau une position qu'on repêche. À ne
+                    <div class="fzp-step-row">
+                        <span class="fzp-pos" data-pos="gar">GAR</span>
+                        <label class="fzp-step-label" for="numGoalies">Gardiens</label>
+                        <span class="fzp-stepper" data-stepper>
+                            <button type="button" class="fzp-step-btn" data-step="-1" aria-label="Gardiens : un de moins"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <input type="number" id="numGoalies" class="fzp-step-val" value="1" min="0" max="10" inputmode="numeric">
+                            <button type="button" class="fzp-step-btn" data-step="1" aria-label="Gardiens : un de plus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </span>
+                    </div>
+                    <div class="fzp-step-row">
+                        <span class="fzp-pos" data-pos="rec">REC</span>
+                        <label class="fzp-step-label" for="numRookies">Recrues</label>
+                        <span class="fzp-stepper" data-stepper>
+                            <button type="button" class="fzp-step-btn" data-step="-1" aria-label="Recrues : un de moins"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <input type="number" id="numRookies" class="fzp-step-val" value="1" min="0" max="10" inputmode="numeric">
+                            <button type="button" class="fzp-step-btn" data-step="1" aria-label="Recrues : un de plus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </span>
+                    </div>
+                    <!-- Équipes LNH : de nouveau une position qu'on repêche. À ne
                          pas confondre avec l'identité choisie avant le repêchage
                          (repechage.html), qui ne donne que les couleurs et le logo
                          de l'équipe du pool. -->
-                    <div class="form-row form-row-half">
-                        <div class="form-group">
-                            <label for="numTeams">Équipes NHL</label>
-                            <input type="number" id="numTeams" value="1" min="0" max="10">
-                        </div>
+                    <div class="fzp-step-row">
+                        <span class="fzp-pos" data-pos="eq">ÉQ</span>
+                        <label class="fzp-step-label" for="numTeams">Équipes LNH</label>
+                        <span class="fzp-stepper" data-stepper>
+                            <button type="button" class="fzp-step-btn" data-step="-1" aria-label="Équipes LNH : un de moins"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <input type="number" id="numTeams" class="fzp-step-val" value="1" min="0" max="10" inputmode="numeric">
+                            <button type="button" class="fzp-step-btn" data-step="1" aria-label="Équipes LNH : un de plus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </span>
                     </div>
-                </div>
             </div>
+        </section>
 
-            <!-- Participants -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h2 class="form-card-title">Nombre de participants</h2>
-                    <p class="form-card-desc">Un maximum, pas un minimum</p>
-                </div>
-                <div class="form-group">
-                    <label for="maxPlayers">Maximum de participants</label>
-                    <select id="maxPlayers" aria-describedby="maxPlayersHint">
+        <!-- 03 · Participants : le select reste la source ; les boutons le
+             font avancer et déclenchent son « change » (updatePoolModeInfo). -->
+        <section class="fzp-sec" aria-labelledby="fzpPart">
+            <h2 class="fzp-sh" id="fzpPart"><span class="fzp-num">03</span>Nombre de participants</h2>
+            <div class="fzp-card fzp-pad">
+                <div class="fzp-max">
+                    <div class="fzp-max-text">
+                        <label for="maxPlayers">Maximum</label>
+                        <span class="fzp-hint" id="maxPlayersHint">Le repêchage peut partir dès 2 équipes.</span>
+                    </div>
+                    <span class="fzp-stepper is-big" data-select-stepper="maxPlayers">
+                        <button type="button" class="fzp-step-btn" data-step="-1" aria-label="Un participant de moins"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        <output class="fzp-step-val" for="maxPlayers" aria-live="polite">10</output>
+                        <button type="button" class="fzp-step-btn" data-step="1" aria-label="Un participant de plus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                    </span>
+                    <select id="maxPlayers" class="fzp-sr" aria-describedby="maxPlayersHint" tabindex="-1">
                         <option value="2">2 participants</option>
                         <option value="3">3 participants</option>
                         <option value="4">4 participants</option>
@@ -155,127 +178,115 @@
                         <option value="9">9 participants</option>
                         <option value="10" selected>10 participants</option>
                     </select>
-                    <p class="form-hint" id="maxPlayersHint">Le repêchage peut commencer dès qu'il y a 2 équipes :
-                        pas besoin d'attendre que le pool soit plein. Personne ne peut entrer au-delà de ce nombre.</p>
                 </div>
+                <div class="fzp-seats" id="fzpSeats" aria-hidden="true"></div>
             </div>
+        </section>
 
-            <!-- Quand repêcher : d'un clic, ou à une date fixée d'avance que
-                 le serveur respecte (routes/pools.js, départs prévus). -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h2 class="form-card-title">Repêchage</h2>
-                    <p class="form-card-desc">Choisissez quand il commence</p>
-                </div>
-                <div class="mode-options">
-                    <div class="form-group">
-                        <label>
-                            <input type="radio" name="draftWhen" value="manuel" checked onchange="majDateRepechage()">
-                            <span class="radio-label">
-                                <strong><span data-icon="bolt" data-icon-size="15"></span> Quand je le décide</strong>
-                                <span class="mode-description">Vous le lancez d'un clic, dès qu'il y a 2 équipes</span>
-                            </span>
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="radio" name="draftWhen" value="date" onchange="majDateRepechage()">
-                            <span class="radio-label">
-                                <strong><span data-icon="clock" data-icon-size="15"></span> À une date précise</strong>
-                                <span class="mode-description">Il démarre tout seul à l'heure choisie, 3 minutes par choix</span>
-                            </span>
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group draft-date-group" id="draftDateGroup" hidden>
-                    <label for="draftDate">Date et heure du repêchage</label>
-                    <input type="datetime-local" id="draftDate" aria-describedby="draftDateHint">
-                    <p class="form-hint" id="draftDateHint">Tout le monde la voit en entrant et peut l'ajouter à son
-                        calendrier. Passé 3 minutes, Fantazy choisit à la place de l'absent. Jusqu'au départ,
-                        vous pourrez changer la date ou lancer plus tôt.</p>
+        <!-- 04 · Repêchage : d'un clic, ou à une date fixée d'avance que
+             le serveur respecte (routes/pools.js, départs prévus). -->
+        <section class="fzp-sec" aria-labelledby="fzpDraft">
+            <h2 class="fzp-sh" id="fzpDraft"><span class="fzp-num">04</span>Repêchage</h2>
+            <div class="fzp-stack" role="radiogroup" aria-labelledby="fzpDraft">
+                <label class="fzp-choice">
+                    <input type="radio" name="draftWhen" value="manuel" checked onchange="majDateRepechage()">
+                    <span class="fzp-choice-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                    <span class="fzp-choice-text"><strong>Quand je le décide</strong><small>Tu le lances dès qu’il y a 2 équipes.</small></span>
+                    <span class="fzp-radio" aria-hidden="true"></span>
+                </label>
+                <label class="fzp-choice">
+                    <input type="radio" name="draftWhen" value="date" onchange="majDateRepechage()">
+                    <span class="fzp-choice-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span>
+                    <span class="fzp-choice-text"><strong>À une date précise</strong><small>Démarre seul à l’heure choisie · 3 min par choix.</small></span>
+                    <span class="fzp-radio" aria-hidden="true"></span>
+                </label>
+                <div class="fzp-field draft-date-group" id="draftDateGroup" hidden>
+                    <label for="draftDate" class="fzp-sr">Date et heure du repêchage</label>
+                    <input type="datetime-local" id="draftDate" class="fzp-input" aria-describedby="draftDateHint">
+                    <p class="fzp-hint" id="draftDateHint">Tout le monde la voit en entrant. Passé 3 minutes, Fantazy choisit
+                        à la place de l’absent. Tu pourras changer la date ou lancer plus tôt.</p>
                 </div>
                 <!-- Repêchage automatique : au départ, le serveur joue tous les
                      tours pour toutes les équipes (routes/pools.js, repecherDOffice). -->
-                <div class="form-group draft-auto-group">
-                    <label>
-                        <input type="checkbox" id="draftAuto">
-                        <span class="checkbox-label">
-                            <strong>Repêchage automatique</strong>
-                            <span class="mode-description">Au départ, Fantazy choisit pour tout le monde, du premier
-                                au dernier tour : le meilleur joueur disponible selon les projections. Personne n'a besoin d'être là.</span>
+                <label class="fzp-choice is-check draft-auto-group">
+                    <input type="checkbox" id="draftAuto">
+                    <span class="fzp-box" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+                    <span class="fzp-choice-text"><strong>Repêchage automatique <em>optionnel</em></strong><small>Au départ, Fantazy choisit pour tout le monde selon les projections. Personne n’a besoin d’être là.</small></span>
+                    <span class="fzp-bot" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><line x1="12" y1="4" x2="12" y2="8"/><circle cx="12" cy="3.5" r=".6"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><line x1="2" y1="13" x2="2" y2="16"/><line x1="22" y1="13" x2="22" y2="16"/></svg></span>
+                </label>
+            </div>
+        </section>
+
+        <!-- 05 · Mode de jeu -->
+        <section class="fzp-sec" aria-labelledby="fzpMode">
+            <h2 class="fzp-sh" id="fzpMode"><span class="fzp-num">05</span>Mode de jeu</h2>
+            <div class="fzp-modes" role="radiogroup" aria-labelledby="fzpMode">
+                <label class="fzp-choice is-tile">
+                    <input type="radio" name="poolMode" value="cumulative" checked onchange="updatePoolModeInfo()">
+                    <span class="fzp-tile-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></span>
+                    <strong>Cumulatif</strong>
+                    <small>Le plus de points en fin de saison gagne.</small>
+                </label>
+                <label class="fzp-choice is-tile">
+                    <input type="radio" name="poolMode" value="head-to-head" onchange="updatePoolModeInfo()">
+                    <span class="fzp-tile-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" y1="14" x2="9" y2="18"/><line x1="7" y1="17" x2="4" y2="20"/><line x1="3" y1="19" x2="5" y2="21"/></svg></span>
+                    <strong>Face-à-face</strong>
+                    <small>Duels chaque semaine, le plus de victoires gagne.</small>
+                </label>
+            </div>
+            <!-- Banc du tête-à-tête : des remplaçants repêchés, qui n'ont
+                 de sens que lorsqu'un duel se joue avec un alignement. -->
+            <div class="fzp-card fzp-rows fzp-bench" id="benchGroup" style="display:none;">
+                    <div class="fzp-step-row">
+                        <span class="fzp-pos" data-pos="banc">BANC</span>
+                        <label class="fzp-step-label" for="numBench">Joueurs de banc</label>
+                        <span class="fzp-stepper" data-stepper>
+                            <button type="button" class="fzp-step-btn" data-step="-1" aria-label="Joueurs de banc : un de moins"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <input type="number" id="numBench" class="fzp-step-val" value="2" min="0" max="5" inputmode="numeric" aria-describedby="benchHint">
+                            <button type="button" class="fzp-step-btn" data-step="1" aria-label="Joueurs de banc : un de plus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
                         </span>
-                    </label>
-                </div>
+                    </div>
+                <p class="fzp-hint fzp-bench-hint" id="benchHint">Repêchés en plus de l’alignement, ils ne marquent pas
+                    tant qu’ils sont sur le banc. En cas de blessure, un joueur du banc remplace un partant de la même
+                    position dès le lendemain. Pas de gardien au banc.</p>
             </div>
-
-            <!-- Mode de jeu & options -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h2 class="form-card-title">Mode de jeu & options</h2>
-                    <p class="form-card-desc">Choisissez comment le classement sera déterminé</p>
-                </div>
-                <div class="form-section">
-                    <h3>Mode de jeu</h3>
-                    <div class="mode-options">
-                        <div class="form-group">
-                            <label>
-                                <input type="radio" name="poolMode" value="cumulative" checked onchange="updatePoolModeInfo()">
-                                <span class="radio-label">
-                                    <strong><span data-icon="chart" data-icon-size="15"></span> Cumulatif</strong>
-                                    <span class="mode-description">L'équipe avec le plus de points totaux à la fin de la saison gagne</span>
-                                </span>
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label>
-                                <input type="radio" name="poolMode" value="head-to-head" onchange="updatePoolModeInfo()">
-                                <span class="radio-label">
-                                    <strong><span data-icon="swords" data-icon-size="15"></span> Head-to-Head</strong>
-                                    <span class="mode-description">Duels hebdomadaires (Lun-Dim) - Équipe avec le plus de victoires gagne</span>
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-                    <!-- Banc du tête-à-tête : des remplaçants repêchés, qui n'ont
-                         de sens que lorsqu'un duel se joue avec un alignement. -->
-                    <div class="form-group" id="benchGroup" style="display:none;">
-                        <label for="numBench">Joueurs de banc</label>
-                        <input type="number" id="numBench" value="2" min="0" max="5" aria-describedby="benchHint">
-                        <p class="form-hint" id="benchHint">Repêchés en plus de l'alignement, ils ne marquent pas
-                            tant qu'ils sont sur le banc. En cas de blessure, faites entrer un joueur du banc à la place
-                            d'un partant de la même position : le changement compte dès le lendemain. Pas de gardien au banc.</p>
-                    </div>
-                    <div id="h2h-warning" class="warning-message" style="display:none;">
-                        <span class="warning-icon" data-icon="warning" data-icon-size="17"></span>
-                        En Head-to-Head, le repêchage demandera un nombre <strong>pair</strong> d'équipes au moment du départ
-                    </div>
-                </div>
-
-                <div class="form-section form-section-options">
-                    <h3>Options</h3>
-                    <div class="form-group checkbox-group">
-                        <label>
-                            <input type="checkbox" id="allowTrades" checked>
-                            <span class="checkbox-label">Autoriser les échanges de joueurs</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <button class="create-btn" onclick="createClan()">Créer le pool</button>
-
-            <p class="pool-page-foot">
-                Vous cherchez plutôt à rejoindre une ligue existante ?
-                <a href="rejoindre-pool.html">Voir les pools disponibles →</a>
+            <p id="h2h-warning" class="fzp-warn" style="display:none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>En face-à-face, le repêchage demandera un nombre <strong>pair</strong> d’équipes au départ.</span>
             </p>
+        </section>
+
+        <!-- 06 · Échanges -->
+        <section class="fzp-sec" aria-labelledby="fzpTrade">
+            <h2 class="fzp-sh" id="fzpTrade"><span class="fzp-num">06</span>Échanges</h2>
+            <label class="fzp-choice is-switch">
+                <input type="checkbox" id="allowTrades" checked>
+                <span class="fzp-choice-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4"/></svg></span>
+                <span class="fzp-choice-text"><strong>Autoriser les échanges</strong><small>Les équipes peuvent s’échanger des joueurs pendant la saison.</small></span>
+                <span class="fzp-switch" aria-hidden="true"></span>
+            </label>
+        </section>
+
+        <a class="fzp-alt" href="rejoindre-pool.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            Plutôt rejoindre un pool existant
+        </a>
+
+        <!-- Toujours à portée de pouce. Le texte suit le formulaire ; le
+             clic passe toujours par createClan(), qui dit quoi corriger. -->
+        <div class="fzp-cta-bar">
+            <button type="button" class="fzp-cta create-btn" id="fzpCreate" onclick="createClan()">
+                <span class="fzp-cta-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></span>
+                <span class="fzp-cta-label">Nomme ton pool et ton équipe</span>
+            </button>
         </div>
-    </div>
+    </main>
 
     <script defer src="/socket.io/socket.io.js"></script>
     <!-- Filtre de grossieretes, partage avec le serveur. Charge avant
          equipes.js, qui s'en sert. -->
     <script src="profanity.js"></script>
-    <script defer src="equipes.js?v=20261022a"></script>
+    <script defer src="equipes.js?v=20261022b"></script>
     <script defer src="navbar.js?v=20261015b"></script>
     <script defer src="installerApp.js?v=20261010a"></script>
     <script defer src="avatars.js"></script>
@@ -283,5 +294,6 @@
     <script defer src="poolNav.js?v=20261015b"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20261010a"></script>
+    <script defer src="poolForm.js?v=20261022a"></script>
 </body>
 </html>

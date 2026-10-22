@@ -505,6 +505,18 @@ function estPoolInstantane(nom, clan) {
         : !!(clan && clan.instant);
 }
 
+/** Pool sans photo : ses initiales sur une tuile de couleur stable. */
+const TUILES_POOL = ['#3A1A1C', '#1E2A3A', '#2A2A2F', '#1F3326', '#33281A', '#2B1E36'];
+function tuilePool(nom) {
+    let h = 0;
+    for (const c of String(nom)) h = (h * 31 + c.codePointAt(0)) >>> 0;
+    return TUILES_POOL[h % TUILES_POOL.length];
+}
+function initialesPool(nom) {
+    const mots = String(nom).replace(/[^\p{L}\p{N} ]/gu, '').split(' ').filter(Boolean);
+    return (mots.slice(0, 2).map(m => m[0]).join('') || 'P').toUpperCase();
+}
+
 // 🔄 Met à jour la liste des pools ouverts
 //
 // Les pools dont on est déjà membre ne figurent plus ici : ils sont gérés
@@ -556,10 +568,6 @@ function updateUI(draftData) {
         const totalPicks = clan.totalPicks
             || (config.numOffensive + config.numDefensive + config.numGoalies + config.numRookies + config.numTeams);
 
-        const poolImgHtml = clan.imageUrl
-            ? `<img src="${clan.imageUrl}" class="pool-item-img" alt="${clanName}" onerror="this.style.display='none'">`
-            : `<img src="Icons/grayGroup.png" class="pool-item-img pool-item-img-placeholder" alt="${clanName}">`;
-
         const draftStarted = clan.draftStarted === true
             || !!(clan.draftOrder && clan.draftOrder.length > 0);
 
@@ -574,22 +582,28 @@ function updateUI(draftData) {
             // d'entrer : on sait si l'on sera là.
             const prevu = clan.draftScheduledAt && window.FZPool
                 ? FZPool.draftDate(clan.draftScheduledAt, { court: true }) : '';
+            // Rangée de la maquette « Rejoindre » : tuile (photo ou
+            // initiales), nom, barre des places, un seul bouton.
+            const tuile = clan.imageUrl
+                ? `<img src="${cmEchapper(clan.imageUrl)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+            const places = Math.min(plafond, 10);
+            const prises = Math.round(Math.min(totalParticipants, plafond) / plafond * places);
+            const barre = Array.from({ length: places }, (_, i) => `<i${i < prises ? ' class="is-on"' : ''}></i>`).join('');
+            const meta = `${totalParticipants}/${plafond} · ${totalPicks} choix${prevu ? ` · ${prevu}` : ''}`;
             $("#available-clans-list").append(`
                 <li data-nom="${nomEchappe.toLowerCase()}"
-                    data-acces="${protege ? 'protege' : 'ouvert'}">
-                    <div class="pool-item-img-wrap">${poolImgHtml}</div>
-                    <div class="pool-item-content">
-                        <span class="pool-item-name">${nomEchappe}</span>
-                        <div class="pool-item-info">
-                            <span class="pool-item-badge">👥 ${totalParticipants}/${plafond} participants</span>
-                            <span class="pool-item-badge">📋 ${totalPicks} sélections</span>
-                            ${prevu ? `<span class="pool-item-badge">🗓️ Repêchage ${cmEchapper(prevu)}</span>` : ''}
-                            <span class="pool-item-badge pool-acces-badge ${protege ? 'is-protege' : 'is-ouvert'}">
-                                ${protege ? '🔒 Mot de passe' : '🔓 Accès libre'}
-                            </span>
-                        </div>
-                    </div>
-                    <button class="pool-action-btn secondary" data-rejoindre-pool="${nomEchappe}"${plein ? ' disabled' : ''}>
+                    data-acces="${protege ? 'protege' : 'ouvert'}"${plein ? ' class="is-full"' : ''}>
+                    <span class="fzp-tile" style="--tile:${tuilePool(clanName)}" aria-hidden="true">${cmEchapper(initialesPool(clanName))}${tuile}</span>
+                    <span class="fzp-pool-main">
+                        <span class="fzp-pool-name"><span>${nomEchappe}</span>${protege
+                            ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Mot de passe"><path d="M17 9V7A5 5 0 0 0 7 7v2a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM9 7a3 3 0 0 1 6 0v2H9z"/></svg>'
+                            : ''}</span>
+                        <span class="fzp-pool-meta">
+                            <span class="fzp-bar" aria-hidden="true">${barre}</span>
+                            <span>${cmEchapper(meta)}</span>
+                        </span>
+                    </span>
+                    <button type="button" class="fzp-pool-btn" data-rejoindre-pool="${nomEchappe}"${plein ? ' disabled' : ''}>
                         ${plein ? 'Complet' : 'Rejoindre'}
                     </button>
                 </li>
@@ -635,6 +649,10 @@ function filtrerPoolsDisponibles() {
 
     const vide = document.getElementById('poolNoResult');
     if (vide) vide.hidden = visibles > 0 || liste.children.length === 0;
+    const aucun = document.getElementById('fzpNoPool');
+    if (aucun) aucun.hidden = liste.children.length > 0 || liste.style.display === 'none';
+    const compte = document.getElementById('fzpPoolCount');
+    if (compte && liste.style.display !== 'none') compte.textContent = `${visibles} pool${visibles > 1 ? 's' : ''}`;
 
     const effacer = document.getElementById('poolSearchClear');
     if (effacer) effacer.hidden = !(champ && champ.value.length);
