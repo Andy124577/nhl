@@ -733,8 +733,8 @@ describe('trade — catégories', () => {
         assert.equal(getCategoryLabel('F'), 'ATT');
         assert.equal(getCategoryLabel('D'), 'DÉF');
         assert.equal(getCategoryLabel('G'), 'GAR');
-        assert.equal(getCategoryLabel('R'), 'ROO');
-        assert.equal(getCategoryLabel('T'), 'ÉQU');
+        assert.equal(getCategoryLabel('R'), 'REC');
+        assert.equal(getCategoryLabel('T'), 'ÉQ');
     });
 
     test('un type inconnu retombe sur les attaquants', () => {

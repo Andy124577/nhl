@@ -1,604 +1,357 @@
-/* ============================================================ */
-/* TRADE PAGE — Premium editorial skin                          */
-/* ------------------------------------------------------------ */
-/* Same treatment as draftActif-premium.css: an Oswald/red       */
-/* editorial look on Apple's gray ladder, scoped entirely under  */
-/* body.fz-trade so it never leaks into the shared navbar/rail   */
-/* (those keep index.css's own dark/light theme) and never       */
-/* redeclares index.css's own token names — see DESIGN.md's      */
-/* "Don't" section on trade.css's old :root collision.           */
-/* ============================================================ */
+/* ============================================================
+   ÉCHANGES — HABILLAGE « 6b ÉDITORIAL » (maquette Fantazy Échanges)
+   ------------------------------------------------------------
+   Même langage que l'accueil de saison (accueil-season.css) et le
+   repêchage (draftReskin.css) : Saira, intertitres Saira Condensed,
+   gris chauds, cartes arrondies, rouge réservé à l'action et à la
+   sélection. Les deux thèmes passent par les jetons --s-* ci-dessous.
 
-* { box-sizing: border-box; }
+   Téléphone (≤ 900 px) : un effectif à la fois (Mes joueurs / l'autre
+   équipe), bilan + envoi figés au-dessus de la barre d'onglets.
+   Bureau : mes joueurs · le panier · leurs joueurs, côte à côte.
 
-body.fz-trade {
-    /* trade.html charge index.css : les rôles pointent sur ses jetons, qui
-       basculent déjà d'un thème à l'autre. Restent en dur l'aplat neutre
-       (--fzt-solid) et le fond fort (--fzt-muted-fill), sans jeton global. */
-    --fzt-bg: var(--bg-gray-light);
-    --fzt-bg-alt: var(--bg-gray-light);
-    --fzt-bg-page: var(--bg-page);
-    --fzt-surface: var(--card);
-    --fzt-ink: var(--text-main);
-    --fzt-text: var(--text-main);
-    --fzt-text-muted: var(--text-secondary);
-    --fzt-text-faint: var(--text-secondary);
-    /* Tertiaire : indications, champs vides et états désactivés seulement. */
-    --fzt-text-fainter: var(--text-light-gray);
-    --fzt-border: var(--border-light);
-    --fzt-border-strong: var(--border-gray);
-    --fzt-border-soft: var(--border-light);
-    --fzt-border-input: var(--border-gray);
-    /* Le rouge a trois emplois : texte (--fzt-accent), aplat
-       (--fzt-accent-fill, blanc dessus à 4,55:1) et survol de l'aplat. */
-    --fzt-accent: var(--primary-text);
-    --fzt-accent-dark: var(--primary-text);
-    --fzt-accent-fill: var(--primary);
-    --fzt-accent-fill-hover: var(--primary-deep);
-    --fzt-on-accent: var(--on-primary);
-    /* --fzt-ink porte deux rôles en thème clair : la couleur du texte le
-       plus appuyé ET l'aplat des boutons secondaires pleins / onglets
-       actifs. Les deux s'inversent en thème sombre (le texte s'éclaircit,
-       l'aplat aussi, et son libellé fonce avec lui) : ils sont séparés ici. */
-    --fzt-solid: #1D1D1F;
-    --fzt-solid-hover: #000000;
-    --fzt-on-solid: #FFFFFF;
-    --fzt-surface-alt: var(--card-white);
-    --fzt-row-hover: var(--bg-hover);
-    --fzt-muted-fill: #E8E8ED;
-    /* Voiles à 10 % : au-delà, le texte sémantique passe sous 4,5:1 en clair. */
-    --fzt-success-bg: color-mix(in srgb, var(--success) 10%, var(--card));
-    --fzt-success-text: var(--success);
-    --fzt-success-border: color-mix(in srgb, var(--success) 30%, var(--card));
-    --fzt-warning-bg: color-mix(in srgb, var(--warning) 10%, var(--card));
-    --fzt-warning-text: var(--warning);
-    --fzt-danger-bg: color-mix(in srgb, var(--primary) 10%, var(--card));
-    --fzt-danger-border: rgba(var(--primary-rgb), .35);
+   Tout est sous body.fz-trade : la barre du haut, le rail et la barre
+   d'onglets gardent leurs propres feuilles.
+   ============================================================ */
+
+html body.fz-trade {
+    --s-bg: #0B0B0C;
+    --s-card: #141416;
+    --s-raise: #1A1A1D;
+    --s-line: #1F1F23;
+    --s-line2: #2A2A2F;
+    --s-box: #3A3A40;
+    --s-face: #1F1F23;
+    --s-ink: #F3F1EE;
+    --s-on-ink: #0B0B0C;
+    --s-ink2: #C9C7C4;
+    --s-mute: #A8A6A3;
+    --s-faint: #8E8B88;
+    --s-dim: #7E7C79;
+    --s-ghost: #5A5A60;
+    --s-red: #E5372B;
+    --s-red-soft: rgba(229, 55, 43, .08);
+    --s-red-ink: #FF8A80;
+    --s-green: #7FD49B;
+    --s-green-soft: rgba(127, 212, 155, .07);
+    --s-give-soft: rgba(229, 55, 43, .07);
+    --s-gold: #E8B26A;
+    --s-wait: #E0B341;
+    --s-shadow: 0 -8px 24px rgba(0, 0, 0, .35);
+    /* Pastilles de position : texte, puis fond à 16 % */
+    --s-pos-att: 156, 201, 255;
+    --s-pos-def: 201, 162, 255;
+    --s-pos-gar: 255, 138, 128;
+    --s-pos-rec: 232, 178, 106;
+    --s-pos-eq: 110, 220, 215;
 
     margin: 0;
     min-height: 100vh;
-    background: var(--fzt-bg-page);
-    color: var(--fzt-text);
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--s-bg);
+    color: var(--s-ink);
+    font-family: 'Saira', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
 }
-/* ============================================================ */
-/* THÈME SOMBRE — remappage des jetons éditoriaux                */
-/* ------------------------------------------------------------ */
-/* La palette ci-dessus est du papier : elle était posée en dur,  */
-/* sans contrepartie, donc la page restait blanche même avec      */
-/* data-theme="dark" — le seul écran du site à ne pas suivre le   */
-/* commutateur. Rien d'autre ne change ici : mêmes rôles, mêmes   */
-/* noms, mêmes règles en aval. Seules les VALEURS basculent, ce   */
-/* qui est exactement la raison d'être des jetons.                */
-/*                                                                */
-/* Les jetons globaux basculent seuls ; ne restent ici que les    */
-/* valeurs sans jeton global.                                     */
-/* ============================================================ */
-html[data-theme="dark"] body.fz-trade {
-    /* Le creux (carte fantôme, échange refusé) est au niveau de la
-       carte en sombre, un cran sous elle en clair. */
-    --fzt-bg: var(--card);
-    --fzt-muted-fill: #3A3A3C;
-    /* L'aplat plein s'inverse avec le fond : clair sur sombre, comme il
-       était sombre sur clair. Son libellé suit (--fzt-on-solid). */
-    --fzt-solid: #F5F5F7;
-    --fzt-solid-hover: #FFFFFF;
-    --fzt-on-solid: #000000;
+html[data-theme="light"] body.fz-trade {
+    --s-bg: #F3F2EF;
+    --s-card: #FFFFFF;
+    --s-raise: #F6F5F2;
+    --s-line: #ECEAE6;
+    --s-line2: #DDDAD5;
+    --s-box: #C9C6C1;
+    --s-face: #ECEAE6;
+    --s-ink: #141416;
+    --s-on-ink: #FFFFFF;
+    --s-ink2: #34343A;
+    --s-mute: #5E5C59;
+    --s-faint: #6B6965;
+    --s-dim: #74716D;
+    --s-ghost: #A29F9A;
+    --s-red: #D52B1E;
+    --s-red-soft: rgba(213, 43, 30, .06);
+    --s-red-ink: #B3241A;
+    --s-green: #1D8048;
+    --s-green-soft: rgba(29, 128, 72, .07);
+    --s-give-soft: rgba(213, 43, 30, .06);
+    --s-gold: #976111;
+    --s-wait: #8A6400;
+    --s-shadow: 0 -8px 24px rgba(0, 0, 0, .08);
+    --s-pos-att: 38, 104, 186;
+    --s-pos-def: 120, 76, 196;
+    --s-pos-gar: 186, 52, 40;
+    --s-pos-rec: 160, 98, 18;
+    --s-pos-eq: 14, 128, 122;
 }
 
 body.fz-trade * { box-sizing: border-box; }
-body.fz-trade a { color: var(--fzt-accent); text-decoration: none; }
-body.fz-trade a:hover { color: var(--fzt-accent-dark); }
-body.fz-trade button { font-family: inherit; }
+body.fz-trade :is(button, input) { font-family: inherit; }
+body.fz-trade button { -webkit-tap-highlight-color: transparent; }
+body.fz-trade button:disabled { cursor: not-allowed; }
+body.fz-trade .hidden { display: none !important; }
+body.fz-trade main :is(a, button, input):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
 
-/* Shared chrome (navbar.css / poolNav.css) keeps the site's own theme —
-   without this it inherits this page's font/color and stops matching the
-   bar on every other page. Same fix as draftActif-premium.css. */
+/* La barre du haut, le rail et le tiroir gardent la police du site. */
 body.fz-trade .navbar,
 body.fz-trade #fzSidebar,
 body.fz-trade #fzDrawer {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: var(--text-dark);
 }
-body.fz-trade nav a { color: var(--text-secondary); }
-body.fz-trade nav a:hover { color: var(--text-main); }
-body.fz-trade nav a.active:hover,
-body.fz-trade nav a.is-active:hover { color: var(--primary-text); }
 
-body.fz-trade .fzt-num {
-    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
-    font-variant-numeric: tabular-nums;
-}
-
-/* ============================================================ */
-/* CONTAINER + HEADER                                           */
-/* ============================================================ */
+/* ============================================================
+   EN-TÊTE + ONGLETS
+   ============================================================ */
 body.fz-trade .trade-container {
-    max-width: 1600px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 28px 34px 64px;
+    padding: 28px 32px 64px;
+}
+body.fz-trade .tr-head { display: flex; flex-direction: column; gap: 8px; }
+body.fz-trade .tr-kicker {
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--s-faint);
+    min-height: 11px;
+}
+body.fz-trade .tr-title {
+    margin: 0;
+    font: 800 32px/32px 'Saira Condensed', 'Saira', sans-serif;
+    text-transform: uppercase;
+    color: var(--s-ink);
 }
 
-body.fz-trade .page-header {
-    text-align: left;
-    margin-bottom: 0;
-}
-
-body.fz-trade .page-header h1 {
-    font: 600 30px/1 'Oswald', sans-serif;
-    color: var(--fzt-ink);
-    margin: 0 0 16px;
-}
-
-/* ============================================================ */
-/* SUB NAVIGATION (Proposer / Reçus / Historique)                */
-/* ============================================================ */
 body.fz-trade .trade-sub-nav {
     display: flex;
-    align-items: center;
-    gap: 28px;
-    margin: 0 0 26px;
-    padding-bottom: 0;
-    border-bottom: 1px solid var(--fzt-border);
-    justify-content: flex-start;
-    overflow-x: auto;
-    scrollbar-width: none;
+    margin: 14px 0 0;
+    border-bottom: 1px solid var(--s-line);
 }
-body.fz-trade .trade-sub-nav::-webkit-scrollbar { display: none; }
-
 body.fz-trade .trade-tab {
+    position: relative;
+    flex: 0 0 auto;
+    min-width: 132px;
+    height: 44px;
+    padding: 0 18px;
+    border: 0;
+    background: none;
     display: flex;
     align-items: center;
-    gap: 7px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    padding: 0 0 13px;
-    margin: 0;
-    font: 600 12.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
+    justify-content: center;
+    gap: 6px;
+    font: 600 14px/1 'Saira', sans-serif;
+    color: var(--s-dim);
     cursor: pointer;
-    white-space: nowrap;
-    transition: color .18s ease;
-    box-shadow: none;
-    transform: none;
 }
-body.fz-trade .trade-tab:hover {
-    color: var(--fzt-ink);
-    border-color: transparent;
-    transform: none;
-    box-shadow: none;
+body.fz-trade .trade-tab::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: transparent;
 }
-body.fz-trade .trade-tab.active {
-    color: var(--fzt-ink);
-    border-bottom-color: var(--fzt-accent-fill);
-    background: none;
-    box-shadow: none;
-}
-
+body.fz-trade .trade-tab:hover { color: var(--s-ink2); }
+body.fz-trade .trade-tab.active { color: var(--s-ink); }
+body.fz-trade .trade-tab.active::after { background: var(--s-red); }
 body.fz-trade .trade-tab-badge {
     display: inline-grid;
     place-items: center;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    background: var(--fzt-accent-fill);
-    color: var(--fzt-on-accent);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
     border-radius: 999px;
-    font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    line-height: 16px;
+    background: var(--s-red);
+    color: #fff;
+    font: 700 10px/1 'Saira', sans-serif;
 }
-body.fz-trade .trade-tab.active .trade-tab-badge { background: var(--fzt-accent-fill); color: var(--fzt-on-accent); }
 
 body.fz-trade .trade-section { display: none; }
 body.fz-trade .trade-section.active { display: block; }
 
-body.fz-trade .empty-msg {
-    text-align: left;
-    color: var(--fzt-text-faint);
-    padding: 40px 4px;
-    font-size: 1rem;
-}
-
-/* ============================================================ */
-/* PARTNER BAR — trade rule + team switcher                     */
-/* ============================================================ */
-body.fz-trade .tm-partner-bar {
+body.fz-trade .tr-rule {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    flex-wrap: wrap;
-    padding: 12px 16px;
-    margin-bottom: 18px;
-    background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border);
-    border-radius: 12px;
-}
-
-body.fz-trade .tm-partner-rule {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    max-width: 480px;
-    font: 400 11.5px/1.45 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-muted);
-}
-body.fz-trade .tm-partner-rule-icon { color: var(--fzt-text-faint); flex-shrink: 0; }
-
-body.fz-trade .tm-partner-switch {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-body.fz-trade .tm-partner-switch-lbl {
-    font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .13em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
-
-body.fz-trade .tm-team-trigger {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    padding: 8px 10px 8px 14px;
-    border: 1px solid var(--fzt-border-input);
-    border-radius: 9px;
-    background: var(--fzt-surface);
-    box-shadow: 0 1px 2px rgba(0,0,0,.06);
-    transition: border-color .15s ease, box-shadow .15s ease;
-}
-body.fz-trade .tm-team-trigger:hover,
-body.fz-trade .tm-team-trigger:focus-visible {
-    border-color: var(--fzt-ink);
-    box-shadow: 0 2px 6px rgba(0,0,0,.12);
-    outline: none;
-}
-body.fz-trade #partnerTeamTriggerName {
-    font: 600 16px/1 'Oswald', sans-serif;
-    color: var(--fzt-ink);
-    max-width: 260px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-body.fz-trade .tm-team-caret {
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: var(--fzt-solid);
-    color: var(--fzt-on-solid);
-    font-size: 9px;
-    flex-shrink: 0;
-}
-
-/* Téléphone : le sélecteur en tête de page, là où les autres pages mettent
-   le bandeau « Pool actif » (trade.js, placerSelecteurPartenaire). Caché
-   avec l'assistant — aucun pool, échanges désactivés, envoi réussi : il
-   n'y aurait personne à choisir. */
-body.fz-trade .tm-context { display: none; }
-@media (max-width: 900px) {
-    body.fz-trade .tm-context {
-        display: block;
-        margin: 16px 16px 0;
-        padding: 10px 14px;
-        background: var(--fzt-surface);
-        border: 1px solid var(--fzt-border);
-        border-radius: 13px;
-    }
-    body.fz-trade:has(#tmBuilder.hidden) .tm-context { display: none; }
-}
-
-body.fz-trade .tm-team-dropdown.hidden { display: none; }
-body.fz-trade .tm-dropdown-scrim { position: fixed; inset: 0; z-index: 80; background: transparent; }
-body.fz-trade .tm-dropdown-panel {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 81;
-    width: 320px;
-    max-height: 360px;
-    overflow-y: auto;
-    background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border);
-    border-radius: 12px;
-    box-shadow: 0 18px 40px rgba(0,0,0,.18);
-}
-body.fz-trade .tm-dropdown-title {
-    padding: 10px 14px;
-    background: var(--fzt-bg-alt);
-    border-bottom: 1px solid var(--fzt-border);
-    font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
-body.fz-trade .tm-dropdown-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 11px 14px;
-    border-bottom: 1px solid var(--fzt-border-soft);
-    cursor: pointer;
-    background: var(--fzt-surface);
-}
-body.fz-trade .tm-dropdown-row:last-child { border-bottom: none; }
-body.fz-trade .tm-dropdown-row:hover:not(.is-self) { background: var(--fzt-row-hover); }
-body.fz-trade .tm-dropdown-row.is-current { background: var(--fzt-row-hover); }
-body.fz-trade .tm-dropdown-row.is-self { cursor: not-allowed; opacity: .45; }
-body.fz-trade .tm-dropdown-name { font: 600 13.5px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzt-ink); }
-body.fz-trade .tm-dropdown-meta { font: 400 10.5px/1 'Helvetica Neue', Helvetica, sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--fzt-text-faint); }
-body.fz-trade .tm-dropdown-row-text { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-body.fz-trade .tm-dropdown-mark { width: 16px; text-align: right; font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzt-accent); }
-
-/* ============================================================ */
-/* MOBILE SEGMENTED TABS (Mes joueurs / Leurs joueurs)          */
-/* ------------------------------------------------------------ */
-/* Hidden by default: the three-column layout is the reference   */
-/* view. Revealed under 900px alongside the collapse below.      */
-/* ============================================================ */
-body.fz-trade .tm-tabs { display: none; }
-
-/* ============================================================ */
-/* THREE-COLUMN BUILDER                                          */
-/* ============================================================ */
-body.fz-trade .trade-grid-3col {
-    display: grid;
-    grid-template-columns: 1fr 400px 1fr;
-    gap: 20px;
-    align-items: start;
-}
-
-body.fz-trade .roster-column {
-    background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border);
-    border-radius: 13px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-body.fz-trade .roster-col-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 18px 22px 14px;
-    border-bottom: 1px solid var(--fzt-border);
-}
-body.fz-trade .rc-avatar {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-    border-radius: 999px;
-    background: var(--fzt-solid);
-    color: var(--fzt-on-solid);
-    display: grid;
-    place-items: center;
-    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
-}
-body.fz-trade .rc-headtext { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-body.fz-trade .rc-label {
-    font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .13em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
-body.fz-trade .roster-column:last-child .rc-label { color: var(--fzt-accent); }
-body.fz-trade .rc-teamname {
-    font: 600 18px/1.2 'Oswald', sans-serif;
-    color: var(--fzt-ink);
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-body.fz-trade .rc-search-row {
-    display: flex;
-    align-items: center;
     gap: 8px;
-    padding: 14px 22px 0;
+    margin: 14px 6px 0;
+    font: 400 12px/17px 'Saira', sans-serif;
+    color: var(--s-dim);
+    text-wrap: pretty;
 }
-body.fz-trade .rc-search {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 10px 13px;
-    border: 1px solid var(--fzt-border-input);
-    border-radius: 9px;
-    background: var(--fzt-surface);
-    color: var(--fzt-text-fainter);
-}
-body.fz-trade .rc-search svg { flex-shrink: 0; }
-body.fz-trade .rc-search input {
-    flex: 1;
-    border: none;
-    outline: none;
-    background: none;
-    font: 400 13px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-ink);
-    min-width: 0;
-}
-body.fz-trade .rc-search input::placeholder { color: var(--fzt-text-fainter); }
+body.fz-trade .tr-rule svg { flex: none; margin-top: 1px; color: var(--s-ghost); }
 
-body.fz-trade .rc-forsale-toggle {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 10px 13px;
-    border: 1px solid var(--fzt-border-input);
-    border-radius: 9px;
-    background: var(--fzt-surface);
-    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .05em;
+body.fz-trade .empty-msg,
+body.fz-trade .received-empty,
+body.fz-trade .history-empty {
+    margin: 14px 0 0;
+    padding: 28px 18px;
+    border: 1px solid var(--s-line);
+    border-radius: 18px;
+    background: var(--s-card);
+    font: 500 14px/1.45 'Saira', sans-serif;
+    color: var(--s-faint);
+    text-align: center;
+}
+body.fz-trade .roster-list .empty-msg { margin: 0; border: 0; border-radius: 0; background: none; font-size: 13px; }
+
+/* ============================================================
+   ÉCHANGER AVEC — puces d'équipe
+   ============================================================ */
+body.fz-trade .tr-partners { margin-top: 16px; }
+body.fz-trade .tr-label {
+    display: block;
+    margin: 0 6px;
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.4px;
     text-transform: uppercase;
-    color: var(--fzt-text);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: border-color .15s ease, background .15s ease, color .15s ease;
+    color: var(--s-faint);
 }
-body.fz-trade .rc-forsale-toggle span { color: var(--fzt-accent); }
-body.fz-trade .rc-forsale-toggle:hover { border-color: var(--fzt-ink); }
-body.fz-trade .rc-forsale-toggle.is-active {
-    background: var(--fzt-solid);
-    border-color: var(--fzt-solid);
-    color: var(--fzt-on-solid);
-}
-body.fz-trade .rc-forsale-toggle.is-active span { color: var(--fzt-on-solid); }
-body.fz-trade .rc-forsale-toggle.hidden { display: none; }
-
-body.fz-trade .position-tabs {
+body.fz-trade .tr-partner-chips {
     display: flex;
-    gap: 0;
-    margin: 14px 22px 0;
-    border: 1px solid var(--fzt-border-input);
-    border-radius: 8px;
+    gap: 6px;
+    padding: 10px 0 2px;
     overflow-x: auto;
     scrollbar-width: none;
-    width: fit-content;
-    max-width: calc(100% - 44px);
 }
-body.fz-trade .position-tabs::-webkit-scrollbar { display: none; }
-body.fz-trade .pos-tab {
-    flex: 0 0 auto;
-    padding: 8px 12px;
-    background: none;
-    border: none;
-    border-right: 1px solid var(--fzt-border-input);
-    font: 500 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--fzt-text-muted);
-    cursor: pointer;
-    transition: background .15s ease, color .15s ease;
-}
-body.fz-trade .pos-tab:last-child { border-right: none; }
-body.fz-trade .pos-tab:hover { background: var(--fzt-bg-alt); }
-body.fz-trade .pos-tab.active {
-    background: var(--fzt-solid);
-    color: var(--fzt-on-solid);
-    font-weight: 600;
-}
-body.fz-trade .pos-tab.active:hover { background: var(--fzt-solid); }
-
-body.fz-trade .roster-list-head {
+body.fz-trade .tr-partner-chips::-webkit-scrollbar { display: none; }
+body.fz-trade .tr-chip {
+    flex: none;
+    height: 44px;
+    padding: 0 14px 0 5px;
+    border-radius: 999px;
+    border: 1px solid var(--s-line2);
+    background: transparent;
+    color: var(--s-ink2);
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 16px 16px 10px;
-    margin-top: 14px;
-    background: var(--fzt-bg-alt);
-    border-top: 1px solid var(--fzt-border);
-    border-bottom: 1px solid var(--fzt-border);
-}
-body.fz-trade .rlh-check { width: 19px; flex-shrink: 0; }
-body.fz-trade .rlh-name {
-    flex: 1;
-    font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
-body.fz-trade .rlh-stats {
-    display: flex;
     gap: 8px;
-    font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
-body.fz-trade .rlh-stats span { width: 22px; text-align: right; }
-body.fz-trade .rlh-stats .rlh-pts { width: 34px; color: var(--fzt-ink); font-weight: 600; }
-
-body.fz-trade .roster-list {
-    max-height: 560px;
-    overflow-y: auto;
-}
-
-/* Player row */
-body.fz-trade .player-card-roster {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--fzt-border-soft);
-    border-left: 3px solid transparent;
+    font: 600 13px/1 'Saira', sans-serif;
+    white-space: nowrap;
     cursor: pointer;
-    background: var(--fzt-surface);
-    transition: background .12s ease;
+    transition: border-color .15s ease, background .15s ease;
 }
-body.fz-trade .player-card-roster:hover { background: var(--fzt-bg-alt); }
-body.fz-trade .player-card-roster.selected {
-    border-left-color: var(--fzt-accent-fill);
-    background: var(--fzt-surface);
-}
-body.fz-trade .player-card-roster.selected:hover { background: var(--fzt-surface); }
-body.fz-trade .player-card-roster.locked {
-    opacity: .45;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-body.fz-trade .pcr-check {
-    width: 19px;
-    height: 19px;
-    border-radius: 5px;
-    border: 1px solid var(--fzt-border-strong);
-    background: var(--fzt-surface);
-    flex-shrink: 0;
+body.fz-trade .tr-chip:hover { border-color: var(--s-mute); }
+body.fz-trade .tr-chip-av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--s-line2);
+    color: var(--s-ink2);
     display: grid;
     place-items: center;
-    color: var(--fzt-on-accent);
-    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 800 12px/1 'Saira Condensed', sans-serif;
 }
-body.fz-trade .player-card-roster.selected .pcr-check {
-    background: var(--fzt-accent-fill);
-    border-color: var(--fzt-accent-fill);
-}
+body.fz-trade .tr-chip.is-active { border-color: var(--s-ink); background: var(--s-ink); color: var(--s-on-ink); }
+body.fz-trade .tr-chip.is-active .tr-chip-av { background: var(--s-on-ink); color: var(--s-ink); }
 
-body.fz-trade .pcr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-body.fz-trade .pcr-name {
-    font: 600 14.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-ink);
+/* ============================================================
+   MARCHÉ DES ÉCHANGES
+   ============================================================ */
+body.fz-trade .tm-market {
+    margin: 14px 0 0;
+    border-radius: 18px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    overflow: hidden;
+}
+body.fz-trade .tm-market[hidden] { display: none; }
+body.fz-trade .tm-market-head {
+    width: 100%;
+    height: 52px;
+    padding: 0 14px;
+    border: 0;
+    background: none;
+    color: var(--s-ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    cursor: pointer;
+}
+body.fz-trade .tm-market-ico { display: flex; color: var(--s-gold); }
+body.fz-trade .tm-market-title { flex: 1; font: 600 14px/1 'Saira', sans-serif; }
+body.fz-trade .tm-market-count { font: 500 12px/1 'Saira', sans-serif; color: var(--s-faint); }
+body.fz-trade .tm-market-caret { color: var(--s-faint); transition: transform .15s ease; }
+body.fz-trade .tm-market-head[aria-expanded="true"] .tm-market-caret { transform: rotate(180deg); }
+body.fz-trade .tm-market-list[hidden] { display: none; }
+body.fz-trade .tmm-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px 10px 14px;
+    border-top: 1px solid var(--s-line);
+}
+body.fz-trade .tmm-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+body.fz-trade .tmm-player {
+    font: 600 14px/1.1 'Saira', sans-serif;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+body.fz-trade .tmm-meta {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
+    min-width: 0;
+    font: 400 11px/1 'Saira', sans-serif;
+    color: var(--s-dim);
+    white-space: nowrap;
 }
-body.fz-trade .player-card-roster.locked .pcr-name,
-body.fz-trade .player-card-roster.locked .pcr-team { color: var(--fzt-text-fainter); }
-body.fz-trade .pcr-team {
-    font: 400 10.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
+body.fz-trade .tmm-meta > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .tmm-offrir {
+    flex: none;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 0;
+    background: var(--s-ink);
+    color: var(--s-on-ink);
+    font: 600 12px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+body.fz-trade .tmm-offrir:hover { opacity: .88; }
+body.fz-trade .tmm-refus {
+    flex: none;
+    max-width: 42%;
+    font: 500 11px/1.3 'Saira', sans-serif;
+    color: var(--s-dim);
+    text-align: right;
 }
 
-/* Player photo — same recipe as the Stats page's Alignements tab: the NHL
-   cut-out on the player's club color (background from .fz-shot,
-   teamLogos.css; --fz-shot-team set inline by tradeShotHTML). Initials sit
-   under the image and show only when it's missing or fails to load. */
+/* ============================================================
+   PASTILLES + PHOTOS
+   ============================================================ */
+body.fz-trade .tr-pos {
+    --s-pc: var(--s-pos-att);
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    height: 16px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: rgba(var(--s-pc), .16);
+    color: rgb(var(--s-pc));
+    font: 800 10px/1 'Saira Condensed', sans-serif;
+    letter-spacing: .4px;
+}
+body.fz-trade .tr-pos[data-cat="D"] { --s-pc: var(--s-pos-def); }
+body.fz-trade .tr-pos[data-cat="G"] { --s-pc: var(--s-pos-gar); }
+body.fz-trade .tr-pos[data-cat="R"] { --s-pc: var(--s-pos-rec); }
+body.fz-trade .tr-pos[data-cat="T"] { --s-pc: var(--s-pos-eq); }
+
+/* La photo sur la couleur du club (.fz-shot, teamLogos.css ; --fz-shot-team
+   posé par tradeShotHTML). Les initiales sont dessous : une photo qui ne
+   charge pas s'efface (onerror) et les découvre. */
 body.fz-trade .tr-shot {
     position: relative;
+    flex: none;
     display: grid;
     place-items: center;
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     overflow: hidden;
-    flex-shrink: 0;
 }
 body.fz-trade .tr-shot img {
     position: absolute;
@@ -608,943 +361,798 @@ body.fz-trade .tr-shot img {
     object-fit: cover;
     object-position: top;
 }
+body.fz-trade .tr-shot.is-club { background: var(--s-face); }
+body.fz-trade .tr-shot.is-club img { inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); object-fit: contain; object-position: center; }
 body.fz-trade .tr-shot-init {
     color: #fff;
-    font: 700 11px/1 'Helvetica Neue', Helvetica, sans-serif;
+    font: 800 11px/1 'Saira Condensed', sans-serif;
     letter-spacing: .04em;
     text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
 }
+body.fz-trade .tr-shot.is-club .tr-shot-init { color: var(--s-faint); text-shadow: none; }
 body.fz-trade .tr-shot img ~ .tr-shot-init { display: none; }
-body.fz-trade .tb-card .tr-shot,
-body.fz-trade .history-side-player .tr-shot { width: 30px; height: 30px; }
-body.fz-trade .tb-card .tr-shot-init,
-body.fz-trade .history-side-player .tr-shot-init { font-size: 10px; }
-body.fz-trade .pcr-forsale-badge {
-    font: 600 8.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--fzt-accent);
-    border: 1px solid var(--fzt-accent);
-    border-radius: 3px;
-    padding: 3px 5px;
-    flex-shrink: 0;
-}
+body.fz-trade .tmm-row .tr-shot { width: 36px; height: 36px; }
 
-body.fz-trade .pcr-stats {
+/* ============================================================
+   COMPOSEUR — effectifs
+   ============================================================ */
+body.fz-trade .tm-builder { margin: 0; }
+body.fz-trade .tm-tabs { display: none; }
+
+body.fz-trade .trade-grid-3col {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    margin-top: 18px;
+}
+body.fz-trade .roster-column { min-width: 0; display: flex; flex-direction: column; }
+
+body.fz-trade .roster-col-header {
     display: flex;
-    gap: 8px;
-    font: 400 12.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-muted);
-    font-variant-numeric: tabular-nums;
-    margin: 0;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding: 0 4px;
 }
-body.fz-trade .pcr-stat { width: 22px; text-align: right; font-weight: 400; }
-body.fz-trade .pcr-stat.pcr-pts {
-    width: 34px;
-    font: 600 16px/1 'Oswald', sans-serif;
-    color: var(--fzt-ink);
+body.fz-trade .rc-avatar {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--s-line2);
+    color: var(--s-ink2);
+    display: grid;
+    place-items: center;
+    font: 800 12px/1 'Saira Condensed', sans-serif;
+}
+body.fz-trade .rc-headtext { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+body.fz-trade .rc-label {
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--s-red-ink);
+}
+body.fz-trade .roster-column[data-side="partner"] .rc-label { color: var(--s-green); }
+body.fz-trade .rc-teamname {
+    margin: 0;
+    font: 600 16px/1.15 'Saira', sans-serif;
+    color: var(--s-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Chargement : les rangées en os de trade.html, en attendant renderMyRoster /
-   renderPartnerRoster. Os de fzSquelette.css, aux hauteurs des lignes. */
+body.fz-trade .rc-search-row { display: flex; gap: 8px; }
+body.fz-trade .rc-search {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--s-dim);
+    cursor: text;
+}
+body.fz-trade .rc-search:focus-within { border-color: var(--s-line2); }
+body.fz-trade .rc-search svg { flex: none; }
+body.fz-trade .rc-search input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: none;
+    color: var(--s-ink);
+    font: 400 14px/1 'Saira', sans-serif;
+    -webkit-appearance: none;
+    appearance: none;
+}
+body.fz-trade .rc-search input::placeholder { color: var(--s-dim); }
+body.fz-trade .rc-search input::-webkit-search-cancel-button { display: none; }
+body.fz-trade .rc-forsale-toggle {
+    flex: none;
+    height: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid var(--s-line2);
+    background: none;
+    color: var(--s-ink2);
+    font: 600 12px/1 'Saira', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+body.fz-trade .rc-forsale-toggle span { color: var(--s-gold); }
+body.fz-trade .rc-forsale-toggle.is-active { background: var(--s-ink); border-color: var(--s-ink); color: var(--s-on-ink); }
+body.fz-trade .rc-forsale-toggle.is-active span { color: var(--s-on-ink); }
+
+body.fz-trade .position-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 10px 0 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+body.fz-trade .position-tabs::-webkit-scrollbar { display: none; }
+body.fz-trade .pos-tab {
+    flex: none;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--s-line2);
+    background: transparent;
+    color: var(--s-mute);
+    font: 600 12px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+body.fz-trade .pos-tab:hover { border-color: var(--s-mute); }
+body.fz-trade .pos-tab.active { border-color: var(--s-ink); background: var(--s-ink); color: var(--s-on-ink); }
+
+body.fz-trade .roster-card {
+    margin-top: 10px;
+    border-radius: 18px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    overflow: hidden;
+}
+body.fz-trade .roster-list-head {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px 0 14px;
+    border-bottom: 1px solid var(--s-line);
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--s-dim);
+}
+body.fz-trade .rlh-name { flex: 1; }
+body.fz-trade .rlh-stats,
+body.fz-trade .pcr-stats { flex: none; display: flex; align-items: center; }
+body.fz-trade .rlh-stats span,
+body.fz-trade .pcr-stat { width: 26px; text-align: center; }
+body.fz-trade .rlh-stats .rlh-pts,
+body.fz-trade .pcr-stat.pcr-pts { width: 38px; text-align: right; }
+body.fz-trade .rlh-stats .rlh-pts { color: var(--s-mute); }
+
+body.fz-trade .roster-list { max-height: 640px; overflow-y: auto; }
+body.fz-trade .player-card-roster {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    cursor: pointer;
+    transition: background .12s ease;
+}
+body.fz-trade .player-card-roster + .player-card-roster { border-top: 1px solid var(--s-line); }
+body.fz-trade .player-card-roster:hover { background: var(--s-raise); }
+body.fz-trade .player-card-roster.selected { background: var(--s-red-soft); }
+body.fz-trade .player-card-roster.locked { cursor: not-allowed; opacity: .4; }
+body.fz-trade .player-card-roster.locked:hover { background: none; }
+
+body.fz-trade .pcr-check {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--s-box);
+    display: grid;
+    place-items: center;
+    color: #fff;
+}
+body.fz-trade .pcr-check svg { opacity: 0; }
+body.fz-trade .player-card-roster.selected .pcr-check { border: 0; background: var(--s-red); }
+body.fz-trade .player-card-roster.selected .pcr-check svg { opacity: 1; }
+
+body.fz-trade .pcr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+body.fz-trade .pcr-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font: 600 14px/1.1 'Saira', sans-serif;
+    color: var(--s-ink);
+}
+body.fz-trade .pcr-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.fz-trade .pcr-forsale-badge {
+    flex: none;
+    height: 16px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: rgba(232, 178, 106, .16);
+    color: var(--s-gold);
+    font: 700 9px/16px 'Saira', sans-serif;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+}
+body.fz-trade .pcr-team {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font: 400 11px/1 'Saira', sans-serif;
+    color: var(--s-dim);
+    white-space: nowrap;
+}
+body.fz-trade .pcr-stats { font: 500 13px/1 'Saira', sans-serif; color: var(--s-faint); font-variant-numeric: tabular-nums; }
+body.fz-trade .pcr-stat.pcr-pts { font: 700 17px/1 'Saira', sans-serif; color: var(--s-ink); }
+
+/* Chargement : rangées en os (fzSquelette.css) aux hauteurs des lignes. */
 body.fz-trade .tr-sk-row { cursor: default; pointer-events: none; opacity: 0; animation: fzOsMonte .35s ease-out forwards; animation-delay: calc(var(--i, 0) * 40ms); }
 body.fz-trade .tr-sk-name { width: var(--w); max-width: 100%; height: 12px; margin: 1px 0; }
 body.fz-trade .tr-sk-meta { width: var(--w); max-width: 100%; height: 8px; margin: 1px 0; }
-body.fz-trade .tr-sk-n { width: 9px; height: 9px; margin: 2px 0 2px auto; }
+body.fz-trade .tr-sk-n { width: 9px; height: 9px; margin: 2px auto; }
 body.fz-trade .tr-sk-pts { width: 18px; height: 14px; margin: 1px 0 1px auto; }
-body.fz-trade .tr-sk-team { width: 132px; max-width: 100%; height: 16px; margin: 3px 0 2px; }
-body.fz-trade .tr-sk-trigger { width: 96px; height: 14px; }
+body.fz-trade .tr-sk-team { width: 132px; max-width: 100%; height: 16px; margin: 0; }
 @media (prefers-reduced-motion: reduce) { body.fz-trade .tr-sk-row { opacity: 1; animation: none; } }
 
-body.fz-trade .rc-showmore {
-    padding: 14px 22px 18px;
-    font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-faint);
-    text-align: center;
-}
-
-/* ============================================================ */
-/* TRADE SUMMARY / BASKET (center column)                        */
-/* ============================================================ */
+/* ============================================================
+   PANIER (bureau, colonne du centre)
+   ============================================================ */
 body.fz-trade .trade-summary-column {
-    background: var(--fzt-bg-alt);
-    border: 1px solid var(--fzt-border);
-    border-radius: 13px;
-    padding: 20px 20px 22px;
-    min-height: 560px;
+    position: sticky;
+    top: 86px;
+    min-height: 420px;
+    padding: 16px;
+    border-radius: 18px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
     display: flex;
     flex-direction: column;
 }
 body.fz-trade .tsc-inner { flex: 1; display: flex; flex-direction: column; }
-
 body.fz-trade .trade-empty-state {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    text-align: center;
     gap: 8px;
     padding: 24px 8px;
+    text-align: center;
 }
-body.fz-trade .trade-empty-state h3 {
-    font: 600 15px/1.3 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-ink);
-    margin: 0;
-}
-body.fz-trade .trade-empty-state p {
-    font: 400 12px/1.5 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-faint);
-    margin: 0;
-    max-width: 240px;
-}
-
-body.fz-trade .trade-basket { display: flex; flex-direction: column; gap: 14px; flex: 1; }
-body.fz-trade .trade-basket.hidden { display: none; }
-
-body.fz-trade .tb-cols-lbl {
+body.fz-trade .tes-ico {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--s-face);
+    color: var(--s-faint);
     display: grid;
-    grid-template-columns: 1fr 34px 1fr;
-    gap: 0 8px;
+    place-items: center;
+    margin-bottom: 4px;
+}
+body.fz-trade .trade-empty-state h3 { margin: 0; font: 600 15px/1.3 'Saira', sans-serif; color: var(--s-ink); }
+body.fz-trade .trade-empty-state p { margin: 0; max-width: 240px; font: 400 12px/1.5 'Saira', sans-serif; color: var(--s-dim); }
+
+body.fz-trade .trade-basket { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+body.fz-trade .tb-cols-lbl,
+body.fz-trade .tb-pair-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+    gap: 6px;
     align-items: center;
 }
 body.fz-trade .tb-give-lbl,
 body.fz-trade .tb-get-lbl {
-    font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .11em;
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    color: var(--fzt-ink);
+    color: var(--s-red-ink);
 }
-body.fz-trade .tb-get-lbl { color: var(--fzt-accent); text-align: right; }
-
-body.fz-trade .tb-pairs { display: flex; flex-direction: column; gap: 9px; }
-body.fz-trade .tb-pair-row {
-    display: grid;
-    grid-template-columns: 1fr 34px 1fr;
-    gap: 8px;
-    align-items: stretch;
-}
+body.fz-trade .tb-get-lbl { color: var(--s-green); text-align: right; }
+body.fz-trade .tb-pairs { display: flex; flex-direction: column; gap: 8px; }
 body.fz-trade .tb-card {
-    border: 1px solid var(--fzt-border);
-    border-radius: 10px;
-    background: var(--fzt-surface);
-    padding: 10px 12px;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
     min-width: 0;
+    padding: 8px;
+    border-radius: 12px;
+    background: var(--s-give-soft);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-body.fz-trade .tb-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+body.fz-trade .tb-pair-row > .tb-card:last-child { background: var(--s-green-soft); }
+body.fz-trade .tb-card.is-ghost { background: none; border: 1px dashed var(--s-line2); }
+body.fz-trade .tb-card .tr-shot { width: 30px; height: 30px; }
+body.fz-trade .tb-card .tr-shot-init { font-size: 10px; }
+body.fz-trade .tb-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 body.fz-trade .tb-card-name {
-    font: 600 12.5px/1.2 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-ink);
+    font: 600 13px/1.15 'Saira', sans-serif;
+    color: var(--s-ink);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
 }
-body.fz-trade .tb-card-meta {
-    font: 400 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
+body.fz-trade .tb-card.is-ghost .tb-card-name { color: var(--s-faint); }
+body.fz-trade .tb-card-meta { font: 400 10px/1.2 'Saira', sans-serif; color: var(--s-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.fz-trade .tb-card-remove {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    border-radius: 5px;
-    display: grid;
-    place-items: center;
-    font: 400 13px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-fainter);
-    cursor: pointer;
-    background: none;
-    border: none;
-    transition: color .15s ease;
-}
-body.fz-trade .tb-card-remove:hover { color: var(--fzt-accent); }
-
-body.fz-trade .tb-pair-mid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-}
-body.fz-trade .tb-pair-swap {
-    width: 26px;
-    height: 26px;
-    border-radius: 999px;
-    background: var(--fzt-solid);
-    color: var(--fzt-on-solid);
-    display: grid;
-    place-items: center;
-    font: 400 11px/1 'Helvetica Neue', Helvetica, sans-serif;
-}
-body.fz-trade .tb-pair-swap.is-ghost {
-    background: none;
-    border: 1px dashed var(--fzt-border-strong);
-    color: var(--fzt-text-fainter);
-}
-body.fz-trade .tb-pair-cat {
-    font: 600 8px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
-
-body.fz-trade .tb-card.is-ghost {
-    border-style: dashed;
-    border-color: var(--fzt-border-strong);
-    background: var(--fzt-bg);
-    align-items: center;
-}
-body.fz-trade .tb-card.is-ghost .tb-card-name { color: var(--fzt-text-faint); font-weight: 500; }
-body.fz-trade .tb-card.is-ghost .tb-card-meta { color: var(--fzt-text-fainter); }
-
-body.fz-trade .tb-equity {
-    border-top: 1px solid var(--fzt-border);
-    padding-top: 13px;
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-    margin-top: auto;
-}
-body.fz-trade .tb-eq-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    background: var(--fzt-success-bg);
-    border: 1px solid var(--fzt-success-border);
-}
-body.fz-trade .tb-eq-row.is-invalid {
-    background: var(--fzt-danger-bg);
-    border-color: var(--fzt-danger-border);
-}
-body.fz-trade .tb-eq-check {
-    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-success-text);
-}
-body.fz-trade .tb-eq-row.is-invalid .tb-eq-check { color: var(--fzt-accent-dark); }
-body.fz-trade #tbValidText {
-    font: 500 11px/1.35 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-success-text);
-}
-body.fz-trade .tb-eq-row.is-invalid #tbValidText { color: var(--fzt-accent-dark); }
-
-body.fz-trade .tb-eq-line {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-}
-body.fz-trade .tb-eq-line span {
-    font: 400 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-muted);
-}
-body.fz-trade .tb-eq-line strong {
-    font: 600 15px/1 'Oswald', sans-serif;
-    color: var(--fzt-ink);
-}
-body.fz-trade .tb-eq-line.tb-eq-gap span,
-body.fz-trade .tb-eq-line.tb-eq-gap strong { color: var(--fzt-accent); }
-body.fz-trade .tb-eq-line.tb-eq-gap.is-positive span,
-body.fz-trade .tb-eq-line.tb-eq-gap.is-positive strong { color: var(--fzt-success-text); }
-
-body.fz-trade .btn-propose-trade {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 10px;
-    /* L'action principale de la page : le seul aplat rouge de la vue. */
-    background: var(--fzt-accent-fill);
-    color: var(--fzt-on-accent);
-    font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: none;
-    transition: background .15s ease;
-}
-body.fz-trade .btn-propose-trade:hover:not(:disabled) { background: var(--fzt-accent-fill-hover); transform: none; box-shadow: none; }
-body.fz-trade .btn-propose-trade:disabled {
-    background: var(--fzt-muted-fill);
-    color: var(--fzt-text-faint);
-    cursor: not-allowed;
-    opacity: 1;
-}
-body.fz-trade .btn-reset-trade {
-    width: 100%;
-    padding: 11px;
-    border-radius: 10px;
-    border: 1px solid var(--fzt-border-input);
-    background: none;
-    text-align: center;
-    font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-    color: var(--fzt-text-muted);
-    cursor: pointer;
-    transition: border-color .15s ease, color .15s ease;
-}
-body.fz-trade .btn-reset-trade:hover { border-color: var(--fzt-ink); color: var(--fzt-ink); }
-
-/* ============================================================ */
-/* SUCCESS SCREEN — the one place allowed a bounce (DESIGN.md)  */
-/* ============================================================ */
-body.fz-trade .trade-success-inner {
-    text-align: center;
-    padding: 56px 24px;
-    max-width: 520px;
-    margin: 0 auto;
-}
-body.fz-trade .trade-success-check {
-    width: 88px;
-    height: 88px;
-    margin: 0 auto 22px;
-    border-radius: 50%;
-    background: var(--fzt-solid);
-    color: var(--fzt-on-solid);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fztSuccessPop .5s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes fztSuccessPop {
-    0% { transform: scale(0); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-body.fz-trade .trade-success-inner h2 {
-    font: 600 26px/1.2 'Oswald', sans-serif;
-    color: var(--fzt-ink);
-    margin: 0 0 12px;
-}
-body.fz-trade .trade-success-inner p {
-    font: 400 13.5px/1.6 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-muted);
-    margin: 0 0 28px;
-}
-body.fz-trade .trade-success-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-body.fz-trade .btn-success-primary,
-body.fz-trade .btn-success-secondary {
-    padding: 13px 22px;
-    border-radius: 10px;
-    font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background .15s ease, border-color .15s ease, color .15s ease;
-}
-body.fz-trade .btn-success-primary { background: var(--fzt-accent-fill); border: none; color: var(--fzt-on-accent); }
-body.fz-trade .btn-success-primary:hover { background: var(--fzt-accent-fill-hover); transform: none; box-shadow: none; }
-body.fz-trade .btn-success-secondary { background: none; border: 1px solid var(--fzt-border-input); color: var(--fzt-text-muted); }
-body.fz-trade .btn-success-secondary:hover { border-color: var(--fzt-ink); color: var(--fzt-ink); }
-
-/* ============================================================ */
-/* RECEIVED TRADES — card list                                  */
-/* ============================================================ */
-body.fz-trade .received-trades-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    max-width: 760px;
-}
-
-body.fz-trade .received-trade-card {
-    border: 1px solid var(--fzt-border);
-    border-radius: 13px;
-    background: var(--fzt-surface);
-    overflow: hidden;
-    margin: 0;
-    transition: none;
-}
-body.fz-trade .received-trade-card:hover { box-shadow: none; }
-body.fz-trade .received-trade-card.is-target,
-body.fz-trade .history-card.is-target,
-body.fz-trade .history-card.is-target.is-declined {
-    border-color: var(--fzt-accent-fill);
-    outline: 2px solid var(--fzt-accent-fill);
-    outline-offset: 3px;
-    scroll-margin-block: 100px;
-    opacity: 1;
-    animation: fztTargetPulse 1.6s ease-out 2;
-}
-@keyframes fztTargetPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb),.18); }
-    50% { box-shadow: 0 0 0 6px rgba(var(--primary-rgb),.12); }
-}
-@media (prefers-reduced-motion: reduce) {
-    body.fz-trade .received-trade-card.is-target,
-    body.fz-trade .history-card.is-target,
-    body.fz-trade .history-card.is-target.is-declined { animation: none; }
-}
-
-body.fz-trade .trade-card-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 22px;
-    border-bottom: 1px solid var(--fzt-border);
-    background: var(--fzt-surface-alt);
-    margin: 0;
-}
-body.fz-trade .trade-card-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 999px;
-    background: var(--fzt-solid);
-    color: var(--fzt-on-solid);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    font: 600 12px/1 'Helvetica Neue', Helvetica, sans-serif;
-}
-body.fz-trade .trade-card-info { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-body.fz-trade .trade-card-teams {
-    font: 600 15px/1 'Oswald', sans-serif;
-    color: var(--fzt-ink);
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-body.fz-trade .trade-card-date { font: 400 11px/1 'Helvetica Neue', Helvetica, sans-serif; color: var(--fzt-text-faint); }
-body.fz-trade .trade-card-status {
-    padding: 5px 10px;
-    border-radius: 999px;
-    background: var(--fzt-warning-bg);
-    color: var(--fzt-warning-text);
-    font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    flex-shrink: 0;
-}
-
-body.fz-trade .trade-card-players {
-    display: grid;
-    grid-template-columns: 1fr 40px 1fr;
-    gap: 14px;
-    padding: 18px 22px;
-    align-items: center;
-}
-body.fz-trade .trade-player { background: none; padding: 0; border-radius: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-body.fz-trade .trade-player-label {
-    font: 500 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-    margin: 0;
-}
-body.fz-trade .trade-card-players .trade-player:last-child .trade-player-label { color: var(--fzt-accent); }
-body.fz-trade .trade-player-box {
-    border: 1px solid var(--fzt-border);
-    border-radius: 9px;
-    padding: 9px 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-}
-body.fz-trade .trade-player-text { flex: 1; min-width: 0; }
-body.fz-trade .trade-player-name {
-    font: 600 13.5px/1.15 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-ink);
-    margin: 0 0 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-body.fz-trade .trade-player-position {
-    display: block;
-    padding: 0;
-    background: none;
-    border: none;
-    margin: 0;
-    font: 400 10px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
-body.fz-trade .trade-arrow-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
-    background: var(--fzt-solid);
-    color: var(--fzt-on-solid);
-    display: grid;
-    place-items: center;
-    font: 400 12px/1 'Helvetica Neue', Helvetica, sans-serif;
-    margin: 0 auto;
-}
-
-body.fz-trade .trade-card-actions { display: flex; gap: 10px; padding: 0 22px 18px; }
-body.fz-trade .btn-accept-trade,
-body.fz-trade .btn-decline-trade,
-body.fz-trade .btn-counter-trade {
-    flex: 1;
-    padding: 12px;
-    border-radius: 9px;
-    font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-    cursor: pointer;
-    text-align: center;
-    transition: background .15s ease, border-color .15s ease, color .15s ease;
-}
-body.fz-trade .btn-accept-trade { background: var(--fzt-solid); border: none; color: var(--fzt-on-solid); box-shadow: none; }
-body.fz-trade .btn-accept-trade:hover { background: var(--fzt-solid-hover); transform: none; box-shadow: none; }
-body.fz-trade .btn-decline-trade,
-body.fz-trade .btn-counter-trade {
-    flex: 1;
-    background: none;
-    border: 1px solid var(--fzt-border-input);
-    color: var(--fzt-text-muted);
-}
-body.fz-trade .btn-decline-trade:hover { border-color: var(--fzt-accent); color: var(--fzt-accent); }
-body.fz-trade .btn-counter-trade:hover { border-color: var(--fzt-ink); color: var(--fzt-ink); }
-body.fz-trade .btn-counter-trade { flex: 0 0 auto; padding: 12px 16px; }
-
-body.fz-trade .received-empty {
-    text-align: center;
-    padding: 20px;
-    font: 400 12px/1.4 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-faint);
-}
-
-/* ============================================================ */
-/* HISTORY                                                       */
-/* ============================================================ */
-body.fz-trade .history-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    max-width: 900px;
-}
-
-body.fz-trade .history-card {
-    border: 1px solid var(--fzt-border);
-    border-radius: 10px;
-    background: var(--fzt-surface);
-    overflow: hidden;
-}
-body.fz-trade .history-card.is-declined {
-    border-color: var(--fzt-border);
-    background: var(--fzt-bg);
-    opacity: .7;
-}
-
-body.fz-trade .history-card-head {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 18px;
-    background: var(--fzt-bg-alt);
-    border-bottom: 1px solid var(--fzt-border);
-}
-body.fz-trade .history-card.is-declined .history-card-head { background: var(--fzt-muted-fill); }
-body.fz-trade .history-card-date {
-    font: 600 11px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--fzt-text);
-}
-body.fz-trade .history-card-status {
-    margin-left: auto;
-    padding: 5px 10px;
-    border-radius: 999px;
-    background: var(--fzt-success-bg);
-    color: var(--fzt-success-text);
-    font: 600 10px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-}
-body.fz-trade .history-card.is-declined .history-card-status {
-    background: var(--fzt-border);
-    color: var(--fzt-text);
-}
-
-body.fz-trade .history-card-sides {
-    display: grid;
-    grid-template-columns: 1fr 1px 1fr;
-}
-body.fz-trade .history-side-team {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--fzt-border-soft);
-}
-body.fz-trade .history-side-dot {
+    flex: none;
     width: 22px;
     height: 22px;
-    border-radius: 999px;
-    background: var(--fzt-muted-fill);
-    flex-shrink: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--s-faint);
+    font: 500 16px/1 'Saira', sans-serif;
+    cursor: pointer;
 }
-body.fz-trade .history-side-name {
-    flex: 1;
-    font: 700 13px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .03em;
-    text-transform: uppercase;
-    color: var(--fzt-ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+body.fz-trade .tb-card-remove:hover { background: var(--s-line); color: var(--s-ink); }
+body.fz-trade .tb-pair-mid { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+body.fz-trade .tb-pair-swap { font-size: 16px; line-height: 1; color: var(--s-ink2); }
+body.fz-trade .tb-pair-swap.is-ghost { color: var(--s-ghost); }
+body.fz-trade .tb-pair-cat { font: 800 9px/1 'Saira Condensed', sans-serif; letter-spacing: .4px; color: var(--s-dim); }
+
+body.fz-trade .tb-counter-note {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--s-red-soft);
+    border: 1px solid rgba(229, 55, 43, .3);
+    font: 400 12px/1.4 'Saira', sans-serif;
+    color: var(--s-ink2);
 }
-body.fz-trade .history-side-acquires-lbl {
-    font: 600 9.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-    flex-shrink: 0;
+body.fz-trade .tb-counter-note strong { font-weight: 600; color: var(--s-red-ink); }
+
+body.fz-trade .tb-equity {
+    margin-top: auto;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--s-raise);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
 }
-body.fz-trade .history-side-player {
+body.fz-trade .tb-eq-row { display: flex; align-items: center; gap: 6px; font: 600 12px/1.3 'Saira', sans-serif; color: var(--s-green); }
+body.fz-trade .tb-eq-row.is-invalid { color: var(--s-faint); }
+body.fz-trade .tb-eq-row.is-invalid .tb-eq-check { display: none; }
+body.fz-trade .tb-eq-line { display: flex; justify-content: space-between; font: 400 12px/1 'Saira', sans-serif; color: var(--s-dim); }
+body.fz-trade .tb-eq-line strong { font: 600 13px/1 'Saira', sans-serif; color: var(--s-ink); font-variant-numeric: tabular-nums; }
+body.fz-trade .tb-eq-gap.is-positive strong { color: var(--s-green); }
+
+body.fz-trade .btn-propose-trade,
+body.fz-trade .tm-cta {
+    width: 100%;
+    height: 48px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--s-red);
+    color: #fff;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 11px 18px;
+    justify-content: center;
+    gap: 8px;
+    font: 600 15px/1 'Saira', sans-serif;
+    cursor: pointer;
+    transition: opacity .15s ease;
 }
-body.fz-trade .history-player-dot {
-    width: 30px;
-    height: 30px;
-    border-radius: 999px;
-    background: var(--fzt-muted-fill);
-    flex-shrink: 0;
+body.fz-trade .btn-propose-trade:hover:not(:disabled) { opacity: .9; }
+body.fz-trade .btn-propose-trade:disabled { background: var(--s-raise); color: var(--s-faint); }
+body.fz-trade .btn-propose-trade span[data-icon] { display: flex; }
+body.fz-trade .btn-reset-trade {
+    width: 100%;
+    height: 40px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: var(--s-faint);
+    font: 600 13px/1 'Saira', sans-serif;
+    cursor: pointer;
 }
-body.fz-trade .history-player-name {
-    flex: 1;
-    font: 600 13.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-body.fz-trade .history-player-name span { font-weight: 500; color: var(--fzt-text-faint); }
-body.fz-trade .history-card.is-declined .history-side-name,
-body.fz-trade .history-card.is-declined .history-player-name { color: var(--fzt-text-faint); }
-body.fz-trade .history-card.is-declined .history-player-name span { color: var(--fzt-text-fainter); }
+body.fz-trade .btn-reset-trade:hover { color: var(--s-ink); }
 
-body.fz-trade .history-divider { background: var(--fzt-border); position: relative; }
-body.fz-trade .history-divider-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 26px;
-    height: 26px;
-    border-radius: 999px;
-    background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border);
+/* Barre fixe du téléphone : cachée au bureau. */
+body.fz-trade .tm-bottombar { display: none; }
+
+/* ============================================================
+   PROPOSITION ENVOYÉE
+   ============================================================ */
+body.fz-trade .trade-success-inner {
+    max-width: 520px;
+    margin: 16px auto 0;
+    padding: 40px 20px;
+    border-radius: 18px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    text-align: center;
+}
+body.fz-trade .trade-success-check {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: var(--s-green);
+    color: var(--s-on-ink);
     display: grid;
     place-items: center;
-    font: 400 12px/1 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-faint);
+    animation: fztSuccessPop .5s cubic-bezier(.34, 1.56, .64, 1);
 }
-
-body.fz-trade .history-empty {
-    text-align: center;
-    padding: 48px 24px;
-    font: 400 13px/1.4 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-text-faint);
+html[data-theme="light"] body.fz-trade .trade-success-check { color: #fff; }
+@keyframes fztSuccessPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+body.fz-trade .trade-success-check span { display: flex; }
+body.fz-trade .trade-success-inner h2 { margin: 0 0 10px; font: 800 26px/1.1 'Saira Condensed', sans-serif; text-transform: uppercase; color: var(--s-ink); }
+body.fz-trade .trade-success-inner p { margin: 0 0 24px; font: 400 14px/1.55 'Saira', sans-serif; color: var(--s-mute); }
+body.fz-trade .trade-success-inner p strong { color: var(--s-ink); font-weight: 600; }
+body.fz-trade .trade-success-actions { display: flex; flex-direction: column; gap: 8px; }
+body.fz-trade .btn-success-primary,
+body.fz-trade .btn-success-secondary {
+    height: 46px;
+    border-radius: 12px;
+    font: 600 14px/1 'Saira', sans-serif;
+    cursor: pointer;
 }
+body.fz-trade .btn-success-primary { border: 0; background: var(--s-ink); color: var(--s-on-ink); }
+body.fz-trade .btn-success-secondary { border: 1px solid var(--s-line2); background: none; color: var(--s-ink); }
+@media (prefers-reduced-motion: reduce) { body.fz-trade .trade-success-check { animation: none; } }
 
-/* ============================================================ */
-/* STYLED CONFIRM — standard ease, not the success-only bounce   */
-/* ============================================================ */
+/* ============================================================
+   REÇUS
+   ============================================================ */
+body.fz-trade .received-trades-list { display: flex; flex-direction: column; gap: 12px; max-width: 640px; margin-top: 12px; }
+body.fz-trade .received-trades-list > .received-empty { margin-top: 0; }
+body.fz-trade .received-trade-card {
+    border-radius: 18px;
+    background: var(--s-card);
+    border: 1px solid rgba(224, 179, 65, .35);
+    overflow: hidden;
+}
+body.fz-trade .trade-card-header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+body.fz-trade .trade-card-avatar {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--s-line2);
+    color: var(--s-ink2);
+    display: grid;
+    place-items: center;
+    font: 800 12px/1 'Saira Condensed', sans-serif;
+}
+body.fz-trade .trade-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+body.fz-trade .trade-card-teams { font: 600 15px/1.1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .trade-card-date { font: 400 12px/1 'Saira', sans-serif; color: var(--s-dim); }
+body.fz-trade .trade-card-status {
+    flex: none;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(224, 179, 65, .14);
+    color: var(--s-wait);
+    font: 700 10px/22px 'Saira', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+body.fz-trade .trade-card-players { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 0 10px; }
+body.fz-trade .trade-player {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: var(--s-green-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+body.fz-trade .trade-player.is-give { background: var(--s-give-soft); }
+body.fz-trade .trade-player-label {
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--s-green);
+}
+body.fz-trade .trade-player.is-give .trade-player-label { color: var(--s-red-ink); }
+body.fz-trade .trade-player-box { display: flex; align-items: center; gap: 10px; min-width: 0; }
+body.fz-trade .trade-player-box .tr-shot { width: 40px; height: 40px; }
+body.fz-trade .trade-player-name { flex: 1; min-width: 0; font: 600 15px/1.1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .trade-player-box .tr-pos { height: 18px; padding: 0 6px; border-radius: 5px; font-size: 11px; }
+body.fz-trade .trade-player-pts { flex: none; width: 28px; text-align: right; font: 700 16px/1 'Saira', sans-serif; font-variant-numeric: tabular-nums; }
+body.fz-trade .trade-arrow-icon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--s-bg);
+    border: 1px solid var(--s-line2);
+    color: var(--s-ink2);
+    display: grid;
+    place-items: center;
+}
+body.fz-trade .trade-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 10px 10px;
+}
+body.fz-trade .trade-card-actions button {
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font: 600 14px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+body.fz-trade .btn-accept-trade { border: 0; background: var(--s-ink); color: var(--s-on-ink); }
+body.fz-trade .btn-accept-trade:hover { opacity: .9; }
+body.fz-trade .btn-decline-trade { border: 1px solid var(--s-line2); background: none; color: var(--s-ink); }
+body.fz-trade .btn-decline-trade:hover { border-color: var(--s-mute); }
+body.fz-trade .trade-card-actions .btn-counter-trade {
+    grid-column: 1 / 3;
+    height: 40px;
+    border: 0;
+    background: none;
+    color: var(--s-red-ink);
+    font-size: 13px;
+}
+body.fz-trade .btn-counter-trade:hover { text-decoration: underline; }
+
+/* ============================================================
+   HISTORIQUE
+   ============================================================ */
+body.fz-trade .history-cards {
+    max-width: 640px;
+    margin-top: 12px;
+    border-radius: 18px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    overflow: hidden;
+}
+body.fz-trade .history-cards:empty { display: none; }
+body.fz-trade .history-cards > .history-empty { margin: 0; border: 0; border-radius: 0; }
+body.fz-trade .history-cards > .history-empty + .history-card,
+body.fz-trade .history-card + .history-card { border-top: 1px solid var(--s-line); }
+body.fz-trade .history-card { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+body.fz-trade .history-card-head { display: flex; align-items: center; gap: 8px; }
+body.fz-trade .history-card-date {
+    flex: 1;
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--s-dim);
+}
+body.fz-trade .history-card-status {
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(127, 212, 155, .14);
+    color: var(--s-green);
+    font: 700 10px/20px 'Saira', sans-serif;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+body.fz-trade .history-card-status[data-statut="refuse"] { background: rgba(255, 138, 128, .14); color: var(--s-red-ink); }
+body.fz-trade .history-card-status[data-statut="annule"] { background: var(--s-face); color: var(--s-faint); }
+body.fz-trade .history-card-sides {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+body.fz-trade .history-card.is-declined .history-card-sides { opacity: .6; }
+body.fz-trade .history-side { min-width: 0; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+body.fz-trade .history-side.is-right { align-items: flex-end; }
+body.fz-trade .history-side-name { font: 500 11px/1 'Saira', sans-serif; color: var(--s-dim); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .history-side-player { display: flex; align-items: center; gap: 6px; max-width: 100%; }
+body.fz-trade .history-player-name { font: 600 13px/1.1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .history-divider { display: flex; color: var(--s-ghost); }
+
+body.fz-trade .received-trade-card.is-target,
+body.fz-trade .history-card.is-target {
+    outline: 2px solid var(--s-red);
+    outline-offset: -2px;
+    scroll-margin-block: 100px;
+}
+body.fz-trade .history-card.is-target .history-card-sides { opacity: 1; }
+
+/* ============================================================
+   CONFIRMATION, NOTIFICATIONS, CHARGEMENT
+   ============================================================ */
 body.fz-trade .trade-confirm-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: var(--overlay-dark);
     z-index: 10000;
+    padding: 16px;
+    background: rgba(0, 0, 0, .6);
     align-items: center;
     justify-content: center;
     animation: fztFadeIn .2s ease;
 }
 body.fz-trade .trade-confirm-overlay.show { display: flex; }
 @keyframes fztFadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fztSlideUp {
-    from { transform: translateY(12px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
+@keyframes fztSlideUp { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 body.fz-trade .trade-confirm-box {
-    background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border);
-    border-radius: 16px;
-    padding: 26px 24px;
-    width: 90%;
-    max-width: 480px;
+    width: 100%;
+    max-width: 440px;
     max-height: 80vh;
     overflow-y: auto;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,.28);
-    animation: fztSlideUp .22s cubic-bezier(.4,0,.2,1);
+    padding: 20px 16px 16px;
+    border-radius: 20px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+    animation: fztSlideUp .22s cubic-bezier(.4, 0, .2, 1);
 }
-body.fz-trade .trade-confirm-title {
-    font: 600 20px/1.2 'Oswald', sans-serif;
-    color: var(--fzt-ink);
-    margin: 0 0 18px;
-}
-body.fz-trade .tc-trade-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-body.fz-trade .tc-side {
-    flex: 1;
-    background: var(--fzt-bg-alt);
-    border: 1px solid var(--fzt-border);
-    border-radius: 10px;
-    padding: 12px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-}
-body.fz-trade .tc-side-label {
-    font: 700 9px/1 'Helvetica Neue', Helvetica, sans-serif;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--fzt-text-faint);
-}
-body.fz-trade .tc-side strong {
-    font: 600 13px/1.3 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-body.fz-trade .tc-arrow {
-    font-size: 1.3rem;
-    color: var(--fzt-text-faint);
-    flex-shrink: 0;
-}
-body.fz-trade .trade-confirm-actions { display: flex; gap: 12px; margin-top: 20px; }
-body.fz-trade .tc-btn {
-    flex: 1;
-    padding: 13px;
-    border-radius: 10px;
-    font: 600 13px/1 'Helvetica Neue', Helvetica, sans-serif;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background .15s ease, border-color .15s ease, color .15s ease;
-}
-body.fz-trade .tc-cancel { background: none; border: 1px solid var(--fzt-border-input); color: var(--fzt-text-muted); }
-body.fz-trade .tc-cancel:hover { border-color: var(--fzt-ink); color: var(--fzt-ink); }
-body.fz-trade .tc-ok { background: var(--fzt-accent-fill); border: none; color: var(--fzt-on-accent); }
-body.fz-trade .tc-ok:hover { background: var(--fzt-accent-fill-hover); transform: none; box-shadow: none; }
+body.fz-trade .trade-confirm-title { margin: 0 0 14px; font: 800 22px/1.1 'Saira Condensed', sans-serif; text-transform: uppercase; color: var(--s-ink); text-align: center; }
+body.fz-trade .tc-trade-row { display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr); gap: 6px; align-items: center; margin-bottom: 8px; }
+body.fz-trade .tc-side { min-width: 0; padding: 10px; border-radius: 12px; background: var(--s-give-soft); display: flex; flex-direction: column; gap: 5px; }
+body.fz-trade .tc-trade-row .tc-side:last-child { background: var(--s-green-soft); text-align: right; }
+body.fz-trade .tc-side-label { font: 600 10px/1.2 'Saira', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .tc-side strong { font: 600 14px/1.2 'Saira', sans-serif; color: var(--s-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .tc-arrow { text-align: center; color: var(--s-faint); }
+body.fz-trade .trade-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+body.fz-trade .tc-btn { height: 46px; border-radius: 12px; font: 600 14px/1 'Saira', sans-serif; cursor: pointer; }
+body.fz-trade .tc-cancel { border: 1px solid var(--s-line2); background: none; color: var(--s-ink); }
+body.fz-trade .tc-ok { border: 0; background: var(--s-red); color: #fff; }
+body.fz-trade .tc-ok:hover { opacity: .9; }
 
-/* ============================================================ */
-/* MOBILE BOTTOM BAR                                             */
-/* ============================================================ */
-body.fz-trade .tm-bottombar { display: none; }
+body.fz-trade .trade-notification {
+    position: fixed;
+    top: 84px;
+    right: -420px;
+    max-width: min(380px, calc(100vw - 32px));
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line2);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .25);
+    z-index: 9999;
+    transition: right .3s cubic-bezier(.4, 0, .2, 1);
+}
+body.fz-trade .trade-notification.show { right: 16px; }
+body.fz-trade .notification-content { display: flex; align-items: center; gap: 10px; }
+body.fz-trade .notification-icon { flex: none; display: flex; color: var(--s-ink); }
+body.fz-trade .trade-notification-error .notification-icon { color: var(--s-red-ink); }
+body.fz-trade .trade-notification-success .notification-icon { color: var(--s-green); }
+body.fz-trade .notification-message { font: 500 13px/1.4 'Saira', sans-serif; color: var(--s-ink); }
 
 body.fz-trade .loading-spinner {
     display: inline-block;
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
     border: 2px solid currentColor;
     border-right-color: transparent;
     border-radius: 50%;
     animation: fztSpin .6s linear infinite;
 }
 @keyframes fztSpin { to { transform: rotate(360deg); } }
-body.fz-trade button:disabled { cursor: not-allowed; }
 
-body.fz-trade .hidden { display: none !important; }
-
-/* ============================================================ */
-/* NOTIFICATIONS (kept functional, restyled to the editorial look) */
-/* ============================================================ */
-body.fz-trade .trade-notification {
-    position: fixed;
-    top: 88px;
-    right: -400px;
-    max-width: 380px;
-    background: var(--fzt-surface);
-    border: 1px solid var(--fzt-border);
-    border-radius: 12px;
-    padding: 14px 18px;
-    box-shadow: 0 12px 32px rgba(0,0,0,.18);
-    z-index: 9999;
-    transition: right .3s cubic-bezier(.4,0,.2,1);
+/* ============================================================
+   TABLETTE — le panier passe sous les deux effectifs
+   ============================================================ */
+@media (max-width: 1180px) and (min-width: 901px) {
+    body.fz-trade .trade-grid-3col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    body.fz-trade .trade-summary-column { grid-column: 1 / -1; grid-row: 2; position: static; min-height: 0; }
+    body.fz-trade .trade-empty-state { padding: 8px; }
 }
-body.fz-trade .trade-notification.show { right: 24px; }
-body.fz-trade .notification-content { display: flex; align-items: center; gap: 12px; }
-body.fz-trade .notification-icon { flex-shrink: 0; color: var(--fzt-ink); }
-body.fz-trade .notification-message { color: var(--fzt-ink); font: 500 13px/1.4 'Helvetica Neue', Helvetica, sans-serif; }
 
-/* ============================================================ */
-/* RESPONSIVE — collapse to the mobile builder under 900px       */
-/* (900px matches the breakpoint the rest of the trade builder   */
-/* already used before this pass; kept for continuity.)          */
-/* ============================================================ */
+/* ============================================================
+   TÉLÉPHONE — un effectif à la fois, bilan figé en bas
+   ============================================================ */
 @media (max-width: 900px) {
-    body.fz-trade .trade-container { padding: 20px 16px 100px; }
-    body.fz-trade .page-header h1 { font-size: 24px; margin-bottom: 12px; }
+    body.fz-trade .trade-container { padding: 18px 10px 24px; }
+    body.fz-trade .tr-head { padding: 0 6px; }
+    body.fz-trade .trade-sub-nav { margin: 14px -10px 0; padding: 0 10px; }
+    body.fz-trade .trade-tab { flex: 1; min-width: 0; padding: 0 6px; }
+    body.fz-trade .tr-label { margin: 0 6px; }
+    body.fz-trade .tr-partner-chips { margin: 0 -10px; padding: 10px 10px 2px; }
 
-    body.fz-trade .tm-partner-bar { flex-direction: column; align-items: stretch; gap: 12px; }
-    body.fz-trade .tm-partner-switch { justify-content: space-between; }
-    body.fz-trade .tm-team-trigger { flex: 1; justify-content: space-between; }
-    body.fz-trade .tm-dropdown-panel { left: 0; right: 0; width: auto; }
+    /* Le bilan figé (~130 px) ne doit cacher ni la dernière rangée ni la règle. */
+    body.fz-trade:has(#proposeTradeSection.active #tmBuilder:not(.hidden)) .trade-container { padding-bottom: 150px; }
 
     body.fz-trade .tm-tabs {
-        display: flex;
-        margin-bottom: 14px;
-        border-bottom: 1px solid var(--fzt-border);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        margin: 18px 0 0;
+        padding: 4px;
+        border-radius: 14px;
+        background: var(--s-card);
+        border: 1px solid var(--s-line);
     }
     body.fz-trade .tm-tab {
-        flex: 1;
+        min-width: 0;
+        height: 40px;
+        padding: 0 8px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--s-mute);
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
-        padding: 12px 6px;
-        min-height: 44px;
-        background: none;
-        border: 0;
-        border-bottom: 2px solid transparent;
-        font: 600 11.5px/1 'Helvetica Neue', Helvetica, sans-serif;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        color: var(--fzt-text-faint);
+        font: 600 13px/1 'Saira', sans-serif;
         cursor: pointer;
-        transition: color .18s ease, border-color .18s ease;
     }
-    body.fz-trade .tm-tab.is-active { color: var(--fzt-ink); border-bottom-color: var(--fzt-accent-fill); }
+    body.fz-trade .tm-tab-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    body.fz-trade .tm-tab.is-active { background: var(--s-ink); color: var(--s-on-ink); }
     body.fz-trade .tm-tab-count {
+        flex: none;
         display: inline-grid;
         place-items: center;
-        min-width: 15px;
-        height: 15px;
-        padding: 0 4px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
         border-radius: 999px;
-        background: var(--fzt-muted-fill);
-        color: var(--fzt-text);
-        font: 600 9px/1 'Helvetica Neue', Helvetica, sans-serif;
+        background: var(--s-line2);
+        color: var(--s-faint);
+        font: 700 10px/1 'Saira', sans-serif;
     }
-    body.fz-trade .tm-tab.is-active .tm-tab-count { background: var(--fzt-accent-fill); color: var(--fzt-on-accent); }
+    body.fz-trade .tm-tab.is-active .tm-tab-count { background: var(--s-mute); color: var(--s-on-ink); }
+    html[data-theme="light"] body.fz-trade .tm-tab.is-active .tm-tab-count { background: #4A4A50; color: #fff; }
+    /* Une pastille non nulle passe au rouge : il y a quelque chose dans le panier. */
+    body.fz-trade .tm-tab .tm-tab-count.has-n { background: var(--s-red); color: #fff; }
 
-    body.fz-trade .trade-grid-3col { grid-template-columns: 1fr; gap: 0; }
-    body.fz-trade .trade-grid-3col > .trade-summary-column { display: none; }
-    body.fz-trade .trade-grid-3col[data-cote="my"] > :nth-child(3),
-    body.fz-trade .trade-grid-3col[data-cote="partner"] > :nth-child(1) { display: none; }
-
-    body.fz-trade .roster-column { border: 0; border-radius: 0; background: none; }
+    body.fz-trade .trade-grid-3col { display: block; margin-top: 10px; }
+    body.fz-trade .trade-summary-column { display: none; }
+    body.fz-trade .trade-grid-3col[data-cote="my"] > [data-side="partner"],
+    body.fz-trade .trade-grid-3col[data-cote="partner"] > [data-side="my"] { display: none; }
     body.fz-trade .roster-col-header { display: none; }
-    body.fz-trade .rc-search-row { padding: 0; }
-    body.fz-trade .position-tabs { margin: 12px 0 0; max-width: 100%; }
-    body.fz-trade .roster-list-head { margin-top: 12px; padding: 12px 14px 8px; }
-    body.fz-trade .player-card-roster { padding: 13px 14px; }
-    /* Clears the fixed .tm-bottombar (balance row + CTA, ~150px) so the
-       last roster rows don't end up hidden underneath it. */
-    body.fz-trade .roster-list { max-height: none; padding-bottom: 160px; }
+    body.fz-trade .roster-list { max-height: none; overflow: visible; }
 
     body.fz-trade .tm-bottombar {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
         position: fixed;
         left: 0;
         right: 0;
-        bottom: 80px;
+        bottom: 0;
         z-index: 998;
-        padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-        background: var(--fzt-surface);
-        border-top: 1px solid var(--fzt-border);
-        box-shadow: 0 -8px 28px rgba(0,0,0,.14);
-    }
-    body.fz-trade .tm-balance {
-        display: flex;
-        padding: 8px 4px;
-        background: var(--fzt-bg-alt);
-        border: 1px solid var(--fzt-border);
-        border-radius: 10px;
-    }
-    body.fz-trade .tm-balance-cell {
-        flex: 1;
-        min-width: 0;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 2px;
-    }
-    body.fz-trade .tm-balance-cell + .tm-balance-cell { border-left: 1px solid var(--fzt-border); }
-    body.fz-trade .tm-balance-lbl {
-        font: 700 .58rem/1 'Helvetica Neue', Helvetica, sans-serif;
-        letter-spacing: .07em;
-        text-transform: uppercase;
-        color: var(--fzt-text-faint);
-    }
-    body.fz-trade .tm-balance-val {
-        font: 700 .84rem/1 'Helvetica Neue', Helvetica, sans-serif;
-        font-variant-numeric: tabular-nums;
-        color: var(--fzt-ink);
-        white-space: nowrap;
-        text-align: center;
-    }
-    body.fz-trade .tm-balance-val.is-give { color: var(--fzt-accent); }
-    body.fz-trade .tm-balance-val.is-get { color: var(--fzt-ink); }
-
-    body.fz-trade .tm-cta {
-        display: flex;
-        align-items: center;
-        justify-content: center;
         gap: 8px;
-        width: 100%;
-        min-height: 50px;
-        border: 0;
-        border-radius: 10px;
-        background: var(--fzt-muted-fill);
-        color: var(--fzt-text-faint);
-        font: 600 1rem/1 'Helvetica Neue', Helvetica, sans-serif;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        cursor: not-allowed;
-        transition: background .2s ease;
+        padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+        background: var(--s-bg);
+        border-top: 1px solid var(--s-line);
+        box-shadow: var(--s-shadow);
     }
-    body.fz-trade .tm-cta.is-ready { background: var(--fzt-accent-fill); color: var(--fzt-on-accent); cursor: pointer; }
-    body.fz-trade .tm-cta.is-ready:hover { background: var(--fzt-accent-fill-hover); }
-    body.fz-trade .tm-cta.is-ready:active { transform: scale(.98); }
+    body.fz-trade #tmBuilder.hidden .tm-bottombar,
+    body.fz-trade:not(:has(#proposeTradeSection.active)) .tm-bottombar { display: none; }
+    body.fz-trade .tm-balance {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
+        align-items: center;
+        gap: 6px;
+    }
+    body.fz-trade .tm-balance-cell { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+    body.fz-trade .tm-balance-cell.is-get { align-items: flex-end; text-align: right; }
+    body.fz-trade .tm-balance-lbl {
+        font: 600 10px/1 'Saira', sans-serif;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--s-red-ink);
+    }
+    body.fz-trade .tm-balance-lbl.is-get { color: var(--s-green); }
+    body.fz-trade .tm-balance-val {
+        max-width: 100%;
+        font: 600 13px/16px 'Saira', sans-serif;
+        color: var(--s-ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    body.fz-trade .tm-balance-val.is-empty { color: var(--s-ghost); }
+    body.fz-trade .tm-balance-swap { color: var(--s-box); }
+    body.fz-trade .tm-balance-swap.is-ready { color: var(--s-ink); }
+    body.fz-trade .tm-cta { background: var(--s-raise); color: var(--s-faint); font-size: 14px; }
+    body.fz-trade .tm-cta.is-ready { background: var(--s-red); color: #fff; font-size: 15px; }
+    body.fz-trade .tm-cta-ico { display: flex; }
+    body.fz-trade .tm-cta span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    body.fz-trade .trade-card-players { grid-template-columns: 1fr 32px 1fr; gap: 10px; padding: 14px 16px; }
-    body.fz-trade .trade-card-header { padding: 13px 16px; }
-    body.fz-trade .trade-card-actions { padding: 0 16px 14px; flex-wrap: wrap; }
-
-    body.fz-trade .history-card-sides { grid-template-columns: 1fr; }
-    body.fz-trade .history-divider { display: none; }
+    body.fz-trade .received-trades-list,
+    body.fz-trade .history-cards { max-width: none; }
 }
 
-@media (max-width: 480px) {
-    body.fz-trade .tc-trade-row { flex-direction: column; }
-    body.fz-trade .tc-arrow { transform: rotate(90deg); }
-    /* Une offre reçue à plusieurs joueurs : les deux côtés l'un sous l'autre,
-       sinon trois photos et trois noms par colonne ne tiennent pas. */
-    body.fz-trade .trade-card-players { grid-template-columns: minmax(0, 1fr); }
-    body.fz-trade .trade-card-players .trade-arrow-icon { justify-self: center; transform: rotate(90deg); }
-    body.fz-trade #partnerTeamTriggerName { max-width: 160px; }
+/* La barre d'onglets du site (≤ 768 px) : le bilan se pose dessus. */
+@media (max-width: 768px) {
+    body.fz-trade .tm-bottombar { bottom: var(--tr-bnav-h, calc(69px + env(safe-area-inset-bottom, 0px))); padding-bottom: 10px; }
+    body.fz-trade .trade-notification { top: 72px; }
 }
-
-/* Contre-offre : le panier dit à qui il répond, et ce qui arrivera à
-   l'offre reçue. */
-body.fz-trade .tb-counter-note {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 10px 12px;
-    border: 1px solid rgba(var(--primary-rgb), .35);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--fzt-accent-fill) 8%, transparent);
-    font: 500 12px/1.4 'Helvetica Neue', Helvetica, sans-serif;
-    color: var(--fzt-ink);
-}
-body.fz-trade .tb-counter-note strong { color: var(--fzt-accent); font-weight: 700; }
