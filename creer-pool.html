@@ -15,7 +15,7 @@
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="pool.css?v=20261003b">
+    <link rel="stylesheet" href="pool.css?v=20261022a">
     <link rel="stylesheet" href="poolNav.css?v=20261003a">
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
@@ -194,6 +194,18 @@
                         calendrier. Passé 3 minutes, Fantazy choisit à la place de l'absent. Jusqu'au départ,
                         vous pourrez changer la date ou lancer plus tôt.</p>
                 </div>
+                <!-- Repêchage automatique : au départ, le serveur joue tous les
+                     tours pour toutes les équipes (routes/pools.js, repecherDOffice). -->
+                <div class="form-group draft-auto-group">
+                    <label>
+                        <input type="checkbox" id="draftAuto">
+                        <span class="checkbox-label">
+                            <strong>Repêchage automatique</strong>
+                            <span class="mode-description">Au départ, Fantazy choisit pour tout le monde, du premier
+                                au dernier tour : le meilleur joueur disponible selon les projections. Personne n'a besoin d'être là.</span>
+                        </span>
+                    </label>
+                </div>
             </div>
 
             <!-- Mode de jeu & options -->
@@ -263,7 +275,7 @@
     <!-- Filtre de grossieretes, partage avec le serveur. Charge avant
          equipes.js, qui s'en sert. -->
     <script src="profanity.js"></script>
-    <script defer src="equipes.js?v=20260929n"></script>
+    <script defer src="equipes.js?v=20261022a"></script>
     <script defer src="navbar.js?v=20261015b"></script>
     <script defer src="installerApp.js?v=20261010a"></script>
     <script defer src="avatars.js"></script>

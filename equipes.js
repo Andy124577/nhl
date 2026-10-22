@@ -314,6 +314,7 @@ async function createClan() {
     const poolPassword = ($("#poolPassword").val() || "").trim();
     const aDateRepechage = $('input[name="draftWhen"]:checked').val() === 'date';
     const valeurDate = ($("#draftDate").val() || "").trim();
+    const draftAuto = $("#draftAuto").is(':checked');
     const username = localStorage.getItem("username");
 
     // Un refus de formulaire : la fenêtre dit quoi corriger, puis rend la
@@ -386,6 +387,8 @@ async function createClan() {
         password: poolPassword,
         // Absent : le repêchage partira quand on le lancera.
         ...(draftScheduledAt ? { draftScheduledAt } : {}),
+        // Au départ, Fantazy choisit pour toutes les équipes.
+        ...(draftAuto ? { draftAuto: true } : {}),
         config: {
             numOffensive: numOffensive,
             numDefensive: numDefensive,
@@ -434,7 +437,11 @@ async function createClan() {
                 note: {
                     icon: 'users',
                     title: 'Prochaine étape',
-                    text: quand
+                    text: draftAuto
+                        ? (quand
+                            ? `Invitez vos amis : le ${quand}, Fantazy repêchera automatiquement pour toutes les équipes inscrites.`
+                            : 'Invitez vos amis : dès qu’il y aura 2 équipes, lancez le repêchage et Fantazy choisira pour tout le monde.')
+                        : quand
                         ? `Invitez vos amis : le repêchage commencera le ${quand}. Sur la page suivante, « Ajouter au calendrier » vous donne un lien de rappel à leur envoyer.`
                         : 'Invitez vos amis : le repêchage pourra commencer dès qu’il y aura 2 équipes.'
                 },
@@ -452,6 +459,7 @@ async function createClan() {
             $("#numTeams").val("1");
             $('input[name="draftWhen"][value="manuel"]').prop('checked', true);
             $("#draftDate").val("");
+            $("#draftAuto").prop('checked', false);
             majDateRepechage();
             const poolImgPreview = document.getElementById('poolImgPreview');
             const poolImgHint = document.getElementById('poolImgUploadHint');
