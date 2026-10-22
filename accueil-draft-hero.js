@@ -1,37 +1,38 @@
 /* ============================================================
-   ACCUEIL — HÉROS DU REPÊCHAGE (maquette « Accueil v2 »)
+   ACCUEIL — HÉROS DU REPÊCHAGE (maquettes « Accueil · repêchage en cours »
+   et « Accueil · repêchage en préparation », langage 6b Éditorial)
    ------------------------------------------------------------
    Le haut de l'accueil, du moment où le pool existe jusqu'à la fin du
-   repêchage. Un seul bloc, qui change de ton selon où l'on en est :
+   repêchage : une carte sombre (le héros), puis des cartes qui changent
+   selon où l'on en est :
 
-     pre      — le repêchage n'est pas parti : la date prévue, ce qui reste
-                à préparer ;
-     waiting  — il est parti, mon tour viendra : où j'en suis, mon choix
-                probable ;
-     next     — je suis le prochain : liseré rouge, même panneau ;
-     onclock  — c'est mon tour : le bloc passe au rouge et je peux choisir
-                d'ici, en deux clics (choisir, confirmer) ;
+     pre      — le repêchage n'est pas parti : les participants, « Avant le
+                début » (ce qui reste à préparer) et « Pour ta liste » ;
+     waiting  — il est parti, mon tour viendra : mon choix probable ;
+     next     — je suis le prochain : même carte ;
+     onclock  — c'est mon tour : le héros s'allume et je peux choisir d'ici,
+                en deux clics (choisir, confirmer) ;
      done     — mon dernier choix vient de passer, ou mon équipe est
                 complète.
 
+   Une fois parti, « Ma sélection » (ce qui manque à mon équipe) et
+   « Derniers choix » suivent, dans tous les états.
+
    La limite de temps par choix n'existe que dans un repêchage à date fixe
    (pickTimeLimitMs, lib/poolOps.js) : à zéro, le serveur choisit à la
-   place de l'équipe. Là, on affiche le temps restant ; ailleurs, le temps
-   écoulé, jamais un compte à rebours.
+   place de l'équipe. Là, l'horloge montre le temps restant ; ailleurs, le
+   temps écoulé, jamais un compte à rebours.
 
    Le calcul (fzhHero*) est pur : il lit l'état du pool et rend un modèle,
-   que fzhHeroHTML() met en forme. Les tests l'appellent sans navigateur
-   (test/unit/accueil-draft-hero.test.js).
+   que fzhHeroHTML() et ses voisines mettent en forme. Les tests l'appellent
+   sans navigateur (test/unit/accueil-draft-hero.test.js).
    ============================================================ */
 
-/** Nombre de cases de l'ordre de sélection montrées d'un coup. */
+/** Nombre de cases de l'ordre de sélection : 4 au téléphone, 8 au bureau. */
 const FZH_HERO_CASES = 8;
 
 /** Libellés courts d'une position, en français. */
 const FZH_HERO_POS = { C: 'C', L: 'AG', R: 'AD', D: 'D', G: 'G' };
-
-/** Catégorie du pool → libellé court, pour « Ton équipe ». */
-const FZH_HERO_CATEGORIES = { offensive: 'Att.', defensive: 'Déf.', goalie: 'G', rookie: 'Recrue', teams: 'Club' };
 
 /** Le titre de l'onglet avant que le repêchage ne s'en mêle. */
 const FZH_HERO_TITRE = typeof document !== 'undefined' ? document.title : '';
@@ -194,7 +195,7 @@ function fzhHeroCategorie(code) {
  * ne reste plus qu'eux à choisir.
  */
 function fzhHeroCandidats(options) {
-    const { pools, poolData, teamName, favoris = [], quotaBanc = 0, nombre = 3 } = options;
+    const { pools, poolData, teamName, favoris = [], quotaBanc = 0, nombre = 3, favorisDevant = true } = options;
     const pris = fzhHeroPris(poolData);
     const ouvertes = fzhHeroOuvertes(poolData, teamName, quotaBanc);
     const joueursOuverts = ouvertes.offensive || ouvertes.defensive || ouvertes.rookie || ouvertes.goalie;
@@ -212,7 +213,7 @@ function fzhHeroCandidats(options) {
             return { ...c, code, categorie: fzhHeroCategorie(code), favori: listeFavoris.has(c.nom) };
         })
         .filter(c => ouvertes[c.categorie])
-        .sort((a, b) => (Number(b.favori) - Number(a.favori)) || (valeur(b) - valeur(a)) || a.nom.localeCompare(b.nom))
+        .sort((a, b) => (favorisDevant ? Number(b.favori) - Number(a.favori) : 0) || (valeur(b) - valeur(a)) || a.nom.localeCompare(b.nom))
         .slice(0, nombre)
         .map(c => ({
             nom: c.nom,
@@ -222,7 +223,10 @@ function fzhHeroCandidats(options) {
             equipe: c.kind === 'team' ? (c.rec.teamAbbrev || '') : String(c.rec.teamAbbrevs || '').split(',').pop().trim(),
             playerId: c.rec.playerId || null,
             estClub: c.kind === 'team',
-            detail: fzhHeroDetail(c)
+            detail: fzhHeroDetail(c),
+            pos: c.kind === 'team' ? 'ÉQ' : c.kind === 'goalie' ? 'G' : (FZH_HERO_POS[c.rec.positionCode] || c.rec.positionCode || ''),
+            recrue: c.code === '*',
+            stat: c.kind === 'skater' ? `${c.rec.points ?? '–'} pts` : `${c.rec.wins ?? '–'} V`
         }));
 }
 
@@ -270,8 +274,8 @@ function fzhHeroCases(poolData, teamName) {
         let sous = '';
         if (etat === 'fait') sous = parIndice.has(indice) ? fzhHeroNomCourt(parIndice.get(indice)) : 'Passé';
         else if (etat === 'actuel') sous = mien ? 'Au choix' : 'Choisit…';
-        else if (indice === suivantMien) sous = 'Ton tour';
-        return { numero: String(indice + 1).padStart(2, '0'), nom: mien ? 'TOI' : equipe, sous, etat, mien };
+        else sous = indice === suivantMien ? 'Ton tour' : 'À venir';
+        return { numero: String(indice + 1), nom: mien ? 'Toi' : equipe, sous, etat, mien };
     });
 }
 
@@ -279,16 +283,67 @@ function fzhHeroCases(poolData, teamName) {
 function fzhHeroCasesAvant(poolData, teamName) {
     const annonce = fzhHeroOrdreAnnonce(poolData);
     const equipes = poolData.teams || {};
-    const noms = annonce || Object.keys(equipes).filter(n => (equipes[n].members || []).length).sort((a, b) => a.localeCompare(b, 'fr'));
+    // Sans ordre connu, mon équipe d'abord, puis les autres par nom.
+    const noms = annonce || Object.keys(equipes).filter(n => (equipes[n].members || []).length)
+        .sort((a, b) => (Number(b === teamName) - Number(a === teamName)) || a.localeCompare(b, 'fr'));
     return noms.slice(0, FZH_HERO_CASES).map((nom, i) => {
         const membres = (equipes[nom] && equipes[nom].members) || [];
         const mien = nom === teamName;
         return {
-            numero: annonce ? String(i + 1).padStart(2, '0') : '',
-            nom: mien ? 'TOI' : nom,
-            sous: !mien && membres[0] && membres[0] !== nom ? membres[0] : '',
+            numero: annonce ? String(i + 1) : '',
+            nom: mien ? 'Toi' : nom,
+            sous: mien ? 'Inscrit' : membres[0] && membres[0] !== nom ? membres[0] : '',
             etat: 'avenir',
             mien
+        };
+    });
+}
+
+/**
+ * Ce que l'équipe a déjà, catégorie par catégorie, et ce qui lui manque —
+ * « Ma sélection ». Une catégorie que le pool ne demande pas n'apparaît pas ;
+ * le banc (tête-à-tête) seulement quand il existe.
+ */
+function fzhHeroBesoins(poolData, teamName, quotaBanc = 0) {
+    const e = (poolData.teams || {})[teamName] || {};
+    const c = { numOffensive: 6, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1, ...(poolData.config || {}) };
+    const cases = [
+        ['ATT', (e.offensive || []).length, c.numOffensive],
+        ['DÉF', (e.defensive || []).length, c.numDefensive],
+        ['GAR', (e.goalie || []).length, c.numGoalies],
+        ['REC', (e.rookie || []).length, c.numRookies],
+        ['ÉQ', (e.teams || []).length, c.numTeams],
+        ['BANC', (e.bench || []).length, quotaBanc]
+    ].filter(([, , max]) => max > 0).map(([libelle, n, max]) => ({ libelle, n: Math.min(n, max), max }));
+    const manque = cases.filter(k => k.n < k.max).map(k => `${k.max - k.n} ${k.libelle}`);
+    return {
+        cases,
+        total: cases.reduce((s, k) => s + k.n, 0),
+        max: cases.reduce((s, k) => s + k.max, 0),
+        texte: manque.length ? `Il te manque : ${manque.join(', ')}.` : 'Ton alignement est complet.'
+    };
+}
+
+/**
+ * Les derniers choix du repêchage, du plus récent au plus ancien. La
+ * position vient de la fiche du joueur quand on l'a, sinon de sa catégorie.
+ */
+function fzhHeroDerniers(poolData, teamName, nombre = 3) {
+    const fiche = nom => (typeof getPlayerStats === 'function' ? getPlayerStats(nom) : null) || {};
+    return (poolData.picksHistory || []).slice(-nombre).reverse().map(h => {
+        const club = h.position === 'teams';
+        const f = club ? {} : fiche(h.player);
+        const pos = club ? 'ÉQ' : h.position === 'goalie' ? 'G'
+            : FZH_HERO_POS[f.position] || { defensive: 'D' }[h.position] || (h.position === 'rookie' ? 'REC' : 'ATT');
+        return {
+            numero: String((h.pickIndex ?? 0) + 1),
+            nom: h.player,
+            equipe: club ? (typeof fzhClubAbbrev === 'function' ? fzhClubAbbrev(h.player) : '') : (f.teamAbbrev || ''),
+            playerId: f.playerId || null,
+            estClub: club,
+            pos,
+            par: h.team === teamName ? 'Toi' : h.team,
+            mien: h.team === teamName
         };
     });
 }
@@ -297,6 +352,9 @@ function fzhHeroCasesAvant(poolData, teamName) {
  * Le modèle du héros. Tout ce qui s'affiche en sort ; rien n'y est inventé :
  * chaque chiffre vient du pool, et une estimation sans assez de recul cède
  * la place au nombre de choix.
+ *
+ * L'horloge du héros suit toujours le tour en cours : le temps restant d'un
+ * choix chronométré, sinon le temps écoulé depuis le début du tour.
  */
 function fzhHeroModele(options) {
     const { poolData, poolName, teamName, username, maintenant = Date.now(), favoris = [] } = options;
@@ -310,9 +368,8 @@ function fzhHeroModele(options) {
     const salle = `draftActif.html?pool=${encodeURIComponent(poolName)}`;
     const salon = `repechage.html?pool=${encodeURIComponent(poolName)}`;
     const base = {
-        phase, poolName,
-        meta: `${poolName} · ${participants.length} participant${participants.length > 1 ? 's' : ''} · ${rondes} rondes`,
-        barreLibelle: 'Repêchage en direct'
+        phase, poolName, salle,
+        meta: `${poolName} · ${participants.length} participant${participants.length > 1 ? 's' : ''} · ${rondes} rondes`
     };
 
     if (phase === 'pre') return { ...base, ...fzhHeroAvant({ poolData, teamName, username, maintenant, favoris, inscrites, participants, salon }) };
@@ -320,49 +377,35 @@ function fzhHeroModele(options) {
     const ordre = poolData.draftOrder;
     const tour = poolData.currentPickIndex || 0;
     const nbEquipes = new Set(ordre).size || 1;
-    const ronde = Math.floor(tour / nbEquipes) + 1;
+    const ronde = indice => Math.floor(indice / nbEquipes) + 1;
     const prochain = ordre.indexOf(teamName, tour);
     const avant = prochain < 0 ? null : prochain - tour;
     const auChoix = ordre[tour];
     const depuis = Number(poolData.turnStartedAt) || null;
+    const limite = Number(poolData.pickTimeLimitMs) || 0;
+    const echeance = limite && depuis ? depuis + limite : null;
     const rythme = fzhHeroRythme(poolData.picksHistory);
     const attente = fzhHeroAttente({ avant, rythme, depuis, maintenant });
-    const eta = attente == null ? null : { avant, rythme, depuis };
-    const tempsTour = attente == null ? (avant ? `${avant} choix` : '—') : fzhHeroDuree(attente);
+    const monTour = prochain < 0 ? '' : `choix ${prochain + 1} · Ronde ${ronde(prochain)}`;
     const commun = {
         cases: fzhHeroCases(poolData, teamName),
-        ordreTitre: 'Ordre de sélection',
-        ordreDetail: `Ronde ${ronde} · choix ${tour + 1} / ${ordre.length}`,
-        activite: `${auChoix} choisit depuis`,
-        depuis,
-        cta: { libelle: 'Suivre le repêchage', href: salle, style: 'ghost' },
-        temps: { libelle: 'Ton tour dans', valeur: tempsTour, eta },
-        panneau: { type: 'probable', titre: 'Ton choix probable', note: 'Classement mis à jour à chaque choix.', salle },
-        barreCta: 'Suivre',
-        href: salle
+        ordreDetail: `Ronde ${ronde(tour)} · choix ${tour + 1} / ${ordre.length}`,
+        temps: echeance
+            ? { libelle: 'Restant', rebours: echeance, valeur: fzhHeroChrono(Math.max(0, echeance - maintenant)) }
+            : { libelle: 'Écoulé', chrono: depuis, valeur: fzhHeroChrono(depuis ? maintenant - depuis : 0) },
+        cta: { libelle: 'Suivre le repêchage', href: salle },
+        panneau: { type: 'probable', titre: 'Ton choix probable', note: 'Classement mis à jour à chaque choix.', salle }
     };
 
     if (phase === 'onclock') {
-        const autres = inscrites.filter(n => n !== teamName);
-        const limite = Number(poolData.pickTimeLimitMs) || 0;
-        const echeance = limite && depuis ? depuis + limite : null;
         return {
             ...base, ...commun,
             puce: "C'est ton tour",
-            titre: "C'est ton tour",
-            sousTitre: echeance
-                ? `Ronde ${ronde}, choix ${tour + 1}. Choisis ici ou dans le repêchage : à zéro, Fantazy prend le meilleur joueur disponible.`
-                : `Ronde ${ronde}, choix ${tour + 1}. Choisis directement ici ou ouvre le repêchage.`,
-            cta: { libelle: 'Ouvrir le repêchage', href: salle, style: 'blanc' },
-            temps: echeance
-                ? { libelle: 'Temps restant', rebours: echeance, valeur: fzhHeroChrono(Math.max(0, echeance - maintenant)), grand: true }
-                : { libelle: 'Temps écoulé', chrono: depuis, valeur: fzhHeroChrono(depuis ? maintenant - depuis : 0), grand: true },
-            activite: autres.length > 2 ? `Les ${autres.length} autres équipes attendent ton choix` : `${fzhHeroListe(autres)} ${autres.length > 1 ? 'attendent' : 'attend'} ton choix`,
-            depuis: null,
-            panneau: { type: 'choix', titre: 'Choisis en un clic', meta: 'Tes 3 meilleurs disponibles', salle, tour },
-            barreTexte: "C'est ton tour",
-            ...(echeance ? { barreRebours: echeance } : { barreChrono: depuis }),
-            barreCta: 'Choisir',
+            vif: true,
+            titre: 'À toi de choisir',
+            sousTitre: `Ronde ${ronde(tour)} · Choix ${tour + 1} / ${ordre.length} · ${poolName}`,
+            cta: { libelle: 'Ouvrir le repêchage', href: salle },
+            panneau: { type: 'choix', titre: 'Choisis en un clic', salle, tour, auto: !!echeance },
             titreOnglet: "(C'est ton tour !) Fantazy"
         };
     }
@@ -371,19 +414,15 @@ function fzhHeroModele(options) {
         return {
             ...base, ...commun,
             puce: 'Tu es le prochain',
-            titre: 'Tu es le prochain',
-            sousTitre: `${auChoix} est en train de choisir. Garde ta liste sous la main.`,
-            cta: { libelle: 'Rejoindre le repêchage', href: salle, style: 'plein' },
+            titre: `${auChoix} choisit`,
+            sousTitre: `Ton tour : ${monTour}`,
+            cta: { libelle: 'Rejoindre le repêchage', href: salle },
             panneau: { ...commun.panneau, suivant: auChoix },
-            barreTexte: `Tu es le prochain${attente == null ? '' : ` · ${tempsTour}`}`,
-            barreCta: 'Rejoindre',
             titreOnglet: '(Tu es le prochain) Fantazy'
         };
     }
 
     if (phase === 'done') {
-        const miens = (poolData.picksHistory || []).filter(h => h.team === teamName);
-        const panneau = { type: 'equipe', titre: 'Ton équipe', meta: `${miens.length} / ${rondes} joueurs`, choix: miens.slice(-5).reverse() };
         if (prochain < 0) {
             const restants = ordre.length - tour;
             return {
@@ -391,28 +430,29 @@ function fzhHeroModele(options) {
                 puce: 'Repêchage en cours',
                 titre: 'Ton équipe est complète',
                 sousTitre: `Le repêchage se poursuit : encore ${restants} choix.`,
-                temps: { libelle: 'Choix restants', valeur: String(restants) },
-                panneau,
-                barreTexte: 'Ton équipe est complète'
+                panneau: null
             };
         }
+        const miens = (poolData.picksHistory || []).filter(h => h.team === teamName);
         const dernier = miens[miens.length - 1];
         return {
             ...base, ...commun,
             puce: 'Choix confirmé',
             titre: `${fzhHeroNomFamille(dernier.player, dernier.position === 'teams')} est à toi`,
-            sousTitre: `Bon choix. Ton prochain tour arrive dans ${avant} choix.`,
-            panneau,
-            barreTexte: `Choix confirmé · ton tour dans ${avant} choix`
+            sousTitre: `Ton prochain tour : ${monTour}`
         };
     }
 
     return {
         ...base, ...commun,
-        puce: 'Repêchage en cours',
-        titre: `Ton tour dans ${avant} choix`,
-        sousTitre: "Pas d'urgence. C'est le bon moment pour revoir ta liste.",
-        barreTexte: `Ton tour dans ${avant} choix${attente == null ? '' : ` (${tempsTour})`}`
+        puce: 'En attente',
+        titre: `${auChoix} choisit`,
+        sousTitre: `Ton prochain tour : ${monTour}`,
+        // L'attente estimée avance seule (data-fzh-eta) ; sans rythme connu,
+        // le nombre de choix d'ici là.
+        attente: attente == null
+            ? { valeur: `dans ${avant} choix` }
+            : { valeur: fzhHeroDuree(attente), eta: { avant, rythme, depuis } }
     };
 }
 
@@ -424,37 +464,34 @@ function fzhHeroAvant(options) {
     const createur = poolData.creator || null;
     const jeSuisCreateur = !!createur && createur === username;
     const annonce = fzhHeroOrdreAnnonce(poolData);
-    const rang = annonce ? annonce.indexOf(teamName) + 1 : 0;
-    const ordre = rang === 1 ? 'Tu choisis en premier.'
-        : rang > 1 ? `Tu choisis au ${rang}e rang.`
-        : "L'ordre sera tiré au hasard au départ.";
-    const autres = participants.filter(p => p !== username);
     const pair = poolData.poolMode === 'head-to-head';
     const pret = inscrites.length >= 2 && (!pair || inscrites.length % 2 === 0);
     const heure = prevu ? fzhHeroHeure(prevu, maintenant) : '';
     const bientot = prevu ? fzhHeroAvantDebut(restant) : null;
 
+    // Trois favoris au moins : de quoi choisir même si les deux premiers partent.
     const liste = favoris.length;
     const etapes = [
         {
-            ok: liste > 0,
+            ok: liste >= FZH_HERO_LISTE_MIN,
             titre: 'Ta liste de favoris',
-            detail: liste ? `${liste} joueur${liste > 1 ? 's' : ''} dans ta liste` : 'Ajoute les joueurs que tu vises',
-            action: { libelle: liste ? 'Modifier' : 'Préparer', href: 'stats.html' }
+            detail: liste >= FZH_HERO_LISTE_MIN ? `${liste} joueurs ajoutés`
+                : `Ajoute au moins ${FZH_HERO_LISTE_MIN} joueurs que tu vises (${liste}/${FZH_HERO_LISTE_MIN})`,
+            action: liste >= FZH_HERO_LISTE_MIN ? null : { libelle: 'Préparer', href: 'stats.html' }
         },
         {
             ok: pret,
             titre: 'Participants',
             detail: `${inscrites.length} équipe${inscrites.length > 1 ? 's' : ''} inscrite${inscrites.length > 1 ? 's' : ''}`
                 + (inscrites.length < 2 ? ' · il en faut au moins 2' : !pret ? ' · il en faut un nombre pair' : ''),
-            action: jeSuisCreateur ? { libelle: 'Inviter', href: salon } : null
+            action: jeSuisCreateur && !pret ? { libelle: 'Inviter', href: salon } : null
         },
         {
             ok: !!prevu,
             titre: 'Départ',
             detail: prevu ? `${heure.includes(',') ? heure : `Aujourd'hui, ${heure}`} · automatique`
                 : jeSuisCreateur ? 'Fixe une date ou lance-le toi-même'
-                : `${createur || 'La personne qui a créé le pool'} le lancera`,
+                : `${createur || 'Le créateur du pool'} lancera le repêchage`,
             action: jeSuisCreateur ? { libelle: prevu ? 'Changer' : 'Organiser', href: salon } : null
         }
     ];
@@ -463,25 +500,36 @@ function fzhHeroAvant(options) {
         puce: 'Bientôt',
         titre: prevu ? (bientot ? 'Le repêchage commence ' : 'Le repêchage va commencer') : 'Repêchage en préparation',
         compteARebours: prevu && bientot ? { iso: prevu, texte: bientot } : null,
-        sousTitre: `${ordre} Tout est prêt de ton côté ?`,
-        cta: { libelle: 'Préparer ma liste', href: 'stats.html', style: 'ghost' },
-        temps: { libelle: 'Début', valeur: prevu ? heure : (jeSuisCreateur ? 'Quand tu veux' : 'À confirmer') },
+        sousTitre: null,
+        cta: { libelle: 'Préparer ma liste', href: 'stats.html' },
+        temps: { libelle: 'Début', valeur: prevu ? heure : (jeSuisCreateur ? 'Quand tu veux' : 'À confirmer'), avant: true },
         cases: fzhHeroCasesAvant(poolData, teamName),
         ordreTitre: annonce ? 'Ordre de sélection' : 'Participants',
-        ordreDetail: annonce ? 'Ronde 1' : 'Ordre tiré au départ',
-        activite: autres.length
-            ? `${fzhHeroListe(autres)} ${autres.length > 1 ? 'sont inscrits' : 'est inscrit'}`
-            : "Personne d'autre n'est inscrit pour l'instant",
-        depuis: null,
+        ordreDetail: annonce ? 'Ronde 1' : 'Ordre tiré au hasard',
+        inviter: true,
         panneau: { type: 'avant', titre: 'Avant le début', meta: `${etapes.filter(e => e.ok).length} sur ${etapes.length}`, etapes },
-        barreLibelle: 'Repêchage',
-        barreTexte: prevu ? `Commence ${heure.includes(',') ? 'le ' : 'à '}${heure}` : 'En préparation',
-        barreCta: 'Préparer',
-        href: 'stats.html'
+        liste: { titre: 'Pour ta liste', favoris: liste }
     };
 }
 
 // ───────────────────────────── Rendu ─────────────────────────────
+
+/** Les pictogrammes des en-têtes, au trait, comme ceux de l'accueil de saison. */
+const FZH_HERO_ICONES = {
+    eclair: '<path d="m13 2-9 12h7l-1 8 10-13h-8Z"/>',
+    equipe: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5a6 6 0 0 1 12 0V20M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4.5V20"/>',
+    historique: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+    liste: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3.5 6 1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5M3.5 18l1.5 1.5 2.5-2.5"/>',
+    etoile: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9Z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    coche: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+    inviter: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5a6 6 0 0 1 12 0V20M19 8v6M16 11h6"/>',
+    fleche: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
+    chevron: '<path d="m9 6 6 6-6 6"/>'
+};
+
+/** Trois favoris au moins avant le départ (« Avant le début »). */
+const FZH_HERO_LISTE_MIN = 3;
 
 function fzhHeroEsc(texte) {
     return typeof escapeHTML === 'function'
@@ -489,156 +537,242 @@ function fzhHeroEsc(texte) {
         : String(texte ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 }
 
+function fzhHeroIcone(nom, taille = 22) {
+    return `<svg class="fzs-ico" width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${FZH_HERO_ICONES[nom] || ''}</svg>`;
+}
+
+/** L'en-tête d'une carte : pictogramme, titre, et un mot à droite. */
+function fzhHeroTete(icone, titre, droite, id) {
+    return `<header class="fzs-sh">${fzhHeroIcone(icone)}<h2${id ? ` id="${id}"` : ''}>${fzhHeroEsc(titre)}</h2>${droite ? `<span class="fzh-sh-meta">${fzhHeroEsc(droite)}</span>` : ''}</header>`;
+}
+
+function fzhHeroPied(href, libelle) {
+    return `<a class="fzs-foot" href="${fzhHeroEsc(href)}">${fzhHeroEsc(libelle)}${fzhHeroIcone('chevron', 18)}</a>`;
+}
+
+/** C, AG, AD, D, G, ÉQ : une pastille à la couleur de la position. */
+function fzhHeroPos(pos) {
+    const cle = { 'ÉQ': 'eq', REC: 'rec', ATT: 'att' }[pos] || String(pos || '').toLowerCase();
+    return pos ? `<span class="fzh-pos is-${cle}">${fzhHeroEsc(pos)}</span>` : '';
+}
+
 function fzhHeroCasesHTML(cases) {
     return cases.map(k => `<li class="fzh-case is-${k.etat}${k.mien ? ' is-mine' : ''}">
-                <span class="fzh-case-num">${fzhHeroEsc(k.numero)}</span>
+                ${k.numero ? `<span class="fzh-case-num">${fzhHeroEsc(k.numero)}</span>` : ''}
                 <span class="fzh-case-nom">${fzhHeroEsc(k.nom)}</span>
                 <span class="fzh-case-sous">${fzhHeroEsc(k.sous)}</span>
             </li>`).join('');
 }
 
+/** La photo, et le logo du club en médaillon. */
 function fzhHeroVisage(c) {
-    if (typeof offPlayerFaceHTML === 'function' && !c.estClub) return offPlayerFaceHTML(c.nom, c.equipe, c.playerId);
-    if (c.estClub && c.equipe) return `<span class="fzd-off-face"><img src="teams/${fzhHeroEsc(c.equipe)}.png" alt="" loading="lazy" onerror="this.remove()"></span>`;
-    return `<span class="fzd-off-face">${fzhHeroEsc((c.nom || '?').charAt(0))}</span>`;
+    const photo = typeof offPlayerFaceHTML === 'function' && !c.estClub
+        ? offPlayerFaceHTML(c.nom, c.equipe, c.playerId)
+        : c.estClub && c.equipe
+            ? `<span class="fzd-off-face"><img src="teams/${fzhHeroEsc(c.equipe)}.png" alt="" loading="lazy" onerror="this.remove()"></span>`
+            : `<span class="fzd-off-face">${fzhHeroEsc((c.nom || '?').charAt(0))}</span>`;
+    const logo = c.equipe && !c.estClub
+        ? `<img class="fzh-logo" src="teams/${fzhHeroEsc(c.equipe)}.png" alt="" loading="lazy" onerror="this.remove()">` : '';
+    return `<span class="fzh-face">${photo}${logo}</span>`;
 }
 
+/** Une ligne de joueur proposé : au choix (Choisir), probable, ou pour la liste (+). */
 function fzhHeroCandidatHTML(c, i, options) {
-    const { choix = false, enAttente = false, envoi = false } = options || {};
-    const ligne = `<div class="fzh-cand-ligne">
-                <span class="fzh-cand-rang">${i + 1}</span>
+    const { mode = 'probable', enAttente = false, envoi = false } = options || {};
+    const choix = mode === 'choix';
+    const sous = [c.equipe, c.stat || c.detail, c.recrue ? 'Recrue' : ''].filter(Boolean).join(' · ');
+    let action = '';
+    if (choix && !enAttente) action = `<button type="button" class="fzh-cand-choisir" data-fzh-choisir="${i}"${envoi ? ' disabled' : ''}>Choisir</button>`;
+    else if (mode === 'probable' && i === 0) action = '<span class="fzh-cand-tag">Probable</span>';
+    else if (mode === 'liste') {
+        action = `<button type="button" class="fzh-cand-fav${c.favori ? ' is-on' : ''}" data-fzh-favori="${fzhHeroEsc(c.nom)}" aria-pressed="${c.favori}" aria-label="${c.favori ? 'Retirer de ma liste' : 'Ajouter à ma liste'} : ${fzhHeroEsc(c.nom)}">${fzhHeroIcone(c.favori ? 'coche' : 'plus', 20)}</button>`;
+    }
+    const etoile = c.favori && mode !== 'liste' ? ' <b class="fzh-cand-etoile" title="Dans ta liste">★</b>' : '';
+    const ligne = `<div class="fzs-row">
                 ${fzhHeroVisage(c)}
-                <span class="fzh-cand-txt"><strong>${fzhHeroEsc(c.nom)}</strong><small>${fzhHeroEsc([c.equipe, c.detail].filter(Boolean).join(' · '))}${c.favori ? '<b class="fzh-cand-fav">★<span> Favori</span></b>' : ''}</small></span>
-                ${!choix && i === 0 ? '<span class="fzh-cand-tag">Probable</span>' : ''}
-                ${choix && !enAttente ? `<button type="button" class="fzh-cand-choisir" data-fzh-choisir="${i}"${envoi ? ' disabled' : ''}>Choisir</button>` : ''}
+                <span class="fzs-row-txt"><span class="fzs-row-name">${fzhHeroEsc(c.nom)}${etoile}</span><span class="fzs-row-sub">${fzhHeroPos(c.pos)}${fzhHeroEsc(sous)}</span></span>
+                ${action}
             </div>`;
     const confirmer = choix && enAttente ? `<div class="fzh-cand-confirmer">
                 <button type="button" class="fzh-cand-ok" data-fzh-confirmer="${i}"${envoi ? ' disabled' : ''}>${envoi ? 'Envoi…' : `Confirmer ${fzhHeroEsc(fzhHeroNomFamille(c.nom, c.estClub).toUpperCase())}`}</button>
                 <button type="button" class="fzh-cand-annuler" data-fzh-annuler${envoi ? ' disabled' : ''}>Annuler</button>
             </div>` : '';
-    return `<li class="fzh-cand${i === 0 && !choix ? ' is-top' : ''}${enAttente ? ' is-pending' : ''}">${ligne}${confirmer}</li>`;
-}
-
-/** Le corps du panneau de droite. `candidats` : null tant que la trousse charge. */
-function fzhHeroPanneauHTML(modele, candidats, etatChoix) {
-    const { enAttente = null, envoi = false } = etatChoix || {};
-    const p = modele.panneau;
-    if (p.type === 'avant') {
-        return `<ul class="fzh-etapes">${p.etapes.map(e => `
-                <li class="fzh-etape${e.ok ? ' is-ok' : ''}">
-                    <span class="fzh-etape-puce" aria-hidden="true">${e.ok ? '✓' : ''}</span>
-                    <span class="fzh-etape-txt"><strong>${fzhHeroEsc(e.titre)}</strong><small>${fzhHeroEsc(e.detail)}</small></span>
-                    <span class="fzh-sr">${e.ok ? 'Prêt' : 'À faire'}</span>
-                    ${e.action ? `<a class="fzh-etape-action" href="${fzhHeroEsc(e.action.href)}">${fzhHeroEsc(e.action.libelle)}</a>` : ''}
-                </li>`).join('')}</ul>`;
-    }
-    if (p.type === 'equipe') {
-        return `<ol class="fzh-equipe">${p.choix.map((h, i) => `
-                <li class="${i === 0 ? 'is-new' : ''}"><span>Choix ${h.pickIndex + 1}</span><strong>${fzhHeroEsc(h.player)}</strong><small>${fzhHeroEsc(FZH_HERO_CATEGORIES[h.position] || '')}</small></li>`).join('')}</ol>
-            <a class="fzh-panel-lien" href="${fzhHeroEsc(modele.href)}">Voir tout le repêchage →</a>`;
-    }
-    if (!candidats) return '<p class="fzh-panel-attente">Chargement des joueurs…</p>';
-    if (!candidats.length) return `<p class="fzh-panel-attente">Aucun joueur disponible dans tes catégories ouvertes.</p>`;
-
-    const choix = p.type === 'choix';
-    const liste = `<ol class="fzh-cands">${candidats.map((c, i) => fzhHeroCandidatHTML(c, i, { choix, enAttente: enAttente === i, envoi })).join('')}</ol>`;
-    if (choix) {
-        return `${liste}
-            <footer class="fzh-panel-pied"><span>Aucune limite de temps : prends le temps qu'il faut.</span><a href="${fzhHeroEsc(p.salle)}">Tous les disponibles →</a></footer>`;
-    }
-    const aDesFavoris = candidats.some(c => c.favori);
-    const note = p.suivant && candidats[1]
-        ? `Si ${p.suivant} prend ${fzhHeroNomFamille(candidats[0].nom, candidats[0].estClub)}, ${fzhHeroNomFamille(candidats[1].nom, candidats[1].estClub)} passe en tête.`
-        : p.note;
-    return `${liste}
-            <p class="fzh-panel-note">${fzhHeroEsc(note)}</p>
-            <footer class="fzh-panel-pied"><span>${aDesFavoris ? 'Selon tes favoris' : 'Aucun favori : les meilleurs disponibles'}</span><a href="${fzhHeroEsc(p.salle)}">Ma liste →</a></footer>`;
+    return `<li class="fzh-cand${enAttente ? ' is-pending' : ''}">${ligne}${confirmer}</li>`;
 }
 
 function fzhHeroMetaPanneau(modele, candidats) {
     const p = modele.panneau;
     if (p.meta) return p.meta;
     if (!candidats) return '';
-    return candidats.some(c => c.favori) ? 'Selon ta liste' : 'Meilleurs disponibles';
+    if (candidats.some(c => c.favori)) return 'Selon ta liste';
+    return p.type === 'choix' ? 'Selon tes besoins' : 'Meilleurs disponibles';
 }
 
-/** La barre du haut : l'essentiel du héros, qui reste en vue en défilant. */
-function fzhHeroBarreHTML(modele) {
-    const chrono = modele.barreRebours
-        ? ` · <span data-fzh-rebours="${modele.barreRebours}">${fzhHeroChrono(Math.max(0, modele.barreRebours - Date.now()))}</span>`
-        : modele.barreChrono ? ` · <span data-fzh-depuis="${modele.barreChrono}">${fzhHeroChrono(Date.now() - modele.barreChrono)}</span>` : '';
-    return `<a class="fzh-barre is-${modele.phase}" href="${fzhHeroEsc(modele.href)}">
-            <i class="fzh-point" aria-hidden="true"></i>
-            <span class="fzh-barre-libelle">${fzhHeroEsc(modele.barreLibelle)}</span>
-            <span class="fzh-barre-pool">${fzhHeroEsc(modele.poolName)}</span>
-            <span class="fzh-barre-sep" aria-hidden="true">·</span>
-            <span class="fzh-barre-texte">${fzhHeroEsc(modele.barreTexte)}${chrono}</span>
-            <span class="fzh-barre-cta">${fzhHeroEsc(modele.barreCta)} <span aria-hidden="true">→</span></span>
-        </a>`;
+/** Des lignes grises, le temps que la trousse arrive. */
+function fzhHeroOsHTML(n) {
+    return Array.from({ length: n }, () => '<li class="fzs-row is-bone"><span class="fzd-off-face"></span><span class="fzs-row-txt"><span></span><span></span></span></li>').join('');
 }
 
-function fzhHeroHTML(modele, candidats, etatChoix) {
+/** Une étape d'« Avant le début » : faite (coche verte) ou à faire. */
+function fzhHeroEtapeHTML(e) {
+    const action = e.action ? `<a class="fzh-etape-action" href="${fzhHeroEsc(e.action.href)}">${fzhHeroEsc(e.action.libelle)}${fzhHeroIcone('chevron', 18)}</a>` : '';
+    return `<li class="fzs-row fzh-etape${e.ok ? ' is-ok' : ''}">
+                <span class="fzh-etape-puce" aria-hidden="true">${e.ok ? fzhHeroIcone('coche', 16) : ''}</span>
+                <span class="fzs-row-txt"><span class="fzs-row-name">${fzhHeroEsc(e.titre)}</span><span class="fzh-etape-detail">${fzhHeroEsc(e.detail)}</span></span>
+                <span class="fzh-sr">${e.ok ? 'Prêt' : 'À faire'}</span>
+                ${action}
+            </li>`;
+}
+
+/**
+ * La carte principale sous le héros : « Choisis en un clic » (mon tour),
+ * « Ton choix probable » (en attente) ou « Avant le début » (pas parti).
+ * `candidats` : null tant que la trousse charge.
+ */
+function fzhHeroPanneauHTML(modele, candidats, etatChoix) {
+    const { enAttente = null, envoi = false } = etatChoix || {};
+    const p = modele.panneau;
+    if (!p) return '';
+    if (p.type === 'avant') {
+        const faits = p.etapes.filter(e => e.ok).length;
+        const etapes = p.etapes.map(fzhHeroEtapeHTML).join('');
+        return `<section class="fzs-sec fzh-avant" aria-labelledby="fzhPanneauTitre">
+            ${fzhHeroTete('liste', p.titre, p.meta, 'fzhPanneauTitre')}
+            <div class="fzh-jauge" role="progressbar" aria-valuemin="0" aria-valuemax="${p.etapes.length}" aria-valuenow="${faits}" aria-label="Préparation"><i style="width:${Math.round(faits / p.etapes.length * 100)}%"></i></div>
+            <ul class="fzs-list fzh-etapes">${etapes}</ul>
+        </section>`;
+    }
+
+    const choix = p.type === 'choix';
+    let corps;
+    if (!candidats) corps = `<ol class="fzs-list fzh-cands" aria-label="Chargement des joueurs">${fzhHeroOsHTML(3)}</ol><p class="fzh-sr">Chargement des joueurs…</p>`;
+    else if (!candidats.length) corps = '<p class="fzs-empty">Aucun joueur disponible dans tes catégories ouvertes.</p>';
+    else {
+        corps = `<ol class="fzs-list fzh-cands">${candidats.map((c, i) => fzhHeroCandidatHTML(c, i, { mode: choix ? 'choix' : 'probable', enAttente: enAttente === i, envoi })).join('')}</ol>`;
+        const note = choix
+            ? (p.auto ? 'À zéro, Fantazy prend le meilleur joueur disponible.' : '')
+            : p.suivant && candidats[1]
+                ? `Si ${p.suivant} prend ${fzhHeroNomFamille(candidats[0].nom, candidats[0].estClub)}, ${fzhHeroNomFamille(candidats[1].nom, candidats[1].estClub)} passe en tête.`
+                : p.note;
+        if (note) corps += `<p class="fzh-note">${fzhHeroEsc(note)}</p>`;
+    }
+    return `<section class="fzs-sec fzh-choix" aria-labelledby="fzhPanneauTitre">
+            ${fzhHeroTete(choix ? 'eclair' : 'etoile', p.titre, fzhHeroMetaPanneau(modele, candidats), 'fzhPanneauTitre')}
+            <div aria-live="polite">${corps}</div>
+            ${fzhHeroPied(p.salle, choix ? 'Tous les disponibles' : 'Ma liste')}
+        </section>`;
+}
+
+/** « Pour ta liste » : les meilleurs disponibles, à ajouter d'un clic. */
+function fzhHeroListeHTML(modele, candidats) {
+    const l = modele.liste;
+    if (!l) return '';
+    const corps = !candidats
+        ? `<ul class="fzs-list fzh-cands">${fzhHeroOsHTML(4)}</ul>`
+        : candidats.length
+            ? `<ul class="fzs-list fzh-cands">${candidats.map((c, i) => fzhHeroCandidatHTML(c, i, { mode: 'liste' })).join('')}</ul>`
+            : '<p class="fzs-empty">Les joueurs arrivent dès que la trousse est prête.</p>';
+    return `<section class="fzs-sec fzh-liste" aria-labelledby="fzhListeTitre">
+            ${fzhHeroTete('etoile', l.titre, `${l.favoris} favori${l.favoris > 1 ? 's' : ''}`, 'fzhListeTitre')}
+            ${corps}
+            ${fzhHeroPied('stats.html', 'Tous les joueurs')}
+        </section>`;
+}
+
+/** « Ma sélection » : où en est mon équipe, catégorie par catégorie. */
+function fzhHeroBesoinsHTML(besoins, salle) {
+    const cases = besoins.cases.map(k => `<li class="${k.n >= k.max ? 'is-full' : ''}"><span>${fzhHeroEsc(k.libelle)}</span><strong>${k.n}/${k.max}</strong></li>`).join('');
+    return `<section class="fzs-sec fzh-besoins" aria-labelledby="fzhBesoinsTitre">
+            ${fzhHeroTete('equipe', 'Ma sélection', `${besoins.total} / ${besoins.max}`, 'fzhBesoinsTitre')}
+            <ul class="fzh-besoins-grille" style="--n:${besoins.cases.length}">${cases}</ul>
+            <p class="fzh-besoins-txt">${fzhHeroEsc(besoins.texte)}</p>
+            ${fzhHeroPied(salle, 'Voir mon alignement')}
+        </section>`;
+}
+
+function fzhHeroDernierHTML(d) {
+    return `<li class="fzs-row${d.mien ? ' is-mine' : ''}">
+                <span class="fzh-dernier-num">${fzhHeroEsc(d.numero)}</span>
+                ${fzhHeroVisage(d)}
+                <span class="fzs-row-txt"><span class="fzs-row-name">${fzhHeroEsc(d.nom)}</span><span class="fzs-row-sub">${fzhHeroEsc(d.par)}</span></span>
+                ${fzhHeroPos(d.pos)}
+            </li>`;
+}
+
+/** « Derniers choix » : les trois derniers, le mien en vert. */
+function fzhHeroDerniersHTML(derniers) {
+    const lignes = derniers.length
+        ? `<ol class="fzs-list fzh-derniers">${derniers.map(fzhHeroDernierHTML).join('')}</ol>`
+        : '<p class="fzs-empty">Aucun choix pour l’instant.</p>';
+    return `<section class="fzs-sec fzh-recents" aria-labelledby="fzhDerniersTitre">
+            ${fzhHeroTete('historique', 'Derniers choix', '', 'fzhDerniersTitre')}
+            ${lignes}
+        </section>`;
+}
+
+function fzhHeroHTML(modele) {
     const t = modele.temps;
     const titre = modele.compteARebours
         ? `${fzhHeroEsc(modele.titre)}<span data-fzh-avant="${fzhHeroEsc(modele.compteARebours.iso)}">${fzhHeroEsc(modele.compteARebours.texte)}</span>`
         : fzhHeroEsc(modele.titre);
-    const valeurTemps = t.rebours
+    const valeur = t.rebours
         ? `<strong data-fzh-rebours="${t.rebours}">${fzhHeroEsc(t.valeur)}</strong>`
         : t.chrono
-        ? `<strong data-fzh-depuis="${t.chrono}">${fzhHeroEsc(t.valeur)}</strong>`
-        : t.eta
-            ? `<strong data-fzh-eta="${fzhHeroEsc(JSON.stringify(t.eta))}">${fzhHeroEsc(t.valeur)}</strong>`
+            ? `<strong data-fzh-depuis="${t.chrono}">${fzhHeroEsc(t.valeur)}</strong>`
             : `<strong>${fzhHeroEsc(t.valeur)}</strong>`;
+    const a = modele.attente;
+    const sous = modele.sousTitre == null ? fzhHeroEsc(modele.meta)
+        : fzhHeroEsc(modele.sousTitre) + (a ? ` · <span${a.eta ? ` data-fzh-eta="${fzhHeroEsc(JSON.stringify(a.eta))}"` : ''}>${fzhHeroEsc(a.valeur)}</span>` : '');
+    const n = modele.cases.length;
+    const inviter = modele.inviter
+        ? `<li class="fzh-case is-inviter" style="--reste:${(4 - n % 4) || 4};--reste-large:${(8 - n % 8) || 8}"><button type="button" data-fzh-inviter="${fzhHeroEsc(modele.poolName)}">${fzhHeroIcone('inviter', 18)}<span>Inviter</span></button></li>` : '';
     return `
-        <section class="fzh-hero is-${modele.phase}" aria-labelledby="fzhHeroTitre">
-            <div class="fzh-hero-grille">
-                <div class="fzh-hero-principal">
-                    <div class="fzh-hero-haut">
-                        <span class="fzh-puce"><i class="fzh-point" aria-hidden="true"></i>${fzhHeroEsc(modele.puce)}</span>
-                        <span class="fzh-hero-meta">${fzhHeroEsc(modele.meta)}</span>
-                    </div>
-                    <div class="fzh-hero-copie">
-                        <h1 id="fzhHeroTitre">${titre}</h1>
-                        <p>${fzhHeroEsc(modele.sousTitre)}</p>
-                    </div>
-                    <div class="fzh-hero-actions">
-                        <a class="fzh-hero-cta is-${modele.cta.style}" href="${fzhHeroEsc(modele.cta.href)}">${fzhHeroEsc(modele.cta.libelle)} <span aria-hidden="true">→</span></a>
-                        <div class="fzh-hero-temps${t.grand ? ' is-grand' : ''}"><span>${fzhHeroEsc(t.libelle)}</span>${valeurTemps}</div>
-                    </div>
-                    <div class="fzh-hero-ordre">
-                        <div class="fzh-hero-ordre-tete"><span>${fzhHeroEsc(modele.ordreTitre)}</span><span>${fzhHeroEsc(modele.ordreDetail)}</span></div>
-                        <ol class="fzh-cases">${fzhHeroCasesHTML(modele.cases)}</ol>
-                        <p class="fzh-hero-activite"><span>${fzhHeroEsc(modele.activite)}</span>${modele.depuis ? ` <strong data-fzh-depuis="${modele.depuis}">${fzhHeroChrono(Date.now() - modele.depuis)}</strong>` : ''}</p>
-                    </div>
+        <section class="fzh-hero is-${modele.phase}${modele.vif ? ' is-vif' : ''}" aria-labelledby="fzhHeroTitre">
+            <div class="fzh-hero-haut">
+                <div class="fzh-hero-copie">
+                    <span class="fzh-puce">${modele.vif ? '<i class="fzs-dot" aria-hidden="true"></i>' : modele.phase === 'pre' ? '<i class="fzh-point" aria-hidden="true"></i>' : ''}${fzhHeroEsc(modele.puce)}</span>
+                    <h1 id="fzhHeroTitre">${titre}</h1>
+                    <p>${sous}</p>
                 </div>
-                <aside class="fzh-hero-panneau" aria-labelledby="fzhHeroPanneauTitre">
-                    <header><h2 id="fzhHeroPanneauTitre">${fzhHeroEsc(modele.panneau.titre)}</h2><span data-fzh-panneau-meta>${fzhHeroEsc(fzhHeroMetaPanneau(modele, candidats))}</span></header>
-                    <div class="fzh-hero-panneau-corps" data-fzh-panneau aria-live="polite">${fzhHeroPanneauHTML(modele, candidats, etatChoix)}</div>
-                </aside>
+                <div class="fzh-horloge${t.avant ? ' is-avant' : ''}">${t.avant ? `<span>${fzhHeroEsc(t.libelle)}</span>${valeur}` : `${valeur}<span>${fzhHeroEsc(t.libelle)}</span>`}</div>
             </div>
+            <div class="fzh-ordre">
+                ${modele.ordreTitre ? `<div class="fzh-ordre-tete"><span>${fzhHeroEsc(modele.ordreTitre)}</span><span>${fzhHeroEsc(modele.ordreDetail)}</span></div>` : ''}
+                <ol class="fzh-cases" aria-label="Ordre de sélection">${fzhHeroCasesHTML(modele.cases)}${inviter}</ol>
+            </div>
+            <a class="fzh-hero-cta" href="${fzhHeroEsc(modele.cta.href)}">${fzhHeroEsc(modele.cta.libelle)}${fzhHeroIcone('fleche', 20)}</a>
         </section>`;
 }
 
 // ───────────────────────────── Vie de la page ─────────────────────────────
 
-/** Le dernier héros posé, pour redessiner son panneau sans tout reconstruire. */
+/** Le dernier héros posé, pour redessiner ses cartes sans tout reconstruire. */
 let fzhHeroCourant = null;
 let fzhHeroMinuterie = null;
 
+function fzhHeroCleFavoris(poolName, username) {
+    return 'fzFavoris_' + poolName + '_' + username;
+}
+
+/** Les favoris de la salle de repêchage (draftFavorites.js) : même clé, même liste. */
 function fzhHeroFavoris(poolName, username) {
     try {
-        const liste = JSON.parse(localStorage.getItem('fzFavoris_' + poolName + '_' + username) || '[]');
+        const liste = JSON.parse(localStorage.getItem(fzhHeroCleFavoris(poolName, username)) || '[]');
         return Array.isArray(liste) ? liste : [];
     } catch (_) { return []; }
 }
 
+function fzhHeroUtilisateur() {
+    return (typeof userData !== 'undefined' && userData.username) || localStorage.getItem('username') || '';
+}
+
 /**
- * Pose la barre et le héros dans `root` (accueil-draft.js), à leurs
- * emplacements. Le panneau de choix se remplit quand la trousse est là.
+ * Pose le héros et ses cartes dans `root` (accueil-draft.js), à leurs
+ * emplacements. Les joueurs proposés arrivent quand la trousse est là.
  */
 function fzhHeroRendre(root, pool) {
     const { poolData, poolName, teamName } = pool;
-    const username = (typeof userData !== 'undefined' && userData.username) || localStorage.getItem('username') || '';
+    const username = fzhHeroUtilisateur();
     const modele = fzhHeroModele({ poolData, poolName, teamName, username, favoris: fzhHeroFavoris(poolName, username) });
     const precedent = fzhHeroCourant;
     // Un choix en attente de confirmation survit à un rafraîchissement du
@@ -646,65 +780,77 @@ function fzhHeroRendre(root, pool) {
     const garder = precedent && precedent.poolName === poolName && modele.phase === 'onclock'
         && precedent.tour === (poolData.currentPickIndex || 0);
     fzhHeroCourant = {
-        root, modele, poolData, poolName, teamName,
+        root, modele, poolData, poolName, teamName, username,
         tour: poolData.currentPickIndex || 0,
         candidats: garder ? precedent.candidats : null,
+        suggestions: null,
         enAttente: garder ? precedent.enAttente : null,
         envoi: false
     };
 
-    const barre = root.querySelector('[data-fzh-barre]');
     const hero = root.querySelector('[data-fzh-hero]');
-    if (barre) barre.innerHTML = fzhHeroBarreHTML(modele);
-    if (hero) hero.innerHTML = fzhHeroHTML(modele, fzhHeroCourant.candidats, fzhHeroCourant);
-    root.classList.toggle('is-onclock', modele.phase === 'onclock');
-    fzhHeroMesurerEntete();
+    if (hero) hero.innerHTML = fzhHeroHTML(modele);
+    fzhHeroRendrePanneau();
     document.title = modele.titreOnglet || FZH_HERO_TITRE;
     fzhHeroDemarrerMinuterie();
 
-    if (['probable', 'choix'].includes(modele.panneau.type) && typeof fzdChargerBassinJoueurs === 'function') {
+    const veutCandidats = modele.panneau && ['probable', 'choix'].includes(modele.panneau.type);
+    if ((veutCandidats || modele.liste) && typeof fzdChargerBassinJoueurs === 'function') {
         const courant = fzhHeroCourant;
         fzdChargerBassinJoueurs().then(pools => {
             if (fzhHeroCourant !== courant) return;
-            courant.candidats = fzhHeroCandidats({
-                pools, poolData, teamName,
-                favoris: fzhHeroFavoris(poolName, username),
-                quotaBanc: typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(poolData) : 0
-            });
+            courant.pools = pools;
+            fzhHeroCalculer(courant);
             fzhHeroRendrePanneau();
         });
     }
 }
 
+function fzhHeroCalculer(c) {
+    const favoris = fzhHeroFavoris(c.poolName, c.username);
+    const quotaBanc = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(c.poolData) : 0;
+    const commun = { pools: c.pools, poolData: c.poolData, teamName: c.teamName, favoris, quotaBanc };
+    if (c.modele.panneau && c.modele.panneau.type !== 'avant') c.candidats = fzhHeroCandidats(commun);
+    if (c.modele.liste) c.suggestions = fzhHeroCandidats({ ...commun, nombre: 4, favorisDevant: false });
+}
+
 function fzhHeroRendrePanneau() {
     const c = fzhHeroCourant;
     if (!c || !c.root.isConnected) return;
-    const corps = c.root.querySelector('[data-fzh-panneau]');
-    const meta = c.root.querySelector('[data-fzh-panneau-meta]');
-    if (corps) corps.innerHTML = fzhHeroPanneauHTML(c.modele, c.candidats, c);
-    if (meta) meta.textContent = fzhHeroMetaPanneau(c.modele, c.candidats);
+    const principal = c.root.querySelector('[data-fzh-panneau]');
+    const liste = c.root.querySelector('[data-fzh-liste]');
+    if (principal) principal.innerHTML = fzhHeroPanneauHTML(c.modele, c.candidats, c);
+    if (liste) liste.innerHTML = fzhHeroListeHTML(c.modele, c.suggestions);
 }
 
-/**
- * La barre se colle sous l'en-tête du site, dont la hauteur change avec la
- * largeur de l'écran : on la mesure plutôt que de la deviner, au rendu et à
- * chaque redimensionnement.
- */
-function fzhHeroMesurerEntete() {
-    const entete = document.querySelector('.navbar');
-    const racine = document.getElementById('fzDraftHome');
-    if (entete && racine) racine.style.setProperty('--fzh-nav', `${Math.round(entete.getBoundingClientRect().height)}px`);
-    if (!fzhHeroMesurerEntete.branche) {
-        fzhHeroMesurerEntete.branche = true;
-        window.addEventListener('resize', fzhHeroMesurerEntete, { passive: true });
-    }
+/** Ajoute ou retire un favori, puis remet la liste et « Avant le début » à jour. */
+function fzhHeroBasculerFavori(nom) {
+    const c = fzhHeroCourant;
+    if (!c || !nom) return;
+    const cle = fzhHeroCleFavoris(c.poolName, c.username);
+    const liste = fzhHeroFavoris(c.poolName, c.username);
+    const i = liste.indexOf(nom);
+    if (i >= 0) liste.splice(i, 1); else liste.push(nom);
+    try { localStorage.setItem(cle, JSON.stringify(liste)); } catch (_) { /* navigation privée */ }
+    c.modele = fzhHeroModele({ poolData: c.poolData, poolName: c.poolName, teamName: c.teamName, username: c.username, favoris: liste });
+    if (c.pools) fzhHeroCalculer(c);
+    fzhHeroRendrePanneau();
+    c.root.querySelector(`[data-fzh-favori="${CSS.escape(nom)}"]`)?.focus({ preventScroll: true });
 }
 
-/** Choisir, confirmer, annuler : un seul écouteur, posé une fois sur la racine. */
+/** Choisir, confirmer, annuler, favori, inviter : un seul écouteur, posé une fois sur la racine. */
 function fzhHeroBrancher(root) {
     if (root.dataset.fzhHeroBranche) return;
     root.dataset.fzhHeroBranche = '1';
     root.addEventListener('click', e => {
+        const inviter = e.target.closest('[data-fzh-inviter]');
+        if (inviter) {
+            // La feuille de partage du téléphone, sinon le presse-papiers (accueil-mobile.js).
+            if (typeof fzmInviter === 'function') { inviter.dataset.fzmInviter = inviter.dataset.fzhInviter; fzmInviter(inviter); }
+            return;
+        }
+        const favori = e.target.closest('[data-fzh-favori]');
+        if (favori) { fzhHeroBasculerFavori(favori.dataset.fzhFavori); return; }
         const c = fzhHeroCourant;
         if (!c || c.envoi) return;
         const choisir = e.target.closest('[data-fzh-choisir]');
@@ -763,7 +909,7 @@ async function fzhHeroEnvoyerChoix(indice) {
     if (window.FZPool) await FZPool.refresh();
 }
 
-/** Les temps qui avancent — écoulé, attente, départ — sans redessiner le héros. */
+/** Les temps qui avancent — écoulé, restant, attente, départ — sans redessiner le héros. */
 function fzhHeroDemarrerMinuterie() {
     if (fzhHeroMinuterie) return;
     fzhHeroMinuterie = setInterval(() => {

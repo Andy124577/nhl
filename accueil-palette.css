@@ -36,8 +36,7 @@ html[data-theme="dark"] #fzDashSection .fz-dash,
     --fzd-accent-dark: var(--fzh-accent);
     --fzd-accent-tint: var(--fzh-tint);
 }
-html[data-theme="dark"] #fzDashSection .fz-mobile-home,
-#fzDashSection .fzh {
+html[data-theme="dark"] #fzDashSection .fz-mobile-home {
     --fzm-bg: var(--fzh-page);
     --fzm-panel: var(--fzh-panel);
     --fzm-surface: var(--fzh-panel);
@@ -48,18 +47,6 @@ html[data-theme="dark"] #fzDashSection .fz-mobile-home,
     --fzm-ink-faint: var(--fzh-muted);
     --fzm-red: var(--fzh-accent);
     --fzm-red-soft: var(--fzh-tint);
-    color: var(--fzh-ink);
-}
-#fzDashSection .fzh-panel {
-    background: var(--fzh-panel);
-    border-color: var(--fzh-outline);
-    box-shadow: none;
-}
-/* Le filtre d'« À surveiller » n'est plus de la partie : il suit les jetons
-   --fzd-* du panneau qui l'entoure, comme les onglets des mouvements. */
-#fzDashSection .fzh-game {
-    background: var(--fzh-panel);
-    border-color: var(--fzh-border);
     color: var(--fzh-ink);
 }
 /* Le bouton contour « Classement » garde son contour : deux aplats rouges
@@ -80,16 +67,11 @@ html[data-theme="dark"] #fzDashSection .fzd-hero-cta:not(.fzd-hero-cta--ghost):h
    passe à l'aplat d'encre, sinon il se fond dans le rouge. */
 html[data-theme="dark"] #fzDashSection .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta:not(.fzd-hero-cta--ghost) { background: #1D1D1F; border-color: #1D1D1F; }
 html[data-theme="dark"] #fzDashSection .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta:not(.fzd-hero-cta--ghost):hover { background: #2C2C2E; border-color: #2C2C2E; }
-#fzDashSection .fzh-link { color: var(--fzh-accent); }
 /* Le chevron garde le gris prévu pour l'aplat d'encre du thème clair : sur
    le rouge du thème sombre, il passe au blanc. */
 html[data-theme="dark"] #fzDashSection .fzd-hero-cta .fzd-hero-cta-chev { color: var(--on-primary); }
-/* Pastilles pleines portant du texte blanc : blanc sur --primary, 4,55:1
-   dans les deux thèmes. */
-#fzDashSection .fzh { --fzm-solid: var(--fzh-accent-fill); --fzm-on-solid: var(--on-primary); }
 html[data-theme="dark"] #fzDashSection :is(.fz-dash-hero, #fzmHeroSlot.is-draft) {
     background: var(--fzh-panel);
     border-color: var(--fzh-outline);
     box-shadow: none;
 }
-html[data-theme="dark"] #fzDashSection .fzo-start { border-color: var(--fzh-outline); }

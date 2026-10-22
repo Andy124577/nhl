@@ -2869,6 +2869,9 @@ async function renderDash() {
     // calendrier — mais elle n'existe qu'avec un pool. Sans pool, la carte
     // « Calendrier LNH » de l'état vide doit pouvoir l'ouvrir.
     section.classList.toggle('is-poolless', !hasPool);
+    // L'accueil sans pool (accueil-nouveau.css) prend les jetons --s-* des
+    // accueils repêchage et saison, et ne montre que son mot d'accueil.
+    document.body.classList.toggle('fz-onboard-page', !hasPool);
     fzdApplyPreseasonLayout(hasPool);
     if (!hasPool && hero) { fzdStopHeroTimer('fzDashHero'); hero.style.display = 'none'; hero.innerHTML = ''; }
     if (calWrap) calWrap.style.display = '';

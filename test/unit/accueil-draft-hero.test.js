@@ -1,9 +1,10 @@
 'use strict';
 
 /**
- * Héros du repêchage de l'accueil (accueil-draft-hero.js), maquette
- * « Accueil v2 » : quatre états — avant le départ, en attente, prochain, au
- * choix — plus la confirmation d'un choix. Le calcul est pur : ces tests
+ * Héros du repêchage de l'accueil (accueil-draft-hero.js), maquettes
+ * « repêchage en cours » et « en préparation » : quatre états — avant le
+ * départ, en attente, prochain, au choix — plus la confirmation d'un choix,
+ * et les cartes « Ma sélection » et « Derniers choix ». Le calcul est pur : ces tests
  * l'appellent sans navigateur.
  */
 
@@ -21,14 +22,15 @@ const lire = f => fs.readFileSync(path.join(__dirname, '../..', f), 'utf8');
 const echapper = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const H = chargerFonctions('accueil-draft-hero.js', [
-    'FZH_HERO_CASES', 'FZH_HERO_POS', 'FZH_HERO_CATEGORIES',
+    'FZH_HERO_CASES', 'FZH_HERO_POS', 'FZH_HERO_LISTE_MIN', 'FZH_HERO_ICONES',
     'fzhHeroPhase', 'fzhHeroRythme', 'fzhHeroAttente', 'fzhHeroDuree', 'fzhHeroChrono',
     'fzhHeroAvantDebut', 'fzhHeroHeure', 'fzhHeroNomCourt', 'fzhHeroNomFamille', 'fzhHeroListe',
     'fzhHeroPris', 'fzhHeroOuvertes', 'fzhHeroCode', 'fzhHeroCategorie', 'fzhHeroCandidats',
     'fzhHeroDetail', 'fzhHeroOrdreAnnonce', 'fzhHeroCases', 'fzhHeroCasesAvant',
-    'fzhHeroModele', 'fzhHeroAvant',
+    'fzhHeroBesoins', 'fzhHeroDerniers', 'fzhHeroModele', 'fzhHeroAvant',
+    'fzhHeroIcone', 'fzhHeroTete', 'fzhHeroPied', 'fzhHeroPos', 'fzhHeroOsHTML', 'fzhHeroEtapeHTML',
     'fzhHeroCasesHTML', 'fzhHeroVisage', 'fzhHeroCandidatHTML', 'fzhHeroPanneauHTML',
-    'fzhHeroMetaPanneau', 'fzhHeroBarreHTML', 'fzhHeroHTML'
+    'fzhHeroMetaPanneau', 'fzhHeroListeHTML', 'fzhHeroBesoinsHTML', 'fzhHeroDernierHTML', 'fzhHeroDerniersHTML', 'fzhHeroHTML'
 ], { fzhHeroEsc: echapper });
 
 const MAINTENANT = Date.parse('2026-10-03T22:00:00.000Z');
@@ -125,23 +127,24 @@ describe('héros du repêchage — ordre de sélection', () => {
         });
         const cases = H.fzhHeroCases(pool, 'A');
         assert.equal(cases.length, H.FZH_HERO_CASES);
-        egal(cases.map(c => c.numero), ['03', '04', '05', '06', '07', '08', '09', '10']);
+        egal(cases.map(c => c.numero), ['3', '4', '5', '6', '7', '8', '9', '10']);
         egal(cases.slice(0, 2).map(c => c.sous), ['Passé', 'L. Carlsson'], 'un tour sauté n’a pas de joueur');
         assert.equal(cases[2].etat, 'actuel');
         assert.equal(cases[2].sous, 'Choisit…');
-        assert.equal(cases[3].nom, 'TOI');
+        assert.equal(cases[3].nom, 'Toi');
         assert.equal(cases[3].sous, 'Ton tour');
-        assert.equal(cases[4].sous, '', 'seul mon prochain tour est annoncé');
+        assert.equal(cases[4].sous, 'À venir', 'seul mon prochain tour est annoncé');
     });
 
     test('avant le départ : les équipes, ou l’ordre du classement inversé s’il est connu', () => {
         const pool = { teams: { Zèbres: equipeVide(['zoe']), Aigles: equipeVide(['alice']), Vide: equipeVide([]) } };
         const libre = H.fzhHeroCasesAvant(pool, 'Aigles');
-        egal(libre.map(c => [c.numero, c.nom]), [['', 'TOI'], ['', 'Zèbres']]);
+        egal(libre.map(c => [c.numero, c.nom]), [['', 'Toi'], ['', 'Zèbres']], 'mon équipe d’abord');
+        assert.equal(libre[0].sous, 'Inscrit');
         assert.equal(libre[1].sous, 'zoe');
 
         pool.saisonsPrecedentes = [{ classement: [{ equipe: 'Aigles', rang: 1 }, { equipe: 'Zèbres', rang: 2 }] }];
-        egal(H.fzhHeroCasesAvant(pool, 'Aigles').map(c => [c.numero, c.nom]), [['01', 'Zèbres'], ['02', 'TOI']],
+        egal(H.fzhHeroCasesAvant(pool, 'Aigles').map(c => [c.numero, c.nom]), [['1', 'Zèbres'], ['2', 'Toi']],
             'le dernier de la saison passée ouvre le bal');
     });
 });
@@ -209,18 +212,19 @@ describe('héros du repêchage — modèle', () => {
 
     test('avant le départ, date fixée : le compte à rebours et ce qui reste à préparer', () => {
         const prevu = new Date(MAINTENANT + minutes(134)).toISOString();
-        const m = H.fzhHeroModele({ poolData: avant({ draftScheduledAt: prevu }), poolName: 'Les Boys', teamName: 'Aigles', username: 'alice', maintenant: MAINTENANT, favoris: ['x', 'y'] });
+        const m = H.fzhHeroModele({ poolData: avant({ draftScheduledAt: prevu }), poolName: 'Les Boys', teamName: 'Aigles', username: 'alice', maintenant: MAINTENANT, favoris: ['x', 'y', 'z'] });
         assert.equal(m.phase, 'pre');
         assert.equal(m.titre, 'Le repêchage commence ');
         egal(m.compteARebours, { iso: prevu, texte: 'dans 2 h 14' });
-        assert.equal(m.sousTitre, "L'ordre sera tiré au hasard au départ. Tout est prêt de ton côté ?");
+        assert.equal(m.sousTitre, null, 'le héros montre le pool, ses participants et ses rondes');
         assert.equal(m.meta, 'Les Boys · 2 participants · 13 rondes');
-        assert.equal(m.barreLibelle, 'Repêchage', 'pas « en direct » avant le départ');
+        assert.equal(m.ordreDetail, 'Ordre tiré au hasard');
         egal(m.panneau.etapes.map(e => [e.titre, e.ok]), [['Ta liste de favoris', true], ['Participants', true], ['Départ', true]]);
-        assert.equal(m.panneau.etapes[0].detail, '2 joueurs dans ta liste');
+        assert.equal(m.panneau.etapes[0].detail, '3 joueurs ajoutés');
+        assert.equal(m.panneau.etapes[0].action, null);
+        assert.equal(m.liste.favoris, 3);
         assert.equal(m.panneau.meta, '3 sur 3');
         assert.equal(m.panneau.etapes[2].action.href, 'repechage.html?pool=Les%20Boys', 'la personne qui a créé le pool organise le départ');
-        assert.equal(m.activite, 'bob est inscrit');
     });
 
     test('avant le départ, sans date, vu par un autre membre', () => {
@@ -229,11 +233,12 @@ describe('héros du repêchage — modèle', () => {
         assert.equal(m.compteARebours, null);
         assert.equal(m.temps.valeur, 'Quand tu veux');
         assert.equal(m.panneau.etapes[1].detail, '1 équipe inscrite · il en faut au moins 2');
-        assert.equal(m.activite, "Personne d'autre n'est inscrit pour l'instant");
+        assert.equal(m.panneau.etapes[0].detail, 'Ajoute au moins 3 joueurs que tu vises (0/3)');
+        assert.equal(m.inviter, true);
 
         const autre = H.fzhHeroModele({ poolData: avant(), poolName: 'P', teamName: 'Zèbres', username: 'bob', maintenant: MAINTENANT });
         assert.equal(autre.temps.valeur, 'À confirmer');
-        assert.equal(autre.panneau.etapes[2].detail, 'alice le lancera');
+        assert.equal(autre.panneau.etapes[2].detail, 'alice lancera le repêchage');
         assert.equal(autre.panneau.etapes[2].action, null, 'seule la personne qui a créé le pool le lance');
         assert.equal(autre.panneau.etapes[1].action, null);
     });
@@ -241,25 +246,24 @@ describe('héros du repêchage — modèle', () => {
     test('après une saison, l’ordre est connu d’avance', () => {
         const pool = avant({ saisonsPrecedentes: [{ classement: [{ equipe: 'Zèbres', rang: 1 }, { equipe: 'Aigles', rang: 2 }] }] });
         const m = H.fzhHeroModele({ poolData: pool, poolName: 'P', teamName: 'Aigles', username: 'alice', maintenant: MAINTENANT });
-        assert.match(m.sousTitre, /^Tu choisis en premier\./);
         assert.equal(m.ordreTitre, 'Ordre de sélection');
+        egal(m.cases.map(c => [c.numero, c.nom]), [['1', 'Toi'], ['2', 'Zèbres']], 'je choisis en premier');
     });
 
     test('au choix, dans un repêchage daté : le temps restant avant le choix automatique', () => {
         const pool = poolEnCours({ tour: 0, pickTimeLimitMs: minutes(3) });
         const m = H.fzhHeroModele({ poolData: pool, poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT });
-        assert.equal(m.temps.libelle, 'Temps restant');
+        assert.equal(m.temps.libelle, 'Restant');
         assert.equal(m.temps.valeur, '2:00', 'une minute sur trois est déjà passée');
         assert.equal(m.temps.rebours, MAINTENANT + minutes(2));
         assert.equal(m.temps.chrono, undefined);
-        assert.match(m.sousTitre, /à zéro, Fantazy prend le meilleur joueur disponible\.$/);
-        assert.equal(m.barreRebours, MAINTENANT + minutes(2));
-        assert.equal(m.barreChrono, undefined);
+        assert.equal(m.panneau.auto, true);
 
-        const html = H.fzhHeroHTML(m, [], null);
+        const html = H.fzhHeroHTML(m);
         assert.match(html, new RegExp(`data-fzh-rebours="${MAINTENANT + minutes(2)}">2:00<`));
         assert.doesNotMatch(html, /data-fzh-depuis="\d+">2:00/);
-        assert.match(H.fzhHeroBarreHTML(m), /data-fzh-rebours=/);
+        const panneau = H.fzhHeroPanneauHTML(m, [{ nom: 'Lukas Dostal', code: 'G', pos: 'G', categorie: 'goalie', equipe: 'ANA', stat: '40 V', estClub: false }]);
+        assert.match(panneau, /À zéro, Fantazy prend le meilleur joueur disponible\./);
 
         const echu = H.fzhHeroModele({ poolData: pool, poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT + minutes(5) });
         assert.equal(echu.temps.valeur, '0:00', 'jamais sous zéro');
@@ -268,37 +272,39 @@ describe('héros du repêchage — modèle', () => {
     test('au choix : le temps écoulé, jamais un compte à rebours, et l’onglet qui le dit', () => {
         const m = H.fzhHeroModele({ poolData: poolEnCours({ tour: 0 }), poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT });
         assert.equal(m.phase, 'onclock');
-        assert.equal(m.temps.libelle, 'Temps écoulé');
+        assert.equal(m.temps.libelle, 'Écoulé');
         assert.equal(m.temps.valeur, '1:00');
-        assert.equal(m.temps.grand, true);
-        assert.equal(m.activite, 'B et C attendent ton choix');
-        assert.equal(m.sousTitre, 'Ronde 1, choix 1. Choisis directement ici ou ouvre le repêchage.');
+        assert.equal(m.titre, 'À toi de choisir');
+        assert.equal(m.sousTitre, 'Ronde 1 · Choix 1 / 12 · P');
         assert.equal(m.panneau.type, 'choix');
+        assert.equal(m.panneau.auto, false);
         assert.equal(m.titreOnglet, "(C'est ton tour !) Fantazy");
-        assert.equal(m.cta.style, 'blanc');
+        assert.equal(m.cta.libelle, 'Ouvrir le repêchage');
     });
 
     test('en attente : une estimation seulement quand le rythme est connu', () => {
         const sans = H.fzhHeroModele({ poolData: poolEnCours({ tour: 0 }), poolName: 'P', teamName: 'C', username: 'carl', maintenant: MAINTENANT });
         assert.equal(sans.phase, 'waiting');
-        assert.equal(sans.titre, 'Ton tour dans 2 choix');
-        assert.equal(sans.temps.valeur, '2 choix');
-        assert.equal(sans.temps.eta, null);
+        assert.equal(sans.titre, 'A choisit');
+        assert.equal(sans.sousTitre, 'Ton prochain tour : choix 3 · Ronde 1');
+        egal(sans.attente, { valeur: 'dans 2 choix' });
+        assert.equal(sans.temps.libelle, 'Écoulé', 'l’horloge suit le tour en cours');
 
         const historique = [choix(0, 'A', 'a', 9), choix(1, 'B', 'b', 7), choix(2, 'C', 'c', 5), choix(3, 'C', 'd', 3), choix(4, 'B', 'e', 1)];
         const pool = poolEnCours({ tour: 5, historique, turnStartedAt: MAINTENANT - minutes(1) });
         const avec = H.fzhHeroModele({ poolData: pool, poolName: 'P', teamName: 'C', username: 'carl', maintenant: MAINTENANT });
-        assert.equal(avec.titre, 'Ton tour dans 3 choix');
-        assert.equal(avec.temps.valeur, '~5 min');
+        assert.equal(avec.titre, 'A choisit');
+        assert.equal(avec.sousTitre, 'Ton prochain tour : choix 9 · Ronde 3');
+        assert.equal(avec.attente.valeur, '~5 min');
         assert.equal(avec.ordreDetail, 'Ronde 2 · choix 6 / 12');
-        assert.equal(avec.activite, 'A choisit depuis');
-        assert.equal(avec.barreTexte, 'Ton tour dans 3 choix (~5 min)');
+        assert.match(H.fzhHeroHTML(avec), /· <span data-fzh-eta="[^"]+">~5 min<\/span>/);
     });
 
     test('prochain : le liseré, et qui choisit en ce moment', () => {
         const m = H.fzhHeroModele({ poolData: poolEnCours({ tour: 0 }), poolName: 'P', teamName: 'B', username: 'bob', maintenant: MAINTENANT });
         assert.equal(m.phase, 'next');
-        assert.equal(m.sousTitre, 'A est en train de choisir. Garde ta liste sous la main.');
+        assert.equal(m.titre, 'A choisit');
+        assert.equal(m.sousTitre, 'Ton tour : choix 2 · Ronde 1');
         assert.equal(m.panneau.suivant, 'A');
         assert.equal(m.titreOnglet, '(Tu es le prochain) Fantazy');
     });
@@ -307,29 +313,35 @@ describe('héros du repêchage — modèle', () => {
         const pool = poolEnCours({ tour: 1, historique: [choix(0, 'A', 'Macklin Celebrini', 1)] });
         const m = H.fzhHeroModele({ poolData: pool, poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT });
         assert.equal(m.titre, 'Celebrini est à toi');
-        assert.equal(m.sousTitre, 'Bon choix. Ton prochain tour arrive dans 4 choix.');
-        assert.equal(m.panneau.type, 'equipe');
-        assert.equal(m.panneau.meta, '1 / 4 joueurs');
+        assert.equal(m.sousTitre, 'Ton prochain tour : choix 6 · Ronde 2');
+        assert.equal(m.panneau.type, 'probable', 'le prochain choix se prépare déjà');
 
         const fini = H.fzhHeroModele({ poolData: poolEnCours({ tour: 11 }), poolName: 'P', teamName: 'C', username: 'carl', maintenant: MAINTENANT });
         assert.equal(fini.titre, 'Ton équipe est complète');
-        assert.equal(fini.temps.valeur, '1');
+        assert.equal(fini.sousTitre, 'Le repêchage se poursuit : encore 1 choix.');
+        assert.equal(fini.panneau, null);
+        assert.equal(H.fzhHeroPanneauHTML(fini, null), '');
     });
 });
 
 describe('héros du repêchage — rendu', () => {
     const candidats = [
-        { nom: 'Lukas Dostal', code: 'G', categorie: 'goalie', favori: true, equipe: 'ANA', detail: 'G · 40 V', estClub: false },
-        { nom: 'Beckett Sennecke', code: 'R', categorie: 'offensive', favori: false, equipe: 'ANA', detail: 'AD · 60 pts', estClub: false }
+        { nom: 'Lukas Dostal', code: 'G', pos: 'G', categorie: 'goalie', favori: true, equipe: 'ANA', detail: 'G · 40 V', stat: '40 V', estClub: false },
+        { nom: 'Beckett Sennecke', code: 'R', pos: 'AD', categorie: 'offensive', favori: false, equipe: 'ANA', detail: 'AD · 60 pts', stat: '60 pts', estClub: false }
     ];
 
     test('au choix : choisir, puis confirmer ou annuler', () => {
         const m = H.fzhHeroModele({ poolData: poolEnCours({ tour: 0 }), poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT });
-        const libre = H.fzhHeroHTML(m, candidats);
+        const hero = H.fzhHeroHTML(m);
+        assert.match(hero, /<h1 id="fzhHeroTitre">À toi de choisir<\/h1>/);
+        assert.match(hero, /data-fzh-depuis="\d+"/, 'le temps écoulé avance sans redessiner');
+        assert.match(hero, /class="fzh-hero is-onclock is-vif"/);
+
+        const libre = H.fzhHeroPanneauHTML(m, candidats);
         assert.equal((libre.match(/data-fzh-choisir=/g) || []).length, 2);
-        assert.match(libre, /<h1 id="fzhHeroTitre">C'est ton tour<\/h1>/);
-        assert.match(libre, /data-fzh-depuis="\d+"/, 'le temps écoulé avance sans redessiner');
-        assert.match(libre, /Aucune limite de temps/);
+        assert.match(libre, />Choisis en un clic</);
+        assert.match(libre, /Tous les disponibles/);
+        assert.match(libre, /fzh-pos is-g">G</);
         assert.ok(!/Choix auto/i.test(libre), 'Fantazy ne choisit jamais à la place de quelqu’un');
 
         const attente = H.fzhHeroPanneauHTML(m, candidats, { enAttente: 0 });
@@ -351,26 +363,62 @@ describe('héros du repêchage — rendu', () => {
         assert.equal(H.fzhHeroMetaPanneau(m, [candidats[1]]), 'Meilleurs disponibles');
     });
 
-    test('avant le départ : le compte à rebours vit dans le titre, la barre ne dit pas « en direct »', () => {
+    test('avant le départ : le compte à rebours dans le titre, les participants et « Inviter »', () => {
         const prevu = new Date(MAINTENANT + minutes(90)).toISOString();
         const m = H.fzhHeroModele({
             poolData: { creator: 'alice', draftOrder: [], draftScheduledAt: prevu, teams: { A: equipeVide(['alice']) } },
             poolName: 'Pool <test>', teamName: 'A', username: 'alice', maintenant: MAINTENANT
         });
-        const html = H.fzhHeroHTML(m, null);
+        const html = H.fzhHeroHTML(m);
         assert.match(html, /Le repêchage commence <span data-fzh-avant="[^"]+">dans 1 h 30<\/span>/);
-        assert.match(html, /class="fzh-etapes"/);
         assert.ok(html.includes('Pool &lt;test&gt;'), 'le nom du pool est échappé');
-        const barre = H.fzhHeroBarreHTML(m);
-        assert.match(barre, /class="fzh-barre is-pre"/);
-        assert.match(barre, /fzh-barre-libelle">Repêchage</);
+        assert.match(html, /data-fzh-inviter="Pool &lt;test&gt;"/);
+        assert.match(html, /style="--reste:3;--reste-large:7"/, 'Inviter remplit la rangée');
+        const avant = H.fzhHeroPanneauHTML(m, null);
+        assert.match(avant, /class="fzs-list fzh-etapes"/);
+        assert.match(avant, /aria-valuenow="1"/);
+    });
+
+    test('pour ta liste : un bouton qui ajoute ou retire, l’état annoncé', () => {
+        const m = H.fzhHeroModele({ poolData: { draftOrder: [], teams: { A: equipeVide(['alice']) } }, poolName: 'P', teamName: 'A', username: 'alice', maintenant: MAINTENANT, favoris: ['Lukas Dostal'] });
+        const html = H.fzhHeroListeHTML(m, candidats);
+        assert.match(html, />1 favori</);
+        assert.match(html, /data-fzh-favori="Lukas Dostal" aria-pressed="true" aria-label="Retirer de ma liste : Lukas Dostal"/);
+        assert.match(html, /data-fzh-favori="Beckett Sennecke" aria-pressed="false"/);
+    });
+});
+
+describe('héros du repêchage — ma sélection et derniers choix', () => {
+    test('ce qui manque, catégorie par catégorie ; le banc seulement s’il existe', () => {
+        const pool = poolEnCours({ tour: 2 });
+        pool.teams.A.offensive = ['a', 'b'];
+        const b = H.fzhHeroBesoins(pool, 'A');
+        egal(b.cases.map(k => [k.libelle, k.n, k.max]), [['ATT', 2, 2], ['DÉF', 0, 1], ['GAR', 0, 1]]);
+        assert.equal(b.texte, 'Il te manque : 1 DÉF, 1 GAR.');
+        assert.equal(b.total, 2);
+        assert.equal(b.max, 4);
+        assert.equal(H.fzhHeroBesoins(pool, 'A', 2).cases.at(-1).libelle, 'BANC');
+        const html = H.fzhHeroBesoinsHTML(b, 'draftActif.html?pool=P');
+        assert.match(html, /<li class="is-full"><span>ATT<\/span><strong>2\/2<\/strong><\/li>/);
+        assert.match(html, />2 \/ 4</);
+    });
+
+    test('les trois derniers, du plus récent, le mien marqué', () => {
+        const pool = poolEnCours({ tour: 4, historique: [choix(0, 'A', 'a', 9), choix(1, 'B', 'Quinn Hughes', 7, 'defensive'), choix(2, 'C', 'Montréal Canadiens', 5, 'teams'), choix(3, 'C', 'Lukas Dostal', 3, 'goalie')] });
+        const d = H.fzhHeroDerniers(pool, 'C');
+        egal(d.map(x => [x.numero, x.nom, x.pos, x.par]), [['4', 'Lukas Dostal', 'G', 'Toi'], ['3', 'Montréal Canadiens', 'ÉQ', 'Toi'], ['2', 'Quinn Hughes', 'D', 'B']]);
+        assert.equal(d[0].mien, true);
+        assert.match(H.fzhHeroDerniersHTML([]), /Aucun choix pour l’instant/);
     });
 });
 
 describe('héros du repêchage — intégration', () => {
-    test('l’accueil du repêchage pose le héros, et plus l’ancien bandeau', () => {
+    test('l’accueil du repêchage pose le héros et ses cartes', () => {
         const accueil = lire('accueil-draft.js');
         assert.match(accueil, /data-fzh-hero/);
+        assert.match(accueil, /data-fzh-panneau/);
+        assert.match(accueil, /data-fzh-liste/);
+        assert.match(accueil, /fzhHeroBesoinsHTML\(fzhHeroBesoins\(poolData, team\.name, banc\), salle\)/);
         assert.match(accueil, /fzhHeroRendre\(root, \{ poolData, poolName: activeName, teamName: team\.name \}\)/);
         assert.ok(!accueil.includes('fzh-draft'), 'l’ancien bandeau « Repêchage en cours » est parti');
         assert.match(accueil, /state\.mode !== 'predraft'/, 'avant le départ aussi');
@@ -386,7 +434,8 @@ describe('héros du repêchage — intégration', () => {
         const index = lire('index.html');
         const heros = index.indexOf('accueil-draft-hero.js');
         assert.ok(heros > 0 && heros < index.indexOf('src="accueil-draft.js'));
-        assert.match(index, /href="accueil-draft-hero\.css\?v=/);
+        assert.match(index, /href="accueil-draft\.css\?v=/);
+        assert.ok(!index.includes('accueil-draft-hero.css'), 'ses styles vivent dans accueil-draft.css');
     });
 
     test('le choix passe par la même route que la salle, avec le tour attendu', () => {

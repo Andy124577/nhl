@@ -6,8 +6,10 @@
    et À lire sur toute la largeur.
    Les deux thèmes passent par les jetons --s-* ci-dessous ; seule la carte
    « Ma position » reste sombre dans les deux, comme une carte de membre.
+   Les accueils du repêchage (accueil-draft.css) et sans pool
+   (accueil-nouveau.css) reprennent les mêmes jetons.
    ============================================================ */
-body.fz-season-page {
+body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page) {
     --s-bg: #0B0B0C;
     --s-card: #141416;
     --s-raise: #1B1B1E;
@@ -33,7 +35,7 @@ body.fz-season-page {
     --s-coral: #E08A80;
     background: var(--s-bg);
 }
-html[data-theme="light"] body.fz-season-page {
+html[data-theme="light"] body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page) {
     --s-bg: #F3F2EF;
     --s-card: #FFFFFF;
     --s-raise: #F6F5F2;
@@ -59,8 +61,8 @@ html[data-theme="light"] body.fz-season-page {
     --s-coral: #B4372B;
 }
 
-#fzDashSection.is-season { background: var(--s-bg); padding: 0 0 calc(96px + env(safe-area-inset-bottom)); }
-.is-season .fz-dash { max-width: 1240px; padding: 0; }
+#fzDashSection:is(.is-season, .is-drafting) { background: var(--s-bg); padding: 0 0 calc(96px + env(safe-area-inset-bottom)); }
+:is(.is-season, .is-drafting) .fz-dash { max-width: 1240px; padding: 0; }
 .is-season .fz-dash > :not(#fzSeasonHome) { display: none !important; }
 .fzs-slot[hidden] { display: none !important; }
 
@@ -301,7 +303,7 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
 
 /* ---- Bureau : deux colonnes de cartes ---- */
 @media (min-width: 900px) {
-    #fzDashSection.is-season { padding: 24px 24px 56px; }
+    #fzDashSection:is(.is-season, .is-drafting) { padding: 24px 24px 56px; }
     .fzs {
         --s-tile: var(--s-raise);
         display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

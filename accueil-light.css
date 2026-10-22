@@ -1,5 +1,6 @@
-/* Thème clair des accueils « repêchage » (.fzh) et « saison » (.fzs), plus
- * deux retouches de l'accueil sans pool (section 5).
+/* Thème clair des accueils : ce qu'il reste des feuilles dessinées sombres.
+ * Les accueils repêchage (.fzh), saison (.fzs) et sans pool portent leurs
+ * deux thèmes eux-mêmes (jetons --s-*, accueil-season.css).
  *
  * accueil-draft.css et accueil-season.css ont été dessinés sombres, avec
  * leurs couleurs en dur ; accueil-palette.css en remplace une partie par les
@@ -36,33 +37,9 @@ html[data-theme="light"] #fzDashSection:is(.is-drafting, .is-season) .fz-dash {
     --fzd-on-solid-soft: rgba(255, 255, 255, .7);
 }
 
-/* ─────────────────── 2. Accueil repêchage (.fzh) ─────────────────── */
-
-html[data-theme="light"] .fzh h2 { color: var(--fzh-ink); }
-html[data-theme="light"] .fzh :is(.fzh-eyebrow, .fzh-game p, .fzh-empty) { color: var(--fzh-muted); }
-/* Le héros du repêchage (accueil-draft-hero.css) reste sombre dans les deux
-   thèmes, comme sur la maquette : il n'a rien à reprendre ici. */
-
-html[data-theme="light"] .fzh .fzh-game-badge:not(.is-live) { background: var(--fzh-raised); color: var(--fzh-text); }
-
-/* Carte d'actualité. AVEC photo, c'est un voile sombre posé sur l'image : le
-   texte y reste blanc dans les deux thèmes, et le fond de panneau clair de la
-   palette effacerait le voile. SANS photo — un article sans image, ou le mot
-   d'accueil avant le premier choix — c'est un panneau comme les autres : il
-   suit le thème, sinon il faisait une dalle noire au milieu d'une page claire. */
-html[data-theme="light"] #fzDashSection .fzh .fzh-news:has(.fzh-news-image) {
-    background-color: #1C1C1E; border-color: transparent; color: #fff;
-}
-html[data-theme="light"] .fzh .fzh-news:has(.fzh-news-image) h2 { color: #fff; }
-html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image))::after { background: none; }
-html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) :is(h2, h2 a) { color: var(--fzh-ink); }
-html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) .fzh-news-copy p { color: var(--fzh-text); }
-html[data-theme="light"] .fzh .fzh-news:not(:has(.fzh-news-image)) .fzh-news-copy small { color: var(--fzh-muted); }
-
-html[data-theme="light"] .fzh .fzd-off-face { background: var(--fzh-raised); }
-
-/* Le calendrier et « Mouvements récents » sont les blocs partagés du tableau
-   de bord : ils lisent les jetons --fzd-*, déjà remappés en clair plus haut. */
+/* ─────────────────── 2. Accueil repêchage (.fzh) ───────────────────
+   Comme l'accueil de saison : ses deux thèmes vivent dans accueil-draft.css
+   (jetons --s-* d'accueil-season.css). */
 
 /* ─────────────── 3. Panneaux partagés (accueil-watch.css) ─────────────── */
 
@@ -73,13 +50,7 @@ html[data-theme="light"] .fzh .fzd-off-face { background: var(--fzh-raised); }
    côte à côte. La note de la trousse vit sur la fiche du joueur
    (career-modal.css) et suit le thème par ses jetons globaux. Le point
    actif est un aplat --primary, le même dans les deux thèmes. */
-html[data-theme="light"] :is(.fzh, .fzs) .fzd-off-dot::after { background: var(--fzh-outline); }
+html[data-theme="light"] .fzs .fzd-off-dot::after { background: var(--fzh-outline); }
 
 /* ─────────────────── 4. Accueil saison (.fzs) ───────────────────
    Ses deux thèmes vivent dans accueil-season.css (jetons --s-*). */
-
-/* ─────────────── 5. Accueil sans pool, carte d'actualité ─────────────── */
-
-/* Le lien d'une carte à photo vit sur le voile sombre : il garde le rouge
-   texte du thème sombre (#D70015 y ferait 3:1). */
-html[data-theme="light"] #fzDashSection .fzh .fzh-news:has(.fzh-news-image) .fzh-link { color: #FF5C66; }

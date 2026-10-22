@@ -27,27 +27,13 @@ html.fz-home-pending .fz-home-sk { display: block; }
 }
 
 /* ---- Lignes communes ---- */
-/* Les titres de panneau hors de .fzs (repêchage) : ceux de accueil-season.css. */
-.ask .fzs-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 30px; margin-bottom: 14px; }
 .ask h2 { margin: 0; font: 500 15px/1.25 'Oswald', sans-serif; letter-spacing: .45px; text-transform: uppercase; }
-.ask-link { width: 112px; height: 11px; }
 .ask-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--fzh-border); }
 .ask-row:last-child { border-bottom: 0; }
 .ask-row-av { flex: none; width: 40px; height: 40px; }
 .ask-row-txt { display: flex; flex: 1; flex-direction: column; gap: 7px; min-width: 0; }
 .ask-row-l1 { width: var(--w); height: 13px; }
 .ask-row-l2 { width: var(--w); height: 10px; }
-
-/* Les 32 clubs (.fzh-al) : surtitre, titre, flèche, puis les tuiles. */
-.ask-al { padding: 22px 24px; border-radius: 14px; }
-.ask-al-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.ask-al-eyebrow { width: 84px; height: 10px; margin: 3px 0 10px; }
-.ask-al-title { width: 156px; height: 26px; border-radius: 5px; }
-.ask-al-title.is-small { width: 120px; height: 16px; }
-.ask-al-go { flex: none; width: 40px; height: 40px; }
-.ask-al-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; margin-top: 18px; }
-.ask-al-grid > span { height: 46px; border-radius: 7px; }
-.ask-al-caption { width: 62%; height: 11px; margin-top: 20px; }
 
 /* ==================== SAISON ====================
    La charpente de accueil-season.css : une colonne au téléphone, deux au
@@ -76,108 +62,56 @@ html.fz-home-pending .fz-home-sk { display: block; }
     .ask-s-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 }
 
-/* ==================== REPÊCHAGE EN COURS ==================== */
-.ask-ticker {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    height: 36px;
-    padding: 0 22px;
-    background: var(--fzh-panel);
-    border-bottom: 1px solid var(--fzh-outline);
-}
-.ask-ticker-dot { width: 8px; height: 8px; }
-.ask-ticker-l { width: 210px; height: 11px; }
-.ask-ticker-r { width: 58px; height: 11px; margin-left: auto; }
-
-.ask-draft { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px 22px 72px; }
-.ask-hero { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: 479px; padding: 0; border-radius: 16px; }
-.ask-hero-main { display: flex; flex-direction: column; align-items: flex-start; padding: 30px; }
-.ask-hero-pill { width: 150px; height: 26px; margin-bottom: 26px; border-radius: 999px; }
-.ask-hero-h1 { width: 290px; max-width: 100%; height: 50px; margin-bottom: 12px; border-radius: 6px; }
-.ask-hero-h1.is-short { width: 250px; }
-.ask-hero-sub { width: 260px; max-width: 100%; height: 13px; margin: 8px 0 28px; }
-.ask-hero-cta { display: flex; align-items: flex-end; gap: 24px; margin-bottom: 26px; }
-.ask-hero-btn { width: 216px; height: 46px; border-radius: 6px; }
-.ask-hero-cta > span { display: flex; flex-direction: column; gap: 10px; }
-.ask-hero-k { width: 96px; height: 9px; margin-bottom: 10px; }
-.ask-hero-v { width: 44px; height: 24px; }
-.ask-hero-order { display: flex; gap: 6px; }
-.ask-pick { display: flex; flex-direction: column; gap: 6px; width: 52px; height: 50px; padding: 7px; border: 1px solid var(--fzh-outline); border-radius: 6px; }
-.ask-pick-n { width: 14px; height: 8px; }
-.ask-pick-name { width: 32px; height: 9px; }
-.ask-hero-side { padding: 30px 22px; border-left: 1px solid var(--fzh-outline); }
-.ask-hero-side-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.ask-hero-side-title { width: 110px; height: 16px; }
-.ask-hero-side-count { width: 64px; height: 10px; }
-.ask-draft .ask-half { min-height: 417px; }
-.ask-picks { grid-column: 1 / -1; min-height: 591px; padding: 16px 22px; border-radius: 13px; }
-.ask-picks-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 20px; }
-.ask-tab { width: var(--w); height: 30px; border-radius: 999px; }
-.ask-picks-group { display: grid; grid-template-columns: 134px minmax(0, 1fr); align-items: start; padding: 12px 0; border-bottom: 1px solid var(--fzh-border); }
-.ask-picks-group:last-child { border-bottom: 0; }
-.ask-picks-label { width: 92px; height: 11px; margin-top: 16px; }
-.ask-picks-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.ask-player { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--fzh-raised); }
-.ask-player-av { flex: none; width: 30px; height: 30px; }
+/* ==================== REPÊCHAGE ====================
+   La charpente d'accueil-draft.css : le héros, puis des cartes. */
+.ask-d { gap: 12px; padding-top: 12px; }
+.ask-d-hero { display: flex; flex-direction: column; gap: 12px; min-height: 254px; padding: 18px 16px 16px; border-radius: 24px; }
+.ask-d-puce { width: 120px; height: 24px; border-radius: 999px; }
+.ask-d-titre { width: 66%; height: 30px; border-radius: 6px; }
+.ask-d-cases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 2px; }
+.ask-d-cases > span { height: 50px; border-radius: 11px; }
+.ask-d-cta { height: 46px; border-radius: 13px; }
+.ask-d-sec { border-radius: 20px; }
+.ask-s-titre { width: 150px; height: 18px; border-radius: 5px; }
 
 /* ==================== SANS POOL ====================
-   Le panneau d'accueil (.fz-dash-onboard, accueil-dash.css). */
-.ask-onboard { display: flex; flex-direction: column; gap: 26px; max-width: 944px; margin: 0 auto; padding: 56px 64px 48px; }
-.ask-intro { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.ask-welcome { width: 150px; height: 11px; margin: 2px 0 6px; }
-.ask-headline { width: 440px; max-width: 100%; height: 56px; border-radius: 6px; }
-.ask-headline.is-short { width: 330px; margin-bottom: 6px; }
-.ask-lede { width: 340px; max-width: 100%; height: 13px; }
-.ask-lede.is-short { width: 220px; }
-.ask-start { min-height: 243px; padding: 24px 28px; border-radius: 14px; }
-.ask-start-head { display: flex; align-items: center; gap: 14px; }
-.ask-start-title { width: 230px; max-width: 100%; height: 24px; border-radius: 5px; }
-.ask-start-well { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; margin-top: 22px; padding: 22px 24px; border-radius: 12px; background: var(--fzh-raised); }
-.ask-seats { display: flex; gap: 10px; }
-.ask-seat { width: 46px; height: 46px; }
-.ask-start-btn { width: 232px; height: 48px; border-radius: 999px; }
-.ask-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.ask-path { display: flex; align-items: center; gap: 14px; min-height: 72px; border-radius: 12px; }
-.ask-path-icon { flex: none; width: 38px; height: 38px; border-radius: 9px; }
-.ask-features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 30px; }
-.ask-feature { min-height: 190px; padding: 0; border-radius: 12px; }
-.ask-feature-art { display: block; height: 120px; background: var(--fz-bone); }
+   L'accueil sans pool (accueil-nouveau.css). */
+.ask-onboard { display: flex; flex-direction: column; gap: 10px; max-width: 1040px; margin: 0 auto; padding: 24px 10px 32px; }
+.ask-intro { display: flex; flex-direction: column; gap: 10px; padding: 0 10px 8px; }
+.ask-welcome { width: 150px; height: 11px; margin-bottom: 4px; }
+.ask-headline { width: 300px; max-width: 100%; height: 32px; border-radius: 6px; }
+.ask-headline.is-short { width: 220px; }
+.ask-lede { width: 320px; max-width: 100%; height: 13px; margin-top: 4px; }
+.ask-start { display: flex; flex-direction: column; gap: 12px; min-height: 290px; padding: 18px 16px 16px; border-radius: 24px; }
+.ask-start-title { width: 240px; max-width: 100%; height: 28px; border-radius: 5px; }
+.ask-seats { display: flex; gap: 10px; margin-top: 4px; }
+.ask-seat { width: 52px; height: 52px; }
+.ask-start-btn { height: 48px; border-radius: 13px; margin-top: auto; }
+.ask-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ask-path { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-height: 118px; padding: 14px; border-radius: 18px; }
+.ask-path-icon { flex: none; width: 36px; height: 36px; border-radius: 10px; }
+.ask-path .ask-row-txt { width: 100%; }
+.ask-features { display: flex; gap: 10px; margin-top: 46px; overflow: hidden; }
+.ask-feature { flex: none; width: 262px; min-height: 178px; padding: 0; border-radius: 18px; }
+.ask-feature-art { display: block; height: 112px; background: var(--fz-bone); }
 .ask-feature-copy { display: flex; flex-direction: column; gap: 8px; padding: 14px; }
 .ask-feature-copy > span { width: var(--w); }
 .ask-paths,
 .ask-features { opacity: 0; animation: fzOsMonte .35s ease-out forwards; animation-delay: calc(var(--i, 0) * 60ms); }
 
-/* ==================== TÉLÉPHONE ==================== */
-@media (max-width: 768px) {
-    .ask-number { width: 72px; height: 30px; }
-    .ask-al-grid > span { height: 32px; border-radius: 6px; }
-
-    .ask-ticker { padding: 0 12px; }
-    .ask-draft { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 14px 12px calc(90px + env(safe-area-inset-bottom)); }
-    .ask-hero { grid-template-columns: minmax(0, 1fr); min-height: 604px; }
-    .ask-hero-main { padding: 20px 18px; }
-    .ask-hero-h1 { width: 230px; height: 40px; }
-    .ask-hero-h1.is-short { width: 200px; }
-    .ask-hero-side { padding: 18px; border-left: 0; border-top: 1px solid var(--fzh-outline); }
-    .ask-hero-side .ask-row:nth-child(n + 3) { display: none; }
-    .ask-draft .ask-half { min-height: 319px; }
-    .ask-draft .ask-al { min-height: 290px; padding: 18px 16px; }
-    .ask-picks { min-height: 730px; padding: 14px; }
-    .ask-picks-group { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-    .ask-picks-label { margin-top: 2px; }
-    .ask-picks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 900px) {
+    .ask-d-hero, .ask-d-sec { border-radius: 18px; }
+    .ask-onboard { padding: 40px 24px 56px; gap: 12px; }
+    .ask-headline { width: 620px; height: 46px; }
+    .ask-headline.is-short { display: none; }
+    .ask-start { min-height: 170px; }
+    .ask-start-btn { width: 260px; align-self: flex-end; }
+    .ask-path { flex-direction: row; align-items: center; min-height: 76px; }
+    .ask-features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .ask-feature { width: auto; }
 }
-@media (max-width: 580px) {
-    .ask-onboard { gap: 18px; padding: 24px 28px 32px; }
-    .ask-headline { width: 250px; height: 30px; }
-    .ask-headline.is-short { width: 190px; }
-    .ask-lede { width: 290px; }
-    .ask-start { min-height: 304px; padding: 18px; }
-    .ask-start-well { padding: 18px; }
-    .ask-start-btn { width: 100%; }
-    .ask-paths { grid-template-columns: minmax(0, 1fr); }
-    .ask-features { grid-template-columns: minmax(0, 1fr); margin-top: 16px; }
+@media (min-width: 1100px) {
+    .ask-d-cases { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
