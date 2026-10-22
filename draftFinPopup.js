@@ -19,6 +19,8 @@
  * page fournit ses propres données par `window.fzSetDraftEndSource()` avant
  * d'appeler `fzShowDraftEndPopup()`. L'auto-affichage, lui, reste réservé à
  * la salle de repêchage : charger ce fichier ailleurs n'ouvre rien.
+ * draftFini.html, où arrive le repêchage automatique, l'ouvre elle-même par
+ * `fzShowDraftEndPopupOnce()`, sous le même drapeau « déjà vu ».
  *
  * Maquette : Claude Design — « Fin de repechage.dc.html ».
  */
@@ -534,6 +536,19 @@
   window.fzShowDraftEndPopup = function () {
     render();
     open();
+  };
+
+  /* Ouverture « une fois par pool » pour une page qui pose sa propre source :
+   * draftFini.html, où mène le repêchage automatique sans passer par la
+   * salle. Même drapeau que l'auto-affichage : qui a vu le récapitulatif au
+   * dernier choix en direct ne le revoit pas en arrivant ici. */
+  window.fzShowDraftEndPopupOnce = function () {
+    if (alreadySeen() || !draftReady() || !draftComplete()) return false;
+    var picks = render();
+    markSeen();
+    if (!picks.length) return false;
+    open();
+    return true;
   };
 
   /* Le panneau « Repêchage terminé » intégré à la page reste le récap

@@ -8,110 +8,6 @@ const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
   : window.location.origin;
 
-// Admin functionality
-function initializeAdminUI() {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const username = localStorage.getItem("username");
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-
-    if (isLoggedIn) {
-        if (isAdmin) {
-            document.getElementById("admin-users-link").style.display = 'block';
-            document.getElementById("admin-users-link").innerHTML = `
-                <div class="admin-dropdown-container">
-                    <a href="#" class="admin-dropdown-toggle" onclick="toggleAdminDropdown(event)">
-                        Utilisateur ▼
-                    </a>
-                    <div class="admin-dropdown-menu" id="adminDropdown">
-                        <div class="admin-dropdown-header">Changer d'utilisateur</div>
-                        <div id="adminUserList" class="admin-user-list">Chargement...</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById("login-link").innerHTML = `<a href="#" onclick="logout(event)">Déconnexion (${username})</a>`;
-            loadAdminUsers();
-        } else {
-            document.getElementById("login-link").innerHTML = `<a href="#" onclick="logout(event)">Déconnexion (${username})</a>`;
-        }
-    }
-}
-
-function toggleAdminDropdown(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    const dropdown = document.getElementById('adminDropdown');
-    dropdown.classList.toggle('show');
-}
-
-document.addEventListener('click', function(event) {
-    const dropdown = document.getElementById('adminDropdown');
-    if (dropdown && !event.target.closest('.admin-dropdown-container')) {
-        dropdown.classList.remove('show');
-    }
-});
-
-async function loadAdminUsers() {
-    try {
-        const response = await fetch(`${BASE_URL}/admin-users?adminToken=admin`);
-        const data = await response.json();
-
-        if (response.ok) {
-            const regularUsers = data.users.filter(u => u !== 'admin').slice(0, 4);
-            const userListEl = document.getElementById('adminUserList');
-
-            if (regularUsers.length === 0) {
-                userListEl.innerHTML = '<div class="admin-no-users">Aucun utilisateur</div>';
-            } else {
-                userListEl.innerHTML = regularUsers.map(username => `
-                    <a href="#" class="admin-dropdown-item" onclick="switchToUser(event, '${username}')">
-                        <span class="user-avatar">${username.charAt(0).toUpperCase()}</span>
-                        <span class="user-name">${username}</span>
-                    </a>
-                `).join('');
-            }
-        }
-    } catch (error) {
-        console.error('Error loading users:', error);
-        document.getElementById('adminUserList').innerHTML = '<div class="admin-no-users">Erreur</div>';
-    }
-}
-
-async function switchToUser(event, username) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    try {
-        const response = await fetch(`${BASE_URL}/admin-switch-user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                adminToken: 'admin',
-                targetUsername: username
-            })
-        });
-
-        if (response.ok) {
-            localStorage.setItem('username', username);
-            localStorage.setItem('activeUser', username);
-            window.location.reload();
-        } else {
-            fzAlert({ type: 'error', title: 'Changement impossible', message: 'Le changement d’utilisateur a échoué.' });
-        }
-    } catch (error) {
-        console.error('Error switching user:', error);
-        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
-    }
-}
-
-function logout(event) {
-    if (event) event.preventDefault();
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("username");
-    localStorage.removeItem("isAdmin");
-    localStorage.removeItem("activeUser");
-    location.reload();
-}
-
 async function fetchImageData() {
     // Les photos viennent du CDN de la LNH (voir headshots.js) : rien à charger.
 }
@@ -160,8 +56,6 @@ function getCurrentTeamStats(teamFullName) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    initializeAdminUI();
-
     const clanName = localStorage.getItem("draftClan");
     if (!clanName) {
         await fzAlert({ type: 'info', title: 'Aucun pool sélectionné', message: 'Choisissez un pool pour revoir ses sélections.', confirmLabel: 'Voir mes pools', dismissible: false });
@@ -214,6 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         document.getElementById("clanTitle").textContent = `Classement Final : ${clanName}`;
         renderTeamStatsTable(clan.teams);
+        ouvrirRecapitulatif(clanName, clan);
     } catch (error) {
         console.error("Erreur lors du chargement :", error);
     }
@@ -232,6 +127,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 });
+
+/**
+ * Le récapitulatif « Ton équipe est complète » (draftFinPopup.js), celui que
+ * la salle de repêchage ouvre au dernier choix. Un repêchage automatique se
+ * joue en une seule requête et mène ici sans passer par la salle : c'est
+ * donc cette page qui le montre, une fois par pool.
+ */
+function ouvrirRecapitulatif(clanName, clan) {
+    if (typeof window.fzShowDraftEndPopupOnce !== "function" || typeof FZPool === "undefined") return;
+    const equipe = FZPool.teamOf(clan, localStorage.getItem("username"));
+    if (!equipe) return;
+    window.fzSetDraftEndSource({
+        draftData: clan,
+        teamName: equipe.teamName,
+        clanName,
+        complete: FZPool.draftState(clan).etat === "termine",
+        skaters: fullPlayerData,
+        goalies: goalieData,
+        teams: teamData
+    });
+    window.fzShowDraftEndPopupOnce();
+}
 
 function renderTeamStatsTable(teams) {
     const tbody = document.getElementById("teamStatsBody");
