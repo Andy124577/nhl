@@ -235,6 +235,10 @@ html body.fz-draft #playerTable td.action-column button.favorite-btn {
     color: var(--s-dim);
 }
 html body.fz-draft #playerTable td.action-column button.favorite-btn:hover { color: var(--s-ink2); }
+/* À son tour, la rangée n'offre que « Repêcher » : l'étoile (se mettre un
+   joueur de côté) sert pendant qu'on attend (demande d'andy). */
+html body.fz-draft #playerTable tbody tr:has(.select-button) button.favorite-btn,
+html body.fz-draft .suggestion-actions:has(.select-button) button.favorite-btn { display: none !important; }
 html body.fz-draft #playerTable td.action-column button.favorite-btn.is-active { color: #E8B26A; }
 html body.fz-draft #playerTable td.action-column button.favorite-btn.is-active svg { fill: currentColor; }
 
@@ -683,9 +687,9 @@ html body.fz-draft .recent-feed-count {
     html body.fz-draft #playerTable#playerTable thead th:first-child::before { content: '#'; }
     html body.fz-draft #playerTable#playerTable thead th:nth-child(2) { display: block; flex: 1 1 auto; min-width: 0; }
     html body.fz-draft #playerTable#playerTable thead th:nth-child(2)::before { content: 'Joueur'; }
-    /* Calé sur les chiffres : la colonne d'action fait 88px (étoile,
-       « + », marges), dont 12px sont déjà le padding de la rangée. */
-    html body.fz-draft #playerTable#playerTable thead th.points-column { display: block; flex: none; width: auto; min-width: 0; margin-right: 66px; text-align: right; }
+    /* Calé sur les chiffres de la colonne PTS : à son tour, la colonne
+       d'action ne porte que le « + » ; sinon, que l'étoile. */
+    html body.fz-draft #playerTable#playerTable thead th.points-column { display: block; flex: none; width: auto; min-width: 0; margin-right: 32px; text-align: right; }
     /* Hors de son tour, pas de « + » : il ne reste que l'étoile. */
     html body.fz-draft #playerTable#playerTable:not(:has(tbody .select-button)) thead th.points-column { margin-right: 28px; }
     html body.fz-draft #playerTable#playerTable thead th.points-column::before { content: 'Pts'; }
@@ -750,7 +754,7 @@ html body.fz-draft .recent-feed-count {
     html body.fz-draft #playerTable td.action-column button.select-button {
         width: 34px;
         height: 34px;
-        margin-left: 4px;
+        margin-left: 0;
         font: 600 22px/1 var(--fzd-font);
     }
 
@@ -867,26 +871,11 @@ html body.fz-draft .recent-feed-count {
     html body.fz-draft .recent-feed-list { gap: 0; }
     html body.fz-draft #recentPicksFeed .no-picks { padding: 0 14px 14px; color: var(--s-faint); }
 
-    /* ---- Barre du bas : la pilule sous l'icône active ---- */
-    html body.fz-draft .bottom-nav { background: var(--s-card); border-top: 1px solid var(--s-line2); }
-    html body.fz-draft .bottom-nav-item { color: #8E8B88; }
-    html body.fz-draft .bottom-nav-item.active { color: #FF5A4E; }
-    html[data-theme="light"] body.fz-draft .bottom-nav-item { color: var(--s-faint); }
-    html[data-theme="light"] body.fz-draft .bottom-nav-item.active { color: var(--s-red); }
-    html body.fz-draft .bottom-nav-icon {
-        width: 56px;
-        height: 32px;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    html body.fz-draft .bottom-nav-item.active .bottom-nav-icon { background: rgba(229, 55, 43, .2); }
-    html body.fz-draft .bottom-nav-label {
-        font: 500 12px/14px var(--fzd-font);
-        letter-spacing: 0;
-        text-transform: none;
-    }
+    /* ---- Pas de barre du bas dans la salle (demande d'andy) ----
+       Le menu de la barre du haut garde la navigation du site ; la
+       colonne descend jusqu'au bas de l'écran, encoche comprise. */
+    html body.fz-draft .bottom-nav { display: none !important; }
+    html body.fz-draft { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
 
 /* ============================================================
