@@ -103,14 +103,15 @@ function fzDeskMonterBande() {
 
 /* ---- Pastilles de position ------------------------------------- */
 
-/** Les options de #playerFilter, en pastilles — code court de la maquette. */
+/** Les options de #playerFilter, en pastilles — libellés de la maquette
+ *  Repêchage. « Tous » vaut « Joueurs » : les patineurs, sans les clubs. */
 const FZD_PASTILLES = [
-    { valeur: 'all', court: 'JOU' },
+    { valeur: 'all', court: 'Tous' },
     { valeur: 'offensive', court: 'ATT' },
     { valeur: 'defensive', court: 'DÉF' },
-    { valeur: 'goalies', court: 'G' },
-    { valeur: 'rookies', court: 'REC' },
-    { valeur: 'teams', court: 'ÉQ' }
+    { valeur: 'goalies', court: 'GAR' },
+    { valeur: 'rookies', court: 'Recrue' },
+    { valeur: 'teams', court: 'Équipe' }
 ];
 
 /**
@@ -244,6 +245,15 @@ function fzDeskEquipesDuPool() {
     return vues;
 }
 
+/** Deux lettres pour une équipe : « LesDevils » → LD, « Ice Storm MTL » → IS. */
+function fzDeskSigle(nom) {
+    const mots = String(nom || '').trim().split(/\s+/).filter(Boolean);
+    if (mots.length > 1) return (mots[0][0] + mots[1][0]).toUpperCase();
+    const mot = mots[0] || '';
+    const majuscules = mot.replace(/[^A-ZÀ-Ý]/g, '');
+    return (majuscules.length >= 2 ? majuscules.slice(0, 2) : mot.slice(0, 2)).toUpperCase();
+}
+
 /** Remplit le sélecteur d'équipe sans perdre le choix en cours. */
 function fzDeskRenderSelecteur(me, cible) {
     const select = document.getElementById('fzdRailTeam');
@@ -261,6 +271,20 @@ function fzDeskRenderSelecteur(me, cible) {
     }
     if (cible) select.value = cible;
     select.setAttribute('aria-label', "Voir l'alignement de l'équipe");
+
+    // Le sigle de l'équipe affichée, en pastille devant son nom (maquette
+    // Repêchage). Décoratif : le sélecteur reste ce qu'on lit et touche.
+    const picker = document.getElementById('fzdRailPicker');
+    if (picker) {
+        let sigle = picker.querySelector('.fzd-rail-sigle');
+        if (!sigle) {
+            sigle = document.createElement('span');
+            sigle.className = 'fzd-rail-sigle';
+            sigle.setAttribute('aria-hidden', 'true');
+            picker.prepend(sigle);
+        }
+        sigle.textContent = fzDeskSigle(select.value);
+    }
 
     const autre = !!(cible && me && cible !== me);
     const titre = document.getElementById('fzdRailTitle');
@@ -826,6 +850,14 @@ function fzDeskBuildSlot(slot) {
             img.addEventListener('error', () => img.remove());
             pastille.appendChild(img);
         }
+        // Le logo du club en médaillon, comme dans la liste des joueurs.
+        if (slot.trouve.kind !== 'team' && photo && logo) {
+            const badge = document.createElement('img');
+            badge.className = 'fzd-slot-logo';
+            badge.src = logo; badge.alt = ''; badge.loading = 'lazy';
+            badge.addEventListener('error', () => badge.remove());
+            pastille.appendChild(badge);
+        }
     }
     el.appendChild(pastille);
 
@@ -833,19 +865,22 @@ function fzDeskBuildSlot(slot) {
     txt.className = 'fzd-slot-txt';
     const nom = document.createElement('span');
     nom.className = 'fzd-slot-name';
-    nom.textContent = slot.nom || 'Libre';
     txt.appendChild(nom);
-    const meta = document.createElement('span');
-    meta.className = 'fzd-slot-meta';
-    meta.textContent = slot.nom
-        ? [fzDeskAbbrev(slot.nom, slot.trouve), slot.ronde ? 'R' + slot.ronde : ''].filter(Boolean).join(' · ')
-        : 'À combler';
-    txt.appendChild(meta);
+    nom.textContent = slot.nom || 'Place libre';
+    if (slot.nom) {
+        const meta = document.createElement('span');
+        meta.className = 'fzd-slot-meta';
+        meta.textContent = [fzDeskAbbrev(slot.nom, slot.trouve), slot.ronde ? 'Ronde ' + slot.ronde : ''].filter(Boolean).join(' · ');
+        txt.appendChild(meta);
+    }
     el.appendChild(txt);
 
+    // data-pos : la couleur de la pastille (maquette Repêchage), lue par
+    // draftReskin.css sur le code affiché — AG, AD, C, D, G, Recrue…
     const code = document.createElement('span');
     code.className = 'fzd-slot-pos';
     code.textContent = slot.code || '';
+    code.dataset.pos = slot.code || '';
     el.appendChild(code);
 
     // Un clic ouvre la fiche du joueur (fzMarquerFiche, draftActif.js).
@@ -865,6 +900,19 @@ function fzDeskRenderRail() {
     fzDeskRenderSelecteur(moi, equipeVue);
 
     if (compte) compte.textContent = total.of > 0 ? `${total.have}/${total.of}` : '';
+    // Le même compte, recopié dans le sélecteur d'équipe : sous 1100px,
+    // l'en-tête du rail est masqué et c'est là que la maquette le place.
+    const picker = document.getElementById('fzdRailPicker');
+    if (picker) {
+        let recopie = picker.querySelector('.fzd-rail-picker-count');
+        if (!recopie) {
+            recopie = document.createElement('span');
+            recopie.className = 'fzd-rail-picker-count';
+            recopie.setAttribute('aria-hidden', 'true');
+            picker.querySelector('select')?.after(recopie);
+        }
+        recopie.textContent = total.of > 0 ? `${total.have} / ${total.of}` : '';
+    }
 
     liste.replaceChildren();
     groupes.forEach(g => {
@@ -1397,6 +1445,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.dataset.fzRail = 'page';
     try { fzDeskBrancherFavoris(); } catch (e) {}
     try { fzDeskSync(); } catch (e) { console.error('[bureau] mise en page :', e); }
+    // Les pastilles de position servent aussi sous 1100px (maquette
+    // Repêchage) : sous la recherche, à la place du sélecteur.
+    try { fzDeskMonterPastilles(document.getElementById('listFiltersSidebar')); } catch (e) {}
     try { fzDeskWatchRail(); } catch (e) {}
     try { fzDeskWatchTable(); } catch (e) {}
     try { window.fzRefreshDeskUI(); } catch (e) {}

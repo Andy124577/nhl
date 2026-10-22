@@ -247,7 +247,9 @@ function initPanelTabs() {
         },
         {
             cle: 'equipe',
-            libelle: 'Mon alignement',
+            // « Alignement », pas « Mon alignement » : la maquette, et le
+            // libellé tient dans un tiers de 390px avec son compteur.
+            libelle: 'Alignement',
             // getElementById, pas querySelector('.progress-card') : cette
             // classe est l'habillage partagé de toutes ces cartes, et
             // querySelector se serait arrêté à la première.

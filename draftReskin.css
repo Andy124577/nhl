@@ -1,0 +1,954 @@
+/* ============================================================
+   REPÊCHAGE — HABILLAGE « 6b ÉDITORIAL » (maquette Repêchage)
+   ------------------------------------------------------------
+   Même langage que l'accueil de saison (accueil-season.css) : Saira,
+   intertitres Saira Condensed, gris chauds, cartes arrondies, rouge
+   réservé au tour et à l'alerte. Chargé APRÈS toutes les feuilles du
+   repêchage : il ne touche ni à la mise en page bureau (trois colonnes)
+   ni au modèle téléphone (chrome figé, seul le corps de l'onglet
+   défile) — seulement à l'apparence.
+
+   Les deux thèmes passent par les jetons --s-* ci-dessous, puis par les
+   jetons --fzd-* des feuilles existantes, remappés ici : tout ce qui les
+   lit suit sans règle de plus. Le bandeau de tour reste sombre dans les
+   deux thèmes, comme la carte « Ma position » de l'accueil.
+
+   Le carrousel des choix (.picks-carousel) n'est volontairement PAS
+   rhabillé : il garde son style actuel.
+   ============================================================ */
+
+html body.fz-draft {
+    --s-bg: #0B0B0C;
+    --s-card: #141416;
+    --s-raise: #1B1B1E;
+    --s-sel: #18181B;
+    --s-line: #232327;
+    --s-line2: #1F1F23;
+    --s-chip-line: #2E2E33;
+    --s-head: #0F0F11;
+    --s-face: #0B0B0C;
+    --s-ink: #F3F1EE;
+    --s-ink2: #C9C7C4;
+    --s-mute: #A8A6A3;
+    --s-faint: #7E7C79;
+    --s-dim: #6E6C69;
+    --s-ghost: #34343A;
+    --s-red: #E5372B;
+    --s-red-soft: rgba(229, 55, 43, .16);
+    --s-red-ink: #FF8A80;
+    --s-green: #7FD49B;
+    --s-watch: #9CC9FF;
+    /* Pastilles de position, couleur de la maquette (texte, puis fond à 16 %) */
+    --s-pos-c: 156, 201, 255;
+    --s-pos-ag: 127, 212, 155;
+    --s-pos-ad: 232, 178, 106;
+    --s-pos-d: 201, 162, 255;
+    --s-pos-g: 255, 138, 128;
+    --s-pos-eq: 110, 220, 215;
+    --s-pos-rec: 201, 199, 196;
+
+    --fzd-font: 'Saira', 'Barlow', system-ui, sans-serif;
+    --fzd-font-cond: 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    --fzd-bg: var(--s-bg);
+    --fzd-bg-alt: var(--s-card);
+    --fzd-bg-page: var(--s-bg);
+    --fzd-surface: var(--s-card);
+    --fzd-ink: var(--s-ink);
+    --fzd-ink-soft: var(--s-ink2);
+    --fzd-text: var(--s-ink);
+    --fzd-text-muted: var(--s-mute);
+    --fzd-text-faint: var(--s-faint);
+    --fzd-text-fainter: var(--s-faint);
+    --fzd-text-dim: var(--s-dim);
+    --fzd-text-ghost: var(--s-faint);
+    --fzd-border: var(--s-line2);
+    --fzd-border-strong: var(--s-line);
+    --fzd-border-soft: var(--s-line2);
+    --fzd-border-input: var(--s-line);
+    --fzd-tile-bg: var(--s-face);
+    --fzd-tile-bg-strong: var(--s-chip-line);
+    --fzd-solid: var(--s-ink);
+    --fzd-on-solid: var(--s-bg);
+    --fzd-tab-track: var(--s-card);
+    --fzd-tab-hover: var(--s-raise);
+    --fzd-tab-text: var(--s-ink2);
+    --fzd-rail-foot: var(--s-card);
+    --fzd-logo-bg: var(--s-card);
+    background: var(--s-bg);
+    color: var(--s-ink);
+    font-family: var(--fzd-font);
+}
+html[data-theme="light"] body.fz-draft {
+    --s-bg: #F3F2EF;
+    --s-card: #FFFFFF;
+    --s-raise: #F6F5F2;
+    --s-sel: #F4F2EE;
+    --s-line: #E2E0DC;
+    --s-line2: #ECEAE6;
+    --s-chip-line: #DDDAD5;
+    --s-head: #F7F6F3;
+    --s-face: #ECEAE6;
+    --s-ink: #141416;
+    --s-ink2: #34343A;
+    --s-mute: #5E5C59;
+    --s-faint: #74716D;
+    --s-dim: #74716D;
+    --s-ghost: #CFCCC7;
+    --s-red: #D52B1E;
+    --s-red-soft: rgba(213, 43, 30, .1);
+    --s-red-ink: #B3241A;
+    --s-green: #1D8048;
+    --s-watch: #2F6DB5;
+    --s-pos-c: 38, 104, 186;
+    --s-pos-ag: 29, 128, 72;
+    --s-pos-ad: 160, 98, 18;
+    --s-pos-d: 120, 76, 196;
+    --s-pos-g: 186, 52, 40;
+    --s-pos-eq: 14, 128, 122;
+    --s-pos-rec: 94, 92, 89;
+    --fzd-logo-bg: #FFFFFF;
+}
+
+html body.fz-draft :is(.player-selection-card, .draft-sidebar, .draft-rail, .draft-header) :is(button, input, select) {
+    font-family: var(--fzd-font);
+}
+
+/* ---- Pastilles de position : la couleur de la maquette ---- */
+html body.fz-draft :is(.fzd-pos-tag, .fzd-slot-pos) {
+    --s-pc: var(--s-pos-rec);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 18px;
+    min-width: 0;
+    padding: 0 6px;
+    border: 0;
+    border-radius: 5px;
+    background: rgba(var(--s-pc), .16);
+    color: rgb(var(--s-pc));
+    font: 700 10px/1 var(--fzd-font);
+    letter-spacing: .2px;
+    text-transform: none;
+}
+html body.fz-draft :is(.fzd-pos-tag[data-pos="C"], .fzd-slot-pos[data-pos="C"]) { --s-pc: var(--s-pos-c); }
+html body.fz-draft :is(.fzd-pos-tag[data-pos="L"], .fzd-slot-pos[data-pos="AG"], .fzd-slot-pos[data-pos="AT"]) { --s-pc: var(--s-pos-ag); }
+html body.fz-draft :is(.fzd-pos-tag[data-pos="R"], .fzd-slot-pos[data-pos="AD"]) { --s-pc: var(--s-pos-ad); }
+html body.fz-draft :is(.fzd-pos-tag[data-pos="D"], .fzd-slot-pos[data-pos="D"]) { --s-pc: var(--s-pos-d); }
+html body.fz-draft :is(.fzd-pos-tag[data-pos="G"], .fzd-slot-pos[data-pos="G"]) { --s-pc: var(--s-pos-g); }
+html body.fz-draft :is(.fzd-pos-tag[data-pos="T"], .fzd-slot-pos[data-pos="Éq"], .fzd-slot-pos[data-pos="T"]) { --s-pc: var(--s-pos-eq); }
+html body.fz-draft :is(.fzd-pos-tag[data-pos="star"], .fzd-slot-pos[data-pos="Recrue"], .fzd-slot-pos[data-pos="Rec"]) { --s-pc: var(--s-pos-rec); }
+
+/* ---- Pastilles de position du filtre ---- */
+html body.fz-draft .fzd-pos-chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+html body.fz-draft .fzd-pos-chips::-webkit-scrollbar { display: none; }
+html body.fz-draft .fzd-pos-chip {
+    flex: none;
+    width: auto;
+    min-width: 0;
+    height: 28px;
+    min-height: 0;
+    padding: 0 12px;
+    border: 1px solid var(--s-chip-line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--s-mute);
+    font: 600 13px/1 var(--fzd-font);
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+}
+html body.fz-draft .fzd-pos-chip:hover:not(:disabled) { color: var(--s-ink); border-color: var(--s-mute); }
+html body.fz-draft .fzd-pos-chip.is-active,
+html body.fz-draft .fzd-pos-chip.is-active:hover {
+    border-color: var(--s-ink);
+    background: var(--s-ink);
+    color: var(--s-bg);
+}
+html body.fz-draft .fzd-pos-chip:disabled { opacity: .4; cursor: not-allowed; }
+html body.fz-draft .fzd-pos-chip[hidden] { display: none; }
+
+/* ---- Recherche ---- */
+html body.fz-draft .list-filters-sidebar .list-filters-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    border: 1px solid var(--s-line);
+    border-radius: 14px;
+    background: var(--s-card);
+}
+html body.fz-draft .list-filters-sidebar .list-filters-search .search-field-icon {
+    left: 13px;
+    color: var(--s-faint);
+}
+html body.fz-draft .list-filters-sidebar .search-input,
+html body.fz-draft .list-filters-sidebar .search-input:focus {
+    width: 100%;
+    height: 38px;
+    min-height: 0;
+    padding: 0 12px 0 40px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    color: var(--s-ink);
+    font: 400 14px/1 var(--fzd-font);
+}
+html body.fz-draft .list-filters-sidebar .list-filters-search:focus-within { border-color: var(--s-mute); }
+html body.fz-draft .list-filters-sidebar .search-input::placeholder { color: var(--s-dim); }
+
+/* ---- Liste des joueurs : la rangée ---- */
+html body.fz-draft #playerTable .fzd-name-main {
+    font: 600 14px/1.15 var(--fzd-font);
+    color: var(--s-ink);
+}
+html body.fz-draft #playerTable .fzd-name-meta .fzd-team-abbr {
+    font: 500 11px/1 var(--fzd-font);
+    letter-spacing: 0;
+    color: var(--s-faint);
+}
+html body.fz-draft #playerTable .fzd-name-meta .fzd-name-line {
+    font: 400 11px/1.2 var(--fzd-font);
+    color: var(--s-faint);
+}
+html body.fz-draft .draft-watch-badge { color: var(--s-watch); }
+html body.fz-draft #playerTable .player-photo img.face { background-color: var(--s-face); }
+
+/* « Repêcher » : l'aplat d'encre de la maquette, plus de rouge. */
+html body.fz-draft #playerTable td.action-column button.select-button {
+    border: 0;
+    border-radius: 11px;
+    background: var(--s-ink);
+    color: var(--s-bg);
+}
+html body.fz-draft #playerTable td.action-column button.select-button:hover { background: var(--s-ink2); }
+html body.fz-draft #playerTable td.action-column button.select-button:active { transform: scale(.94); }
+html body.fz-draft #playerTable td.action-column button.favorite-btn {
+    border: 0;
+    background: none;
+    color: var(--s-dim);
+}
+html body.fz-draft #playerTable td.action-column button.favorite-btn:hover { color: var(--s-ink2); }
+html body.fz-draft #playerTable td.action-column button.favorite-btn.is-active { color: #E8B26A; }
+html body.fz-draft #playerTable td.action-column button.favorite-btn.is-active svg { fill: currentColor; }
+
+/* ---- Alignement : rangées ---- */
+html body.fz-draft .fzd-slot-avatar { position: relative; overflow: visible; }
+html body.fz-draft .fzd-slot-avatar > img:not(.fzd-slot-logo) { border-radius: 50%; }
+html body.fz-draft .fzd-slot-avatar > img.fzd-slot-logo {
+    position: absolute;
+    right: -4px;
+    bottom: -3px;
+    width: 16px;
+    height: 16px;
+    padding: 1px;
+    border-radius: 50%;
+    object-fit: contain;
+    background: var(--s-card);
+}
+html body.fz-draft .fzd-slot.is-empty .fzd-slot-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px dashed var(--s-ghost);
+    background: none;
+}
+html body.fz-draft .fzd-slot.is-empty .fzd-slot-avatar::before {
+    content: '+';
+    font: 400 18px/1 var(--fzd-font);
+    color: var(--s-dim);
+}
+
+/* ---- Sélecteur d'équipe : sigle, nom, compte ---- */
+html body.fz-draft .fzd-rail-picker { position: relative; }
+/* Le bouton « Revenir à mon équipe » suit le sélecteur : le sigle et le
+   compte se calent sur le seul sélecteur, pas sur la boîte entière. */
+html body.fz-draft .fzd-rail-picker:has(.fzd-rail-back:not([hidden])) :is(.fzd-rail-sigle, .fzd-rail-picker-count) { top: 22px; }
+html body.fz-draft .fzd-rail-sigle {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--s-ink);
+    color: var(--s-bg);
+    font: 800 12px/1 var(--fzd-font-cond);
+    pointer-events: none;
+}
+html body.fz-draft .fzd-rail-picker .fzd-rail-select {
+    width: 100%;
+    height: 44px;
+    min-height: 0;
+    padding: 0 76px 0 48px;
+    border: 1px solid var(--s-line);
+    border-radius: 14px;
+    background-color: var(--s-card);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237E7C79' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 20px 20px;
+    color: var(--s-ink);
+    font: 600 14px/1 var(--fzd-font);
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+html body.fz-draft .fzd-rail-picker-count {
+    position: absolute;
+    right: 38px;
+    top: 50%;
+    transform: translateY(-50%);
+    font: 500 12px/1 var(--fzd-font);
+    color: var(--s-faint);
+    pointer-events: none;
+}
+
+/* ---- Derniers choix : rangée portrait ---- */
+html body.fz-draft .recent-feed-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 0;
+    border-top: 1px solid var(--s-line2);
+    cursor: pointer;
+}
+html body.fz-draft .recent-feed-row:hover { background: var(--s-sel); }
+html body.fz-draft .recent-feed-slot {
+    order: 0;
+    flex: none;
+    width: 24px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: 600 12px/1 var(--fzd-font);
+    letter-spacing: 0;
+    color: var(--s-dim);
+    text-align: left;
+}
+html body.fz-draft .recent-feed-avatar {
+    position: relative;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--s-face);
+}
+html body.fz-draft .recent-feed-face {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 15%;
+}
+html body.fz-draft .recent-feed-face.is-club { object-fit: contain; padding: 5px; }
+html body.fz-draft .recent-feed-logo {
+    position: absolute;
+    right: -4px;
+    bottom: -3px;
+    width: 16px;
+    height: 16px;
+    padding: 1px;
+    border-radius: 50%;
+    object-fit: contain;
+    background: var(--s-card);
+}
+html body.fz-draft .recent-feed-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font: 400 11px/1 var(--fzd-font);
+    color: var(--s-faint);
+}
+html body.fz-draft .recent-feed-player {
+    font: 600 14px/1.1 var(--fzd-font);
+    color: var(--s-ink);
+    border: 0;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+html body.fz-draft .recent-feed-meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body.fz-draft .recent-feed-removed { color: var(--s-red-ink); }
+html body.fz-draft .recent-feed-row .fzd-pos-tag { flex: none; height: 20px; padding: 0 7px; }
+html body.fz-draft .recent-feed-count {
+    margin-left: auto;
+    font: 500 12px/1 var(--fzd-font);
+    color: var(--s-faint);
+}
+
+/* ============================================================
+   TÉLÉPHONE ET TABLETTE — sous 1100px (seuil de draftActifUI.js)
+   ============================================================ */
+@media (max-width: 1099px) {
+
+    html body.fz-draft .draft-header { background: var(--s-bg); }
+
+    /* ---- Barre du haut : le titre en encre, plus en rouge ---- */
+    html body.fz-draft .navbar,
+    html body.fz-draft .navbar .navbar-desktop { background: var(--s-bg); border-bottom-color: var(--s-line2); }
+    html body.fz-draft .navbar .nav-link.active .nav-text {
+        font: 800 18px/1 var(--fzd-font-cond);
+        letter-spacing: 1px;
+        color: var(--s-ink);
+    }
+
+    /* ---- Bandeau de tour : une carte, sombre dans les deux thèmes ---- */
+    html body.fz-draft #turn-banner {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        min-height: 0;
+        margin: 10px 10px 0;
+        padding: 9px 10px 9px 14px;
+        gap: 12px;
+        border-radius: 16px;
+        color: #F3F1EE;
+        background:
+            radial-gradient(70% 90% at 100% 0%, rgba(255, 255, 255, .06) 0%, rgba(255, 255, 255, 0) 60%),
+            linear-gradient(135deg, #1D1D20 0%, #151517 55%, #101012 100%);
+    }
+    html body.fz-draft #turn-banner.your-turn {
+        background:
+            radial-gradient(90% 120% at 0% 100%, rgba(240, 64, 48, .5) 0%, rgba(240, 64, 48, 0) 62%),
+            radial-gradient(70% 90% at 100% 0%, rgba(255, 90, 70, .18) 0%, rgba(255, 90, 70, 0) 60%),
+            linear-gradient(135deg, #2A1213 0%, #171214 55%, #100E10 100%);
+    }
+    html body.fz-draft #turn-banner.done {
+        background:
+            radial-gradient(90% 120% at 0% 100%, rgba(80, 190, 120, .35) 0%, rgba(80, 190, 120, 0) 62%),
+            linear-gradient(135deg, #12201A 0%, #121614 55%, #0E100F 100%);
+    }
+    /* Les filets en biais et la trame de points de la maquette */
+    html body.fz-draft #turn-banner.your-turn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background: linear-gradient(160deg, rgba(255, 72, 56, 0) 22%, rgba(255, 72, 56, .6) 23%, rgba(255, 72, 56, 0) 31%, rgba(255, 72, 56, 0) 38%, rgba(255, 72, 56, .38) 39.5%, rgba(255, 72, 56, 0) 50%);
+    }
+    html body.fz-draft #turn-banner::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 62%;
+        z-index: -1;
+        pointer-events: none;
+        background-image: radial-gradient(rgba(255, 255, 255, .13) 1px, rgba(255, 255, 255, 0) 1.5px);
+        background-size: 9px 9px;
+        -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, #000 70%);
+        mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, #000 70%);
+    }
+    html body.fz-draft #turn-banner #turn-banner-body { gap: 5px; }
+    html body.fz-draft #turn-banner #turn-banner-sub,
+    html body.fz-draft #turn-banner #turn-banner-sub .fz-me-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        font: 600 10px/1 var(--fzd-font);
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #A8A6A3;
+    }
+    html body.fz-draft #turn-banner.your-turn #turn-banner-sub,
+    html body.fz-draft #turn-banner.your-turn #turn-banner-sub .fz-me-chip { color: #FF8A80; }
+    html body.fz-draft #turn-banner.your-turn #turn-banner-sub::before {
+        content: '';
+        flex: none;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #E5372B;
+        animation: fzdPulse 1.2s infinite;
+    }
+    html body.fz-draft #turn-banner #turn-banner-text {
+        font: 600 14px/1.15 var(--fzd-font);
+        letter-spacing: 0;
+        text-transform: none;
+        color: #F3F1EE;
+    }
+    /* Le chrono : une pastille sombre au filet cuivré */
+    html body.fz-draft #turn-banner #turn-clock {
+        order: 9;
+        position: static;
+        display: block;
+        border: 0;
+        flex: none;
+        align-self: center;
+        margin: 0;
+        padding: 8px 10px;
+        border-radius: 11px;
+        background: rgba(10, 10, 11, .8);
+        box-shadow: inset 0 0 0 1.5px rgba(217, 154, 94, .8);
+        font: 700 17px/1 var(--fzd-font);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0;
+        color: #E7B07A;
+        opacity: 1;
+    }
+    @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+        html body.fz-draft #turn-banner #turn-clock {
+            background:
+                linear-gradient(160deg, #F6D2A8 0%, #D99A5E 28%, #A8622E 52%, #E7B07A 70%, #8A4A1F 100%) text,
+                rgba(10, 10, 11, .8);
+            -webkit-background-clip: text, padding-box;
+            background-clip: text, padding-box;
+            color: transparent;
+        }
+    }
+    html body.fz-draft #turn-banner #turn-clock.is-long { box-shadow: inset 0 0 0 1.5px rgba(229, 55, 43, .9); }
+    html body.fz-draft #turn-banner #turn-clock[hidden] { display: none; }
+    html body.fz-draft #turn-banner #turn-banner-logo { width: 32px; height: 32px; background: rgba(255, 255, 255, .08); }
+
+    /* ---- Onglets : un contrôle segmenté ---- */
+    html body.fz-draft .panel-tabs-band {
+        margin: 8px 10px 0;
+        padding: 0;
+        border: 0;
+        gap: 6px;
+    }
+    html body.fz-draft .panel-tabs {
+        gap: 4px;
+        padding: 3px;
+        border: 1px solid var(--s-line2);
+        border-radius: 13px;
+        background: var(--s-card);
+    }
+    html body.fz-draft .panel-tab {
+        flex-direction: row;
+        gap: 5px;
+        height: 36px;
+        padding: 0 6px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        transition: background .15s;
+    }
+    html body.fz-draft .panel-tab:hover { background: var(--s-raise); }
+    html body.fz-draft .panel-tab .panel-tab-label {
+        font: 600 12px/1 var(--fzd-font);
+        letter-spacing: 0;
+        text-transform: none;
+        color: var(--s-ink2);
+    }
+    html body.fz-draft .panel-tab .panel-tab-meta {
+        font: 500 11px/1 var(--fzd-font);
+        color: var(--s-dim);
+    }
+    html body.fz-draft .panel-tab.is-active,
+    html body.fz-draft .panel-tab.is-active:hover { background: var(--s-ink); border: 0; }
+    html body.fz-draft .panel-tab.is-active .panel-tab-label { color: var(--s-bg); }
+    html body.fz-draft .panel-tab.is-active .panel-tab-meta { color: var(--s-dim); }
+    html body.fz-draft .panel-tabs-band .turn-skip-btn {
+        height: 42px;
+        padding: 0 12px;
+        border: 1px solid var(--s-line);
+        border-radius: 13px;
+        background: var(--s-card);
+        color: var(--s-ink2);
+        font: 600 12px/1 var(--fzd-font);
+        letter-spacing: 0;
+        text-transform: none;
+    }
+
+    /* Le carrousel garde son style ; il se pose seulement sous les onglets. */
+    html body.fz-draft .recent-picks-card { margin-top: 8px; }
+
+    /* ---- Alerte « à ton tour » : une carte ---- */
+    html body.fz-draft .fz-alertes-bande--tel {
+        margin: 8px 10px 0;
+        padding: 5px 4px 5px 10px;
+        border: 1px solid var(--s-line);
+        border-radius: 12px;
+        background: var(--s-card);
+    }
+    html body.fz-draft .fz-alertes-bande--tel .fz-alertes-ico { color: var(--s-red); }
+    html body.fz-draft .fz-alertes-bande--tel .fz-alertes-bande-txt { font: 500 12px/1.2 var(--fzd-font); color: var(--s-ink2); }
+    html body.fz-draft .fz-alertes-bande--tel .fz-alertes-btn {
+        min-height: 28px;
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid var(--s-ink);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--s-ink);
+        font: 600 13px/1 var(--fzd-font);
+    }
+    html body.fz-draft .fz-alertes-bande--tel .fz-alertes-masquer { color: var(--s-dim); background: none; border: 0; }
+
+    /* ---- Onglet Joueurs : recherche + tri, puis les positions ---- */
+    html body.fz-draft .list-filters-sidebar {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px;
+        margin: 8px 10px 0;
+        padding: 0;
+        border: 0;
+        background: none;
+    }
+    html body.fz-draft .list-filters-sidebar .list-filters-search { grid-column: 1; }
+    html body.fz-draft .list-filters-sidebar .list-filters-block--position { display: none; }
+    html body.fz-draft .list-filters-sidebar .list-filters-sort {
+        grid-column: 2;
+        grid-row: 1;
+        width: auto;
+        max-width: 132px;
+    }
+    html body.fz-draft .list-filters-sidebar .fzd-pos-chips { grid-column: 1 / -1; grid-row: 2; }
+
+    /* ---- Tri : une pastille « ⇅ Points » ---- */
+    html body.fz-draft .list-filters-sidebar .list-filters-sort {
+        height: 40px;
+        min-height: 0;
+        padding: 0 26px 0 32px;
+        border: 1px solid var(--s-line);
+        border-radius: 12px;
+        background-color: var(--s-card);
+        background-image:
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23A8A6A3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4'/%3E%3C/svg%3E"),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23A8A6A3' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 9px 50%, right 10px top 50%;
+        background-size: 16px 16px, 10px 10px;
+        color: var(--s-ink2);
+        font: 500 12px/1 var(--fzd-font);
+        -webkit-appearance: none;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    /* La liste : une carte arrondie, son en-tête collé en haut */
+    html body.fz-draft .player-selection-card > #playerTableWrapper,
+    html body.fz-draft .player-selection-card > #fzPickedListWrapper {
+        margin: 8px 10px 10px;
+        border: 1px solid var(--s-line2);
+        border-radius: 16px;
+        background: var(--s-card);
+    }
+    html[data-theme="light"] body.fz-draft .player-selection-card > :is(#playerTableWrapper, #fzPickedListWrapper) { background: var(--s-card); }
+    html body.fz-draft #playerTable#playerTable thead {
+        display: block;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--s-head);
+    }
+    html body.fz-draft #playerTable#playerTable thead tr {
+        display: flex !important;
+        align-items: center;
+        gap: 0;
+        padding: 8px 12px;
+        border: 0;
+        background: none;
+    }
+    html body.fz-draft #playerTable#playerTable thead th {
+        display: none;
+        width: auto;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: 600 0/1 var(--fzd-font);
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        text-align: left;
+        color: var(--s-dim);
+    }
+    html body.fz-draft #playerTable#playerTable thead th { background: transparent !important; box-shadow: none !important; }
+    html body.fz-draft #playerTable#playerTable thead th::before { font-size: 10px; letter-spacing: 1.2px; color: var(--s-dim); }
+    html body.fz-draft #playerTable#playerTable thead th:first-child { display: block; flex: 0 0 26px; width: 26px; min-width: 0; max-width: 26px; }
+    html body.fz-draft #playerTable#playerTable thead th:first-child::before { content: '#'; }
+    html body.fz-draft #playerTable#playerTable thead th:nth-child(2) { display: block; flex: 1 1 auto; min-width: 0; }
+    html body.fz-draft #playerTable#playerTable thead th:nth-child(2)::before { content: 'Joueur'; }
+    /* Calé sur les chiffres : la colonne d'action fait 88px (étoile,
+       « + », marges), dont 12px sont déjà le padding de la rangée. */
+    html body.fz-draft #playerTable#playerTable thead th.points-column { display: block; flex: none; width: auto; min-width: 0; margin-right: 66px; text-align: right; }
+    /* Hors de son tour, pas de « + » : il ne reste que l'étoile. */
+    html body.fz-draft #playerTable#playerTable:not(:has(tbody .select-button)) thead th.points-column { margin-right: 28px; }
+    html body.fz-draft #playerTable#playerTable thead th.points-column::before { content: 'Pts'; }
+
+    html body.fz-draft #playerTable#playerTable tbody tr {
+        border-bottom: 0;
+        border-top: 1px solid var(--s-line2);
+    }
+    html body.fz-draft #playerTable#playerTable tbody tr:hover,
+    html body.fz-draft #playerTable#playerTable tbody tr:has(button.select-button:hover) { background: var(--s-sel); }
+    html body.fz-draft #playerTable#playerTable tbody tr.fzd-selected-row,
+    html body.fz-draft #playerTable#playerTable tbody tr.fzd-selected-row:hover {
+        background: var(--s-sel);
+        box-shadow: none;
+    }
+    html body.fz-draft #playerTable#playerTable tbody td:first-child {
+        flex: 0 0 38px;
+        padding-left: 12px;
+        padding-right: 8px;
+    }
+    html body.fz-draft #playerTable#playerTable tbody td:first-child::before {
+        font: 600 13px/1 var(--fzd-font);
+        letter-spacing: 0;
+        color: var(--s-dim);
+    }
+    html body.fz-draft #playerTable#playerTable tbody tr.fzd-selected-row td:first-child::before { color: var(--s-ink); }
+    html body.fz-draft #playerTable .fzd-name-inner .player-photo,
+    html body.fz-draft #playerTable .fzd-name-inner .player-photo img.face {
+        width: 40px;
+        height: 40px;
+        background-color: var(--s-face);
+    }
+    html body.fz-draft #playerTable .fzd-name-inner .player-photo img.face { object-position: 50% 15%; }
+    html body.fz-draft #playerTable .fzd-name-inner .player-photo img.logo {
+        right: -4px;
+        bottom: -3px;
+        width: 18px !important;
+        height: 18px;
+        border: 0;
+        background: var(--s-card);
+    }
+    html body.fz-draft #playerTable .fzd-name-inner > img.logo {
+        width: 40px !important;
+        height: 40px;
+        border: 0;
+        background: var(--s-face);
+    }
+    html body.fz-draft #playerTable .fzd-name-txt { gap: 5px; }
+    html body.fz-draft #playerTable#playerTable tbody td.points-column {
+        gap: 3px;
+        padding-left: 8px;
+        font: 700 19px/1 var(--fzd-font);
+        color: var(--s-ink);
+    }
+    html body.fz-draft #playerTable#playerTable tbody td.points-column::after {
+        font: 600 9px/1 var(--fzd-font);
+        letter-spacing: 1px;
+        color: var(--s-dim);
+    }
+    html body.fz-draft #playerTable#playerTable tbody td.action-column { padding-left: 8px; padding-right: 12px; }
+    html body.fz-draft #playerTable td.action-column button.favorite-btn { width: 30px; height: 34px; }
+    html body.fz-draft #playerTable td.action-column button.select-button {
+        width: 34px;
+        height: 34px;
+        margin-left: 4px;
+        font: 600 22px/1 var(--fzd-font);
+    }
+
+    /* ---- Onglet Alignement : une carte par position ---- */
+    html body.fz-draft .fzd-rail-head { display: none; }
+    html body.fz-draft .fzd-rail-picker { margin: 8px 10px 0; padding: 0; border: 0; }
+    html body.fz-draft .fzd-rail-picker .fzd-rail-back {
+        margin-top: 6px;
+        font: 600 12px/1 var(--fzd-font);
+        color: var(--s-mute);
+    }
+    html body.fz-draft .fzd-rail-body {
+        gap: 8px;
+        margin: 0;
+        padding: 8px 10px 12px;
+        border: 0;
+    }
+    html body.fz-draft .fzd-group {
+        flex: none;
+        gap: 0;
+        border: 1px solid var(--s-line2);
+        border-radius: 16px;
+        background: var(--s-card);
+        overflow: hidden;
+    }
+    html body.fz-draft .fzd-group-head { padding: 10px 12px 8px; margin: 0; border: 0; }
+    html body.fz-draft .fzd-group-label {
+        font: 800 14px/1 var(--fzd-font-cond);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--s-ink);
+    }
+    html body.fz-draft .fzd-group-count,
+    html body.fz-draft .fzd-group-count.is-empty { font: 600 12px/1 var(--fzd-font); color: var(--s-mute); }
+    html body.fz-draft .fzd-group-count.is-full { color: var(--s-green); }
+    html body.fz-draft .fzd-group-slots { gap: 0; }
+    html body.fz-draft .fzd-slot,
+    html body.fz-draft .fzd-slot.is-empty {
+        gap: 10px;
+        min-height: 0;
+        padding: 8px 12px;
+        border: 0;
+        border-top: 1px solid var(--s-line2);
+        border-radius: 0;
+        background: none;
+    }
+    html body.fz-draft .fzd-slot:not(.is-empty):hover { background: var(--s-sel); }
+    html body.fz-draft .fzd-slot-avatar { width: 36px; height: 36px; flex: none; background: var(--s-face); border-radius: 50%; }
+    html body.fz-draft .fzd-slot-txt { gap: 4px; }
+    html body.fz-draft .fzd-slot-name { font: 600 14px/1.1 var(--fzd-font); color: var(--s-ink); }
+    html body.fz-draft .fzd-slot.is-empty .fzd-slot-name { font: 500 13px/1 var(--fzd-font); color: var(--s-dim); }
+    html body.fz-draft .fzd-slot-meta { font: 400 11px/1 var(--fzd-font); color: var(--s-faint); }
+    html body.fz-draft .fzd-slot-pos { height: 20px; padding: 0 7px; }
+    /* Les comptes de chaque carte disent déjà les limites. */
+    html body.fz-draft .fzd-rail-foot { display: none; }
+
+    /* ---- Onglet Choix : suggestion, puis derniers choix ---- */
+    html body.fz-draft #suggestionCard,
+    html body.fz-draft #recentPicksFeed {
+        margin: 8px 10px 0;
+        padding: 0;
+        border: 1px solid var(--s-line2);
+        border-radius: 18px;
+        background: var(--s-card);
+        overflow: hidden;
+    }
+    html body.fz-draft #recentPicksFeed { margin-bottom: 12px; }
+    html body.fz-draft :is(#suggestionCard, #recentPicksFeed) > .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0;
+        padding: 14px 14px 10px;
+        border: 0;
+    }
+    html body.fz-draft :is(#suggestionCard, #recentPicksFeed) > .card-header h2 {
+        margin: 0;
+        font: 800 17px/1 var(--fzd-font-cond);
+        letter-spacing: .8px;
+        text-transform: uppercase;
+        color: var(--s-ink);
+    }
+    html body.fz-draft #suggestionCard .suggestion-body {
+        margin: 0;
+        padding: 10px 12px 12px;
+        border: 0;
+        border-top: 1px solid var(--s-line2);
+        border-radius: 0;
+        background: none;
+    }
+    html body.fz-draft #suggestionCard .suggestion-empty { padding: 0 14px 14px; color: var(--s-faint); }
+    html body.fz-draft .suggestion-tag { font: 600 10px/1 var(--fzd-font); letter-spacing: 1.2px; color: var(--s-red-ink); }
+    html body.fz-draft .suggestion-name { font: 600 15px/1.15 var(--fzd-font); color: var(--s-ink); }
+    html body.fz-draft .suggestion-meta { font: 400 11px/1.3 var(--fzd-font); color: var(--s-faint); }
+    html body.fz-draft .suggestion-photo { background: var(--s-face); }
+    html body.fz-draft .suggestion-actions button.select-button {
+        border: 0;
+        border-radius: 11px;
+        background: var(--s-ink);
+        color: var(--s-bg);
+        font: 600 14px/1 var(--fzd-font);
+        letter-spacing: 0;
+        text-transform: none;
+    }
+    html body.fz-draft .suggestion-actions button.favorite-btn {
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--s-line);
+        border-radius: 11px;
+        background: none;
+        color: var(--s-mute);
+    }
+    html body.fz-draft .suggestion-actions button.favorite-btn.is-active { color: #E8B26A; }
+    html body.fz-draft .recent-feed-list { gap: 0; }
+    html body.fz-draft #recentPicksFeed .no-picks { padding: 0 14px 14px; color: var(--s-faint); }
+
+    /* ---- Barre du bas : la pilule sous l'icône active ---- */
+    html body.fz-draft .bottom-nav { background: var(--s-card); border-top: 1px solid var(--s-line2); }
+    html body.fz-draft .bottom-nav-item { color: #8E8B88; }
+    html body.fz-draft .bottom-nav-item.active { color: #FF5A4E; }
+    html[data-theme="light"] body.fz-draft .bottom-nav-item { color: var(--s-faint); }
+    html[data-theme="light"] body.fz-draft .bottom-nav-item.active { color: var(--s-red); }
+    html body.fz-draft .bottom-nav-icon {
+        width: 56px;
+        height: 32px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    html body.fz-draft .bottom-nav-item.active .bottom-nav-icon { background: rgba(229, 55, 43, .2); }
+    html body.fz-draft .bottom-nav-label {
+        font: 500 12px/14px var(--fzd-font);
+        letter-spacing: 0;
+        text-transform: none;
+    }
+}
+
+/* ============================================================
+   BUREAU — 1100px et plus
+   ============================================================ */
+@media (min-width: 1100px) {
+    /* Le compte est déjà dans l'en-tête du rail. */
+    html body.fz-draft .fzd-rail-picker-count { display: none; }
+    html body.fz-draft .fzd-rail-picker .fzd-rail-select { padding-right: 36px; }
+
+    /* La tuile du tour : la carte du bandeau téléphone */
+    html body.fz-draft #fzdHero {
+        isolation: isolate;
+        color: #F3F1EE;
+        background:
+            radial-gradient(70% 90% at 100% 0%, rgba(255, 255, 255, .06) 0%, rgba(255, 255, 255, 0) 60%),
+            linear-gradient(135deg, #1D1D20 0%, #151517 55%, #101012 100%);
+    }
+    html body.fz-draft #fzdHero.is-mine {
+        background:
+            linear-gradient(160deg, rgba(255, 72, 56, 0) 22%, rgba(255, 72, 56, .45) 23%, rgba(255, 72, 56, 0) 31%, rgba(255, 72, 56, 0) 38%, rgba(255, 72, 56, .28) 39.5%, rgba(255, 72, 56, 0) 50%),
+            radial-gradient(90% 120% at 0% 100%, rgba(240, 64, 48, .5) 0%, rgba(240, 64, 48, 0) 62%),
+            radial-gradient(70% 90% at 100% 0%, rgba(255, 90, 70, .18) 0%, rgba(255, 90, 70, 0) 60%),
+            linear-gradient(135deg, #2A1213 0%, #171214 55%, #100E10 100%);
+    }
+    html body.fz-draft #fzdHero :is(.fzd-hero-kicker, .fzd-hero-pick) {
+        font: 600 10px/1.2 var(--fzd-font);
+        letter-spacing: 1.2px;
+        opacity: 1;
+        color: #A8A6A3;
+    }
+    html body.fz-draft #fzdHero.is-mine .fzd-hero-kicker { color: #FF8A80; }
+    html body.fz-draft #fzdHero .fzd-hero-team { font: 800 26px/1 var(--fzd-font-cond); letter-spacing: .5px; }
+    html body.fz-draft #fzdHero .fzd-hero-clock {
+        padding: 6px 9px;
+        border-radius: 10px;
+        background: rgba(10, 10, 11, .8);
+        box-shadow: inset 0 0 0 1.5px rgba(217, 154, 94, .8);
+        font: 700 16px/1 var(--fzd-font);
+        color: #E7B07A;
+    }
+    @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+        html body.fz-draft #fzdHero .fzd-hero-clock {
+            background:
+                linear-gradient(160deg, #F6D2A8 0%, #D99A5E 28%, #A8622E 52%, #E7B07A 70%, #8A4A1F 100%) text,
+                rgba(10, 10, 11, .8);
+            -webkit-background-clip: text, padding-box;
+            background-clip: text, padding-box;
+            color: transparent;
+        }
+    }
+    html body.fz-draft #fzdHero .fzd-hero-label { font: 500 10px/1.2 var(--fzd-font); letter-spacing: 1px; color: #A8A6A3; opacity: 1; }
+
+    /* « Repêcher » : l'aplat d'encre */
+    html body.fz-draft #playerTable td.action-column button.select-button {
+        font-family: var(--fzd-font);
+        font-weight: 600;
+        letter-spacing: .3px;
+    }
+}
+
+@keyframes fzdPulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) {
+    html body.fz-draft #turn-banner.your-turn #turn-banner-sub::before { animation: none; }
+}

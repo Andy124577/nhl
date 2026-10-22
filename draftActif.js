@@ -458,10 +458,10 @@ function filterCareerStats(){if(!currentCareerData)return;const e=document.getEl
                 // Le serveur fait foi : à zéro, il choisit, et l'état arrive
                 // par le temps réel. L'horloge ne fait que l'annoncer.
                 const remaining = limit - elapsed;
-                clock.textContent = "· " + (remaining > 0 ? formatRemaining(remaining) : "choix automatique…");
+                clock.textContent = remaining > 0 ? formatRemaining(remaining) : "choix automatique…";
                 clock.classList.toggle("is-long", remaining <= 30000);
             } else {
-                clock.textContent = "· " + formatElapsed(elapsed);
+                clock.textContent = formatElapsed(elapsed);
                 clock.classList.toggle("is-long", elapsed >= SKIP_AFTER_MS);
             }
         }

@@ -228,7 +228,7 @@ function fzRenderSuggestionCard() {
 }
 
 /* ============================================================
-   3. DERNIERS CHOIX — même historique que la vue "Tous", en texte
+   3. DERNIERS CHOIX — même historique que la vue "Tous", en rangées
    ============================================================ */
 
 function fzRenderRecentPicksFeed() {
@@ -249,37 +249,83 @@ function fzRenderRecentPicksFeed() {
         return;
     }
 
+    // Maquette Repêchage : une rangée par choix — numéro, portrait avec le
+    // logo du club, nom, « équipe du pool · club », pastille de position.
+    // Les douze derniers, du plus récent au plus ancien : l'onglet « Choix »
+    // est la seule vue de l'historique sur téléphone.
     const total = historique.length;
-    historique.slice(-3).reverse().forEach((pick, i) => {
+    historique.slice(-12).reverse().forEach((pick, i) => {
         const numero = total - i;
+        const trouve = typeof fzFindRecord === 'function' ? fzFindRecord(pick.player) : null;
+        const estClub = pick.position === 'teams' || pick.position === 'T' || (trouve && trouve.kind === 'team');
+
         const rangee = document.createElement('div');
         rangee.className = 'recent-feed-row';
+
         const slot = document.createElement('span');
         slot.className = 'recent-feed-slot';
-        slot.textContent = 'C' + numero;
+        slot.textContent = numero;
         rangee.appendChild(slot);
+
+        const pastille = document.createElement('span');
+        pastille.className = 'recent-feed-avatar';
+        if (trouve && typeof fzPhotoAndLogo === 'function') {
+            const { photo, logo } = fzPhotoAndLogo(pick.player, trouve.rec, trouve.kind);
+            const src = estClub ? photo : (photo || logo);
+            if (src) {
+                const img = document.createElement('img');
+                img.className = 'recent-feed-face' + (estClub ? ' is-club' : '');
+                img.src = src; img.alt = ''; img.loading = 'lazy';
+                img.addEventListener('error', () => img.remove());
+                pastille.appendChild(img);
+            }
+            if (!estClub && photo && logo) {
+                const badge = document.createElement('img');
+                badge.className = 'recent-feed-logo';
+                badge.src = logo; badge.alt = ''; badge.loading = 'lazy';
+                badge.addEventListener('error', () => badge.remove());
+                pastille.appendChild(badge);
+            }
+        }
+        rangee.appendChild(pastille);
+
         const texte = document.createElement('span');
         texte.className = 'recent-feed-text';
-        const fort = document.createElement('strong');
-        fort.textContent = pick.team;
-        texte.appendChild(fort);
-        texte.appendChild(document.createTextNode(' a repêché '));
         const joueur = document.createElement('span');
         joueur.className = 'recent-feed-player';
         joueur.textContent = pick.player;
-        const estClub = pick.position === 'teams' || pick.position === 'T';
-        if (!estClub && typeof fzMarquerFiche === 'function') fzMarquerFiche(joueur, pick.player, null);
         texte.appendChild(joueur);
-        texte.appendChild(document.createTextNode('.'));
+        const meta = document.createElement('span');
+        meta.className = 'recent-feed-meta';
+        const club = typeof fzDeskAbbrev === 'function' ? fzDeskAbbrev(pick.player, trouve) : '';
+        meta.textContent = [pick.team, estClub ? '' : club].filter(Boolean).join(' · ');
         if (favoris.has(pick.player)) {
             const retire = document.createElement('span');
             retire.className = 'recent-feed-removed';
-            retire.textContent = ' Retiré de vos favoris.';
-            texte.appendChild(retire);
+            retire.textContent = ' · Retiré de vos favoris';
+            meta.appendChild(retire);
         }
+        texte.appendChild(meta);
         rangee.appendChild(texte);
+
+        const code = trouve && typeof fzPositionCode === 'function' ? fzPositionCode(trouve.rec, trouve.kind) : null;
+        if (code && typeof fzDeskBuildTag === 'function') rangee.appendChild(fzDeskBuildTag(code));
+
+        if (!estClub && typeof fzMarquerFiche === 'function') fzMarquerFiche(rangee, pick.player, null);
         liste.appendChild(rangee);
     });
+
+    // Le compte, à droite du titre comme dans la maquette (« 17 faits »).
+    const entete = hote.querySelector('.card-header');
+    if (entete) {
+        let compte = entete.querySelector('.recent-feed-count');
+        if (!compte) {
+            compte = document.createElement('span');
+            compte.className = 'recent-feed-count';
+            entete.appendChild(compte);
+        }
+        compte.textContent = total + ' fait' + (total > 1 ? 's' : '');
+    }
 }
 
 /* ============================================================
