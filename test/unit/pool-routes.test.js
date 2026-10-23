@@ -59,6 +59,32 @@ test('créer un pool inscrit son auteur et refuse un nom déjà pris, accents co
     assert.equal(double.statusCode, 409, 'deux pools que seul un accent distingue seraient intéléphonables');
 });
 
+test('un pool de 20 ramène chaque position à ce que la réserve peut fournir', async () => {
+    const h = banc({});
+    const res = await h.appeler('POST', '/create-clan', {
+        auth: ALICE,
+        body: {
+            name: 'Grande Ligue', maxPlayers: 20, teamName: 'Les Fusées', poolMode: 'head-to-head',
+            config: { numOffensive: 15, numDefensive: 4, numGoalies: 3, numRookies: 2, numTeams: 2, numBench: 5 }
+        }
+    });
+    assert.equal(res.statusCode, 200);
+    const pool = h.lirePool('Grande Ligue');
+    assert.equal(pool.maxPlayers, 20);
+    assert.deepEqual(pool.config, {
+        numOffensive: 12, numDefensive: 4, numGoalies: 1, numRookies: 1, numTeams: 1, numBench: 3
+    });
+});
+
+test('le plafond de participants reste entre 2 et 20, dix par défaut', async () => {
+    const h = banc({});
+    await h.appeler('POST', '/create-clan', { auth: ALICE, body: { name: 'Trop Grand', maxPlayers: 30 } });
+    await h.appeler('POST', '/create-clan', { auth: ALICE, body: { name: 'Sans Plafond', config: { numGoalies: 'deux' } } });
+    assert.equal(h.lirePool('Trop Grand').maxPlayers, 20);
+    assert.equal(h.lirePool('Sans Plafond').maxPlayers, 10);
+    assert.equal(h.lirePool('Sans Plafond').config.numGoalies, 1, 'une valeur illisible reprend le défaut');
+});
+
 test('un nom de pool invalide ou grossier est refusé avant toute écriture', async () => {
     const h = banc({});
     for (const nom of ['ab', 'x'.repeat(31), 'nom<script>']) {

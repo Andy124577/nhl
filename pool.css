@@ -987,7 +987,9 @@ html[data-theme="light"] .draft-ready-badge { background: color-mix(in srgb, var
     gap: 9px;
     margin-top: 11px;
 }
-.cm-seat-dots { display: inline-flex; gap: 4px; flex-shrink: 0; }
+/* Jusqu'à vingt places : les pastilles passent à la ligne plutôt que de
+   pousser le « 3/20 » hors de la modale sur un téléphone. */
+.cm-seat-dots { display: inline-flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
 .cm-seat {
     width: 8px; height: 8px;
     border-radius: 50%;

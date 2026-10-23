@@ -40,8 +40,8 @@ The product runs on the rhythm of an NHL season, and its surfaces belong to dist
 **Confirmed functionality**
 
 - Accounts: signup, login, profile, avatar upload, account data export, account deletion; admin login and admin user-switching.
-- Pools: create (name, optional photo, optional password), join, leave, delete, rename team, change team; 2–10 participants.
-- Configurable roster shape per pool: counts for attaquants, défenseurs, gardiens, rookies, and équipes NHL.
+- Pools: create (name, optional photo, optional password), join, leave, delete, rename team, change team; 2–20 participants.
+- Configurable roster shape per pool: counts for attaquants, défenseurs, gardiens, rookies, and équipes NHL. The maximum per position shrinks as the pool grows, so the league never runs out of useful players (at 20 participants: 12 / 6 / 1 / 1 / 1; see `lib/quotasPool.js`).
 - Two scoring modes: **cumulatif** (most total points at season end) and **head-to-head** (weekly Mon–Sun duels; requires an even participant count). Trades are a per-pool on/off option.
 - Live draft: draft order (including randomization), turn-based picking over socket.io, draft state and completion views.
 - Trades: propose, accept, decline; pending and completed history.

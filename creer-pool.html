@@ -17,12 +17,12 @@
     <script src="fzDialog.js?v=20260926a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
     <link rel="stylesheet" href="index.css?v=20260926b">
-    <link rel="stylesheet" href="pool.css?v=20261022a">
+    <link rel="stylesheet" href="pool.css?v=20261023a">
     <link rel="stylesheet" href="poolNav.css?v=20261003a">
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <!-- Habillage « Fantazy Créer / Rejoindre » : en dernier, il a le mot de la fin. -->
-    <link rel="stylesheet" href="poolForm.css?v=20261022a">
+    <link rel="stylesheet" href="poolForm.css?v=20261023a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -149,6 +149,9 @@
                             <button type="button" class="fzp-step-btn" data-step="1" aria-label="Équipes LNH : un de plus"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
                         </span>
                     </div>
+                    <!-- Rempli par poolForm.js : les maximums suivent le nombre
+                         de participants (lib/quotasPool.js). -->
+                    <p class="fzp-hint fzp-quota-hint" id="fzpQuotaHint" aria-live="polite"></p>
             </div>
         </section>
 
@@ -177,6 +180,16 @@
                         <option value="8">8 participants</option>
                         <option value="9">9 participants</option>
                         <option value="10" selected>10 participants</option>
+                        <option value="11">11 participants</option>
+                        <option value="12">12 participants</option>
+                        <option value="13">13 participants</option>
+                        <option value="14">14 participants</option>
+                        <option value="15">15 participants</option>
+                        <option value="16">16 participants</option>
+                        <option value="17">17 participants</option>
+                        <option value="18">18 participants</option>
+                        <option value="19">19 participants</option>
+                        <option value="20">20 participants</option>
                     </select>
                 </div>
                 <div class="fzp-seats" id="fzpSeats" aria-hidden="true"></div>
@@ -286,7 +299,10 @@
     <!-- Filtre de grossieretes, partage avec le serveur. Charge avant
          equipes.js, qui s'en sert. -->
     <script src="profanity.js"></script>
-    <script defer src="equipes.js?v=20261022b"></script>
+    <!-- Maximums par position selon la taille du pool, partagés avec le
+         serveur. Chargé avant equipes.js et poolForm.js, qui s'en servent. -->
+    <script src="lib/quotasPool.js?v=20261023a"></script>
+    <script defer src="equipes.js?v=20261023a"></script>
     <script defer src="navbar.js?v=20261023b"></script>
     <script defer src="installerApp.js?v=20261010a"></script>
     <script defer src="avatars.js"></script>
@@ -294,6 +310,6 @@
     <script defer src="poolNav.js?v=20261022a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20261023a"></script>
-    <script defer src="poolForm.js?v=20261022a"></script>
+    <script defer src="poolForm.js?v=20261023a"></script>
 </body>
 </html>

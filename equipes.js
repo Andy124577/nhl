@@ -308,8 +308,10 @@ async function createClan() {
     // ne donne que les couleurs, elle ne remplit pas cette case.
     const numTeams = parseInt($("#numTeams").val());
     const poolMode = $('input[name="poolMode"]:checked').val();
+    // Les maximums suivent la taille du pool (lib/quotasPool.js), comme au serveur.
+    const maximums = window.FZQuotas ? FZQuotas.maximumsPour(maxPlayers) : null;
     const numBench = poolMode === 'head-to-head'
-        ? Math.min(5, Math.max(0, parseInt($("#numBench").val(), 10) || 0)) : 0;
+        ? Math.min(maximums ? maximums.numBench : 5, Math.max(0, parseInt($("#numBench").val(), 10) || 0)) : 0;
     const allowTrades = $("#allowTrades").is(':checked');
     const poolPassword = ($("#poolPassword").val() || "").trim();
     const aDateRepechage = $('input[name="draftWhen"]:checked').val() === 'date';
@@ -344,6 +346,23 @@ async function createClan() {
     if (numOffensive < 0 || numDefensive < 0 || numGoalies < 0 || numRookies < 0 || numTeams < 0) {
         return refuser('Configuration invalide', 'Le nombre de joueurs par position ne peut pas être négatif.');
     }
+    // Le « + » respecte déjà ces maximums ; ceci rattrape une saisie au
+    // clavier, que le serveur ramènerait sinon sans rien dire.
+    if (maximums) {
+        const trop = [
+            [numOffensive, 'numOffensive', 'attaquant'], [numDefensive, 'numDefensive', 'défenseur'],
+            [numGoalies, 'numGoalies', 'gardien'], [numRookies, 'numRookies', 'recrue'],
+            [numTeams, 'numTeams', 'équipe LNH']
+        ].find(([valeur, cle]) => valeur > maximums[cle]);
+        if (trop) {
+            const [, cle, libelle] = trop;
+            const max = maximums[cle];
+            const nom = max > 1 ? libelle.replace(/^(\S+)/, '$1s') : libelle;
+            return refuser('Trop de joueurs',
+                `À ${maxPlayers} participants, chaque équipe peut avoir au plus ${max} ${nom} : il n’y en aurait pas assez pour tout le monde.`,
+                `#${cle}`);
+        }
+    }
 
     if (typeof contientGrossierete === 'function' && contientGrossierete(clanName)) {
         return refuser('Nom de pool refusé', 'Ce nom contient un terme inapproprié. Choisissez-en un autre.', '#clanName');
@@ -372,7 +391,7 @@ async function createClan() {
     // toujours partir. Le serveur vérifie la parité des équipes au départ.
     if (poolMode === 'head-to-head' && maxPlayers % 2 !== 0) {
         return refuser('Nombre pair requis',
-            'En tête-à-tête, les duels se jouent à deux : choisissez un maximum pair (2, 4, 6, 8 ou 10).', '#maxPlayers');
+            'En tête-à-tête, les duels se jouent à deux : choisissez un maximum pair, de 2 à 20.', '#maxPlayers');
     }
 
     const poolConfig = {

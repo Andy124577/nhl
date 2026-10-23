@@ -96,10 +96,14 @@
     /**
      * Une couleur par équipe, la même partout : sa pastille parmi les
      * participants, sa part de la roue, son rang dans l'ordre. Des teintes
-     * qui portent toutes un texte blanc lisible.
+     * qui portent toutes un texte blanc lisible. Vingt, une par place
+     * possible : au-delà de dix, la onzième équipe ne reprend plus la
+     * couleur de la première.
      */
     const TEINTES = ['#c0392b', '#1f5fbf', '#1e8449', '#7d3c98', '#b35309',
-        '#117a8b', '#a93266', '#4d6320', '#34495e', '#8e5a1f'];
+        '#117a8b', '#a93266', '#4d6320', '#34495e', '#8e5a1f',
+        '#283593', '#880e4f', '#0277bd', '#86198f', '#00695c',
+        '#7b6a00', '#5d4037', '#bf360c', '#be185d', '#455a64'];
 
     function teinteDe(poolData, nom) {
         const rang = equipesEligibles(poolData).findIndex(([n]) => n === nom);
@@ -284,8 +288,8 @@
             return `${(R * Math.sin(rad)).toFixed(2)} ${(-R * Math.cos(rad)).toFixed(2)}`;
         };
         // Le nom court du moyeu au bord : moins de place quand les parts s'amincissent.
-        const taille = n <= 4 ? 15 : n <= 8 ? 12 : 10;
-        const lettres = n <= 4 ? 9 : n <= 8 ? 11 : 12;
+        const taille = n <= 4 ? 15 : n <= 8 ? 12 : n <= 12 ? 10 : 8;
+        const lettres = n <= 4 ? 9 : n <= 8 ? 11 : n <= 12 ? 12 : 10;
         const court = nom => (nom.length > lettres ? `${nom.slice(0, lettres - 1)}…` : nom);
         const parts = equipes.map((nom, i) => {
             const teinte = teinteDe(pool.data, nom);

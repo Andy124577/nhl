@@ -259,6 +259,8 @@ html[data-theme="light"] .fz-pool-form .fzp-seats > span:not(.is-on):not(.is-me)
 .fzp-choice.is-tile strong { line-height: 1; }
 .fzp-bench { margin-top: 8px; }
 .fzp-bench-hint { padding: 0 14px 12px; }
+.fzp-quota-hint { padding: 10px 14px 12px; border-top: 1px solid var(--s-line2); }
+.fzp-quota-hint:empty { display: none; }
 .fzp-warn {
     margin: 8px 10px 0; padding: 10px 12px; border-radius: 12px;
     background: rgba(224, 179, 65, .1); color: var(--s-ink2); font: 400 12px/16px 'Saira', sans-serif;

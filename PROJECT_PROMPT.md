@@ -12,7 +12,7 @@ Contact address for the project: `fantazyhockey@outlook.com`.
 
 ## What the product is
 
-Fantazy lets a group of 2 to 10 people run a full NHL fantasy season together: create or join a pool, draft a roster in a live turn-based draft, trade players, and follow the standings until the season ends.
+Fantazy lets a group of 2 to 20 people run a full NHL fantasy season together: create or join a pool, draft a roster in a live turn-based draft, trade players, and follow the standings until the season ends.
 
 The **live draft is the product**. It is the one synchronous, everyone-is-watching moment, and a pool that stalls there never becomes a season. When draft-room needs conflict with another surface's needs, the draft room wins.
 

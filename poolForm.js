@@ -5,6 +5,7 @@
    toujours les mêmes champs. On ne fait que les piloter :
    - les boutons − / + des quantités, bornés par min / max du champ ;
    - le maximum de participants, dont le <select> reste la source ;
+   - le max de chaque position, qui baisse quand le pool grandit ;
    - l'interrupteur du mot de passe (éteint = champ vidé = pool ouvert) ;
    - le total « N choix / équipe » et le bouton du bas, qui dit ce qui
      manque tant que le pool et l'équipe n'ont pas de nom.
@@ -34,6 +35,35 @@
         const total = POSITIONS.reduce((s, id) => s + (parseInt(($id(id) || {}).value, 10) || 0), 0);
         const cible = $id('fzpTotal');
         if (cible) cible.textContent = `${total} choix / équipe`;
+    }
+
+    /**
+     * Les maximums par position suivent le nombre de participants
+     * (lib/quotasPool.js, que le serveur applique aussi) : à 20, la réserve
+     * ne fournit qu'un gardien, une recrue et un club par équipe. Une valeur
+     * au-dessus du nouveau maximum y redescend, et la phrase sous
+     * l'alignement dit pourquoi le « + » est grisé.
+     */
+    function majMaximums() {
+        const select = $id('maxPlayers');
+        if (!window.FZQuotas || !select) return;
+        const n = Number(select.value);
+        const max = FZQuotas.maximumsPour(n);
+        [...POSITIONS, 'numBench'].forEach(id => {
+            const champ = $id(id);
+            if (!champ) return;
+            champ.max = max[id];
+            champ.value = borne(champ, parseInt(champ.value, 10));
+            const stepper = champ.closest('[data-stepper]');
+            if (stepper) majStepper(stepper);
+        });
+        majTotal();
+        const note = $id('fzpQuotaHint');
+        if (note) {
+            note.textContent = `À ${n} participants : jusqu’à ${max.numOffensive} ATT · ${max.numDefensive} DÉF · `
+                + `${max.numGoalies} GAR · ${max.numRookies} REC · ${max.numTeams} ÉQ par équipe, `
+                + 'pour que chacune repêche des joueurs qui jouent.';
+        }
     }
 
     /** Participants : une barre par place possible, la sienne en premier. */
@@ -117,6 +147,7 @@
                 majParticipants();
             });
             select.addEventListener('change', majParticipants);
+            select.addEventListener('change', majMaximums);
         }
 
         const pw = $id('fzpPwToggle');
@@ -128,6 +159,7 @@
 
         ['clanName', 'teamName'].forEach(id => $id(id).addEventListener('input', majBouton));
 
+        majMaximums();
         majTotal();
         majParticipants();
         majBouton();

@@ -20,6 +20,7 @@ const bcrypt = require('bcryptjs');
 const { contientGrossierete } = require('../profanity.js');
 const authz = require('../lib/authz.js');
 const poolOps = require('../lib/poolOps.js');
+const quotasPool = require('../lib/quotasPool.js');
 const evenements = require('../lib/events.js');
 const { checkIfDraftComplete } = require('../lib/draft.js');
 const { seasonIdForDate } = require('../lib/season.js');
@@ -291,17 +292,24 @@ function monter(app, ctx) {
 
             const mode = poolMode === 'head-to-head' ? 'head-to-head' : 'cumulative';
             // Un plafond, pas un quota : le repêchage peut partir avant qu'il
-            // soit atteint. Borné comme le formulaire, 2 à 10.
+            // soit atteint. Borné comme le formulaire, 2 à 20.
             const plafond = Math.min(poolOps.PARTICIPANTS_MAX,
-                Math.max(2, parseInt(maxPlayers, 10) || poolOps.PARTICIPANTS_MAX));
+                Math.max(2, parseInt(maxPlayers, 10) || poolOps.PARTICIPANTS_PAR_DEFAUT));
 
+            // Chaque position est bornée par ce que la réserve de joueurs peut
+            // fournir à un pool de cette taille (lib/quotasPool.js), là même où
+            // le formulaire grise son « + ». Sinon le repêchage ne finit pas.
+            const maximums = quotasPool.maximumsPour(plafond);
             const quotas = { ...poolOps.CONFIG_PAR_DEFAUT, ...(config || {}) };
-            if (quotas.numTeams == null) quotas.numTeams = 1;
+            for (const [cle, parDefaut] of Object.entries(poolOps.CONFIG_PAR_DEFAUT)) {
+                const n = parseInt(quotas[cle], 10);
+                quotas[cle] = Number.isFinite(n) ? Math.min(maximums[cle], Math.max(0, n)) : parDefaut;
+            }
             // Le banc n'existe qu'en tête-à-tête : il n'y a rien à remplacer
             // dans un cumulatif, où chaque point de la saison compte déjà.
             const banc = parseInt(quotas.numBench, 10);
             if (mode === 'head-to-head' && Number.isFinite(banc) && banc > 0) {
-                quotas.numBench = Math.min(banc, 5);
+                quotas.numBench = Math.min(banc, maximums.numBench);
             } else {
                 delete quotas.numBench;
             }
