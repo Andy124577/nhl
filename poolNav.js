@@ -47,12 +47,12 @@
 
     // « Mes pools » n'est plus une page : la liste des pools est ce rail
     // lui-même, et tout ce qui porte sur l'un d'eux tient dans la fiche
-    // ouverte d'un clic sur son nom (poolSettings.js). Reste ici « Participants », qui ouvre ce
-    // même panneau sur l'onglet du même nom — qui est inscrit, et le nom de
-    // sa propre équipe. Il s'appelait « Mon équipe », ce qu'on lisait comme
-    // « mes joueurs » : l'alignement, lui, est au Classement.
+    // ouverte d'un clic sur son nom (poolSettings.js). Reste ici « Mon pool », qui ouvre cette
+    // page sur l'onglet Équipes — qui est inscrit, avec quels choix, et le
+    // nom de sa propre équipe. Il s'est appelé « Mon équipe », puis
+    // « Participants ».
     const LIENS_GESTION = [
-        { onglet: 'equipes',           icone: 'reglages', titre: 'Participants',      detail: 'Qui joue, nom de mon équipe' },
+        { onglet: 'equipes',           icone: 'reglages', titre: 'Mon pool',          detail: 'Équipes, alignements, règles' },
         { href: 'creer-pool.html',     icone: 'plus',     titre: 'Créer un pool',     detail: 'Nouvelle ligue' },
         { href: 'rejoindre-pool.html', icone: 'entrer',   titre: 'Rejoindre un pool', detail: 'Ligues ouvertes' }
     ];
