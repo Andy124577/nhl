@@ -1,0 +1,478 @@
+/* ============================================================
+   MON POOL — pool.html?onglet=…, maquette « Fantazy Pool »
+   ------------------------------------------------------------
+   Même langage que l'accueil de saison (accueil-season.css) : Saira,
+   intertitres Saira Condensed, gris chauds, cartes arrondies, rouge
+   réservé à sa propre équipe et à l'onglet ouvert. La carte d'état de
+   l'aperçu reste sombre dans les deux thèmes, comme « Ma position ».
+
+   Chargé APRÈS poolSettings.css et poolPage.css. Les pièces encore
+   dessinées en ps-* (mot de passe, Inviter, Identité, saisons) suivent
+   par les jetons d'index.css, remappés ici sur les --s-*.
+
+   Téléphone : une colonne pleine largeur. Bureau : la même colonne,
+   centrée, plus large.
+   ============================================================ */
+
+body.fz-pool-page {
+    --s-bg: #0B0B0C;
+    --s-card: #141416;
+    --s-raise: #1B1B1E;
+    --s-line: #1F1F23;
+    --s-chip: #1F1F23;
+    --s-av: #2A2A2F;
+    --s-ink: #F3F1EE;
+    --s-ink2: #C9C7C4;
+    --s-mute: #A8A6A3;
+    --s-soft: #8E8B88;
+    --s-faint: #7E7C79;
+    --s-dim: #5A5A60;
+    --s-red: #E5372B;
+    --s-red-soft: rgba(229, 55, 43, .2);
+    --s-red-tint: rgba(229, 55, 43, .08);
+    --s-red-line: rgba(229, 55, 43, .5);
+    --s-red-ink: #FF8A80;
+    --s-hot: #FF5A4E;
+    --s-green: #7FD49B;
+    --s-gold: #E8B26A;
+    --s-lock: #E0B341;
+    /* Les positions : ATT, DÉF, GAR, REC, ÉQ, BANC. */
+    --p-att: 156, 201, 255;
+    --p-def: 201, 162, 255;
+    --p-gar: 255, 138, 128;
+    --p-rec: 232, 178, 106;
+    --p-eq: 110, 220, 215;
+    --p-banc: 168, 166, 163;
+    --p-alpha: .16;
+    background: var(--s-bg);
+}
+html[data-theme="light"] body.fz-pool-page {
+    --s-bg: #F3F2EF;
+    --s-card: #FFFFFF;
+    --s-raise: #F6F5F2;
+    --s-line: #E8E6E2;
+    --s-chip: #EEECE8;
+    --s-av: #E6E4E0;
+    --s-ink: #141416;
+    --s-ink2: #34343A;
+    --s-mute: #5E5C59;
+    --s-soft: #6A6764;
+    --s-faint: #74716D;
+    --s-dim: #A29F9A;
+    --s-red: #D52B1E;
+    --s-red-soft: rgba(213, 43, 30, .1);
+    --s-red-tint: rgba(213, 43, 30, .05);
+    --s-red-line: rgba(213, 43, 30, .45);
+    --s-red-ink: #B3241A;
+    --s-hot: #C42A1E;
+    --s-green: #1D8048;
+    --s-gold: #976111;
+    --s-lock: #976111;
+    --p-att: 37, 99, 171;
+    --p-def: 112, 66, 184;
+    --p-gar: 184, 50, 40;
+    --p-rec: 146, 92, 18;
+    --p-eq: 18, 122, 116;
+    --p-banc: 94, 92, 89;
+    --p-alpha: .1;
+}
+
+/* Les pièces ps-* (poolSettings.css) lisent les jetons d'index.css. */
+.pp-page[data-vue="pool"] {
+    --card: var(--s-card);
+    --card-white: var(--s-raise);
+    --bg: var(--s-bg);
+    --bg-hover: var(--s-raise);
+    --text-main: var(--s-ink);
+    --text-secondary: var(--s-mute);
+    --text-gray: var(--s-faint);
+    --text-light-gray: var(--s-dim);
+    --border-light: var(--s-line);
+    --primary: var(--s-red);
+    --primary-deep: var(--s-red);
+    --primary-text: var(--s-red-ink);
+    --danger: var(--s-red-ink);
+    --success: var(--s-green);
+    max-width: 760px;
+    padding: 0 0 calc(40px + env(safe-area-inset-bottom));
+    color: var(--s-ink);
+    font: 400 14px/1.35 'Saira', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+.pp-page[data-vue="pool"] :is(h1, h2, p) { margin: 0; }
+.pp-page[data-vue="pool"] :is(a, button):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
+.mp-ico { flex: none; display: block; }
+
+/* ---- En-tête : vignette, état, nom, format ---- */
+.mp-head { display: flex; align-items: center; gap: 14px; padding: 18px 16px 0; }
+.mp-logo {
+    position: relative;
+    flex: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #3A1A1C, #1A1214);
+    border: 1px solid #2A1A1C;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mp-logo::before { content: attr(data-lettre); font: 800 24px/1 'Saira Condensed', sans-serif; color: #FF8A80; }
+.mp-logo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mp-head-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.mp-eyebrow { display: flex; align-items: center; gap: 6px; font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1.4px; text-transform: uppercase; color: var(--s-faint); }
+.mp-eyebrow.is-active { color: var(--s-green); }
+.mp-eyebrow.is-active::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.mp-title {
+    font: 800 30px/30px 'Saira Condensed', sans-serif;
+    text-transform: uppercase;
+    color: var(--s-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mp-head-sub { display: flex; align-items: center; gap: 6px; font: 500 12px/1.2 'Saira', sans-serif; color: var(--s-soft); }
+.mp-lock { color: var(--s-lock); display: inline-flex; }
+
+/* ---- Onglets ---- */
+.mp-tabs {
+    display: flex;
+    margin: 16px 0 0;
+    padding: 0 10px;
+    background: var(--s-bg);
+    border-bottom: 1px solid var(--s-line);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.mp-tabs::-webkit-scrollbar { display: none; }
+.mp-tab {
+    position: relative;
+    flex: 1 0 auto;
+    min-width: 72px;
+    height: 44px;
+    padding: 0 10px;
+    border: 0;
+    background: none;
+    color: var(--s-faint);
+    font: 600 14px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+.mp-tab:hover { color: var(--s-ink); }
+.mp-tab.is-active { color: var(--s-ink); }
+.mp-tab.is-active::after { content: ''; position: absolute; left: 16px; right: 16px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--s-red); }
+
+.mp-body { padding: 0 10px; }
+.mp-pane { display: flex; flex-direction: column; }
+
+/* ---- Pièces communes ---- */
+.mp-card { margin: 0; padding: 0; list-style: none; border-radius: 18px; background: var(--s-card); border: 1px solid var(--s-line); overflow: hidden; }
+.mp-sh { display: flex; align-items: center; gap: 10px; margin: 24px 6px 10px; color: var(--s-red); }
+.mp-sh h2 { flex: 1; font: 800 18px/20px 'Saira Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-ink); }
+.mp-sh-count { font: 500 12px/1 'Saira', sans-serif; color: var(--s-faint); }
+.mp-sh-hot { font: 600 12px/1 'Saira', sans-serif; color: var(--s-hot); }
+.mp-note { display: flex; gap: 8px; margin: 12px 6px 0; font: 400 12px/17px 'Saira', sans-serif; color: var(--s-faint); text-wrap: pretty; }
+.mp-note .mp-ico { color: var(--s-dim); margin-top: 1px; }
+.mp-empty { padding: 24px 14px; text-align: center; color: var(--s-faint); }
+
+.mp-av {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--s-av);
+    color: var(--s-ink2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 800 12px/1 'Saira Condensed', sans-serif;
+}
+.mp-av.is-lg { width: 40px; height: 40px; font-size: 13px; }
+.mp-av.is-mine { background: var(--s-ink); color: var(--s-bg); }
+
+.mp-pos {
+    flex: none;
+    width: 40px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 800 11px/1 'Saira Condensed', sans-serif;
+    letter-spacing: .5px;
+}
+:is(.mp-pos, .mp-slot).mp-pos-att { --p: var(--p-att); }
+:is(.mp-pos, .mp-slot).mp-pos-def { --p: var(--p-def); }
+:is(.mp-pos, .mp-slot).mp-pos-gar { --p: var(--p-gar); }
+:is(.mp-pos, .mp-slot).mp-pos-rec { --p: var(--p-rec); }
+:is(.mp-pos, .mp-slot).mp-pos-eq { --p: var(--p-eq); }
+:is(.mp-pos, .mp-slot).mp-pos-banc { --p: var(--p-banc); }
+.mp-pos { background: rgba(var(--p), var(--p-alpha)); color: rgb(var(--p)); }
+
+/* ---- Aperçu : la carte d'état, sombre dans les deux thèmes ---- */
+.mp-hero {
+    position: relative;
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 22px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: #F3F1EE;
+    background:
+        radial-gradient(90% 120% at 0% 100%, rgba(240, 64, 48, .5) 0%, rgba(240, 64, 48, 0) 62%),
+        radial-gradient(70% 90% at 100% 0%, rgba(255, 90, 70, .18) 0%, rgba(255, 90, 70, 0) 60%),
+        linear-gradient(135deg, #2A1213 0%, #171214 55%, #100E10 100%);
+}
+.mp-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(160deg, rgba(255, 72, 56, 0) 0%, rgba(255, 72, 56, 0) 22%, rgba(255, 72, 56, .6) 23%, rgba(255, 72, 56, 0) 31%, rgba(255, 72, 56, 0) 38%, rgba(255, 72, 56, .38) 39.5%, rgba(255, 72, 56, 0) 50%);
+}
+.mp-hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 62%;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(255, 255, 255, .13) 1px, rgba(255, 255, 255, 0) 1.5px);
+    background-size: 9px 9px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+}
+.mp-hero > * { position: relative; z-index: 1; }
+.mp-hero-txt { display: flex; flex-direction: column; gap: 6px; }
+.mp-pill {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(229, 55, 43, .2);
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #FF8A80;
+}
+.mp-pill-pret { background: rgba(127, 212, 155, .16); color: #7FD49B; }
+.mp-pill-attente { background: rgba(232, 178, 106, .16); color: #E8B26A; }
+.mp-hero-line { font: 400 13px/18px 'Saira', sans-serif; color: #C9C7C4; text-wrap: pretty; }
+.mp-hero-line strong { color: #F3F1EE; font-weight: 600; }
+.mp-progress { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; margin-top: 4px; }
+.mp-progress i { display: block; height: 100%; background: #E5372B; border-radius: 2px; }
+.mp-stats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 0; border-radius: 14px; background: rgba(10, 10, 11, .45); }
+.mp-stat { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; padding: 0 4px; }
+.mp-stat + .mp-stat { border-left: 1px solid rgba(255, 255, 255, .08); }
+.mp-stat strong { font: 800 18px/1 'Saira Condensed', sans-serif; color: #F3F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.mp-stat strong.is-hot { color: #FF8A80; }
+.mp-stat small { font: 600 9px/1 'Saira', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: #8E8B88; white-space: nowrap; }
+.pp-page a.mp-cta,
+.pp-page a.mp-cta:visited,
+.pp-page a.mp-cta:hover {
+    height: 46px;
+    border-radius: 13px;
+    background: #F3F1EE;
+    color: #0B0B0C;
+    font: 600 15px/1 'Saira', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+}
+.pp-page a.mp-cta:hover { background: #FFFFFF; }
+
+/* ---- Aperçu : les équipes en une ligne chacune ---- */
+.mp-rows li + li { border-top: 1px solid var(--s-line); }
+.mp-row {
+    width: 100%;
+    min-height: 60px;
+    border: 0;
+    background: transparent;
+    color: var(--s-ink);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px 10px 14px;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+}
+.mp-row:hover { background: var(--s-raise); }
+.mp-row.is-mine { background: var(--s-red-tint); }
+.mp-row > .mp-ico { color: var(--s-dim); }
+.mp-rank { flex: none; width: 20px; font: 800 16px/1 'Saira Condensed', sans-serif; color: var(--s-soft); }
+.mp-rank.is-first { color: var(--s-gold); }
+.mp-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.mp-row-name { display: flex; align-items: center; gap: 6px; min-width: 0; font: 600 15px/1.1 'Saira', sans-serif; }
+.mp-row-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-row-meta { font: 400 12px/1.2 'Saira', sans-serif; color: var(--s-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-tag { flex: none; height: 18px; padding: 0 6px; border-radius: 5px; background: var(--s-red-soft); color: var(--s-red-ink); font: 700 10px/18px 'Saira', sans-serif; letter-spacing: .6px; text-transform: uppercase; }
+.mp-admin { flex: none; color: var(--s-soft); display: inline-flex; }
+.mp-row-pts { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.mp-row-pts strong { font: 700 18px/1 'Saira', sans-serif; }
+.mp-row-pts small { font: 600 9px/1 'Saira', sans-serif; letter-spacing: 1px; color: var(--s-faint); }
+
+/* ---- Aperçu : inviter ---- */
+.mp-invite { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; }
+.mp-invite-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 6px 0; }
+.mp-invite-txt small { font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--s-faint); }
+.mp-invite-txt strong { font: 800 20px/1.05 'Saira Condensed', sans-serif; letter-spacing: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-copy {
+    flex: none;
+    height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--s-chip);
+    color: var(--s-ink);
+    font: 600 13px/1 'Saira', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+.mp-copy:hover { background: var(--s-av); }
+.mp-copy.is-done { color: var(--s-green); }
+.mp-more {
+    align-self: flex-start;
+    margin: 10px 6px 0;
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    color: var(--s-mute);
+    font: 600 13px/1 'Saira', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+.mp-more:hover { color: var(--s-ink); }
+
+/* ---- Équipes : une carte par équipe, alignement dépliable ---- */
+.mp-teams { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.mp-team.is-mine { border-color: var(--s-red-line); }
+.mp-team.is-focus { box-shadow: 0 0 0 2px var(--s-red-line); }
+.mp-team-head {
+    position: relative;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 6px 10px 14px;
+    cursor: pointer;
+}
+.mp-team-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.mp-team-name { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; font: 600 15px/1.1 'Saira', sans-serif; color: var(--s-ink); }
+.mp-team-name .ps-team-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-team-meta { font: 400 12px/1.2 'Saira', sans-serif; color: var(--s-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-team-count { flex: none; font: 600 12px/1 'Saira', sans-serif; color: var(--s-soft); }
+.mp-edit,
+.mp-team-name .ps-icon-btn {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    margin: -6px 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--s-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.mp-edit:hover { color: var(--s-ink); background: var(--s-raise); }
+.mp-edit[hidden] { display: none; }
+.mp-team-name .ps-icon-btn.is-ok { color: var(--s-green); }
+.mp-team-name .ps-rename-input {
+    min-width: 0;
+    flex: 1;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--s-line);
+    border-radius: 9px;
+    background: var(--s-raise);
+    color: var(--s-ink);
+    font: 600 14px/1 'Saira', sans-serif;
+}
+.mp-team-toggle {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--s-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.mp-team-toggle .mp-ico { transition: transform .15s; }
+.mp-team.is-open .mp-team-toggle .mp-ico { transform: rotate(180deg); }
+.mp-roster { border-top: 1px solid var(--s-line); padding: 6px 14px 12px; display: flex; flex-direction: column; }
+.mp-roster[hidden] { display: none; }
+.mp-roster-row { display: flex; gap: 10px; padding: 8px 0; }
+.mp-roster-row + .mp-roster-row { border-top: 1px solid var(--s-line); }
+.mp-roster-names { flex: 1; font: 400 13px/20px 'Saira', sans-serif; color: var(--s-ink2); text-wrap: pretty; }
+.mp-roster-empty { padding: 8px 0 2px; font: 400 13px/18px 'Saira', sans-serif; color: var(--s-faint); }
+
+/* ---- Règles ---- */
+.mp-facts { margin-top: 12px; }
+.mp-fact + .mp-fact { border-top: 1px solid var(--s-line); }
+.mp-fact-row { min-height: 50px; display: flex; align-items: center; gap: 12px; padding: 0 14px; }
+.mp-fact-row .mp-ico { color: var(--s-faint); }
+.mp-fact-k { flex: 1; min-width: 0; font: 400 14px/1.2 'Saira', sans-serif; color: var(--s-mute); }
+.mp-fact-row strong { font: 600 14px/1.2 'Saira', sans-serif; color: var(--s-ink); text-align: right; }
+.mp-fact-access { padding-bottom: 12px; }
+.mp-fact-access .ps-access-tools { padding: 0 14px 0 45px; }
+.mp-fact-access :is(.ps-mdp-edit, .ps-note, .ps-msg) { margin-left: 45px; margin-right: 14px; }
+.mp-slots { display: grid; grid-template-columns: repeat(var(--n, 5), 1fr); gap: 6px; }
+.mp-slot { border-radius: 14px; background: rgba(var(--p), var(--p-alpha)); padding: 12px 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mp-slot strong { font: 800 24px/1 'Saira Condensed', sans-serif; color: var(--s-ink); }
+.mp-slot span { font: 800 11px/1 'Saira Condensed', sans-serif; letter-spacing: .6px; color: rgb(var(--p)); }
+
+/* Saisons passées, nouvelle saison, Inviter, Identité : les blocs ps-*
+   prennent la carte de la page. */
+.mp-body .ps-block { margin: 12px 0 0; padding: 14px; border-radius: 18px; background: var(--s-card); border: 1px solid var(--s-line); }
+.mp-body .ps-block-title { font: 800 18px/20px 'Saira Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-ink); }
+.mp-body .ps-note { color: var(--s-faint); font-size: 12px; line-height: 17px; }
+.mp-body :is(.ps-input, .ps-search) { background: var(--s-raise); border-color: var(--s-line); border-radius: 12px; color: var(--s-ink); }
+.mp-body :is(.ps-primary, .ps-invite-btn) { border-radius: 12px; font-family: 'Saira', sans-serif; }
+.mp-body .ps-secondary { border-radius: 12px; background: var(--s-chip); border-color: transparent; font-family: 'Saira', sans-serif; }
+.mp-body .ps-link-btn { color: var(--s-red-ink); font-family: 'Saira', sans-serif; }
+.mp-body .ps-pane[data-pane="inviter"],
+.mp-body .ps-pane[data-pane="identite"] { display: flex; flex-direction: column; }
+
+/* ---- Bureau : la même colonne, plus d'air ---- */
+@media (min-width: 900px) {
+    .pp-page[data-vue="pool"] { padding-top: 12px; }
+    .mp-head { padding: 24px 6px 0; gap: 18px; }
+    .mp-logo { width: 72px; height: 72px; border-radius: 18px; }
+    .mp-title { font-size: 38px; line-height: 38px; }
+    .mp-tabs { padding: 0; }
+    .mp-tab { flex: 0 0 auto; padding: 0 18px; }
+    .mp-body { padding: 0; }
+    .mp-hero { padding: 22px; gap: 18px; }
+    .mp-stat strong { font-size: 24px; }
+    .mp-stat small { font-size: 10px; }
+    .mp-cta { align-self: flex-start; padding: 0 22px; }
+}
+
+/* ---- Chargement : le squelette de pool.html (data-vue="pool") ---- */
+.mp-sk-eyebrow { width: 74px; height: 10px; }
+.mp-sk-title { width: 190px; max-width: 100%; height: 28px; border-radius: 6px; }
+.mp-sk-sub { width: 210px; max-width: 100%; height: 11px; }
+.mp-sk-hero { min-height: 196px; }
+.mp-sk-name { width: var(--w); height: 14px; }
+.mp-sk-meta { width: var(--w); height: 10px; }
+.pp-sk .mp-row { cursor: default; }

@@ -43,8 +43,6 @@ let partnerSearchTerm = '';
 let forSaleListings = [];
 let forSaleFilterActive = false;
 
-let teamSwitcherOpen = false;
-
 // Player images & stats. fullPlayerData/goalieData (nhl_filtered_stats.json)
 // only serve photos: resolveHeadshotByName (headshots.js) falls back on them
 // for rookies who have no line in /current-stats yet.
@@ -90,10 +88,16 @@ function statColsFor(player) {
 }
 
 function metaFor(player) {
-    if (player.category === 'T') return 'Équipe NHL';
+    if (player.category === 'T') return 'Équipe LNH';
     const stats = getPlayerCurrentStats(player.name);
     const abbrev = stats?.teamAbbrev && stats.teamAbbrev !== 'N/A' ? stats.teamAbbrev : '';
     return [getCategoryLabel(player.category), abbrev].filter(Boolean).join(' · ');
+}
+
+/** Ligne sous le nom : pastille de position, puis le club. */
+function metaTagHTML(player) {
+    const club = player.category === 'T' ? 'Équipe LNH' : (clubDuJoueur(player.name) || '');
+    return `${posTagHTML(player.category)}${club ? `<span>${escapeTradeHTML(club)}</span>` : ''}`;
 }
 
 /** NHL club of a player: current stats first, then the draft kit (rookies). */
@@ -119,13 +123,49 @@ function initialesJoueur(name) {
  * uncovers them. An NHL-team entry has no photo, only initials on slate.
  */
 function tradeShotHTML(player) {
-    const estClub = player.category === 'T';
-    const club = estClub ? null : clubDuJoueur(player.name);
+    if (player.category === 'T') {
+        const code = CODE_CLUB_LNH[player.name];
+        const sombre = document.documentElement.getAttribute('data-theme') !== 'light';
+        const logo = code ? (sombre && LOGOS_CLAIRS.includes(code) ? `teams/dark/${code}.svg` : `teams/${code}.png`) : null;
+        return `<span class="tr-shot is-club" aria-hidden="true">`
+            + (logo ? `<img src="${logo}" alt="" loading="lazy" onerror="this.remove()">` : '')
+            + `<span class="tr-shot-init">${escapeTradeHTML(initialesJoueur(player.name))}</span></span>`;
+    }
+    const club = clubDuJoueur(player.name);
     const couleur = typeof getTeamColors === 'function' ? getTeamColors(club)[0] : '#3A414D';
-    const url = estClub ? null : getMatchingImage(player.name);
+    const url = getMatchingImage(player.name);
     return `<span class="tr-shot fz-shot" style="--fz-shot-team: ${escapeTradeHTML(couleur)}" aria-hidden="true">`
         + (url ? `<img src="${escapeTradeHTML(url)}" alt="" loading="lazy" onerror="this.remove()">` : '')
         + `<span class="tr-shot-init">${escapeTradeHTML(initialesJoueur(player.name))}</span></span>`;
+}
+
+/** Nom complet d'un club LNH → son code, pour le logo des cases « équipe ». */
+const CODE_CLUB_LNH = Object.fromEntries(Object.entries({
+    ANA: 'Anaheim Ducks', BOS: 'Boston Bruins', BUF: 'Buffalo Sabres', CAR: 'Carolina Hurricanes',
+    CBJ: 'Columbus Blue Jackets', CGY: 'Calgary Flames', CHI: 'Chicago Blackhawks', COL: 'Colorado Avalanche',
+    DAL: 'Dallas Stars', DET: 'Detroit Red Wings', EDM: 'Edmonton Oilers', FLA: 'Florida Panthers',
+    LAK: 'Los Angeles Kings', MIN: 'Minnesota Wild', MTL: 'Montréal Canadiens', NJD: 'New Jersey Devils',
+    NSH: 'Nashville Predators', NYI: 'New York Islanders', NYR: 'New York Rangers', OTT: 'Ottawa Senators',
+    PHI: 'Philadelphia Flyers', PIT: 'Pittsburgh Penguins', SEA: 'Seattle Kraken', SJS: 'San Jose Sharks',
+    STL: 'St. Louis Blues', TBL: 'Tampa Bay Lightning', TOR: 'Toronto Maple Leafs', UTA: 'Utah Mammoth',
+    VAN: 'Vancouver Canucks', VGK: 'Vegas Golden Knights', WPG: 'Winnipeg Jets', WSH: 'Washington Capitals'
+}).map(([code, nom]) => [nom, code]));
+CODE_CLUB_LNH['Montreal Canadiens'] = 'MTL';
+CODE_CLUB_LNH['Utah Hockey Club'] = 'UTA';
+// Écussons marine qui s'effacent sur fond sombre : variante claire (teamLogos.css).
+const LOGOS_CLAIRS = ['EDM', 'TBL', 'TOR', 'WSH'];
+
+/** Pastille de position, couleur par catégorie (trade.css, .tr-pos). */
+function posTagHTML(category) {
+    return `<span class="tr-pos" data-cat="${escapeTradeHTML(category)}">${escapeTradeHTML(getCategoryLabel(category))}</span>`;
+}
+
+/** « Le BOEUF » → « LB », « Andih » → « AN » : l'avatar d'une équipe de pool. */
+function equipeInitiales(nom) {
+    const mots = String(nom || '').trim().split(/\s+/).filter(Boolean);
+    if (mots.length === 0) return '?';
+    if (mots.length === 1) return mots[0].slice(0, 2).toUpperCase();
+    return (mots[0][0] + mots[mots.length - 1][0]).toUpperCase();
 }
 
 // ============================================================
@@ -205,22 +245,22 @@ function renderMarket() {
     const annonces = Array.isArray(forSaleListings) ? forSaleListings : [];
     section.hidden = annonces.length === 0;
     if (!annonces.length) { liste.innerHTML = ''; return; }
-    if (compte) compte.textContent = `${annonces.length} joueur${annonces.length > 1 ? 's' : ''} disponible${annonces.length > 1 ? 's' : ''}`;
+    if (compte) compte.textContent = `${annonces.length} dispo.`;
 
     liste.innerHTML = annonces.map((a, i) => {
         const code = getCategory(a.category);
+        const date = a.createdAt ? new Date(a.createdAt).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' }) : '';
         const action = a.peutOffrir
             ? `<button type="button" class="tmm-offrir" data-market-index="${i}">Faire une offre</button>`
             : `<span class="tmm-refus">${escapeTradeHTML(MARCHE_RAISONS[a.raison] || '—')}</span>`;
         return `
             <div class="tmm-row">
+                ${tradeShotHTML({ name: a.playerName, category: code })}
                 <div class="tmm-who">
-                    <span class="tmm-player">${escapeTradeHTML(a.playerName)}</span>
-                    <span class="tmm-meta"><span class="tmm-team">${escapeTradeHTML(a.teamName)}</span>
-                        · <span class="tmm-cat">${escapeTradeHTML(getCategoryLabel(code))}</span></span>
+                    <span class="tmm-player">${escapeTradeHTML(code === 'T' ? a.playerName : tmAbrege(a.playerName))}</span>
+                    <span class="tmm-meta">${posTagHTML(code)}<span>${escapeTradeHTML(a.teamName)}${date ? ' · ' + escapeTradeHTML(date) : ''}</span></span>
                 </div>
-                <span class="tmm-stat">${a.createdAt ? escapeTradeHTML(new Date(a.createdAt).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' })) : ''}</span>
-                <div class="tmm-act">${action}</div>
+                ${action}
             </div>`;
     }).join('');
 
@@ -228,9 +268,13 @@ function renderMarket() {
         bouton.addEventListener('click', () => {
             const annonce = annonces[Number(bouton.dataset.marketIndex)];
             if (!annonce || !selectedPoolData || !selectedPoolData.teams[annonce.teamName]) return;
+            const code = getCategory(annonce.category);
             switchTradeTab('propose');
             selectPartnerTeam(annonce.teamName);
-            handlePartnerPick(annonce.playerName, getCategory(annonce.category), null);
+            handlePartnerPick(annonce.playerName, code, null);
+            // La cible est prise : reste à choisir, chez soi, qui donner en retour.
+            filterPosition('my', code);
+            tmSwitchRoster('my');
             document.getElementById('tmBuilder')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
@@ -241,7 +285,6 @@ function renderMarket() {
         bascule.addEventListener('click', () => {
             const ouvert = bascule.getAttribute('aria-expanded') === 'true';
             bascule.setAttribute('aria-expanded', String(!ouvert));
-            bascule.textContent = ouvert ? 'Afficher' : 'Masquer';
             liste.hidden = ouvert;
         });
     }
@@ -364,10 +407,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadReceivedTrades();
         if (currentTradeTab === 'history') loadHistory();
     });
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && teamSwitcherOpen) closeTeamSwitcher();
-    });
 });
 
 // Le rail n'a pas besoin de recharger : l'assistant se reconstruit ici.
@@ -402,6 +441,7 @@ function applyActivePool() {
     partnerPositionFilter = 'all';
 
     document.getElementById('tradeSuccessScreen').classList.add('hidden');
+    document.getElementById('tradePoolName').textContent = nom || '';
 
     const showEmpty = (msg) => {
         builder.classList.add('hidden');
@@ -446,7 +486,7 @@ function applyActivePool() {
     builder.classList.remove('hidden');
     emptyMsg.style.display = 'none';
 
-    document.getElementById('myAvatar').textContent = initialsFor(myTeamData, myTeamName);
+    document.getElementById('myAvatar').textContent = equipeInitiales(myTeamName);
     document.getElementById('myTeamName').textContent = myTeamName;
 
     selectPartnerTeam(partners[0].name);
@@ -475,13 +515,6 @@ function availablePartnerTeams() {
     return Object.entries(selectedPoolData.teams || {})
         .filter(([name, data]) => name !== myTeamName && buildRosterPlayers(data).length > 0)
         .map(([name, data]) => ({ name, data }));
-}
-
-function initialsFor(teamData, teamName) {
-    const source = teamData?.members?.[0] || teamName || '';
-    const parts = String(source).trim().split(/\s+/);
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return String(source).slice(0, 2).toUpperCase() || '--';
 }
 
 /**
@@ -527,84 +560,22 @@ async function loadDraftData() {
 }
 
 // ============================================================
-// TEAM SWITCHER (dropdown)
+// ÉCHANGER AVEC — une puce par équipe du pool
 // ============================================================
-
-/**
- * Téléphone : « Échanger avec » monte en tête de page (#tmContext), à la
- * place du bandeau « Pool actif » que les autres pages affichent. Au-delà
- * de 900 px, il reste dans le bandeau partenaire. Appelé dès le chargement
- * du script, en bas de page : le sélecteur est déjà en place au premier
- * affichage.
- */
-function placerSelecteurPartenaire() {
-    const selecteur = document.querySelector('.tm-partner-switch');
-    const haut = document.getElementById('tmContext');
-    const bandeau = document.querySelector('.tm-partner-bar');
-    if (!selecteur || !haut || !bandeau) return;
-    const telephone = window.matchMedia('(max-width: 900px)');
-    const placer = () => (telephone.matches ? haut : bandeau).appendChild(selecteur);
-    placer();
-    telephone.addEventListener('change', placer);
-}
-placerSelecteurPartenaire();
-
-function toggleTeamSwitcher() {
-    teamSwitcherOpen ? closeTeamSwitcher() : openTeamSwitcher();
-}
-
-function openTeamSwitcher() {
-    if (!selectedPoolData) return;
-    teamSwitcherOpen = true;
-    renderTeamSwitcherList();
-    document.getElementById('teamSwitchDropdown').classList.remove('hidden');
-    document.getElementById('teamSwitchCaret').textContent = '▲';
-}
-
-function closeTeamSwitcher() {
-    teamSwitcherOpen = false;
-    const dd = document.getElementById('teamSwitchDropdown');
-    if (dd) dd.classList.add('hidden');
-    const caret = document.getElementById('teamSwitchCaret');
-    if (caret) caret.textContent = '▾';
-}
-
-function renderTeamSwitcherList() {
-    const list = document.getElementById('teamSwitchList');
-    if (!list) return;
-
-    const rows = [
-        { name: myTeamName, data: myTeamData, self: true },
-        ...availablePartnerTeams()
-    ];
-
-    list.innerHTML = rows.map(t => {
-        const isCurrent = t.name === selectedPartnerTeam;
-        const meta = t.self ? 'Votre équipe' : (t.data?.members?.[0] || 'Sans manager');
-        const classes = ['tm-dropdown-row'];
-        if (t.self) classes.push('is-self');
-        if (isCurrent) classes.push('is-current');
-        return `
-            <div class="${classes.join(' ')}" data-team="${t.name.replace(/"/g, '&quot;')}">
-                <div class="tm-dropdown-row-text">
-                    <div class="tm-dropdown-name">${t.name}</div>
-                    <div class="tm-dropdown-meta">${meta}</div>
-                </div>
-                <div class="tm-dropdown-mark">${isCurrent ? '✓' : ''}</div>
-            </div>
-        `;
+function renderPartnerChips() {
+    const rangee = document.getElementById('tmPartnerChips');
+    if (!rangee) return;
+    rangee.innerHTML = availablePartnerTeams().map(t => {
+        const actif = t.name === selectedPartnerTeam;
+        return `<button type="button" class="tr-chip${actif ? ' is-active' : ''}" aria-pressed="${actif}" data-team="${escapeTradeHTML(t.name)}">
+                <span class="tr-chip-av">${escapeTradeHTML(equipeInitiales(t.name))}</span>${escapeTradeHTML(t.name)}</button>`;
     }).join('');
-
-    list.querySelectorAll('.tm-dropdown-row:not(.is-self)').forEach(row => {
-        row.addEventListener('click', () => {
-            selectPartnerTeam(row.dataset.team);
-            closeTeamSwitcher();
-            // En tête de page (téléphone), le sélecteur reste visible depuis
-            // « Reçus » et « Historique » : choisir une équipe, c'est vouloir
-            // lui proposer un échange.
-            if (currentTradeTab !== 'propose') switchTradeTab('propose');
+    rangee.querySelectorAll('.tr-chip').forEach(puce => {
+        puce.addEventListener('click', () => {
+            if (puce.dataset.team !== selectedPartnerTeam) selectPartnerTeam(puce.dataset.team);
         });
     });
+    rangee.querySelector('.is-active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 /** Switches the trade partner. Clears any in-progress pairs — they were
@@ -622,14 +593,17 @@ function selectPartnerTeam(teamName) {
     partnerPositionFilter = 'all';
     forSaleFilterActive = false;
 
-    document.getElementById('partnerAvatar').textContent = initialsFor(partnerTeamData, teamName);
+    document.getElementById('partnerAvatar').textContent = equipeInitiales(teamName);
     document.getElementById('partnerTeamName').textContent = teamName;
-    document.getElementById('partnerTeamTriggerName').textContent = teamName;
+    document.getElementById('tmTabPartnerName').textContent = teamName;
+    const partnerInputPh = document.getElementById('partnerSearchInput');
+    if (partnerInputPh) partnerInputPh.placeholder = `Filtrer les joueurs de ${teamName}`;
 
     const partnerInput = document.getElementById('partnerSearchInput');
     if (partnerInput) partnerInput.value = '';
     document.querySelectorAll('#partnerPosTabs .pos-tab').forEach(t => t.classList.toggle('active', t.dataset.pos === 'all'));
 
+    renderPartnerChips();
     renderForSaleToggle();
     renderMyRoster();
     renderPartnerRoster();
@@ -664,17 +638,19 @@ function isGetSelected(name) {
 function pairIndexByGive(name) { return pairs.findIndex(p => p.give.name === name); }
 function pairIndexByGet(name) { return pairs.findIndex(p => p.get.name === name); }
 
+const CASE_COCHEE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
+
 function renderPlayerRowHTML(player, selected, locked, forSale) {
     const cols = statColsFor(player);
     return `
         <div class="player-card-roster ${selected ? 'selected' : ''} ${locked ? 'locked' : ''}"
              data-player-name="${player.name.replace(/"/g, '&quot;')}"
              data-player-category="${player.category}">
-            <div class="pcr-check">${selected ? '✓' : ''}</div>
+            <div class="pcr-check">${CASE_COCHEE}</div>
             ${tradeShotHTML(player)}
             <div class="pcr-info">
-                <div class="pcr-name" title="${escapeTradeHTML(player.name)}">${escapeTradeHTML(player.category === 'T' ? player.name : tmAbrege(player.name))}${forSale ? '<span class="pcr-forsale-badge">À vendre</span>' : ''}</div>
-                <div class="pcr-team">${metaFor(player)}${locked ? ' · position non appariée' : ''}</div>
+                <div class="pcr-name" title="${escapeTradeHTML(player.name)}"><span>${escapeTradeHTML(player.category === 'T' ? player.name : tmAbrege(player.name))}</span>${forSale ? '<span class="pcr-forsale-badge">À vendre</span>' : ''}</div>
+                <div class="pcr-team">${metaTagHTML(player)}${locked ? '<span>· autre position</span>' : ''}</div>
             </div>
             <div class="pcr-stats">
                 <span class="pcr-stat">${cols.pj}</span>
@@ -858,7 +834,7 @@ function renderBasket() {
     const noteContre = counterOfTradeId ? `
         <div class="tb-counter-note" role="note">
             <strong>Contre-offre à ${escapeTradeHTML(selectedPartnerTeam || '')}</strong>
-            <span>L'offre reçue est préremplie : changez un joueur, puis envoyez.
+            <span>L'offre reçue est préremplie : change un joueur, puis envoie.
                   L'offre d'origine sera refusée à l'envoi.</span>
         </div>` : '';
     document.getElementById('tbPairs').innerHTML = noteContre + rows + draftRow;
@@ -871,9 +847,9 @@ function renderBasket() {
     const validRow = document.getElementById('tbValidRow');
     const validText = document.getElementById('tbValidText');
     const hasIncomplete = !!(draftGive || draftGet);
-    validRow.classList.toggle('is-invalid', hasIncomplete && validCount === 0);
+    validRow.classList.toggle('is-invalid', hasIncomplete);
     validText.textContent = hasIncomplete
-        ? 'Sélectionnez le joueur en retour pour compléter la paire'
+        ? 'Choisis le joueur en retour pour compléter la paire'
         : `${validCount} pour ${validCount} · position${validCount > 1 ? 's' : ''} valide${validCount > 1 ? 's' : ''}`;
 
     let totalGive = 0, totalGet = 0, anyNumeric = false;
@@ -948,8 +924,9 @@ function draftRowHTML() {
 function updateTabCounts() {
     const myCount = document.getElementById('tmTabMyCount');
     const partnerCount = document.getElementById('tmTabPartnerCount');
-    if (myCount) myCount.textContent = pairs.length + (draftGive ? 1 : 0);
-    if (partnerCount) partnerCount.textContent = pairs.length + (draftGet ? 1 : 0);
+    const poser = (el, n) => { if (el) { el.textContent = n; el.classList.toggle('has-n', n > 0); } };
+    poser(myCount, pairs.length + (draftGive ? 1 : 0));
+    poser(partnerCount, pairs.length + (draftGet ? 1 : 0));
 }
 
 // ============================================================
@@ -1062,7 +1039,7 @@ async function proposeTrade() {
 function showTradeSuccess(nombre) {
     const detail = document.getElementById('tradeSuccessDetail');
     if (detail) {
-        detail.innerHTML = `Proposition <strong>${nombre} pour ${nombre}</strong> envoyée à <strong>${escapeTradeHTML(selectedPartnerTeam)}</strong>.<br>En attente de la réponse de l'autre équipe.`;
+        detail.innerHTML = `Proposition <strong>${nombre} pour ${nombre}</strong> envoyée à <strong>${escapeTradeHTML(selectedPartnerTeam)}</strong>. Tu seras avisé de sa réponse.`;
     }
     document.getElementById('tmBuilder').classList.add('hidden');
     document.getElementById('tradeSuccessScreen').classList.remove('hidden');
@@ -1143,37 +1120,34 @@ async function loadReceivedTrades(idCible) {
             const taille = Math.max(offering.length, receiving.length);
 
             const estCible = idCible && String(trade.id) === String(idCible);
-            const initials = initialsFor(null, trade.fromTeam);
 
             return `
                 <div class="received-trade-card${estCible ? ' is-target' : ''}" data-trade-id="${trade.id}">
                     <div class="trade-card-header">
-                        <div class="trade-card-avatar">${initials}</div>
+                        <div class="trade-card-avatar">${escapeTradeHTML(equipeInitiales(trade.fromTeam))}</div>
                         <div class="trade-card-info">
                             <div class="trade-card-teams">${escapeTradeHTML(trade.fromTeam)}</div>
-                            <div class="trade-card-date">reçue ${relatif}${taille > 1 ? ` · ${taille} pour ${taille}` : ''}</div>
+                            <div class="trade-card-date">Reçue ${relatif}${taille > 1 ? ` · ${taille} pour ${taille}` : ''}</div>
                         </div>
                         <div class="trade-card-status">En attente</div>
                     </div>
 
                     <div class="trade-card-players">
-                        <div class="trade-player">
-                            <div class="trade-player-label">Vous recevriez</div>
+                        <div class="trade-player is-get">
+                            <div class="trade-player-label">Tu reçois</div>
                             ${offering.map(tradePlayerBoxHTML).join('')}
                         </div>
-
-                        <div class="trade-arrow-icon">⇄</div>
-
-                        <div class="trade-player">
-                            <div class="trade-player-label">Vous donneriez</div>
+                        <div class="trade-player is-give">
+                            <div class="trade-player-label">Tu donnes</div>
                             ${receiving.map(tradePlayerBoxHTML).join('')}
                         </div>
+                        <span class="trade-arrow-icon" aria-hidden="true">${ICONE_ECHANGE_VERT}</span>
                     </div>
 
                     <div class="trade-card-actions">
-                        <button class="btn-accept-trade" onclick="acceptTradeProposal('${trade.id}')">Accepter</button>
-                        <button class="btn-decline-trade" onclick="declineTradeProposal('${trade.id}')">Refuser</button>
-                        <button class="btn-counter-trade" onclick="startCounterOffer('${trade.id}')">Contre-offre</button>
+                        <button type="button" class="btn-accept-trade" onclick="acceptTradeProposal('${trade.id}')">${CASE_COCHEE}Accepter</button>
+                        <button type="button" class="btn-decline-trade" onclick="declineTradeProposal('${trade.id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Refuser</button>
+                        <button type="button" class="btn-counter-trade" onclick="startCounterOffer('${trade.id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v4"/></svg>Faire une contre-offre</button>
                     </div>
                 </div>
             `;
@@ -1187,23 +1161,28 @@ async function loadReceivedTrades(idCible) {
     }
 }
 
-/** One player of a received proposal: photo, name, position. */
+const ICONE_ECHANGE_VERT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v18M4 7l4-4 4 4"/><path d="M16 21V3M20 17l-4 4-4-4"/></svg>';
+const ICONE_ECHANGE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4"/><path d="M3 8h13"/><path d="m17 20 4-4-4-4"/><path d="M21 16H8"/></svg>';
+
+/** One player of a received proposal: photo, name, position, points. */
 function tradePlayerBoxHTML(item) {
     const category = getCategory(item && item.type);
+    const joueur = { name: item.name, category };
+    const pts = statColsFor(joueur).pts;
     return `
         <div class="trade-player-box">
-            ${tradeShotHTML({ name: item.name, category })}
-            <div class="trade-player-text">
-                <div class="trade-player-name">${escapeTradeHTML(item.name)}</div>
-                <span class="trade-player-position">${getCategoryLabel(category)}</span>
-            </div>
+            ${tradeShotHTML(joueur)}
+            <div class="trade-player-name">${escapeTradeHTML(category === 'T' ? item.name : tmAbrege(item.name))}</div>
+            ${posTagHTML(category)}
+            <span class="trade-player-pts">${pts}</span>
         </div>`;
 }
 
 function relativeDate(date) {
     const diffMs = Date.now() - date.getTime();
     const hours = diffMs / 3600000;
-    if (hours < 1) return "à l'instant";
+    if (hours < 1 / 60) return "à l'instant";
+    if (hours < 1) return `il y a ${Math.max(1, Math.round(hours * 60))} min`;
     if (hours < 24) return `il y a ${Math.round(hours)} heure${Math.round(hours) > 1 ? 's' : ''}`;
     const days = Math.round(hours / 24);
     if (days < 30) return `il y a ${days} jour${days > 1 ? 's' : ''}`;
@@ -1283,36 +1262,30 @@ async function loadHistory(idCible) {
             return false;
         }
 
+        const moi = monEquipeDansLePool();
+        const qui = equipe => equipe === moi ? 'Toi' : equipe;
         container.innerHTML = trades.map(trade => {
             const cancelled = trade.status === 'cancelled';
             const declined = trade.status === 'declined' || cancelled;
             const date = new Date(trade.completedDate || trade.date);
             const dateStr = date.toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-            const acquiresLbl = declined ? 'Aurait acquis :' : 'Acquiert :';
             const estCible = idCible && String(trade.id) === String(idCible);
+            const statut = cancelled ? 'annule' : declined ? 'refuse' : 'accepte';
 
             return `
                 <div class="history-card${declined ? ' is-declined' : ''}${estCible ? ' is-target' : ''}" data-trade-id="${trade.id}">
                     <div class="history-card-head">
                         <span class="history-card-date">${dateStr}</span>
-                        <span class="history-card-status">${cancelled ? 'Annulé' : declined ? 'Refusé' : 'Complété'}</span>
+                        <span class="history-card-status" data-statut="${statut}">${cancelled ? 'Annulé' : declined ? 'Refusé' : 'Accepté'}</span>
                     </div>
                     <div class="history-card-sides">
-                        <div>
-                            <div class="history-side-team">
-                                <span class="history-side-dot"></span>
-                                <span class="history-side-name">${escapeTradeHTML(trade.toTeam)}</span>
-                                <span class="history-side-acquires-lbl">${acquiresLbl}</span>
-                            </div>
+                        <div class="history-side">
+                            <span class="history-side-name">${escapeTradeHTML(qui(trade.fromTeam))} donne</span>
                             ${historyPlayersHTML(trade.offering)}
                         </div>
-                        <div class="history-divider"><span class="history-divider-icon">⇄</span></div>
-                        <div>
-                            <div class="history-side-team">
-                                <span class="history-side-dot"></span>
-                                <span class="history-side-name">${escapeTradeHTML(trade.fromTeam)}</span>
-                                <span class="history-side-acquires-lbl">${acquiresLbl}</span>
-                            </div>
+                        <span class="history-divider" aria-hidden="true">${ICONE_ECHANGE}</span>
+                        <div class="history-side is-right">
+                            <span class="history-side-name">${escapeTradeHTML(qui(trade.toTeam))} donne</span>
                             ${historyPlayersHTML(trade.receiving)}
                         </div>
                     </div>
@@ -1328,20 +1301,26 @@ async function loadHistory(idCible) {
     }
 }
 
-/** Every player one side acquires in a past trade, photo in the old dot's place. */
+/** Every player one side gives in a past trade: position, then name. */
 function historyPlayersHTML(items) {
     const liste = Array.isArray(items) ? items : [];
     if (liste.length === 0) {
-        return '<div class="history-side-player"><span class="history-player-dot"></span><span class="history-player-name">—</span></div>';
+        return '<span class="history-side-player"><span class="history-player-name">—</span></span>';
     }
     return liste.map(item => {
         const category = getCategory(item && item.type);
         return `
-            <div class="history-side-player">
-                ${tradeShotHTML({ name: item.name, category })}
-                <span class="history-player-name">${escapeTradeHTML(item.name)} <span>${getCategoryLabel(category)}</span></span>
-            </div>`;
+            <span class="history-side-player">
+                ${posTagHTML(category)}
+                <span class="history-player-name">${escapeTradeHTML(item.name)}</span>
+            </span>`;
     }).join('');
+}
+
+/** Mon équipe dans le pool actif, même quand l'assistant est fermé (repêchage, échange du mois fait). */
+function monEquipeDansLePool() {
+    const nom = FZPool.get();
+    return myTeamName || (FZPool.mine().find(p => p.name === nom) || {}).teamName || null;
 }
 
 // La pastille de l'onglet compte les échanges du pool actif, comme la
@@ -1455,7 +1434,7 @@ async function declineTradeProposal(tradeId) {
 // UTILITIES
 // ============================================================
 function getCategoryLabel(category) {
-    const labels = { 'F': 'ATT', 'D': 'DÉF', 'G': 'GAR', 'R': 'ROO', 'T': 'ÉQU' };
+    const labels = { 'F': 'ATT', 'D': 'DÉF', 'G': 'GAR', 'R': 'REC', 'T': 'ÉQ' };
     return labels[category] || category;
 }
 
@@ -1502,6 +1481,7 @@ function tmJoinNames(list) {
 
 /** Reflects pairs + in-progress draft in the mobile bottom bar. */
 function tmSyncMobile() {
+    updateTabCounts();
     const giveNames = pairs.map(p => p.give.name).concat(draftGive ? [draftGive.name] : []);
     const getNames = pairs.map(p => p.get.name).concat(draftGet ? [draftGet.name] : []);
 
@@ -1514,16 +1494,43 @@ function tmSyncMobile() {
 
     const giveEl = document.getElementById('tmValGive');
     const getEl = document.getElementById('tmValGet');
-    if (giveEl) giveEl.textContent = giveNames.length ? `${tmJoinNames(giveNames)}${anyNumeric ? ' · ' + totalGive + ' pts' : ''}` : '—';
-    if (getEl) getEl.textContent = getNames.length ? `${tmJoinNames(getNames)}${anyNumeric ? ' · ' + totalGet + ' pts' : ''}` : '—';
+    if (giveEl) { giveEl.textContent = tmJoinNames(giveNames); giveEl.classList.toggle('is-empty', !giveNames.length); }
+    if (getEl) { getEl.textContent = tmJoinNames(getNames); getEl.classList.toggle('is-empty', !getNames.length); }
+    document.getElementById('tmBalanceSwap')?.classList.toggle('is-ready', pairs.length > 0);
 
     const cta = document.getElementById('tmCta');
     const source = document.getElementById('btnProposeTrade');
     if (cta && source) {
-        cta.disabled = source.disabled;
-        cta.classList.toggle('is-ready', !source.disabled);
+        const pret = !source.disabled;
+        cta.disabled = !pret;
+        cta.classList.toggle('is-ready', pret);
+        // Le bouton dit ce qui manque tant qu'il ne peut pas envoyer.
+        const libelle = pret
+            ? (counterOfTradeId ? 'Envoyer la contre-offre' : 'Envoyer la proposition')
+            : draftGive ? 'Choisis le joueur reçu, même position'
+            : draftGet ? 'Choisis le joueur donné, même position'
+            : 'Choisis des joueurs des deux côtés';
+        document.getElementById('tmCtaLabel').textContent = libelle;
+        if (typeof getIcon === 'function') document.getElementById('tmCtaIco').innerHTML = pret ? getIcon('send', 20) : getIcon('info', 18);
     }
 }
+
+/**
+ * Le bilan figé se pose sur la barre d'onglets du site, dont la hauteur
+ * varie (zone sûre, taille du texte) : on la mesure plutôt que la deviner.
+ */
+function tmSuivreBarreOnglets() {
+    const poser = () => {
+        const barre = document.querySelector('.bottom-nav');
+        const h = barre && getComputedStyle(barre).display !== 'none' ? barre.getBoundingClientRect().height : 0;
+        document.body.style.setProperty('--tr-bnav-h', `${Math.round(h)}px`);
+    };
+    poser();
+    window.addEventListener('resize', poser);
+    // navbar.js pose la barre après coup.
+    new MutationObserver(poser).observe(document.body, { childList: true });
+}
+document.addEventListener('DOMContentLoaded', tmSuivreBarreOnglets);
 
 /** Wraps proposeTrade(): avoids double-submit from the fixed bar. */
 async function tmProposeTrade() {

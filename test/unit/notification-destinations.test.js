@@ -272,13 +272,14 @@ test('archived notification destinations focus the correct card and respect redu
         const { loadHistory } = chargerFonctions('trade.js', [
             'loadHistory', 'focusTradeTarget', 'getCategory', 'getCategoryLabel',
             'historyPlayersHTML', 'tradeShotHTML', 'clubDuJoueur', 'getPlayerCurrentStats',
-            'getMatchingImage', 'initialesJoueur', 'escapeTradeHTML'
+            'getMatchingImage', 'initialesJoueur', 'escapeTradeHTML', 'posTagHTML', 'ICONE_ECHANGE',
+            'monEquipeDansLePool'
         ], {
-            BASE_URL: '', currentUsername: 'recipient',
+            BASE_URL: '', currentUsername: 'recipient', myTeamName: null,
             currentStats: null, fullPlayerData: [], goalieData: [], resolveHeadshotByName: () => null,
             document: { getElementById: () => container },
             window: { matchMedia: () => ({ matches: true }) },
-            FZPool: { get: () => 'Pool' },
+            FZPool: { get: () => 'Pool', mine: () => [] },
             fetch: async (url) => {
                 urls.push(url);
                 return { ok: true, json: async () => [{ ...trade, id: 41 }, trade] };
@@ -288,7 +289,7 @@ test('archived notification destinations focus the correct card and respect redu
         assert.deepEqual(urls, ['/trades/history/Pool'], "l'historique est celui du pool actif");
         assert.deepEqual(focused, ['42']);
         assert.deepEqual(scrolled, ['auto']);
-        assert.match(container.html, status === 'completed' ? /Complété/ : status === 'declined' ? /Refusé/ : /Annulé/);
+        assert.match(container.html, status === 'completed' ? /Accepté/ : status === 'declined' ? /Refusé/ : /Annulé/);
         focused.length = 0;
         assert.equal(await loadHistory('missing'), false);
         assert.deepEqual(focused, []);
@@ -416,9 +417,10 @@ test('la page envoie trois paires en UNE requête, pas trois', async () => {
 test('une proposition 3 pour 3 reçue s’affiche en une seule carte, avec les six joueurs', async () => {
     const conteneur = { innerHTML: '', querySelectorAll: () => [] };
     const { loadReceivedTrades } = chargerFonctions('trade.js', [
-        'loadReceivedTrades', 'tradesRecusParId', 'relativeDate', 'initialsFor', 'tradePlayerBoxHTML',
+        'loadReceivedTrades', 'tradesRecusParId', 'relativeDate', 'equipeInitiales', 'tradePlayerBoxHTML',
         'tradeShotHTML', 'clubDuJoueur', 'getPlayerCurrentStats', 'getMatchingImage', 'initialesJoueur',
-        'escapeTradeHTML', 'getCategory', 'getCategoryLabel', 'focusTradeTarget'
+        'escapeTradeHTML', 'getCategory', 'getCategoryLabel', 'focusTradeTarget', 'posTagHTML',
+        'statColsFor', 'tmAbrege', 'CASE_COCHEE', 'ICONE_ECHANGE_VERT', 'ICONE_ECHANGE'
     ], {
         BASE_URL: '', currentUsername: 'bob',
         currentStats: { players: [{ playerName: 'A1', teamAbbrev: 'MTL', headshot: 'https://assets.nhle.com/mugs/nhl/20262027/MTL/1.png' }] },

@@ -357,7 +357,7 @@ html[data-theme="light"] .rp-hero { box-shadow: 0 10px 28px rgba(20, 20, 22, .14
 .rp-launch-btn:disabled { background: var(--s-chip); color: var(--s-faint); box-shadow: none; cursor: not-allowed; }
 .rp-launch-btn:disabled .rp-ico { fill: none; }
 
-/* Téléphone : collé au-dessus de la barre du bas (navbar.css, 69 px plus la
+/* Téléphone : collé au-dessus de la barre du bas (navbar.css, 65 px plus la
    zone sûre), sur un fondu de la page. Le fondu laisse passer les touchers ;
    le contenu garde de quoi défiler sous le bouton. */
 @media (max-width: 768px) {
@@ -365,7 +365,7 @@ html[data-theme="light"] .rp-hero { box-shadow: 0 10px 28px rgba(20, 20, 22, .14
         position: fixed;
         left: 0;
         right: 0;
-        bottom: calc(69px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(65px + env(safe-area-inset-bottom, 0px));
         z-index: 990;
         padding: 28px 12px 12px;
         background: linear-gradient(180deg, transparent 0%, var(--s-bg) 45%);

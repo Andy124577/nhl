@@ -43,9 +43,7 @@ function construireBarres() {
     // Avant tout : replier les onglets que le dernier passage savait
     // fermés. Dans la même tâche que la construction, donc jamais peints.
     appliquerVisibiliteMemorisee();
-    // La pastille se pose une fois les onglets repliés : elle tombe
-    // directement sous l'onglet actif.
-    initPastilleBas(currentPage);
+    initToucherBas(currentPage);
 }
 
 function initModernNavbar() {
@@ -143,6 +141,28 @@ const PAGE_ICON = {
     pools: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg>`,
     calendrier: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4.5" width="20" height="15" rx="2.5"/><path d="M6 10.25 7.5 8.75v6.5"/><rect x="15.25" y="8.75" width="3.5" height="6.5" rx="1.75"/><path d="M12 10.5h.01M12 13.5h.01"/></svg>`
 };
+
+// La barre du bas (téléphone) : Material Symbols arrondis, en SVG en ligne
+// pour ne pas charger une police d'icônes de plus. Chaque onglet a deux
+// tracés, contour au repos et plein une fois choisi (navbar.css).
+const BARRE_ICON = {
+    accueil: ['M220-180h150v-220q0-12.75 8.63-21.38Q387.25-430 400-430h160q12.75 0 21.38 8.62Q590-412.75 590-400v220h150v-390L480-765 220-570v390Zm-60 0v-390q0-14.25 6.38-27 6.37-12.75 17.62-21l260-195q15.68-12 35.84-12Q500-825 516-813l260 195q11.25 8.25 17.63 21 6.37 12.75 6.37 27v390q0 24.75-17.62 42.37Q764.75-120 740-120H560q-12.75 0-21.37-8.63Q530-137.25 530-150v-220H430v220q0 12.75-8.62 21.37Q412.75-120 400-120H220q-24.75 0-42.37-17.63Q160-155.25 160-180Zm320-293Z',
+        'M160-180v-390q0-14.25 6.38-27 6.37-12.75 17.62-21l260-195q15.68-12 35.84-12Q500-825 516-813l260 195q11.25 8.25 17.63 21 6.37 12.75 6.37 27v390q0 24.75-17.62 42.37Q764.75-120 740-120H590q-12.75 0-21.37-8.63Q560-137.25 560-150v-220q0-12.75-8.62-21.38Q542.75-400 530-400H430q-12.75 0-21.37 8.62Q400-382.75 400-370v220q0 12.75-8.62 21.37Q382.75-120 370-120H220q-24.75 0-42.37-17.63Q160-155.25 160-180Z'],
+    echanges: ['M327-359h163q13 0 21.5-8.5T520-389q0-13-8.5-21.5T490-419H327l63-63q9-9 9-21.5t-9-21.5q-9-9-21.5-9t-21.5 9L232-410q-9 9-9 21t9 21l115 115q9 9 21.5 8.5T390-254q9-9 9-21.5t-9-21.5l-63-62Zm306-174-63 63q-9 9-9 21.5t9 21.5q9 9 21.5 9t21.5-9l115-115q9-9 9-21t-9-21L614-698q-9-9-21.5-9.5T571-699q-9 9-9 22t9 22l62 62H470q-13 0-21.5 8.5T440-563q0 13 8.5 21.5T470-533h163ZM480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z',
+        'M327-359h163q13 0 21.5-8.5T520-389q0-13-8.5-21.5T490-419H327l63-63q9-9 9-21.5t-9-21.5q-9-9-21.5-9t-21.5 9L232-410q-9 9-9 21t9 21l115 115q9 9 21.5 8.5T390-254q9-9 9-21.5t-9-21.5l-63-62Zm306-174-63 63q-9 9-9 21.5t9 21.5q9 9 21.5 9t21.5-9l115-115q9-9 9-21t-9-21L614-698q-9-9-21.5-9.5T571-699q-9 9-9 22t9 22l62 62H470q-13 0-21.5 8.5T440-563q0 13 8.5 21.5T470-533h163ZM480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Z'],
+    classement: ['M140-180h187v-360H140v360Zm247 0h186v-600H387v600Zm246 0h187v-280H633v280Zm-553 0v-360q0-24.75 17.63-42.38Q115.25-600 140-600h187v-180q0-24.75 17.63-42.38Q362.25-840 387-840h186q24.75 0 42.38 17.62Q633-804.75 633-780v260h187q24.75 0 42.38 17.62Q880-484.75 880-460v280q0 24.75-17.62 42.37Q844.75-120 820-120H140q-24.75 0-42.37-17.63Q80-155.25 80-180Z',
+        'M110-120q-12.75 0-21.37-8.63Q80-137.25 80-150v-420q0-12.75 8.63-21.38Q97.25-600 110-600h150q12.75 0 21.38 8.62Q290-582.75 290-570v420q0 12.75-8.62 21.37Q272.75-120 260-120H110Zm295 0q-12.75 0-21.37-8.63Q375-137.25 375-150v-660q0-12.75 8.63-21.38Q392.25-840 405-840h150q12.75 0 21.38 8.62Q585-822.75 585-810v660q0 12.75-8.62 21.37Q567.75-120 555-120H405Zm295 0q-12.75 0-21.37-8.63Q670-137.25 670-150v-340q0-12.75 8.63-21.38Q687.25-520 700-520h150q12.75 0 21.38 8.62Q880-502.75 880-490v340q0 12.75-8.62 21.37Q862.75-120 850-120H700Z'],
+    calendrier: ['M608-365q-14 0-24.5-10.5T573-400v-160q0-14 10.5-24.5T608-595h99q14 0 24.5 10.5T742-560v160q0 14-10.5 24.5T707-365h-99Zm15-50h69v-130h-69v130Zm-355 0h94q10.83 0 17.92 7.12 7.08 7.11 7.08 18 0 10.88-7.08 17.88-7.09 7-17.92 7H253q-14 0-24.5-10.5T218-400v-69q0-14 10.5-24.5T253-504h84v-41h-94q-10.83 0-17.92-7.12-7.08-7.11-7.08-18 0-10.88 7.08-17.88 7.09-7 17.92-7h109q14 0 24.5 10.5T387-560v69q0 14-10.5 24.5T352-456h-84v41ZM140-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h150v-50q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v50h260v-50q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v50h150q24 0 42 18t18 42v520q0 24-18 42t-42 18H140Zm10-70h305v-35q0-10.83 7.12-17.92 7.11-7.08 18-7.08 10.88 0 17.88 7.08 7 7.09 7 17.92v35h305v-500H505v35q0 10.83-7.12 17.92-7.11 7.08-18 7.08-10.88 0-17.88-7.08-7-7.09-7-17.92v-35H150v500Zm0 0v-500 500Zm308.5-301.5Q450-540 450-553t8.5-21.5Q467-583 480-583t21.5 8.5Q510-566 510-553t-8.5 21.5Q493-523 480-523t-21.5-8.5Zm0 146Q450-394 450-407t8.5-21.5Q467-437 480-437t21.5 8.5Q510-420 510-407t-8.5 21.5Q493-377 480-377t-21.5-8.5Z',
+        'M608-365h99q14 0 24.5-10.5T742-400v-160q0-14-10.5-24.5T707-595h-99q-14 0-24.5 10.5T573-560v160q0 14 10.5 24.5T608-365Zm15-50h69v-130h-69v130Zm-370 50h109q11 0 18-7t7-18q0-11-7-18t-18-7h-94v-41h84q14 0 24.5-10.5T387-491v-69q0-14-10.5-24.5T352-595H243q-11 0-18 7t-7 18q0 11 7 18t18 7h94v41h-84q-14 0-24.5 10.5T218-469v69q0 14 10.5 24.5T253-365ZM140-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h150v-50q0-13 8.5-21.5T320-880q13 0 21.5 8.5T350-850v50h260v-50q0-13 8.5-21.5T640-880q13 0 21.5 8.5T670-850v50h150q24 0 42 18t18 42v520q0 24-18 42t-42 18H140Zm361.5-371.5Q510-540 510-553t-8.5-21.5Q493-583 480-583t-21.5 8.5Q450-566 450-553t8.5 21.5Q467-523 480-523t21.5-8.5Zm0 146Q510-394 510-407t-8.5-21.5Q493-437 480-437t-21.5 8.5Q450-420 450-407t8.5 21.5Q467-377 480-377t21.5-8.5ZM498-677q7-7 7-18t-7-18q-7-7-18-7t-18 7q-7 7-7 18t7 18q7 7 18 7t18-7Zm0 430q7-7 7-18t-7-18q-7-7-18-7t-18 7q-7 7-7 18t7 18q7 7 18 7t18-7Z'],
+    stats: ['M292.5-473.38Q284-464.75 284-452v145q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-145q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62Zm332-215Q616-679.75 616-667v360q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-360q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62Zm-166 302Q450-377.75 450-365v58q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-58q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm0-600v600-600Zm321.5 289.32q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68Z',
+        'M292.5-473.38Q284-464.75 284-452v145q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-145q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62Zm332-215Q616-679.75 616-667v360q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-360q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62Zm-166 302Q450-377.75 450-365v58q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-58q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm321.5-370.68q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68Z']
+};
+
+function iconeBarre(cle) {
+    const [contour, plein] = BARRE_ICON[cle];
+    const svg = (d, c) => `<svg class="${c}" viewBox="0 -960 960 960"><path d="${d}"/></svg>`;
+    return svg(contour, 'bn-contour') + svg(plein, 'bn-plein');
+}
 
 // ==================== THÈME ====================
 // theme.js pose l'attribut sur <html> ; localStorage peut être vide au
@@ -429,69 +449,50 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 }
 
 // ==================== MOBILE BOTTOM NAV ====================
-// Même ordre que la barre du haut :
-// Accueil → Repêchage → Échanges → Classement → Scores → Stats
+// Cinq onglets (maquette « Fantazy Nav Options », 1b) :
+// Accueil → Échanges → Classement → Scores → Stats. Le repêchage n'y est
+// plus : pendant le repêchage, l'accueil mène à la salle.
 function buildBottomNav(currentPage) {
     const existing = document.querySelector('.bottom-nav');
     if (existing) existing.remove();
 
     // `data-page` : l'onglet que la page désigne comme actif (getCurrentPage),
-    // relu au retour arrière (initPastilleBas).
-    const onglet = (page, href, icone, libelle, extra = '') => {
+    // relu au retour arrière (initToucherBas).
+    const onglet = (page, href, libelle, extra = '') => {
         const actif = page === currentPage;
         return `
             <a href="${href}" class="bottom-nav-item${actif ? ' active' : ''}" data-page="${page}"${actif ? ' aria-current="page"' : ''}${extra}>
-                <span class="bottom-nav-icon" aria-hidden="true">${icone}</span>
+                <span class="bottom-nav-icon" aria-hidden="true">${iconeBarre(page === 'trade' ? 'echanges' : page)}</span>
                 <span class="bottom-nav-label">${libelle}</span>`;
     };
     const html = `
         <nav class="bottom-nav" aria-label="Navigation principale">
-            <span class="bottom-nav-pill" aria-hidden="true"><span class="bottom-nav-pill-ring"></span></span>
-            ${onglet('accueil', 'index.html', PAGE_ICON.accueil, 'Accueil')}
+            ${onglet('accueil', 'index.html', 'Accueil')}
             </a>
-            ${onglet('repechage', 'repechage.html', PAGE_ICON.repechage, 'Repêchage', ' id="bottomPoolLink"')}
-                <span class="notif-badge" id="bottomDraftBadge" style="display: none;"></span>
-            </a>
-            ${onglet('trade', 'trade.html', PAGE_ICON.echanges, 'Échanges', ' id="bottomTradeLink"')}
+            ${onglet('trade', 'trade.html', 'Échanges', ' id="bottomTradeLink"')}
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
             </a>
-            ${onglet('classement', 'classement.html', PAGE_ICON.classement, 'Classement', ' id="bottomClassementLink"')}
+            ${onglet('classement', 'classement.html', 'Classement', ' id="bottomClassementLink"')}
             </a>
-            ${onglet('calendrier', 'calendrier.html', PAGE_ICON.calendrier, 'Scores')}
+            ${onglet('calendrier', 'calendrier.html', 'Scores')}
             </a>
-            ${onglet('stats', 'stats.html', PAGE_ICON.stats, 'Stats')}
+            ${onglet('stats', 'stats.html', 'Stats')}
             </a>
         </nav>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
 }
 
-// ==================== BARRE DU BAS : LA PASTILLE ====================
+// ==================== BARRE DU BAS : LE TOUCHER ====================
 /*
- * Claude Design, « Footer Nav » : une pastille teintée sous l'onglet actif,
- * qui glisse jusqu'à l'onglet touché (navbar.css, .bottom-nav-pill).
+ * Maquette « Fantazy Nav Options », 1b « Ligne lumineuse » : pas
+ * d'indicateur. L'icône pleine et blanche, qui monte un peu, et le
+ * libellé disent seuls l'onglet choisi (navbar.css, « BARRE DU BAS »).
  *
- * Chaque onglet est une autre page : le glissement commence sur la page
- * qu'on quitte, au toucher, et la page d'arrivée le reprend là où il en
- * est — l'heure du toucher passe par sessionStorage, et l'animation repart
- * avec un délai négatif de ce qui s'est déjà écoulé. Une navigation lente
- * finit le geste avant de partir ; une rapide le termine en arrivant ; dans
- * les deux cas la pastille ne revient jamais en arrière.
- *
- * Le reste du geste (navbar.css, « BARRE DU BAS ») suit la même horloge :
- * l'icône qui rebondit et l'anneau que la pastille lâche en se posant
- * reprennent eux aussi sur la page d'arrivée.
+ * Le toucher se voit avant le relâcher : l'onglet s'enfonce et une onde
+ * part du doigt dès le pointerdown ; au clic, un tic haptique et l'onglet
+ * touché prend tout de suite l'état choisi, sans attendre la page suivante.
  */
-const PASTILLE_MS = 420;
-const PASTILLE_COURBE = 'cubic-bezier(.32, .72, 0, 1)';
-const PASTILLE_CLE = 'fzBarreBasGlisse';
-const REBOND_MS = 520;
-// Sur cette courbe, la pastille a fait 95 % du trajet à 170 ms : c'est
-// là qu'on la voit se poser, bien avant la fin de l'adoucissement.
-const ANNEAU_DELAI = 170;
-const ANNEAU_MS = 420;
-const GESTE_MS = Math.max(PASTILLE_MS, REBOND_MS, ANNEAU_DELAI + ANNEAU_MS);
-
 function mouvementReduit() {
     return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
@@ -554,105 +555,15 @@ function ondeOnglet(onglet, point) {
     };
 }
 
-/**
- * Le geste d'un onglet choisi, vu `ecoule` ms après le toucher : joué au
- * clic (0), puis repris par la page d'arrivée là où il en est.
- *
- * La pastille, déjà posée sous `vers`, part de `depuis` en s'étirant dans
- * le sens de sa course et en s'écrasant d'autant — étirement à son comble
- * au début, quand elle va le plus vite. Sans onglet de départ, elle éclot
- * sur place. L'icône rebondit depuis son enfoncement, et la pastille lâche
- * un anneau en se posant.
- */
-function jouerGeste(nav, depuis, vers, ecoule) {
-    const pastille = nav.querySelector('.bottom-nav-pill');
-    if (!pastille || typeof pastille.animate !== 'function' || mouvementReduit()) return;
-    const x1 = pastilleX(pastille, vers);
-    if (x1 === null) return;
-    const x0 = pastilleX(pastille, depuis);
-    const delay = -ecoule;
-
-    if (x0 !== null && x0 !== x1) {
-        // D'un onglet à son voisin, 15 % ; d'un bout à l'autre, 38 %.
-        const etire = 1 + Math.min(.38, Math.max(.15, Math.abs(x1 - x0) / 500));
-        const ecrase = 1 - (etire - 1) * .4;
-        pastille.animate([
-            { transform: `translateX(${x0}px) scale(1, 1)` },
-            { transform: `translateX(${x0 + (x1 - x0) * .4}px) scale(${etire}, ${ecrase})`, offset: .4 },
-            { transform: `translateX(${x1}px) scale(1, 1)` }
-        ], { duration: PASTILLE_MS, easing: PASTILLE_COURBE, delay });
-    } else {
-        pastille.animate([
-            { transform: `translateX(${x1}px) scale(.4, .6)`, opacity: 0 },
-            { transform: `translateX(${x1}px) scale(1.06, 1.04)`, opacity: 1, offset: .6 },
-            { transform: `translateX(${x1}px) scale(1, 1)`, opacity: 1 }
-        ], { duration: 380, easing: 'cubic-bezier(.2, .8, .2, 1)', delay });
-    }
-
-    // Part de 0,84, l'enfoncement du toucher (navbar.css, .is-pressed). La
-    // transition CSS qui ramène l'icône au relâcher passerait devant le
-    // rebond dans la cascade : elle s'efface.
-    const icone = vers.querySelector('.bottom-nav-icon');
-    if (icone) {
-        if (typeof icone.getAnimations === 'function') icone.getAnimations().forEach(a => a.cancel());
-        icone.animate([
-            { transform: 'translateY(0) scale(.84)', easing: 'cubic-bezier(.2, .8, .2, 1)' },
-            { transform: 'translateY(-2px) scale(1.16)', offset: .38, easing: 'cubic-bezier(.4, 0, .2, 1)' },
-            { transform: 'translateY(0) scale(.97)', offset: .72, easing: 'ease-out' },
-            { transform: 'translateY(0) scale(1)' }
-        ], { duration: REBOND_MS, delay });
-    }
-
-    pastille.querySelector('.bottom-nav-pill-ring')?.animate([
-        { transform: 'scale(1)', opacity: .9 },
-        { transform: 'scale(1.26, 1.45)', opacity: 0 }
-    ], { duration: ANNEAU_MS, easing: 'cubic-bezier(.2, .8, .2, 1)', delay: ANNEAU_DELAI - ecoule });
-}
-
-/** L'abscisse de la pastille centrée sous un onglet, ou null s'il est caché. */
-function pastilleX(pastille, onglet) {
-    if (!onglet || onglet.offsetParent === null) return null;
-    return onglet.offsetLeft + (onglet.offsetWidth - pastille.offsetWidth) / 2;
-}
-
-/** Pose la pastille sous l'onglet actif — en glissant, ou d'un coup. */
-function placerPastille(nav, { glisser = false } = {}) {
-    const pastille = nav.querySelector('.bottom-nav-pill');
-    if (!pastille) return;
-    const x = pastilleX(pastille, nav.querySelector('.bottom-nav-item.active'));
-    if (x === null) { pastille.classList.remove('is-placed'); return; }
-    if (!glisser || !pastille.classList.contains('is-placed')) {
-        // D'un coup, et sans fondu : la pastille est déjà là au premier
-        // rendu de chaque page, elle ne clignote pas à chaque onglet.
-        pastille.style.transition = 'none';
-        pastille.style.transform = `translateX(${x}px)`;
-        pastille.classList.add('is-placed');
-        void pastille.offsetWidth;   // position et opacité comptent avant que la transition revienne
-        pastille.style.transition = '';
-    } else {
-        pastille.style.transform = `translateX(${x}px)`;
-    }
-}
-
-function initPastilleBas(currentPage) {
+function initToucherBas(currentPage) {
     const nav = document.querySelector('.bottom-nav');
-    const pastille = nav && nav.querySelector('.bottom-nav-pill');
-    if (!pastille) return;
+    if (!nav) return;
     const onglets = () => [...nav.querySelectorAll('.bottom-nav-item')];
+    const choisir = actif => onglets().forEach(o => {
+        o.classList.toggle('active', o === actif);
+        if (o === actif) o.setAttribute('aria-current', 'page'); else o.removeAttribute('aria-current');
+    });
 
-    placerPastille(nav);
-    reprendreGlissement(nav, onglets());
-
-    // Un onglet qui paraît ou disparaît (updateDraftLinkVisibility…), un
-    // écran qui tourne : la pastille suit son onglet en glissant.
-    if (window.ResizeObserver) {
-        const suivre = new ResizeObserver(() => placerPastille(nav, { glisser: true }));
-        onglets().forEach(o => suivre.observe(o));
-    }
-
-    // Le contact se voit avant le relâcher — le clic n'arrive qu'au
-    // relâcher, trop tard pour paraître immédiat : l'onglet s'enfonce et
-    // l'onde part du doigt dès le pointerdown.
     let relacher = null;
     const finContact = () => {
         nav.querySelectorAll('.bottom-nav-item.is-pressed').forEach(o => o.classList.remove('is-pressed'));
@@ -674,56 +585,18 @@ function initPastilleBas(currentPage) {
         ticHaptique();
         // Au clavier, pas de pointerdown : l'onde part du centre.
         if (e.detail === 0) ondeOnglet(onglet, null)();
-        if (onglet.classList.contains('active')) return;
-        const depuis = nav.querySelector('.bottom-nav-item.active');
-        // L'onglet touché prend la couleur tout de suite ; la pastille part.
-        onglets().forEach(o => {
-            o.classList.toggle('active', o === onglet);
-            if (o === onglet) o.setAttribute('aria-current', 'page'); else o.removeAttribute('aria-current');
-        });
-        placerPastille(nav);
-        jouerGeste(nav, depuis, onglet, 0);
-        try {
-            sessionStorage.setItem(PASTILLE_CLE, JSON.stringify({
-                depuis: depuis ? depuis.getAttribute('href') : null, vers: onglet.getAttribute('href'), t: Date.now()
-            }));
-        } catch { /* stockage refusé : la page d'arrivée pose la pastille sans geste */ }
+        if (!onglet.classList.contains('active')) choisir(onglet);
     });
 
-    // Retour arrière depuis le cache : la page revient telle qu'on l'a
-    // quittée, pastille partie vers l'autre onglet et geste en cours. On
-    // arrête tout et on la ramène.
+    // Retour arrière depuis le cache : la page revient avec l'onglet
+    // touché encore choisi. On rend l'état à la page.
     window.addEventListener('pageshow', e => {
         if (!e.persisted) return;
         relacher = null;
         nav.querySelectorAll('.bottom-nav-item.is-pressed').forEach(o => o.classList.remove('is-pressed'));
         nav.querySelectorAll('.bottom-nav-wave').forEach(o => o.remove());
-        if (typeof nav.getAnimations === 'function') nav.getAnimations({ subtree: true }).forEach(a => a.cancel());
-        onglets().forEach(o => {
-            const actif = o.dataset.page === currentPage;
-            o.classList.toggle('active', actif);
-            if (actif) o.setAttribute('aria-current', 'page'); else o.removeAttribute('aria-current');
-        });
-        placerPastille(nav);
+        choisir(onglets().find(o => o.dataset.page === currentPage) || null);
     });
-}
-
-/**
- * La page d'arrivée reprend le geste commencé sur la page quittée. Un
- * onglet de départ caché ici fait éclore la pastille plutôt que glisser.
- */
-function reprendreGlissement(nav, onglets) {
-    let geste = null;
-    try {
-        geste = JSON.parse(sessionStorage.getItem(PASTILLE_CLE));
-        sessionStorage.removeItem(PASTILLE_CLE);
-    } catch { return; }
-    const actif = nav.querySelector('.bottom-nav-item.active');
-    if (!geste || !actif || actif.getAttribute('href') !== geste.vers) return;
-    const ecoule = Date.now() - geste.t;
-    if (!(ecoule >= 0 && ecoule < GESTE_MS)) return;
-    const depuis = geste.depuis ? onglets.find(o => o.getAttribute('href') === geste.depuis) : null;
-    jouerGeste(nav, depuis, actif, ecoule);
 }
 
 // ==================== USER AVATAR UPLOAD ====================
@@ -1029,7 +902,7 @@ async function checkPendingTrades() {
  * l'ancien comportement.
  */
 const NAV_ONGLETS_CONDITIONNELS = {
-    repechage: ['desktopPoolLink', 'bottomPoolLink'],
+    repechage: ['desktopPoolLink'],
     trade: ['desktopTradeLink', 'bottomTradeLink'],
     classement: ['desktopClassementLink', 'bottomClassementLink']
 };
@@ -1090,14 +963,14 @@ async function checkActiveDrafts() {
 
         const actif = FZPool.get();
         const pool = FZPool.mine().find(p => p.name === actif);
-        if (!pool) { setNavBadge(['desktopDraftBadge', 'bottomDraftBadge'], null); return; }
+        if (!pool) { setNavBadge(['desktopDraftBadge'], null); return; }
 
         const etat = FZPool.draftState(pool.data);
         const aSignaler = etat.etat === 'encours' || etat.etat === 'pret';
         // Chaîne vide et non « ! » : la pastille devient un simple point
         // (.notif-badge:empty en CSS) — un repêchage actif n'a rien à
         // compter, contrairement aux échanges en attente.
-        setNavBadge(['desktopDraftBadge', 'bottomDraftBadge'], aSignaler ? '' : null);
+        setNavBadge(['desktopDraftBadge'], aSignaler ? '' : null);
     } catch (error) {
         console.error('Error checking active drafts:', error);
     }
