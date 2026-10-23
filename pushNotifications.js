@@ -5,8 +5,9 @@
  *
  *   - l'abonnement de CE navigateur : service worker (sw.js), autorisation,
  *     pushManager, puis remise au serveur (/api/push/subscribe) ;
- *   - le réglage, là où une page pose `data-fz-alertes` : « carte » dans le
- *     salon du repêchage, « reglage » au pied de la cloche, « bande » sous le
+ *   - le réglage, là où une page pose `data-fz-alertes` : « carte » (une
+ *     rangée à interrupteur) dans le salon du repêchage, « reglage » au pied
+ *     de la cloche, « bande » sous le
  *     carrousel de la salle de repêchage. Une page qui se redessine (le salon,
  *     à chaque signal temps réel) retrouve le sien tout seul.
  *
@@ -275,34 +276,44 @@
         return `<p class="fz-alertes-msg${message && message.ton ? ` is-${message.ton}` : ''}" role="status">${message ? echapper(message.texte) : ''}</p>`;
     }
 
-    /** Le salon du repêchage : une carte qui dit l'état et ce qu'on peut y faire. */
+    /**
+     * Le salon du repêchage : une rangée de sa liste de réglages, avec un
+     * interrupteur. Toute la rangée l'actionne ; « Envoyer un essai », une
+     * fois les alertes activées, passe par-dessus. Occupé, l'interrupteur
+     * reste focalisable (aria-disabled) : le focus ne retombe pas en haut de
+     * la page pendant l'abonnement.
+     */
     function carte() {
         const vue = {
-            inactif: { classe: 'is-inactif', icone: 'cloche', titre: 'Soyez averti à votre tour',
-                texte: 'Une alerte sur ce téléphone ou cet ordinateur quand c’est à vous de choisir, même Fantazy fermé.',
-                outils: bouton('activer', 'Activer les alertes', true) },
-            actif: { classe: 'is-actif', icone: 'active', titre: 'Alertes activées',
-                texte: 'Cet appareil vous préviendra quand ce sera votre tour de choisir.',
-                outils: bouton('essai', 'Envoyer un essai') + bouton('desactiver', 'Désactiver') },
-            refuse: { classe: 'is-bloquee', icone: 'bloquee', titre: 'Alertes bloquées',
-                texte: 'Les notifications de Fantazy sont bloquées dans ce navigateur. Autorisez-les dans les réglages du site, puis rechargez la page.',
-                outils: '' },
-            'ios-installer': { classe: 'is-inactif', icone: 'telephone', titre: 'Alertes sur iPhone et iPad',
-                texte: 'Ajoutez d’abord Fantazy à l’écran d’accueil : bouton Partager, puis « Sur l’écran d’accueil ». Ouvrez Fantazy depuis cette icône : vous pourrez alors activer les alertes.',
-                outils: boutonGuide('Voir comment', true) }
+            inactif: { icone: 'cloche', titre: 'Alertes sur cet appareil',
+                texte: 'Sois averti quand c’est à toi de choisir, même Fantazy fermé.', action: 'activer' },
+            actif: { icone: 'active', titre: 'Alertes sur cet appareil',
+                texte: 'Activées · cet appareil te préviendra quand ce sera ton tour de choisir.', action: 'desactiver' },
+            refuse: { icone: 'bloquee', titre: 'Alertes bloquées',
+                texte: 'Les notifications de Fantazy sont bloquées dans ce navigateur. Autorise-les dans les réglages du site, puis recharge la page.' },
+            'ios-installer': { icone: 'telephone', titre: 'Alertes sur iPhone et iPad',
+                texte: 'Ajoute d’abord Fantazy à l’écran d’accueil : bouton Partager, puis « Sur l’écran d’accueil ». Ouvre Fantazy depuis cette icône pour activer les alertes.',
+                fin: boutonGuide('Voir comment') }
         }[etat];
         if (!vue) return '';
+        const interrupteur = vue.action ? `
+                <button type="button" class="fz-alertes-switch" role="switch" aria-checked="${etat === 'actif'}"
+                        aria-label="Alertes sur cet appareil" data-fz-alertes-action="${vue.action}"${occupe ? ' aria-disabled="true" aria-busy="true"' : ''}>
+                    <span class="fz-alertes-pouce"></span>
+                </button>` : '';
+        const essai = etat === 'actif'
+            ? `<button type="button" class="fz-alertes-lien" data-fz-alertes-action="essai"${occupe ? ' disabled' : ''}>Envoyer un essai</button>`
+            : '';
         return `
-            <section class="fz-alertes ${vue.classe}" aria-label="Alertes sur cet appareil">
-                <span class="fz-alertes-ico" aria-hidden="true">${svg(vue.icone)}</span>
-                <div class="fz-alertes-txt">
-                    <span class="fz-alertes-label">Alertes sur cet appareil</span>
+            <div class="fz-alertes is-${etat}">
+                <span class="fz-alertes-ico" aria-hidden="true">${svg(vue.icone, 22)}</span>
+                <span class="fz-alertes-txt">
                     <strong class="fz-alertes-titre">${vue.titre}</strong>
                     <span class="fz-alertes-sub">${vue.texte}</span>
-                </div>
-                ${vue.outils ? `<div class="fz-alertes-outils">${vue.outils}</div>` : ''}
+                </span>
+                ${interrupteur}${vue.fin || ''}${essai}
                 ${ligneMessage()}
-            </section>`;
+            </div>`;
     }
 
     /** Le pied de la cloche : une ligne, pour activer ou couper sur toutes les pages. */
@@ -395,7 +406,7 @@
 
     document.addEventListener('click', e => {
         const cible = e.target.closest && e.target.closest('[data-fz-alertes-action]');
-        if (!cible || cible.disabled) return;
+        if (!cible || cible.disabled || cible.getAttribute('aria-disabled') === 'true') return;
         const action = cible.dataset.fzAlertesAction;
         if (action === 'activer') activer();
         else if (action === 'desactiver') desactiver();

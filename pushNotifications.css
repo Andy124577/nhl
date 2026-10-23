@@ -1,34 +1,10 @@
 /* Alertes sur l'appareil (pushNotifications.js).
-   Deux formes : la carte du salon du repêchage, calquée sur celle de la date
-   (.rp-date, repechage.css), et la ligne au pied de la cloche. Les teintes
-   viennent des jetons du site (index.css) : elles suivent le thème. */
+   Trois formes : la rangée à interrupteur du salon du repêchage, la ligne au
+   pied de la cloche et la bande de la salle de repêchage. La rangée suit les
+   jetons --s-* du salon (repechage.css, ses rangées .rp-row) ; le reste, ceux
+   du site (index.css). Toutes suivent le thème. */
 
 [data-fz-alertes][hidden] { display: none; }
-
-/* ---------- La carte ---------- */
-
-.fz-alertes {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 14px;
-    margin: 0 0 18px;
-    padding: 14px 16px;
-    border: 1px dashed var(--border-gray);
-    border-radius: 14px;
-}
-/* Pas encore activées : l'accent du site, c'est une invitation. */
-.fz-alertes.is-inactif {
-    border-style: solid;
-    border-color: color-mix(in srgb, var(--primary) 30%, var(--border-light));
-    background: color-mix(in srgb, var(--primary) 7%, var(--card));
-}
-.fz-alertes.is-actif { border-style: solid; border-color: var(--border-light); }
-.fz-alertes.is-bloquee {
-    border-style: solid;
-    border-color: color-mix(in srgb, var(--warning) 35%, var(--border-light));
-    background: color-mix(in srgb, var(--warning) 8%, var(--card));
-}
 
 .fz-alertes-ico {
     display: flex;
@@ -41,20 +17,6 @@
     background: var(--bg-gray-light);
     color: var(--text-secondary);
 }
-.fz-alertes.is-inactif .fz-alertes-ico { background: var(--card); color: var(--primary-text); }
-.fz-alertes.is-actif .fz-alertes-ico { color: var(--success); }
-.fz-alertes.is-bloquee .fz-alertes-ico { color: var(--warning); }
-
-.fz-alertes-txt { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.fz-alertes-label {
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-}
-.fz-alertes-titre { font-size: 1.02rem; font-weight: 800; color: var(--text-main); }
-.fz-alertes-sub { font-size: .84rem; line-height: 1.45; color: var(--text-secondary); }
 
 .fz-alertes-outils { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
 
@@ -91,11 +53,107 @@
 .fz-alertes-msg.is-ok { color: var(--success); }
 .fz-alertes-msg.is-erreur { color: var(--primary-text); }
 
-/* Téléphone : les boutons de la carte passent sous le texte, pleine largeur.
-   La carte seule — la ligne de la cloche garde ses boutons à droite. */
-@media (max-width: 520px) {
-    .fz-alertes .fz-alertes-outils { flex: 1 1 100%; }
-    .fz-alertes .fz-alertes-btn { flex: 1; }
+/* ---------- La rangée du salon ----------
+   Pictogramme, texte, interrupteur ; en dessous, « Envoyer un essai » et le
+   message. L'interrupteur étend sa zone de clic à toute la rangée (::after),
+   l'essai passe par-dessus. */
+
+.fz-alertes {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 6px;
+    padding: 14px;
+    color: var(--s-ink, var(--text-main));
+    font-family: 'Saira', 'Barlow', system-ui, sans-serif;
+    transition: background-color .15s ease;
+}
+.fz-alertes:is(.is-inactif, .is-actif):hover { background: var(--s-me, var(--bg-hover)); }
+.fz-alertes > .fz-alertes-ico {
+    grid-column: 1;
+    grid-row: 1;
+    border-radius: 12px;
+    background: var(--s-chip, var(--bg-gray-light));
+    color: var(--s-ink2, var(--text-secondary));
+    transition: background-color .25s ease, color .25s ease;
+}
+.fz-alertes.is-actif > .fz-alertes-ico {
+    background: color-mix(in srgb, var(--s-green, var(--success)) 14%, transparent);
+    color: var(--s-green, var(--success));
+}
+.fz-alertes.is-refuse > .fz-alertes-ico { color: var(--s-gold, var(--warning)); }
+
+.fz-alertes-txt { grid-column: 2; grid-row: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fz-alertes-titre { font: 600 14px/1.15 'Saira', 'Barlow', sans-serif; }
+.fz-alertes-sub { font: 400 12px/16px 'Saira', 'Barlow', sans-serif; color: var(--s-faint, var(--text-secondary)); text-wrap: pretty; }
+
+.fz-alertes-switch {
+    grid-column: 3;
+    grid-row: 1;
+    width: 46px;
+    height: 28px;
+    box-sizing: border-box;
+    padding: 3px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--s-switch, var(--border-gray));
+    cursor: pointer;
+    transition: background-color .25s ease;
+}
+.fz-alertes-switch::after { content: ''; position: absolute; inset: 0; }
+.fz-alertes-switch[aria-checked="true"] { background: var(--s-green, var(--success)); }
+.fz-alertes-switch[aria-disabled="true"] { opacity: .6; cursor: progress; }
+.fz-alertes-switch:focus-visible { outline: 2px solid var(--s-red, var(--primary)); outline-offset: 2px; }
+.fz-alertes-pouce {
+    display: block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+    transition: transform .25s cubic-bezier(.34, 1.4, .64, 1);
+}
+.fz-alertes-switch[aria-checked="true"] .fz-alertes-pouce { transform: translateX(18px); }
+
+/* « Voir comment » (iPhone) : un lien à droite, comme « Copier » à côté. */
+.fz-alertes > .fz-alertes-btn {
+    grid-column: 3;
+    grid-row: 1;
+    min-height: 32px;
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    color: var(--s-red-ink, var(--primary-text));
+    font: 600 13px/1 'Saira', 'Barlow', sans-serif;
+}
+.fz-alertes > .fz-alertes-btn:hover:not(:disabled) { color: var(--s-ink, var(--text-main)); }
+
+.fz-alertes-lien {
+    position: relative;
+    z-index: 1;
+    grid-column: 2 / -1;
+    justify-self: start;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--s-red-ink, var(--primary-text));
+    font: 600 12px/1 'Saira', 'Barlow', sans-serif;
+    cursor: pointer;
+}
+.fz-alertes-lien:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+.fz-alertes-lien:focus-visible { outline: 2px solid var(--s-red, var(--primary)); outline-offset: 2px; border-radius: 4px; }
+.fz-alertes-lien:disabled { opacity: .6; cursor: default; }
+
+.fz-alertes > .fz-alertes-msg { grid-column: 2 / -1; font: 500 12px/16px 'Saira', 'Barlow', sans-serif; color: var(--s-mute, var(--text-secondary)); }
+.fz-alertes > .fz-alertes-msg.is-ok { color: var(--s-green, var(--success)); }
+.fz-alertes > .fz-alertes-msg.is-erreur { color: var(--s-red-ink, var(--primary-text)); }
+
+@media (prefers-reduced-motion: reduce) {
+    .fz-alertes-switch,
+    .fz-alertes-pouce { transition: none; }
 }
 
 /* ---------- Le pied de la cloche ---------- */

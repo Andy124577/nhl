@@ -12,6 +12,12 @@
    aussi avoir choisi son identité LNH (voir la section « IDENTITÉ LNH »
    plus bas) : c'est elle qui marquera toutes ses cartes de choix, du
    premier tour au dernier, dans la salle de repêchage.
+
+   Habillage : maquette « Pool · avant le repêchage » (langage 6b
+   Éditorial, repechage.css). Un héros sombre dans les deux thèmes — état,
+   mode, début, participants —, le bouton de départ collé au-dessus de la
+   barre du bas au téléphone, puis l'invitation, l'ordre du premier tour
+   et les réglages en cartes.
    ============================================================ */
 (function () {
     const echapper = texte => String(texte == null ? '' : texte)
@@ -20,16 +26,36 @@
 
     const conteneur = () => document.getElementById('rpContent');
 
-    function entete(pool, etiquette, classeEtat) {
+    /** Les pictogrammes de la maquette, au trait, comme ceux de l'accueil. */
+    const ICONES = {
+        eclair: '<path d="m13 2-9 12h7l-1 8 10-13h-8Z"/>',
+        horloge: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        equipe: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5a6 6 0 0 1 12 0V20M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4.5V20"/>',
+        inviter: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5a6 6 0 0 1 12 0V20M19 8v6M16 11h6"/>',
+        de: '<rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01" stroke-width="3"/>',
+        liste: '<path d="M10 6h10M10 12h10M10 18h10M4.5 6h.01M4.5 12h.01M4.5 18h.01" />',
+        tourner: '<path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/>',
+        hasard: '<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
+        coche: '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/>',
+        crosse: '<path d="M15 3 9.6 16.2A2.5 2.5 0 0 1 7.3 18H3v3h5.4a3.5 3.5 0 0 0 3.2-2.1L18 3"/><path d="M15.5 20.5h5"/>',
+        lien: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+        crayon: '<path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/>',
+        sortie: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+        calendrier: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+        alerte: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+        sablier: '<path d="M6 3h12M6 21h12M7 3v3a5 5 0 0 0 10 0V3M7 21v-3a5 5 0 0 1 10 0v3"/>',
+        chevron: '<path d="m9 6 6 6-6 6"/>'
+    };
+    const ico = (nom, taille = 20) =>
+        `<svg class="rp-ico" width="${taille}" height="${taille}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONES[nom] || ''}</svg>`;
+
+    /** L'en-tête d'une carte : pictogramme, titre (HTML de confiance), un mot à droite. */
+    function teteCarte(icone, titre, meta, id) {
         return `
-            <header class="rp-head">
-                <img src="${echapper(FZPool.image(pool.data))}" class="rp-img" alt=""
-                     onerror="this.src='Icons/grayGroup.png'">
-                <div class="rp-head-txt">
-                    <p class="rp-eyebrow">Repêchage</p>
-                    <h1 class="rp-title">${echapper(pool.name)}</h1>
-                </div>
-                <span class="rp-state rp-state-${classeEtat}">${etiquette}</span>
+            <header class="rp-card-tete">
+                ${ico(icone, 22)}
+                <h2 id="${id}">${titre}</h2>
+                ${meta ? `<span class="rp-card-meta">${meta}</span>` : ''}
             </header>`;
     }
 
@@ -37,7 +63,7 @@
         conteneur().innerHTML = `
             <div class="fz-empty-pool">
                 <h2>Aucun pool actif</h2>
-                <p>Le repêchage se déroule dans un pool. Créez le vôtre ou rejoignez une ligue
+                <p>Le repêchage se déroule dans un pool. Crée le tien ou rejoins une ligue
                    ouverte pour commencer.</p>
                 <div class="fz-empty-actions">
                     <a class="primary" href="creer-pool.html">Créer un pool</a>
@@ -65,6 +91,34 @@
         return Object.entries(poolData.teams || {})
             .filter(([, equipe]) => (equipe.members || []).length > 0)
             .sort(([a], [b]) => a.localeCompare(b, 'fr'));
+    }
+
+    /**
+     * Une couleur par équipe, la même partout : sa pastille parmi les
+     * participants, sa part de la roue, son rang dans l'ordre. Des teintes
+     * qui portent toutes un texte blanc lisible.
+     */
+    const TEINTES = ['#c0392b', '#1f5fbf', '#1e8449', '#7d3c98', '#b35309',
+        '#117a8b', '#a93266', '#4d6320', '#34495e', '#8e5a1f'];
+
+    function teinteDe(poolData, nom) {
+        const rang = equipesEligibles(poolData).findIndex(([n]) => n === nom);
+        return TEINTES[Math.max(0, rang) % TEINTES.length];
+    }
+
+    /** « U2 », « LB », « A » : ce qui tient dans une pastille ronde. */
+    function initiales(nom) {
+        const mots = String(nom || '').trim().split(/[\s._-]+/).filter(Boolean);
+        if (!mots.length) return '?';
+        if (mots.length > 1) return (mots[0].charAt(0) + mots[1].charAt(0)).toUpperCase();
+        const chiffre = mots[0].length > 1 ? mots[0].match(/\d$/) : null;
+        return (mots[0].charAt(0) + (chiffre ? chiffre[0] : '')).toUpperCase();
+    }
+
+    /** La pastille d'une équipe : les initiales de la personne qui la dirige. */
+    function initialesEquipe(poolData, nom) {
+        const equipe = (poolData.teams || {})[nom];
+        return initiales(((equipe && equipe.members) || [])[0] || nom);
     }
 
     /**
@@ -108,15 +162,17 @@
             const membres = equipe.members || [];
             const estMoi = membres.includes(moi);
             const qui = membres.join(', ');
+            // L'admin du pool est marqué : c'est la seule personne qui peut lancer.
+            const admin = !!createur && membres.includes(createur);
+            const sous = [qui && qui !== nom ? echapper(qui) : '', admin ? 'admin' : ''].filter(Boolean).join(' · ');
             return `
             <li class="rp-seat${estMoi ? ' is-me' : ''}">
-                <span class="rp-seat-ini" aria-hidden="true">${echapper(((membres[0] || nom).charAt(0) || '?').toUpperCase())}</span>
+                <span class="rp-seat-ini" style="--c:${teinteDe(pool.data, nom)}" aria-hidden="true">${echapper(initiales(membres[0] || nom))}</span>
                 <span class="rp-seat-txt">
                     <span class="rp-seat-nom">${echapper(nom)}</span>
-                    ${qui && qui !== nom ? `<span class="rp-seat-qui">${echapper(qui)}</span>` : ''}
+                    ${sous ? `<span class="rp-seat-qui"${admin ? ' title="A créé le pool"' : ''}>${sous}</span>` : ''}
                 </span>
-                ${estMoi ? '<span class="rp-seat-toi">toi</span>' : ''}
-                ${createur && membres.includes(createur) ? '<span class="rp-seat-admin" title="A créé le pool">admin</span>' : ''}
+                ${estMoi ? '<span class="rp-seat-toi">Toi</span>' : ''}
             </li>`;
         });
 
@@ -127,7 +183,7 @@
         const vides = Array.from({ length: libres }, () => `
             <li class="rp-seat is-free">
                 <span class="rp-seat-ini" aria-hidden="true">+</span>
-                <span class="rp-seat-nom">En attente…</span>
+                <span class="rp-seat-txt"><span class="rp-seat-nom">En attente…</span></span>
             </li>`);
 
         // Les invitations en attente prennent place à la suite, en
@@ -136,7 +192,7 @@
         const gerer = inv => (!!createur && createur === moi) || inv.invitedBy === moi;
         const invites = invitationsEnAttente(pool.data).map(inv => `
             <li class="rp-seat is-invited">
-                <span class="rp-seat-ini" aria-hidden="true">${echapper((inv.username.charAt(0) || '?').toUpperCase())}</span>
+                <span class="rp-seat-ini" aria-hidden="true">${echapper(initiales(inv.username))}</span>
                 <span class="rp-seat-txt">
                     <span class="rp-seat-nom">${echapper(inv.username)}</span>
                     <span class="rp-seat-qui">Invitation envoyée${inv.invitedBy && inv.invitedBy !== moi ? ` par ${echapper(inv.invitedBy)}` : ''}</span>
@@ -149,9 +205,10 @@
                 </button>` : ''}
             </li>`);
 
+        const plein = etat.inscrits >= etat.max;
         return `
-            <div class="rp-roster-wrap">
-                <h3 class="rp-roster-title">Participants · ${etat.inscrits} / ${etat.max} max.</h3>
+            <div class="rp-inscrits">
+                <p class="rp-inscrits-tete"><span>Participants</span><span>${etat.inscrits} / ${etat.max}${plein ? ' · complet' : ' max.'}</span></p>
                 <ul class="rp-seats" id="rpSeats">${places.concat(invites, vides).join('')}</ul>
             </div>`;
     }
@@ -165,9 +222,6 @@
     // l'état relu. Ce qui n'est pas tiré l'est au hasard au lancement.
 
     const ROUE_MS = 4200;
-    /** Des teintes qui portent toutes un texte blanc lisible. */
-    const ROUE_TEINTES = ['#1f5fbf', '#c0392b', '#1e8449', '#7d3c98', '#b35309',
-        '#117a8b', '#a93266', '#4d6320', '#34495e', '#8e5a1f'];
 
     /**
      * Ce que ce salon a déjà montré de la roue : c'est ce qui dit quoi
@@ -221,7 +275,7 @@
         zone.textContent = `Choix ${numero} du premier tour : ${equipe}.`;
     }
 
-    function roueSvg(equipes) {
+    function roueSvg(pool, equipes) {
         const n = equipes.length;
         const R = 100;
         const pas = 360 / n;
@@ -229,10 +283,12 @@
             const rad = angle * Math.PI / 180;
             return `${(R * Math.sin(rad)).toFixed(2)} ${(-R * Math.cos(rad)).toFixed(2)}`;
         };
-        const taille = n <= 4 ? 13 : n <= 8 ? 11 : 9;
-        const court = nom => (nom.length > 13 ? `${nom.slice(0, 12)}…` : nom);
+        // Le nom court du moyeu au bord : moins de place quand les parts s'amincissent.
+        const taille = n <= 4 ? 15 : n <= 8 ? 12 : 10;
+        const lettres = n <= 4 ? 9 : n <= 8 ? 11 : 12;
+        const court = nom => (nom.length > lettres ? `${nom.slice(0, lettres - 1)}…` : nom);
         const parts = equipes.map((nom, i) => {
-            const teinte = ROUE_TEINTES[i % ROUE_TEINTES.length];
+            const teinte = teinteDe(pool.data, nom);
             const forme = n === 1
                 ? `<circle r="${R}" class="rp-roue-seg" style="fill:${teinte}"/>`
                 : `<path d="M0 0 L${point(i * pas)} A${R} ${R} 0 ${pas > 180 ? 1 : 0} 1 ${point((i + 1) * pas)} Z" class="rp-roue-seg" style="fill:${teinte}"/>`;
@@ -240,65 +296,107 @@
             const milieu = (i + 0.5) * pas;
             const sens = milieu > 180 ? 90 : -90;
             return `${forme}
-                <g transform="rotate(${milieu.toFixed(2)}) translate(0 -${R * 0.58}) rotate(${sens})">
-                    <text class="rp-roue-txt" text-anchor="middle" dominant-baseline="central" font-size="${taille}">${echapper(court(nom))}</text>
+                <g transform="rotate(${milieu.toFixed(2)}) translate(0 -${R * 0.6}) rotate(${sens})">
+                    <text class="rp-roue-txt" text-anchor="middle" dominant-baseline="central" font-size="${taille}">${echapper(court(nom).toUpperCase())}</text>
                 </g>`;
         }).join('');
         return `
-            <svg class="rp-roue" id="rpRoue" viewBox="-104 -104 208 208" aria-hidden="true">
-                <circle r="${R + 2}" class="rp-roue-bord"/>
+            <svg class="rp-roue" id="rpRoue" viewBox="-100 -100 200 200" aria-hidden="true">
+                <defs>
+                    <radialGradient id="rpRoueOmbre">
+                        <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+                        <stop offset="100%" stop-color="#000" stop-opacity=".25"/>
+                    </radialGradient>
+                </defs>
                 ${parts}
-                <circle r="13" class="rp-roue-moyeu"/>
+                <circle r="${R}" fill="url(#rpRoueOmbre)"/>
             </svg>`;
+    }
+
+    /** Un rang du premier tour : son numéro, la pastille de l'équipe, son nom. `note` : HTML de confiance. */
+    function rangee(pool, k, nom, note) {
+        return `
+            <li class="rp-rang">
+                <span class="rp-rang-num">${k + 1}</span>
+                <span class="rp-rang-ini" style="--c:${teinteDe(pool.data, nom)}" aria-hidden="true">${echapper(initialesEquipe(pool.data, nom))}</span>
+                <span class="rp-order-nom">${echapper(nom)}</span>
+                ${note ? `<span class="rp-rang-note">${note}</span>` : ''}
+            </li>`;
+    }
+
+    function rangeeLibre(k, tourne) {
+        return `
+            <li class="rp-rang is-libre${tourne ? ' is-tourne' : ''}">
+                <span class="rp-rang-num">${k + 1}</span>
+                <span class="rp-rang-ini" aria-hidden="true"></span>
+                <span class="rp-order-nom">${tourne ? 'La roue tourne…' : 'À tirer'}</span>
+            </li>`;
     }
 
     function blocRoue(pool, jeSuisCreateur) {
         const inscrites = equipesEligibles(pool.data).length;
         if (inscrites < 2) {
-            return `<p class="rp-note">L'ordre de sélection sera tiré au hasard au démarrage.</p>`;
+            return `
+            <section class="rp-card rp-ordre" aria-labelledby="rpRoueTitre">
+                ${teteCarte('de', 'Ordre du 1<sup>er</sup> tour', '', 'rpRoueTitre')}
+                <p class="rp-card-sub">L’ordre de sélection sera tiré au hasard au démarrage.</p>
+            </section>`;
         }
         const e = etatRoue(pool);
-        roue.animation = e.cible ? { cible: e.cible, segments: e.segments, apres: e.apres, numero: e.sorties.length + 1 } : null;
+        roue.animation = e.cible ? {
+            cible: e.cible, segments: e.segments, apres: e.apres, numero: e.sorties.length + 1,
+            teinte: teinteDe(pool.data, e.cible), ini: initialesEquipe(pool.data, e.cible)
+        } : null;
 
         const fini = e.segments.length === 0;
-        const lignes = [
-            ...e.sorties.map(nom => `<li><span class="rp-order-nom">${echapper(nom)}</span></li>`),
-            ...e.segments.map((_, k) => `
-                <li class="is-libre${k === 0 && e.cible ? ' is-tourne' : ''}">
-                    <span class="rp-order-nom">${k === 0 && e.cible ? 'La roue tourne…' : 'À tirer'}</span>
-                </li>`)
+        const rangs = [
+            ...e.sorties.map((nom, k) => rangee(pool, k, nom, k === 0 ? 'Choisit en premier' : '')),
+            ...e.segments.map((_, k) => rangeeLibre(e.sorties.length + k, k === 0 && !!e.cible))
         ].join('');
 
         // Aux autres, la roue n'apparaît qu'une fois le tirage commencé :
         // une roue que personne ne peut tourner n'annoncerait rien.
         const montrerRoue = !fini && (jeSuisCreateur || e.sorties.length > 0 || e.cible);
+        const montrerRangs = e.sorties.length || e.cible || jeSuisCreateur;
         const occupe = e.cible ? ' disabled' : '';
-        const actions = jeSuisCreateur && !fini ? `
+        let actions = '';
+        if (jeSuisCreateur && !fini) {
+            actions = `
                 <div class="rp-roue-actions">
-                    <button type="button" class="rp-btn primary" id="rpRoueTourner"${occupe}>Tourner la roue</button>
-                    ${e.segments.length > 1 ? `<button type="button" class="rp-btn secondary" id="rpRoueTout"${occupe}>Tirer le reste au hasard</button>` : ''}
-                </div>` : '';
+                    <button type="button" class="rp-roue-btn is-main${e.cible ? ' is-tourne' : ''}" id="rpRoueTourner"${occupe}>
+                        ${ico('tourner', 20)}<span>${e.cible ? 'Ça tourne…' : 'Tourner la roue'}</span>
+                    </button>
+                    ${e.segments.length > 1 ? `
+                    <button type="button" class="rp-roue-btn" id="rpRoueTout"${occupe}>
+                        ${ico('hasard', 20)}<span>${e.sorties.length ? 'Le reste au hasard' : 'Tout au hasard'}</span>
+                    </button>` : ''}
+                </div>`;
+        } else if (fini) {
+            actions = `<p class="rp-roue-actions rp-ordre-fixe">${ico('coche', 20)}<span>Ordre fixé</span></p>`;
+        }
 
         const createur = createurDe(pool.data);
         const note = fini
             ? 'L’ordre du premier tour est prêt. Les tours suivants suivent le serpentin.'
             : e.sorties.length === 0
                 ? (jeSuisCreateur
-                    ? 'Tournez la roue pour tirer l’ordre, un choix à la fois — ou lancez directement : il sera tiré au hasard.'
+                    ? 'Facultatif. Sans tirage, l’ordre sera tiré au hasard au lancement.'
                     : `L’ordre sera tiré au hasard au démarrage, ou à la roue par ${echapper(createur || 'l’admin du pool')}.`)
                 : 'Les choix pas encore tirés le seront au hasard au lancement.';
+        const meta = montrerRangs ? `${e.sorties.length} sur ${inscrites} tirés` : '';
 
         return `
-            <section class="rp-roster-wrap rp-roue-wrap" aria-labelledby="rpRoueTitre">
-                <h3 class="rp-roster-title" id="rpRoueTitre">Ordre du 1<sup>er</sup> tour</h3>
+            <section class="rp-card rp-ordre" aria-labelledby="rpRoueTitre">
+                ${teteCarte('de', 'Ordre du 1<sup>er</sup> tour', meta, 'rpRoueTitre')}
+                <p class="rp-card-sub">${note}</p>
                 ${montrerRoue ? `
                 <div class="rp-roue-zone">
+                    ${roueSvg(pool, e.segments)}
+                    <span class="rp-roue-moyeu" aria-hidden="true">${ico('crosse', 22)}</span>
                     <span class="rp-roue-pointe" aria-hidden="true"></span>
-                    ${roueSvg(e.segments)}
                 </div>` : ''}
-                ${e.sorties.length || e.cible || jeSuisCreateur ? `<ol class="rp-order rp-order-roue">${lignes}</ol>` : ''}
+                ${montrerRangs ? `<ol class="rp-order rp-order-roue">${rangs}</ol>` : ''}
                 ${actions}
-                <p class="rp-note">${note}</p>
             </section>`;
     }
 
@@ -324,8 +422,18 @@
             if (fini) return;
             fini = true;
             annoncerRoue(anim.numero, anim.cible);
-            const rangee = document.querySelector('.rp-order-roue .is-tourne .rp-order-nom');
-            if (rangee) rangee.textContent = anim.cible;
+            // Le rang qui attendait se remplit sous la roue arrêtée.
+            const rang = document.querySelector('.rp-order-roue .is-tourne');
+            if (rang) {
+                rang.classList.remove('is-libre');
+                const nom = rang.querySelector('.rp-order-nom');
+                if (nom) nom.textContent = anim.cible;
+                const pastille = rang.querySelector('.rp-rang-ini');
+                if (pastille) {
+                    pastille.style.setProperty('--c', anim.teinte);
+                    pastille.textContent = anim.ini;
+                }
+            }
             setTimeout(() => {
                 roue.montrees = anim.apres;
                 roue.animation = null;
@@ -372,15 +480,25 @@
         const ordre = ordreAnnonce(pool.data);
         if (!ordre) return blocRoue(pool, jeSuisCreateur);
         return `
-            <div class="rp-roster-wrap">
-                <h3 class="rp-roster-title">Ordre du 1<sup>er</sup> tour · classement inversé</h3>
+            <section class="rp-card rp-ordre" aria-labelledby="rpOrdreTitre">
+                ${teteCarte('liste', 'Ordre du 1<sup>er</sup> tour', 'Classement inversé', 'rpOrdreTitre')}
+                <p class="rp-card-sub">Le dernier de la saison passée choisit en premier. Les nouvelles équipes passent après, tirées au sort.</p>
                 <ol class="rp-order">
-                    ${ordre.map(e => `
-                        <li><span class="rp-order-nom">${echapper(e.nom)}</span>
-                            <span class="rp-order-rang">${e.rang ? `${e.rang}<sup>${e.rang === 1 ? 'er' : 'e'}</sup> la saison passée` : 'nouvelle équipe'}</span></li>`).join('')}
+                    ${ordre.map((e, k) => rangee(pool, k, e.nom, e.rang
+                        ? `${e.rang}<sup>${e.rang === 1 ? 'er' : 'e'}</sup> la saison passée`
+                        : 'Nouvelle équipe')).join('')}
                 </ol>
-                <p class="rp-note">Le dernier de la saison passée choisit en premier. Les nouvelles équipes passent après, tirées au sort.</p>
-            </div>`;
+            </section>`;
+    }
+
+    /** L'ordre de départ en une ligne, pour la fenêtre « Lancer maintenant ? ». */
+    function resumeOrdre(poolData) {
+        if (ordreAnnonce(poolData)) return 'Classement inversé de la saison passée';
+        const { sorties, restantes } = tirageDe(poolData);
+        if (!sorties.length) return 'Au hasard';
+        // Une seule équipe pas encore tirée : sa place est déjà la dernière.
+        if (restantes.length <= 1) return [...sorties, ...restantes].join(' → ');
+        return `${sorties.join(' → ')}, puis au hasard`;
     }
 
     // ==================== INVITER DES JOUEURS ====================
@@ -399,8 +517,6 @@
 
     const urlPool = (nom, suite) => `${FZPool.BASE_URL}/api/pools/${encodeURIComponent(nom)}${suite}`;
     const icone = (nom, taille) => (typeof getIcon === 'function' ? getIcon(nom, taille || 16) : '');
-    const ICONE_LIEN = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>`;
     const ICONE_OK = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6"
         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
 
@@ -449,35 +565,27 @@
         }).join('');
     }
 
-    function blocInviter(pool, etat) {
-        const complet = etat.inscrits >= etat.max;
+    /** La recherche d'invités. Le pool plein, elle s'efface : « complet » le dit déjà. */
+    function blocInviter(pool) {
         const r = etatRecherche(pool.name);
-
-        const corps = complet
-            ? `<p class="rp-invite-full">Le pool est complet (${etat.max} participants maximum).</p>`
-            : `
-                <div class="rp-search${r.enCours ? ' is-busy' : ''}" id="rpSearch">
-                    <span class="rp-search-ico" aria-hidden="true">${icone('search', 18)}</span>
-                    <input type="search" id="rpInviteQ" class="rp-search-input" maxlength="40"
-                           autocomplete="off" autocapitalize="off" spellcheck="false"
-                           placeholder="Rechercher un nom d’utilisateur"
-                           aria-label="Rechercher un joueur à inviter" aria-describedby="rpInviteSub"
-                           aria-controls="rpInviteResults" value="${echapper(r.q)}">
-                    <span class="rp-search-spin" aria-hidden="true"></span>
-                </div>
-                <ul class="rp-results" id="rpInviteResults" aria-live="polite">${lignesResultats(r)}</ul>
-                <p class="rp-invite-msg${r.erreur ? ' is-error' : ''}" id="rpInviteMsg" role="status"
-                   ${r.message ? '' : 'hidden'}>${r.erreur ? '' : ICONE_OK}<span>${echapper(r.message)}</span></p>`;
-
         return `
-            <section class="rp-invite" aria-labelledby="rpInviteTitre">
-                <h3 class="rp-roster-title" id="rpInviteTitre">Inviter des joueurs</h3>
-                <p class="rp-invite-sub" id="rpInviteSub">La personne reçoit une notification et entre d’un clic,
+            <section class="rp-card rp-invite" aria-labelledby="rpInviteTitre">
+                ${teteCarte('inviter', 'Inviter des joueurs', '', 'rpInviteTitre')}
+                <p class="rp-card-sub" id="rpInviteSub">La personne reçoit une notification et entre d’un clic,
                     sans le mot de passe du pool.</p>
-                ${corps}
-                <div class="rp-invite-alt">
-                    <span>Un ami n’a pas encore de compte ?</span>
-                    <button type="button" class="rp-link-btn" id="rpInviter">${ICONE_LIEN}<span>Copier le lien d’invitation</span></button>
+                <div class="rp-invite-corps">
+                    <div class="rp-search${r.enCours ? ' is-busy' : ''}" id="rpSearch">
+                        <span class="rp-search-ico" aria-hidden="true">${icone('search', 18)}</span>
+                        <input type="search" id="rpInviteQ" class="rp-search-input" maxlength="40"
+                               autocomplete="off" autocapitalize="off" spellcheck="false"
+                               placeholder="Rechercher un nom d’utilisateur"
+                               aria-label="Rechercher un joueur à inviter" aria-describedby="rpInviteSub"
+                               aria-controls="rpInviteResults" value="${echapper(r.q)}">
+                        <span class="rp-search-spin" aria-hidden="true"></span>
+                    </div>
+                    <ul class="rp-results" id="rpInviteResults" aria-live="polite">${lignesResultats(r)}</ul>
+                    <p class="rp-invite-msg${r.erreur ? ' is-error' : ''}" id="rpInviteMsg" role="status"
+                       ${r.message ? '' : 'hidden'}>${r.erreur ? '' : ICONE_OK}<span>${echapper(r.message)}</span></p>
                 </div>
             </section>`;
     }
@@ -605,6 +713,139 @@
         });
     }
 
+    // ==================== LE HÉROS ====================
+
+    /** Une tuile du héros : « Mode », « Début ». `valeur`, `sous`, `actions` : HTML de confiance. */
+    function tuile({ icone: nom, label, valeur, sous = '', actions = '', classe = '' }) {
+        return `
+                    <div class="rp-tuile${classe ? ` ${classe}` : ''}">
+                        <span class="rp-tuile-label">${ico(nom, 16)}${label}</span>
+                        <strong class="rp-tuile-valeur">${valeur}</strong>
+                        ${sous ? `<span class="rp-tuile-sous">${sous}</span>` : ''}
+                        ${actions ? `<span class="rp-tuile-actions">${actions}</span>` : ''}
+                    </div>`;
+    }
+
+    // Repêchage automatique (`draftAuto`, choisi à la création) : au départ,
+    // le serveur joue tous les tours d'un coup (routes/pools.js,
+    // repecherDOffice). Un repêchage daté, lui, part chronométré
+    // (poolOps.demarrerRepechage) ; sans date, chacun choisit à son tour.
+    function tuileMode(pool, etat) {
+        if (pool.data.draftAuto === true) {
+            return tuile({ icone: 'eclair', classe: 'is-auto', label: 'Mode', valeur: 'Automatique',
+                sous: 'Meilleur joueur projeté, à chaque tour' });
+        }
+        if (etat.prevuLe) {
+            return tuile({ icone: 'horloge', label: 'Mode', valeur: 'Chronométré',
+                sous: '3 min par choix, sinon Fantazy prend le meilleur disponible' });
+        }
+        return tuile({ icone: 'equipe', label: 'Mode', valeur: 'En direct', sous: 'Chacun choisit à son tour' });
+    }
+
+    // ==================== DATE DU REPÊCHAGE ====================
+    //
+    // Deux façons de repêcher, choisies à la création du pool : quand la
+    // personne qui l'a créé le décide, ou à une date fixée d'avance — le
+    // serveur lance alors le repêchage lui-même à l'heure dite
+    // (routes/pools.js, demarrerRepechagesPrevus). Jusqu'au départ, elle peut
+    // fixer, déplacer ou retirer la date d'ici.
+
+    function libelleDepart(etat) {
+        return etat.prevuLe ? 'Lancer maintenant' : 'Lancer le repêchage';
+    }
+
+    function tuileDebut(etat, jeSuisCreateur, createur) {
+        if (etat.prevuLe) {
+            // « sam. 25 oct., 20 h » : le jour en valeur, l'heure en dessous.
+            const court = FZPool.draftDate(etat.prevuLe, { court: true });
+            const coupe = court.lastIndexOf(', ');
+            const jour = coupe > 0 ? court.slice(0, coupe) : court;
+            const heure = coupe > 0 ? court.slice(coupe + 2) : '';
+            const delai = FZPool.timeUntil(etat.prevuLe);
+            return tuile({
+                icone: 'horloge', label: 'Début', valeur: echapper(jour),
+                sous: `${heure ? `${echapper(heure)} · ` : ''}<span id="rpDateDelai" data-date="${echapper(etat.prevuLe)}">${echapper(delai || 'Départ imminent…')}</span>`,
+                actions: jeSuisCreateur ? `
+                            <button type="button" class="rp-tuile-lien" id="rpDateChoisir" aria-label="Modifier la date du repêchage">Modifier</button>
+                            <button type="button" class="rp-tuile-lien is-doux" id="rpDateRetirer" aria-label="Retirer la date du repêchage">Retirer</button>` : ''
+            });
+        }
+        if (jeSuisCreateur && etat.manqueLe) {
+            return tuile({
+                icone: 'alerte', classe: 'is-manque', label: 'Début', valeur: 'Date manquée',
+                sous: `Il manquait des équipes le ${echapper(FZPool.draftDate(etat.manqueLe, { court: true }))}.`,
+                actions: `<button type="button" class="rp-tuile-lien" id="rpDateChoisir">Nouvelle date${ico('chevron', 15)}</button>`
+            });
+        }
+        if (jeSuisCreateur) {
+            return tuile({
+                icone: 'horloge', label: 'Début', valeur: 'Quand tu veux',
+                actions: `<button type="button" class="rp-tuile-lien" id="rpDateChoisir">Fixer une date${ico('chevron', 15)}</button>`
+            });
+        }
+        return tuile({ icone: 'horloge', label: 'Début', valeur: 'Au lancement',
+            sous: `Par ${echapper(createur || 'l’admin du pool')}` });
+    }
+
+    /** Mode et début côte à côte ; sous eux, l'agenda et ce qu'il faudra à l'heure dite. */
+    function blocTuiles(pool, etat, jeSuisCreateur, createur) {
+        // Une seule équipe, ou un nombre impair en tête-à-tête : à l'heure
+        // dite, rien ne partira. Mieux vaut le savoir d'avance.
+        const condition = !etat.prevuLe ? ''
+            : etat.raison === 'deux'
+                ? 'Il faudra au moins 2 équipes à cette heure-là, sinon rien ne démarrera.'
+                : etat.raison === 'pair'
+                    ? 'Il faudra un nombre pair d’équipes à cette heure-là, sinon rien ne démarrera.'
+                    : '';
+        return `
+                <div class="rp-hero-infos">
+                    <div class="rp-tuiles">${tuileMode(pool, etat)}${tuileDebut(etat, jeSuisCreateur, createur)}</div>
+                    ${etat.prevuLe ? `
+                    <button type="button" class="rp-hero-btn" id="rpDateCalendrier">${ico('calendrier', 18)}<span>Ajouter au calendrier</span></button>` : ''}
+                    ${condition ? `<p class="rp-hero-note">${ico('alerte', 16)}<span>${condition}</span></p>` : ''}
+                </div>`;
+    }
+
+    // ==================== RÉGLAGES ====================
+
+    function rangeeReglage({ id = '', attributs = '', classe = '', icone: nom, titre, sous, fin }) {
+        return `
+                <button type="button" class="rp-row${classe ? ` ${classe}` : ''}"${id ? ` id="${id}"` : ''}${attributs}>
+                    <span class="rp-row-ico" aria-hidden="true">${ico(nom, 22)}</span>
+                    <span class="rp-row-txt"><strong>${titre}</strong><small>${sous}</small></span>
+                    ${fin || ico('chevron', 20)}
+                </button>`;
+    }
+
+    /**
+     * Les alertes de l'appareil (pushNotifications.js remplit leur rangée),
+     * le lien à copier, le nom de son équipe — et, dans une file
+     * instantanée, la sortie.
+     */
+    function blocReglages(pool, etat, instantane, moi) {
+        const plein = etat.inscrits >= etat.max;
+        const mienne = equipesEligibles(pool.data).find(([, equipe]) => (equipe.members || []).includes(moi));
+        const lien = instantane ? '' : rangeeReglage({
+            id: 'rpInviter', icone: 'lien', titre: 'Lien d’invitation',
+            sous: `${plein ? 'Pool complet · ' : ''}Pour un ami qui n’a pas encore de compte`,
+            fin: '<span class="rp-row-action" data-rp-copie aria-live="polite">Copier</span>'
+        });
+        const quitter = instantane ? rangeeReglage({
+            id: 'rpQuitter', classe: 'is-danger', icone: 'sortie', titre: 'Quitter la file',
+            sous: 'Ta place se libère pour quelqu’un d’autre'
+        }) : '';
+        return `
+            <section class="rp-card rp-reglages" aria-label="Réglages">
+                <div data-fz-alertes="carte" hidden></div>
+                ${lien}
+                ${rangeeReglage({
+                    attributs: ' data-fz-reglages="equipes"', icone: 'crayon', titre: 'Renommer mon équipe',
+                    sous: mienne ? echapper(mienne[0]) : 'Le nom que tout le pool verra'
+                })}
+                ${quitter}
+            </section>`;
+    }
+
     /**
      * Le salon d'avant-repêchage : qui est là, et qui peut lancer.
      *
@@ -620,6 +861,7 @@
         const moi = localStorage.getItem('username') || '';
         const jeSuisCreateur = !!createur && createur === moi;
         const pret = etat.etat === 'pret';
+        const plein = etat.inscrits >= etat.max;
 
         let lead;
         if (instantane) {
@@ -628,44 +870,46 @@
                 ? `Le repêchage démarre tout seul dès que vous êtes ${etat.max}. Il manque ${restants} joueur${restants > 1 ? 's' : ''}.`
                 : 'Tout le monde est là : le repêchage va démarrer.';
         } else if (etat.raison === 'deux') {
-            lead = 'Il faut au moins 2 équipes pour repêcher. Invitez quelqu’un à rejoindre le pool.';
+            lead = 'Il faut au moins 2 équipes pour repêcher. Invite quelqu’un à rejoindre le pool.';
         } else if (etat.raison === 'pair') {
             lead = `Tête-à-tête : les duels se jouent à deux, il faut donc un nombre pair d'équipes (${etat.equipes} pour l'instant).`;
         } else if (etat.prevuLe) {
             lead = jeSuisCreateur
-                ? `${etat.equipes} équipes sont prêtes. Le repêchage partira tout seul à l'heure prévue — ou lancez-le maintenant.`
+                ? `${etat.equipes} équipes sont prêtes. Le repêchage partira tout seul à l'heure prévue — ou lance-le maintenant.`
                 : `${etat.equipes} équipes sont prêtes. Le repêchage commencera tout seul à l'heure prévue.`;
         } else if (jeSuisCreateur) {
-            lead = `${etat.equipes} équipes sont prêtes. Vous pouvez lancer maintenant ou attendre d'autres participants (jusqu'à ${etat.max}).`;
+            lead = plein
+                ? `${etat.equipes} équipes sont prêtes et le pool est complet. Lance quand tu veux.`
+                : `${etat.equipes} équipes sont prêtes. Lance maintenant ou attends d’autres participants (jusqu’à ${etat.max}).`;
         } else {
-            lead = `${etat.equipes} équipes sont prêtes. ${createur ? echapper(createur) : 'La personne qui a créé le pool'} lancera le repêchage.`;
+            lead = `${etat.equipes} équipes sont prêtes.`;
+        }
+        // Les autres ne voient pas la fenêtre de départ : le salon leur dit
+        // d'avance qu'ils n'auront rien à faire.
+        if (!instantane && !jeSuisCreateur && !etat.raison && pool.data.draftAuto === true) {
+            lead += ' Fantazy choisira pour toutes les équipes : pas besoin d’être là.';
         }
 
         const progression = etat.max > 0 ? Math.round((etat.inscrits / etat.max) * 100) : 0;
-        const barre = instantane ? `
-                    <div class="rp-progress" role="img" aria-label="${etat.inscrits} participants sur ${etat.max}">
-                        <div class="rp-progress-fill" style="width:${progression}%"></div>
-                    </div>` : '';
+        const barre = `
+                <div class="rp-progress" role="img" aria-label="${etat.inscrits} participants sur ${etat.max}">
+                    <div class="rp-progress-fill" style="width:${progression}%"></div>
+                </div>`;
 
-        let depart = '';
-        if (!instantane) {
-            if (jeSuisCreateur) {
-                depart = `
-                        <button type="button" class="rp-btn primary" id="rpStart"${pret ? '' : ' disabled'}>
-                            ${libelleDepart(etat, pool.data.draftAuto === true)}
-                        </button>`;
-            } else if (pret && !etat.prevuLe) {
-                depart = `<p class="rp-wait-admin" role="status">En attente du lancement par ${echapper(createur || "l'admin du pool")}.</p>`;
-            }
-        }
+        const depart = !instantane && jeSuisCreateur ? `
+            <div class="rp-launch">
+                <button type="button" class="rp-launch-btn" id="rpStart"${pret ? '' : ' disabled'}>
+                    ${ico('eclair', 22)}<span>${libelleDepart(etat)}</span>
+                </button>
+            </div>` : '';
+        const attente = !instantane && !jeSuisCreateur && pret && !etat.prevuLe
+            ? `<p class="rp-wait-admin" role="status">${ico('sablier', 18)}<span>En attente du lancement par ${echapper(createur || "l'admin du pool")}.</span></p>`
+            : '';
 
         // La recherche d'invités : pour qui a créé le pool — ou pour tout
         // membre d'un pool sans mot de passe (authz.peutInviter) —, tant qu'il
         // n'est pas une file instantanée (celle-ci se remplit toute seule).
-        const inviterParNom = (jeSuisCreateur || !pool.data.hasPassword) && !instantane;
-        const lienSeul = !instantane && !inviterParNom
-            ? '<button type="button" class="rp-btn secondary" id="rpInviter"><span>Copier le lien d’invitation</span></button>'
-            : '';
+        const inviterParNom = (jeSuisCreateur || !pool.data.hasPassword) && !instantane && !plein;
 
         // Une mise à jour temps réel redessine toute la carte : si l'on était
         // en train de taper un nom, le champ reprend focus et curseur.
@@ -674,31 +918,27 @@
             ? { debut: actif.selectionStart, fin: actif.selectionEnd }
             : null;
 
+        const puce = pret ? (instantane ? 'Complet' : 'Prêt à lancer') : 'En attente';
         conteneur().innerHTML = `
-            <article class="rp-card">
-                ${entete(pool, pret ? 'Prêt' : 'En attente', pret ? 'pret' : 'attente')}
-                <div class="rp-body">
-                    <p class="rp-lead">${lead}</p>
-                    ${instantane ? '' : blocAuto(pool)}
-                    ${instantane ? '' : blocDate(etat, jeSuisCreateur, pool.data.draftAuto === true)}
-                    <div data-fz-alertes="carte" hidden></div>
-                    ${barre}
-                    ${rendreInscrits(pool, etat, createur)}
-                    ${inviterParNom ? blocInviter(pool, etat) : ''}
-                    ${instantane ? '' : blocOrdre(pool, jeSuisCreateur)}
-                    <div class="rp-actions">
-                        ${depart}
-                        ${lienSeul}
-                        <button type="button" class="rp-btn secondary" data-fz-reglages="equipes">Renommer mon équipe</button>
-                        ${instantane
-                            ? '<button type="button" class="rp-btn secondary rp-quitter" id="rpQuitter">Quitter la file</button>'
-                            : ''}
+            <div class="rp-salon${depart ? ' has-launch' : ''}">
+                <section class="rp-hero" aria-labelledby="rpTitre">
+                    <div class="rp-hero-copie">
+                        <span class="rp-puce ${pret ? 'is-pret' : 'is-attente'}"><i aria-hidden="true"></i>${puce}</span>
+                        <h1 class="rp-title" id="rpTitre">${instantane ? 'Repêchage instantané' : 'Repêchage'}</h1>
+                        <p class="rp-lead">${lead}</p>
                     </div>
-                </div>
-            </article>`;
+                    ${instantane ? barre : blocTuiles(pool, etat, jeSuisCreateur, createur)}
+                    ${rendreInscrits(pool, etat, createur)}
+                    ${attente}
+                </section>
+                ${depart}
+                ${inviterParNom ? blocInviter(pool) : ''}
+                ${instantane ? '' : blocOrdre(pool, jeSuisCreateur)}
+                ${blocReglages(pool, etat, instantane, moi)}
+            </div>`;
 
         document.getElementById('rpQuitter')?.addEventListener('click', quitterLaFile);
-        document.getElementById('rpStart')?.addEventListener('click', () => demarrer(pool.name));
+        document.getElementById('rpStart')?.addEventListener('click', () => confirmerDepart(pool, etat));
         document.getElementById('rpDateChoisir')?.addEventListener('click', () => choisirDate(pool));
         document.getElementById('rpDateRetirer')?.addEventListener('click', () => retirerDate(pool));
         document.getElementById('rpDateCalendrier')?.addEventListener('click', () => ajouterAuCalendrier(pool));
@@ -717,92 +957,6 @@
         }
     }
 
-    // ==================== DATE DU REPÊCHAGE ====================
-    //
-    // Deux façons de repêcher, choisies à la création du pool : quand la
-    // personne qui l'a créé le décide, ou à une date fixée d'avance — le
-    // serveur lance alors le repêchage lui-même à l'heure dite
-    // (routes/pools.js, demarrerRepechagesPrevus). Jusqu'au départ, elle peut
-    // fixer, déplacer ou retirer la date d'ici.
-
-    function libelleDepart(etat, auto = false) {
-        if (auto) return etat.prevuLe ? 'Lancer maintenant' : 'Lancer le repêchage automatique';
-        return etat.prevuLe ? 'Commencer maintenant' : 'Commencer le repêchage';
-    }
-
-    // Repêchage automatique (`draftAuto`, choisi à la création) : au départ,
-    // le serveur joue tous les tours d'un coup (routes/pools.js,
-    // repecherDOffice). Le salon l'annonce, pour que personne ne s'attende à
-    // choisir.
-    function blocAuto(pool) {
-        if (pool.data.draftAuto !== true) return '';
-        return `
-                    <section class="rp-date" aria-label="Repêchage automatique">
-                        <span class="rp-date-ico" aria-hidden="true">${icone('bolt', 20)}</span>
-                        <div class="rp-date-txt">
-                            <span class="rp-date-label">Repêchage automatique</span>
-                            <span class="rp-date-sub">Au départ, Fantazy choisit pour toutes les équipes, du premier
-                                au dernier tour : le meilleur joueur disponible selon les projections. Personne n’a besoin d’être là.</span>
-                        </div>
-                    </section>`;
-    }
-
-    function blocDate(etat, jeSuisCreateur, auto = false) {
-        if (etat.prevuLe) {
-            const delai = FZPool.timeUntil(etat.prevuLe);
-            // Une seule équipe, ou un nombre impair en tête-à-tête : à l'heure
-            // dite, rien ne partira. Mieux vaut le savoir d'avance.
-            const condition = etat.raison === 'deux'
-                ? '<p class="rp-note">Il faudra au moins 2 équipes à cette heure-là, sinon rien ne démarrera.</p>'
-                : etat.raison === 'pair'
-                    ? '<p class="rp-note">Il faudra un nombre pair d’équipes à cette heure-là, sinon rien ne démarrera.</p>'
-                    : '';
-            return `
-                    <section class="rp-date" aria-label="Date du repêchage">
-                        <span class="rp-date-ico" aria-hidden="true">${icone('clock', 20)}</span>
-                        <div class="rp-date-txt">
-                            <span class="rp-date-label">Repêchage prévu</span>
-                            <strong class="rp-date-quand">${echapper(FZPool.draftDate(etat.prevuLe))}</strong>
-                            <span class="rp-date-sub" id="rpDateDelai" data-date="${echapper(etat.prevuLe)}">${echapper(delai || 'Départ imminent…')}</span>
-                        </div>
-                        <div class="rp-date-tools">
-                            <button type="button" class="rp-date-btn is-main" id="rpDateCalendrier">${icone('clock', 15)} Ajouter au calendrier</button>
-                            ${jeSuisCreateur ? `
-                            <button type="button" class="rp-date-btn" id="rpDateChoisir">Changer</button>
-                            <button type="button" class="rp-date-btn" id="rpDateRetirer">Retirer</button>` : ''}
-                        </div>
-                    </section>
-                    ${auto ? '' : '<p class="rp-note">3 minutes par choix : passé ce délai, Fantazy prend le meilleur joueur disponible.</p>'}
-                    ${condition}`;
-        }
-        if (!jeSuisCreateur) return '';
-        if (etat.manqueLe) {
-            return `
-                    <section class="rp-date is-missed" aria-label="Date du repêchage">
-                        <span class="rp-date-ico" aria-hidden="true">${icone('warning', 20)}</span>
-                        <div class="rp-date-txt">
-                            <span class="rp-date-label">Le repêchage prévu n’a pas démarré</span>
-                            <span class="rp-date-sub">Il manquait des équipes le ${echapper(FZPool.draftDate(etat.manqueLe))}.
-                                Lancez-le quand vous êtes prêts, ou choisissez une autre date.</span>
-                        </div>
-                        <div class="rp-date-tools">
-                            <button type="button" class="rp-date-btn" id="rpDateChoisir">Nouvelle date</button>
-                        </div>
-                    </section>`;
-        }
-        return `
-                    <section class="rp-date is-open" aria-label="Date du repêchage">
-                        <span class="rp-date-ico" aria-hidden="true">${icone('clock', 20)}</span>
-                        <div class="rp-date-txt">
-                            <span class="rp-date-label">Pas de date fixée</span>
-                            <span class="rp-date-sub">Vous lancez quand vous voulez.</span>
-                        </div>
-                        <div class="rp-date-tools">
-                            <button type="button" class="rp-date-btn" id="rpDateChoisir">Fixer une date</button>
-                        </div>
-                    </section>`;
-    }
-
     /** Enregistre la date (ISO) ou la retire (null). Renvoie un message d'erreur, ou null. */
     async function enregistrerDate(nomPool, iso) {
         try {
@@ -814,7 +968,7 @@
             const donnees = await reponse.json().catch(() => ({}));
             if (!reponse.ok) return donnees.message || 'La date n’a pas pu être enregistrée.';
         } catch (erreur) {
-            return 'La date n’a pas pu être enregistrée. Vérifiez votre connexion.';
+            return 'La date n’a pas pu être enregistrée. Vérifie ta connexion.';
         }
         await FZPool.refresh();
         rendre();
@@ -852,8 +1006,8 @@
             onSubmit: async () => {
                 const champ = document.getElementById('rpDateChamp');
                 const iso = FZPool.fromDateInput(champ ? champ.value : '');
-                if (!iso) return erreur('Choisissez une date et une heure.');
-                if (Date.parse(iso) < Date.now()) return erreur('Choisissez une date et une heure à venir.');
+                if (!iso) return erreur('Choisis une date et une heure.');
+                if (Date.parse(iso) < Date.now()) return erreur('Choisis une date et une heure à venir.');
                 const refus = await enregistrerDate(pool.name, iso);
                 return refus ? erreur(refus) : null;
             }
@@ -877,9 +1031,9 @@
             icon: 'calendar',
             title: 'Ajouter au calendrier',
             bodyHTML: `
-                <p>Votre téléphone vous rappellera le repêchage 1 heure, puis 10 minutes avant.</p>
+                <p>Ton téléphone te rappellera le repêchage 1 heure, puis 10 minutes avant.</p>
                 <div class="rp-cal-choix">${android ? google + apple : apple + google}</div>
-                <p class="rp-note">Google Agenda utilise vos rappels habituels. Pour prévenir le groupe, envoyez ce lien :</p>`,
+                <p class="rp-note">Google Agenda utilise tes rappels habituels. Pour prévenir le groupe, envoie ce lien :</p>`,
             copyValue: lien,
             copyLabel: 'Lien du calendrier',
             confirmLabel: 'Fermer',
@@ -890,7 +1044,7 @@
     async function retirerDate(pool) {
         const ok = await fzConfirm({
             title: 'Retirer la date ?',
-            message: 'Le repêchage ne démarrera plus tout seul : vous le lancerez quand vous voudrez.',
+            message: 'Le repêchage ne démarrera plus tout seul : tu le lanceras quand tu voudras.',
             confirmLabel: 'Retirer la date'
         });
         if (!ok) return;
@@ -908,22 +1062,21 @@
 
     /** Le lien « Rejoindre » filtré sur ce pool, dans le presse-papiers. */
     async function inviter(nomPool) {
-        const bouton = document.getElementById('rpInviter');
-        const libelle = bouton && (bouton.querySelector('span') || bouton);
+        const libelle = document.querySelector('#rpInviter [data-rp-copie]');
         const lien = `${window.location.origin}/rejoindre-pool.html?q=${encodeURIComponent(nomPool)}`;
         try {
             await navigator.clipboard.writeText(lien);
-            if (libelle) libelle.textContent = 'Lien copié !';
+            if (libelle) libelle.textContent = 'Copié !';
         } catch (e) {
             // Presse-papiers refusé (page non sécurisée, permission) : le
             // lien s'affiche, sélectionné, avec son propre bouton Copier.
             fzCopy({
                 title: 'Lien d’invitation',
-                message: 'Envoyez ce lien à vos amis : il les mène directement à votre pool.',
+                message: 'Envoie ce lien à tes amis : il les mène directement à ton pool.',
                 value: lien
             });
         }
-        if (libelle) setTimeout(() => { libelle.textContent = 'Copier le lien d’invitation'; }, 2500);
+        if (libelle) setTimeout(() => { libelle.textContent = 'Copier'; }, 2500);
     }
 
     /**
@@ -936,7 +1089,7 @@
     async function quitterLaFile() {
         const bouton = document.getElementById('rpQuitter');
         if (!window.FZInstant || typeof window.FZInstant.quitter !== 'function') {
-            fzAlert({ type: 'warning', title: 'Action indisponible', message: 'Rechargez la page, puis réessayez.' });
+            fzAlert({ type: 'warning', title: 'Action indisponible', message: 'Recharge la page, puis réessaie.' });
             return;
         }
         if (bouton) { bouton.disabled = true; }
@@ -952,18 +1105,21 @@
         rendre();
     }
 
-    function rendreTermine(pool) {
+    function rendreTermine() {
         conteneur().innerHTML = `
-            <article class="rp-card">
-                ${entete(pool, 'Terminé', 'termine')}
-                <div class="rp-body">
-                    <p class="rp-lead">Le repêchage de ce pool est terminé. Place à la saison.</p>
-                    <div class="rp-actions">
-                        <a class="rp-btn primary" href="classement.html">Voir le classement</a>
-                        <a class="rp-btn secondary" href="draftFini.html">Revoir les sélections</a>
+            <div class="rp-salon">
+                <section class="rp-hero" aria-labelledby="rpTitre">
+                    <div class="rp-hero-copie">
+                        <span class="rp-puce is-termine"><i aria-hidden="true"></i>Terminé</span>
+                        <h1 class="rp-title" id="rpTitre">Repêchage</h1>
+                        <p class="rp-lead">Le repêchage de ce pool est terminé. Place à la saison.</p>
                     </div>
-                </div>
-            </article>`;
+                    <div class="rp-hero-actions">
+                        <a class="rp-hero-cta is-plein" href="classement.html">Voir le classement</a>
+                        <a class="rp-hero-cta" href="draftFini.html">Revoir les sélections</a>
+                    </div>
+                </section>
+            </div>`;
     }
 
     function rendreOuverture(pool) {
@@ -974,10 +1130,35 @@
             </div>`;
     }
 
+    /**
+     * Le départ se confirme : il ne s'annule pas. La fenêtre redit ce qui va
+     * se passer et dans quel ordre on part ; le serveur, lui, tranche au clic.
+     */
+    async function confirmerDepart(pool, etat) {
+        const texte = pool.data.draftAuto === true
+            ? 'Fantazy choisit pour toutes les équipes, du premier au dernier tour. Personne n’a besoin d’être là. Ça ne peut pas être annulé.'
+            : etat.prevuLe
+                ? 'Le repêchage part tout de suite, sans attendre l’heure prévue : 3 minutes par choix. Ça ne peut pas être annulé.'
+                : 'Chaque équipe choisit à son tour, dans la salle de repêchage. Ça ne peut pas être annulé.';
+        const ok = await fzModal({
+            type: 'question',
+            title: 'Lancer maintenant ?',
+            bodyHTML: `
+                <p>${texte}</p>
+                <dl class="rp-recap">
+                    <div><dt>Équipes</dt><dd>${etat.equipes}</dd></div>
+                    <div><dt>Ordre du 1<sup>er</sup> tour</dt><dd>${echapper(resumeOrdre(pool.data))}</dd></div>
+                </dl>`,
+            confirmLabel: 'Lancer',
+            cancelLabel: 'Annuler'
+        });
+        if (ok) demarrer(pool.name);
+    }
+
     async function demarrer(nomPool) {
         const bouton = document.getElementById('rpStart');
-        const libelle = bouton ? bouton.textContent.trim() : '';
-        if (bouton) { bouton.disabled = true; bouton.textContent = 'Démarrage…'; }
+        const libelle = bouton ? bouton.innerHTML : '';
+        if (bouton) { bouton.disabled = true; bouton.innerHTML = `${ico('eclair', 22)}<span>Démarrage…</span>`; }
 
         try {
             // Un ordre peut déjà exister si quelqu'un d'autre vient de lancer
@@ -998,7 +1179,7 @@
                     // vérité, on relit l'état plutôt que d'insister sur un
                     // départ déjà refusé.
                     fzAlert({ type: 'error', title: 'Démarrage impossible', message: donnees.message || 'Le repêchage n’a pas pu démarrer.' });
-                    if (bouton) { bouton.disabled = false; bouton.textContent = libelle; }
+                    if (bouton) { bouton.disabled = false; bouton.innerHTML = libelle; }
                     await FZPool.refresh();
                     rendre();
                     return;
@@ -1015,8 +1196,8 @@
             window.location.href = 'draftActif.html';
         } catch (erreur) {
             console.error('Démarrage du repêchage impossible :', erreur);
-            if (bouton) { bouton.disabled = false; bouton.textContent = libelle; }
-            fzAlert({ type: 'error', title: 'Démarrage impossible', message: 'Le repêchage n’a pas pu être préparé. Vérifiez votre connexion et réessayez.' });
+            if (bouton) { bouton.disabled = false; bouton.innerHTML = libelle; }
+            fzAlert({ type: 'error', title: 'Démarrage impossible', message: 'Le repêchage n’a pas pu être préparé. Vérifie ta connexion et réessaie.' });
         }
     }
 
@@ -1040,7 +1221,7 @@
             return;
         }
 
-        if (etat.etat === 'termine') { rendreTermine(pool); return; }
+        if (etat.etat === 'termine') { rendreTermine(); return; }
         rendreSalon(pool, etat);
     }
 

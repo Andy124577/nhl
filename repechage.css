@@ -1,378 +1,505 @@
 /* ============================================================
-   REPÊCHAGE — écran d'entrée du pool actif
-   ============================================================ */
-
-.rp-container { padding-top: 26px; padding-bottom: 40px; }
-.rp-content { max-width: 720px; margin: 0 auto; }
-
-.rp-card {
-    background: var(--card);
-    border: 1px solid var(--border-gray);
-    border-radius: 18px;
-    overflow: hidden;
-}
-
-/* ==================== EN-TÊTE ==================== */
-
-.rp-head {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 20px;
-    background: var(--card-white);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.rp-img { width: 54px; height: 54px; border-radius: 14px; object-fit: cover; flex-shrink: 0; }
-.rp-head-txt { flex: 1; min-width: 0; }
-
-.rp-eyebrow {
-    margin: 0 0 3px;
-    font-size: .69rem;
-    font-weight: 800;
-    letter-spacing: .09em;
-    text-transform: uppercase;
-    color: var(--text-gray);
-}
-
-.rp-title { margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--text-main); word-break: break-word; }
-
-.rp-state {
-    flex-shrink: 0;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: .74rem;
-    font-weight: 800;
-}
-
-.rp-state-attente { background: color-mix(in srgb, var(--warning) 10%, var(--card)); color: var(--warning); }
-.rp-state-pret    { background: color-mix(in srgb, var(--success) 10%, var(--card)); color: var(--success); }
-.rp-state-termine { background: color-mix(in srgb, var(--primary) 10%, var(--card)); color: var(--primary-text); }
-
-/* ==================== CORPS ==================== */
-
-.rp-body { padding: 22px 20px 24px; }
-.rp-lead { margin: 0 0 16px; font-size: 1rem; color: var(--text-main); line-height: 1.55; }
-.rp-note { margin: 0 0 18px; font-size: .84rem; color: var(--text-secondary); line-height: 1.5; }
-
-.rp-progress {
-    height: 9px;
-    border-radius: 999px;
-    background: var(--bg-gray-light);
-    overflow: hidden;
-}
-
-.rp-progress-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--primary);
-    transition: width .4s ease;
-}
-
-.rp-progress-lbl { margin: 8px 0 18px; font-size: .82rem; font-weight: 700; color: var(--text-secondary); }
-
-.rp-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-
-.rp-btn {
-    /* « Gérer mon équipe » est un <button> — il ouvre le panneau de réglages
-       sur place — et doit rester identique aux <a> qui l'entourent. Un bouton
-       n'hérite ni de la police du document ni de son alignement. */
-    font-family: inherit;
-    text-align: center;
-    background: none;
-    padding: 11px 20px;
-    border-radius: 11px;
-    font-weight: 800;
-    font-size: .92rem;
-    text-decoration: none;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: transform .18s ease, border-color .18s ease, color .18s ease;
-}
-
-.rp-btn.primary {
-    background: var(--primary);
-    color: var(--on-primary);
-}
-
-.rp-btn.primary:hover { transform: translateY(-1px); }
-.rp-btn.primary:disabled { opacity: .6; transform: none; cursor: default; }
-
-.rp-btn.secondary {
-    background: var(--bg-gray-light);
-    border-color: var(--border-gray);
-    color: var(--text-secondary);
-}
-
-.rp-btn.secondary:hover { border-color: var(--primary); color: var(--primary-text); }
-
-/* ==================== CHARGEMENT ==================== */
-
-/* Chargement de la page : la carte du salon en os (repechage.html). Les os
-   viennent de fzSquelette.css, à la hauteur des lignes qu'ils remplacent. */
-.rp-sk-title { width: 190px; max-width: 100%; height: 20px; margin: 2px 0 1px; border-radius: 5px; }
-.rp-sk-state { flex-shrink: 0; width: 78px; height: 26px; border-radius: 999px; }
-.rp-sk-lead { width: 92%; height: 14px; margin: 5px 0 9px; }
-.rp-sk-lead.is-short { width: 46%; margin-bottom: 24px; }
-.rp-sk-label { width: 120px; height: 10px; margin: 2px 0 5px; }
-.rp-sk-label.is-section { width: 170px; margin: 4px 0 12px; }
-.rp-sk-quand { width: 180px; max-width: 100%; height: 14px; margin: 2px 0; }
-.rp-sk-datebtn { flex-shrink: 0; width: 120px; height: 36px; border-radius: 10px; }
-.rp-sk-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
-.rp-sk-chip { width: 132px; height: 40px; border-radius: 999px; }
-.rp-sk-btn { width: 210px; height: 46px; border-radius: 10px; }
-.rp-sk-btn.is-second { width: 190px; }
-
-.rp-loading { padding: 70px 20px; text-align: center; color: var(--text-secondary); }
-.rp-loading p { margin: 16px 0 0; font-size: .95rem; }
-.rp-loading strong { color: var(--text-main); }
-
-.rp-spinner {
-    width: 34px;
-    height: 34px;
-    margin: 0 auto;
-    border: 3px solid var(--border-gray);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: rp-spin .8s linear infinite;
-}
-
-@keyframes rp-spin { to { transform: rotate(360deg); } }
-
-@media (prefers-reduced-motion: reduce) {
-    .rp-spinner { animation-duration: 2.4s; }
-    .rp-progress-fill { transition: none; }
-}
-
-@media (max-width: 560px) {
-    .rp-head { flex-wrap: wrap; }
-    .rp-actions .rp-btn { flex: 1; text-align: center; }
-}
-
-/* ============================================================
-   ÉQUIPES DU POOL — la liste de l'écran « Prêt »
+   REPÊCHAGE — le salon d'avant-repêchage (repechage.js)
    ------------------------------------------------------------
-   Cet emplacement portait la grille de choix d'identité LNH : chaque
-   équipe prenait un vrai club, dont les couleurs habillaient ensuite ses
-   cartes de repêchage. L'étape a été retirée — l'équipe de la LNH se
-   repêche maintenant comme n'importe quelle autre position — et il ne
-   reste ici que le rappel de qui s'apprête à repêcher.
+   Maquette « Pool · avant le repêchage », langage 6b Éditorial : Saira,
+   intertitres Saira Condensed, gris chauds, cartes arrondies, rouge
+   réservé au départ et à ce qui presse. Le héros reste sombre dans les
+   deux thèmes, comme ceux de l'accueil (accueil-draft.css) ; le reste
+   suit le thème par les jetons --s-*, ceux de l'accueil de saison
+   (accueil-season.css), redits ici pour cette page.
+
+   Téléphone : le bouton de départ se colle au-dessus de la barre du bas.
+   Bureau : la même colonne, plus large, le bouton sous le héros.
+
+   Les fenêtres ouvertes d'ici (date, calendrier, départ) vivent dans
+   fzDialog : leurs morceaux (.rp-btn, .rp-note, .rp-recap…) gardent les
+   jetons du site, comme la fenêtre qui les porte.
    ============================================================ */
-.rp-roster-wrap { margin: 20px 0; }
-.rp-roster-title {
-    margin: 0 0 10px;
-    font-size: .8rem;
-    font-weight: 800;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
+
+body.fz-salon-page {
+    --s-bg: #0B0B0C;
+    --s-card: #141416;
+    --s-raise: #1B1B1E;
+    --s-line: #232327;
+    --s-line2: #1F1F23;
+    --s-chip: #1F1F23;
+    --s-me: #1A1A1D;
+    --s-face: #0B0B0C;
+    --s-btn: #18181B;
+    --s-btn-line: #2A2A2F;
+    --s-switch: #3A3A40;
+    --s-ink: #F3F1EE;
+    --s-ink2: #C9C7C4;
+    --s-mute: #A8A6A3;
+    --s-faint: #7E7C79;
+    --s-dim: #5A5A60;
+    --s-red: #E5372B;
+    --s-red-soft: rgba(229, 55, 43, .16);
+    --s-red-ink: #FF8A80;
+    --s-green: #7FD49B;
+    --s-gold: #E8B26A;
+    background: var(--s-bg);
 }
-.rp-roster {
+html[data-theme="light"] body.fz-salon-page {
+    --s-bg: #F3F2EF;
+    --s-card: #FFFFFF;
+    --s-raise: #F6F5F2;
+    --s-line: #E2E0DC;
+    --s-line2: #ECEAE6;
+    --s-chip: #EEECE8;
+    --s-me: #F4F2EE;
+    --s-face: #ECEAE6;
+    --s-btn: #F7F6F3;
+    --s-btn-line: #DDDAD5;
+    --s-switch: #CFCCC7;
+    --s-ink: #141416;
+    --s-ink2: #34343A;
+    --s-mute: #5E5C59;
+    --s-faint: #74716D;
+    --s-dim: #A29F9A;
+    --s-red: #D52B1E;
+    --s-red-soft: rgba(213, 43, 30, .1);
+    --s-red-ink: #B3241A;
+    --s-green: #1D8048;
+    --s-gold: #976111;
+}
+
+.rp-container { padding-top: 20px; padding-bottom: 40px; }
+.rp-content { max-width: 680px; margin: 0 auto; }
+
+/* Au téléphone, la pastille de la barre du haut nomme déjà le pool actif :
+   le bandeau « Pool actif » (poolNav.js) le redirait juste en dessous. */
+@media (max-width: 768px) {
+    .rp-container { padding: 12px 10px 24px; }
+    body.fz-salon-page [data-fz-context] { display: none; }
+}
+
+.rp-salon {
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--border-light);
+    gap: 12px;
+    color: var(--s-ink);
+    font: 400 14px/1.35 'Saira', 'Barlow', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
-.rp-roster-item {
+.rp-salon :is(h1, h2, p) { margin: 0; }
+.rp-salon :is(a, button):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
+.rp-ico { flex: none; }
+
+/* ==================== LE HÉROS ==================== */
+
+.rp-hero {
+    /* Les os du chargement, clairs sur le sombre dans les deux thèmes. */
+    --fz-bone: rgba(255, 255, 255, .07);
+    --fz-bone-shine: rgba(255, 255, 255, .14);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px 16px 16px;
+    border-radius: 24px;
+    color: #F3F1EE;
+    background:
+        radial-gradient(90% 120% at 0% 100%, rgba(240, 64, 48, .22) 0%, rgba(240, 64, 48, 0) 62%),
+        linear-gradient(135deg, #1E1A1B 0%, #151517 55%, #101012 100%);
+    box-shadow: inset 0 0 0 1px #232327;
+}
+.rp-hero::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(160deg, transparent 22%, rgba(255, 255, 255, .06) 23%, transparent 31%, transparent 38%, rgba(255, 72, 56, .18) 39.5%, transparent 50%);
+}
+.rp-hero::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 62%; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(rgba(255, 255, 255, .11) 1px, transparent 1.5px);
+    background-size: 9px 9px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+}
+html[data-theme="light"] .rp-hero { box-shadow: 0 10px 28px rgba(20, 20, 22, .14); }
+
+.rp-hero-copie { display: flex; flex-direction: column; gap: 8px; }
+
+.rp-puce {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+.rp-puce i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.rp-puce.is-pret { background: rgba(127, 212, 155, .14); color: #7FD49B; }
+.rp-puce.is-attente { background: rgba(232, 178, 106, .14); color: #E8B26A; }
+.rp-puce.is-termine { background: rgba(255, 255, 255, .08); color: #C9C7C4; }
+
+.rp-title {
+    font: 800 30px/30px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+    text-wrap: balance;
+    color: #F3F1EE;
+}
+.rp-lead { font: 400 14px/20px 'Saira', sans-serif; color: #C9C7C4; text-wrap: pretty; }
+
+/* ---- Mode et début ---- */
+.rp-hero-infos { display: flex; flex-direction: column; gap: 8px; }
+.rp-tuiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rp-tuile {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+    padding: 11px 12px;
+    border-radius: 14px;
+    background: rgba(10, 10, 11, .55);
+    border: 1px solid rgba(255, 255, 255, .07);
+}
+.rp-tuile-label {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    background: var(--card);
+    gap: 6px;
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #8E8B88;
 }
-.rp-roster-team {
-    flex: 0 0 auto;
-    font-size: .84rem;
-    font-weight: 700;
-    color: var(--text-main);
+.rp-tuile-label .rp-ico { color: #C9C7C4; }
+.rp-tuile.is-auto .rp-tuile-label .rp-ico { color: #FF5A4E; fill: currentColor; }
+.rp-tuile.is-manque .rp-tuile-label .rp-ico { color: #E8B26A; }
+.rp-tuile-valeur { display: block; font: 600 15px/1.15 'Saira', sans-serif; color: #F3F1EE; overflow-wrap: anywhere; }
+.rp-tuile-valeur::first-letter { text-transform: uppercase; }
+.rp-tuile.is-manque .rp-tuile-valeur { color: #E8B26A; }
+.rp-tuile-sous { font: 400 11px/14px 'Saira', sans-serif; color: #8E8B88; }
+.rp-tuile-actions { display: flex; flex-wrap: wrap; gap: 0 14px; }
+.rp-tuile-lien {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: 600 12px/14px 'Saira', sans-serif;
+    color: #FF8A80;
+    cursor: pointer;
 }
-.rp-roster-members {
-    flex: 1 1 auto;
-    min-width: 0;
-    font-size: .84rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: right;
-}
+.rp-tuile-lien:hover { color: #FFB1A9; }
+.rp-tuile-lien.is-doux { color: #A8A6A3; }
+.rp-tuile-lien.is-doux:hover { color: #F3F1EE; }
 
-@media (max-width: 480px) {
-    .rp-roster-members { text-align: left; }
-    .rp-roster-item { flex-wrap: wrap; }
-}
-
-/* ============================================================
-   LES PLACES — qui attend, et ce qu'il reste à remplir
-   ------------------------------------------------------------
-   L'écran d'attente ne donnait qu'un compteur. Ces pastilles nomment
-   les inscrits et dessinent les places vides en pointillé : la file se
-   lit alors d'un coup d'œil, et chaque arrivée se voit.
-   ============================================================ */
-.rp-seats {
+/* « Ajouter au calendrier » : le geste que tout le monde doit faire. */
+.rp-hero-btn {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
     gap: 8px;
+    width: 100%;
+    height: 44px;
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .05);
+    color: #F3F1EE;
+    font: 600 14px/1 'Saira', sans-serif;
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+.rp-hero-btn:hover { background: rgba(255, 255, 255, .1); }
+.rp-hero-note { display: flex; align-items: flex-start; gap: 8px; font: 400 12px/16px 'Saira', sans-serif; color: #C9C7C4; }
+.rp-hero-note .rp-ico { color: #E8B26A; }
+
+/* ---- File instantanée : la jauge ---- */
+.rp-progress { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.rp-progress-fill { height: 100%; border-radius: inherit; background: #E5372B; transition: width .4s ease; }
+
+/* ---- Participants ---- */
+.rp-inscrits { display: flex; flex-direction: column; gap: 8px; }
+.rp-inscrits-tete {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #8E8B88;
+}
+.rp-seats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
+    gap: 6px;
     margin: 0;
     padding: 0;
     list-style: none;
 }
 .rp-seat {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 12px 5px 5px;
-    border: 1px solid var(--border-light);
-    border-radius: 999px;
-    background: var(--card);
-    font-size: .82rem;
-    color: var(--text-main);
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 6px 10px 6px 6px;
+    border-radius: 12px;
+    background: rgba(10, 10, 11, .45);
+    border: 1px solid rgba(255, 255, 255, .08);
+    color: #F3F1EE;
 }
 .rp-seat-ini {
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    flex: 0 0 auto;
-    border-radius: 50%;
-    background: rgba(var(--primary-rgb), .1); /* à .18, l'initiale restait sous 4,5:1 */
-    color: var(--primary-text);
-    font-size: .68rem;
-    font-weight: 800;
-}
-.rp-seat-nom {
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.rp-seat.is-me { border-color: var(--primary); }
-.rp-seat-toi {
-    padding: 3px 7px;
-    border-radius: 999px;
-    background: var(--primary);
-    color: var(--on-primary);
-    font-size: .58rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-}
-.rp-seat.is-free {
-    border-style: dashed;
-    background: transparent;
-    color: var(--text-secondary);
-}
-.rp-seat.is-free .rp-seat-ini {
-    background: transparent;
-    border: 1px dashed var(--border-gray);
-    color: var(--text-secondary);
-}
-
-/* Quitter la file : offert, jamais poussé. Le rouge n'apparaît qu'au
-   survol, pour dire ce que le clic va faire sans crier avant. */
-.rp-btn.rp-quitter:hover {
-    border-color: var(--danger);
-    color: var(--danger);
-}
-
-/* Pastilles d'état : un lavis de 10 % posé sur la carte, où le texte
-   sémantique garde 4,5:1 dans les deux thèmes (--warning clair compris) ;
-   les places libres prennent le libellé secondaire, lisible partout. */
-
-/* ============================================================
-   SALON — une personne, une équipe
-   ------------------------------------------------------------
-   Chaque pastille porte le nom d'équipe choisi à l'entrée, et en
-   dessous la personne qui la dirige. L'admin du pool est marqué :
-   c'est la seule personne qui peut lancer le repêchage.
-   ============================================================ */
-.rp-seat-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
-.rp-seat-qui {
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: .7rem;
-    color: var(--text-secondary);
-}
-.rp-seat-admin {
-    padding: 3px 7px;
-    border: 1px solid var(--border-gray);
-    border-radius: 999px;
-    color: var(--text-secondary);
-    font-size: .58rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-}
-.rp-wait-admin {
-    flex: 1 1 100%;
-    margin: 0 0 4px;
-    padding: 10px 14px;
-    border: 1px dashed var(--border-gray);
-    border-radius: 10px;
-    font-size: .86rem;
-    color: var(--text-secondary);
-}
-.rp-btn.primary:disabled { cursor: not-allowed; }
-
-.rp-order {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    margin: 0 0 10px;
-    padding: 0;
-    list-style: none;
-    counter-reset: rp-ordre;
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--border-light);
-}
-.rp-order li {
-    counter-increment: rp-ordre;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 14px;
-    background: var(--card);
-    font-size: .86rem;
+    justify-content: center;
+    flex: none;
+    width: 30px;
+    height: 30px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: var(--c, #3A3A40);
+    color: #fff;
+    font: 700 12px/1 'Saira', sans-serif;
 }
-.rp-order li::before {
-    content: counter(rp-ordre);
-    min-width: 1.4em;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-weight: 700;
-    color: var(--primary-text);
+.rp-seat-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.rp-seat-nom { font: 600 13px/1.1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-seat-qui { font: 400 11px/1.1 'Saira', sans-serif; color: #8E8B88; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-seat.is-me { background: #F3F1EE; border-color: #F3F1EE; color: #0B0B0C; }
+.rp-seat.is-me .rp-seat-qui { color: #6E6C69; }
+.rp-seat-toi {
+    flex: none;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 5px;
+    background: #0B0B0C;
+    color: #F3F1EE;
+    font: 700 9px/18px 'Saira', sans-serif;
+    letter-spacing: .6px;
+    text-transform: uppercase;
 }
-.rp-order-nom { flex: 1 1 auto; min-width: 0; font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rp-order-rang { flex: 0 0 auto; font-size: .76rem; color: var(--text-secondary); }
+/* Une place libre, une invitation en attente : réservées, pas encore prises. */
+.rp-seat:is(.is-free, .is-invited) { background: transparent; border-style: dashed; border-color: rgba(255, 255, 255, .16); }
+.rp-seat:is(.is-free, .is-invited) .rp-seat-ini { background: transparent; border: 1.5px dashed #4A4A50; color: #A8A6A3; }
+.rp-seat:is(.is-free, .is-invited) .rp-seat-nom { color: #A8A6A3; }
+.rp-seat-cancel {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #A8A6A3;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+}
+/* La croix est petite ; sa zone de clic ne l'est pas. */
+.rp-seat-cancel::after { content: ''; position: absolute; inset: -10px; }
+.rp-seat-cancel:hover { background: rgba(255, 255, 255, .1); color: #FF8A80; }
+.rp-seat-cancel:disabled { opacity: .5; cursor: default; }
 
-/* ============================================================
-   INVITER DES JOUEURS — la recherche posée dans le salon
-   ------------------------------------------------------------
-   Même geste que l'onglet « Inviter » de la page du pool : taper un
-   nom, inviter d'un clic. Un puits plus sombre que la carte, pour dire
-   « c'est ici qu'on agit » sans ajouter de couleur.
-   ============================================================ */
-.rp-invite {
-    margin: 22px 0 18px;
-    padding: 18px 18px 16px;
-    border: 1px solid var(--border-light);
-    border-radius: 14px;
-    background: var(--bg-gray-light);
+.rp-wait-admin {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, .16);
+    font: 500 13px/18px 'Saira', sans-serif;
+    color: #C9C7C4;
 }
-.rp-invite .rp-roster-title { margin-bottom: 4px; }
-.rp-invite-sub {
-    margin: 0 0 14px;
-    font-size: .84rem;
-    line-height: 1.5;
-    color: var(--text-secondary);
+.rp-wait-admin .rp-ico { color: #E8B26A; }
+
+/* ---- Repêchage terminé ---- */
+.rp-hero-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rp-hero-cta {
+    flex: 1 1 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 46px;
+    padding: 0 16px;
+    border-radius: 13px;
+    border: 1px solid #F3F1EE;
+    color: #F3F1EE;
+    font: 600 15px/1 'Saira', sans-serif;
+    text-decoration: none;
 }
+.rp-hero-cta:hover { background: rgba(255, 255, 255, .08); color: #F3F1EE; }
+.rp-hero-cta.is-plein { background: #F3F1EE; color: #0B0B0C; }
+.rp-hero-cta.is-plein:hover { background: #fff; color: #0B0B0C; }
+
+/* ==================== LE DÉPART ==================== */
+
+/* Le rouge plein du site (--primary) : le blanc y garde 4,5:1. */
+.rp-launch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 54px;
+    border: 0;
+    border-radius: 15px;
+    background: var(--primary);
+    color: var(--on-primary);
+    font: 700 16px/1 'Saira', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(229, 55, 43, .3);
+    transition: transform .12s ease, background-color .2s ease;
+}
+.rp-launch-btn .rp-ico { fill: currentColor; }
+.rp-launch-btn:hover:not(:disabled) { background: var(--primary-deep); }
+.rp-launch-btn:active:not(:disabled) { transform: scale(.98); }
+.rp-launch-btn:disabled { background: var(--s-chip); color: var(--s-faint); box-shadow: none; cursor: not-allowed; }
+.rp-launch-btn:disabled .rp-ico { fill: none; }
+
+/* Téléphone : collé au-dessus de la barre du bas (navbar.css, 69 px plus la
+   zone sûre), sur un fondu de la page. Le fondu laisse passer les touchers ;
+   le contenu garde de quoi défiler sous le bouton. */
+@media (max-width: 768px) {
+    .rp-launch {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: calc(69px + env(safe-area-inset-bottom, 0px));
+        z-index: 990;
+        padding: 28px 12px 12px;
+        background: linear-gradient(180deg, transparent 0%, var(--s-bg) 45%);
+        pointer-events: none;
+    }
+    .rp-launch-btn { pointer-events: auto; }
+    .rp-salon.has-launch { padding-bottom: 84px; }
+}
+
+/* ==================== LES CARTES ==================== */
+
+.rp-card { border-radius: 20px; background: var(--s-card); border: 1px solid var(--s-line2); overflow: hidden; }
+.rp-card-tete { display: flex; align-items: center; gap: 10px; margin: 0 14px; padding: 14px 0 4px; }
+.rp-card-tete .rp-ico { color: var(--s-red); }
+.rp-card-tete h2 {
+    flex: 1;
+    min-width: 0;
+    font: 800 18px/20px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--s-ink);
+}
+.rp-card-tete h2 sup { font-size: .6em; }
+.rp-card-meta { flex: none; font: 500 12px/1 'Saira', sans-serif; color: var(--s-faint); white-space: nowrap; }
+.rp-card-sub { padding: 0 14px 14px; font: 400 12px/16px 'Saira', sans-serif; color: var(--s-faint); text-wrap: pretty; }
+
+/* ---- La roue ----
+   repechage.js la dessine en SVG et la fait tourner vers l'équipe que le
+   serveur a tirée. La pointe et le moyeu, fixes, restent hors du SVG. */
+.rp-roue-zone { position: relative; width: 216px; height: 216px; margin: 12px auto 26px; }
+.rp-roue-zone::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: var(--s-face);
+    box-shadow: inset 0 0 0 1px var(--s-line);
+}
+.rp-roue {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform: rotate(0deg);
+    will-change: transform;
+}
+.rp-roue-seg { stroke: rgba(0, 0, 0, .2); stroke-width: .75; }
+.rp-roue-txt { fill: #fff; font-family: 'Saira Condensed', 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: .5px; }
+.rp-roue-moyeu {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    margin: -22px 0 0 -22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--s-card);
+    box-shadow: 0 0 0 3px var(--s-face), 0 4px 12px rgba(0, 0, 0, .4);
+    color: var(--s-ink);
+}
+.rp-roue-pointe {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    z-index: 1;
+    width: 0;
+    height: 0;
+    margin-left: -11px;
+    border-left: 11px solid transparent;
+    border-right: 11px solid transparent;
+    border-top: 18px solid var(--s-ink);
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45));
+}
+
+/* ---- L'ordre du premier tour ---- */
+.rp-order { margin: 0; padding: 0; list-style: none; }
+.rp-rang { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-top: 1px solid var(--s-line2); }
+.rp-rang-num { flex: none; width: 26px; font: 800 18px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; color: var(--s-ink); }
+.rp-rang-ini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: var(--c, var(--s-chip));
+    color: #fff;
+    font: 700 11px/1 'Saira', sans-serif;
+}
+.rp-order-nom { flex: 1; min-width: 0; font: 600 14px/1.2 'Saira', sans-serif; color: var(--s-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-rang-note { flex: none; font: 500 12px/1 'Saira', sans-serif; color: var(--s-faint); }
+.rp-rang-note sup { font-size: .7em; }
+.rp-rang.is-libre .rp-rang-num { color: var(--s-dim); }
+.rp-rang.is-libre .rp-rang-ini { background: none; border: 1.5px dashed var(--s-btn-line); }
+.rp-rang.is-libre .rp-order-nom { font-weight: 500; color: var(--s-faint); }
+.rp-rang.is-tourne .rp-order-nom { color: var(--s-red-ink); }
+
+.rp-roue-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 12px 14px 14px; border-top: 1px solid var(--s-line2); }
+.rp-roue-btn {
+    flex: 1 1 130px;
+    min-width: 0;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border-radius: 13px;
+    border: 1px solid var(--s-btn-line);
+    background: var(--s-btn);
+    color: var(--s-ink2);
+    font: 600 14px/1.1 'Saira', sans-serif;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .12s ease, background-color .2s ease, color .2s ease;
+}
+.rp-roue-btn.is-main { border-color: var(--s-ink); background: transparent; color: var(--s-ink); }
+.rp-roue-btn:hover:not(:disabled) { background: var(--s-me); }
+.rp-roue-btn:active:not(:disabled) { transform: scale(.97); }
+.rp-roue-btn:disabled { cursor: default; }
+.rp-roue-btn:disabled:not(.is-tourne) { opacity: .55; }
+/* La roue tourne : le bouton s'allume tant qu'elle n'est pas arrêtée. */
+.rp-roue-btn.is-main.is-tourne { background: var(--s-ink); color: var(--s-bg); }
+.rp-ordre-fixe { align-items: center; font: 600 14px/1 'Saira', sans-serif; color: var(--s-green); }
+
+/* ---- Inviter des joueurs ----
+   Même geste que l'onglet « Inviter » de la page du pool : taper un nom,
+   inviter d'un clic. */
+.rp-invite-corps { padding: 0 14px 14px; }
 
 .rp-search {
     display: flex;
@@ -380,15 +507,15 @@
     gap: 10px;
     min-height: 48px;
     padding: 0 14px;
-    border: 2px solid var(--border-gray);
-    border-radius: 12px;
-    background: var(--card);
-    color: var(--text-secondary);
+    border: 1px solid var(--s-line);
+    border-radius: 13px;
+    background: var(--s-raise);
+    color: var(--s-faint);
     transition: border-color .2s ease, box-shadow .2s ease;
 }
 .rp-search:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .18);
+    border-color: var(--s-ink2);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--s-ink) 12%, transparent);
 }
 .rp-search-ico { display: grid; place-items: center; flex: 0 0 auto; }
 .rp-search-input {
@@ -398,12 +525,10 @@
     border: 0;
     outline: none;
     background: transparent;
-    color: var(--text-main);
-    font: inherit;
-    font-size: 1rem;            /* 16px : iOS ne zoome pas au focus */
-    font-weight: 600;
+    color: var(--s-ink);
+    font: 500 16px/1.2 'Saira', sans-serif;  /* 16px : iOS ne zoome pas au focus */
 }
-.rp-search-input::placeholder { color: var(--text-light-gray); font-weight: 400; }
+.rp-search-input::placeholder { color: var(--s-faint); font-weight: 400; }
 /* La croix native est bleue sur certains navigateurs : on la redessine en gris. */
 .rp-search-input::-webkit-search-cancel-button {
     -webkit-appearance: none;
@@ -411,18 +536,18 @@
     width: 16px;
     height: 16px;
     cursor: pointer;
-    background-color: var(--text-secondary);
+    background-color: var(--s-mute);
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E") center / contain no-repeat;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.rp-search-input::-webkit-search-cancel-button:hover { background-color: var(--text-main); }
+.rp-search-input::-webkit-search-cancel-button:hover { background-color: var(--s-ink); }
 .rp-search-spin {
     display: none;
     width: 16px;
     height: 16px;
     flex: 0 0 auto;
-    border: 2px solid var(--border-gray);
-    border-top-color: var(--primary);
+    border: 2px solid var(--s-line);
+    border-top-color: var(--s-red);
     border-radius: 50%;
     animation: rp-spin .7s linear infinite;
 }
@@ -432,40 +557,23 @@
     margin: 10px 0 0;
     padding: 0;
     list-style: none;
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    background: var(--card);
+    border: 1px solid var(--s-line2);
+    border-radius: 13px;
+    background: var(--s-card);
     overflow: hidden;
 }
 .rp-results:empty { display: none; }
-.rp-result {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 10px 9px 12px;
-}
-.rp-result + .rp-result { border-top: 1px solid var(--border-light); }
-.rp-results-empty {
-    padding: 14px;
-    text-align: center;
-    font-size: .88rem;
-    color: var(--text-secondary);
-}
+.rp-result { display: flex; align-items: center; gap: 12px; padding: 9px 10px 9px 12px; }
+.rp-result + .rp-result { border-top: 1px solid var(--s-line2); }
+.rp-results-empty { padding: 14px; text-align: center; font-size: 13px; color: var(--s-faint); }
 
-.rp-avatar {
-    width: 34px;
-    height: 34px;
-    flex: 0 0 auto;
-    border-radius: 50%;
-    object-fit: cover;
-}
+.rp-avatar { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; object-fit: cover; }
 .rp-avatar-ini {
     display: grid;
     place-items: center;
-    background: rgba(var(--primary-rgb), .1);
-    color: var(--primary-text);
-    font-size: .82rem;
-    font-weight: 800;
+    background: var(--s-chip);
+    color: var(--s-ink2);
+    font: 700 13px/1 'Saira', sans-serif;
 }
 .rp-result-name {
     flex: 1;
@@ -473,33 +581,28 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: .95rem;
-    font-weight: 700;
-    color: var(--text-main);
+    font: 600 14px/1.2 'Saira', sans-serif;
+    color: var(--s-ink);
 }
 
-/* Brique pleine, texte foncé : même règle que tous les boutons primaires. */
+/* L'aplat d'encre : le rouge reste au départ. */
 .rp-invite-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     flex: 0 0 auto;
-    min-height: 40px;
-    padding: 0 16px;
+    min-height: 38px;
+    padding: 0 14px;
     border: 0;
-    border-radius: 10px;
-    background: var(--primary);
-    color: var(--on-primary);
-    font: inherit;
-    font-size: .86rem;
-    font-weight: 800;
+    border-radius: 11px;
+    background: var(--s-ink);
+    color: var(--s-bg);
+    font: 600 13px/1 'Saira', sans-serif;
     cursor: pointer;
-    transition: transform .2s cubic-bezier(.4, 0, .2, 1), box-shadow .2s ease;
+    transition: transform .12s ease, opacity .2s ease;
 }
 .rp-invite-btn svg { width: 14px; height: 14px; }
-.rp-invite-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0, 0, 0, .32); }
-.rp-invite-btn:active:not(:disabled) { transform: none; box-shadow: none; }
-.rp-invite-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .4); }
+.rp-invite-btn:active:not(:disabled) { transform: scale(.97); }
 .rp-invite-btn:disabled { opacity: .6; cursor: default; }
 
 .rp-result-state {
@@ -508,239 +611,97 @@
     gap: 5px;
     flex: 0 0 auto;
     padding: 0 6px;
-    font-size: .8rem;
-    font-weight: 700;
-    color: var(--text-secondary);
+    font: 600 12px/1 'Saira', sans-serif;
+    color: var(--s-faint);
     white-space: nowrap;
 }
-.rp-result-state.is-sent { color: var(--success); }
+.rp-result-state.is-sent { color: var(--s-green); }
 
-.rp-invite-msg {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin: 10px 0 0;
-    font-size: .86rem;
-    font-weight: 700;
-    color: var(--success);
-}
+.rp-invite-msg { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font: 600 13px/1.3 'Saira', sans-serif; color: var(--s-green); }
 .rp-invite-msg[hidden] { display: none; }
-.rp-invite-msg.is-error { color: var(--danger); }
+.rp-invite-msg.is-error { color: var(--s-red-ink); }
 
-.rp-invite-full {
-    margin: 0;
-    padding: 12px 14px;
-    border: 1px dashed var(--border-gray);
-    border-radius: 10px;
-    font-size: .88rem;
-    color: var(--text-secondary);
+/* ---- Réglages ----
+   Les rangées d'un seul tenant, un filet entre elles. La rangée des
+   alertes vient de pushNotifications.js, et peut manquer (navigateur sans
+   alertes) : le filet ne compte que les rangées visibles. */
+.rp-reglages > * { position: relative; }
+.rp-reglages > :not([hidden]) ~ :not([hidden])::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 14px;
+    right: 14px;
+    height: 1px;
+    background: var(--s-line2);
 }
-
-.rp-invite-alt {
+.rp-row {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 2px 10px;
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--border-gray);
-    font-size: .84rem;
-    color: var(--text-secondary);
-}
-.rp-link-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 36px;
-    padding: 0 2px;
+    gap: 12px;
+    width: 100%;
+    padding: 14px;
     border: 0;
     background: none;
-    color: var(--primary-text);
+    color: var(--s-ink);
     font: inherit;
-    font-size: .86rem;
-    font-weight: 800;
+    text-align: left;
     cursor: pointer;
+    transition: background-color .15s ease;
 }
-.rp-link-btn:hover span { text-decoration: underline; text-underline-offset: 3px; }
-.rp-link-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
-
-/* Une invitation en attente : une place réservée, pas encore prise. */
-.rp-seat.is-invited {
-    border-style: dashed;
-    border-color: var(--border-gray);
-    background: transparent;
-}
-.rp-seat.is-invited .rp-seat-ini {
-    background: transparent;
-    border: 1px dashed var(--border-gray);
-    color: var(--text-secondary);
-}
-.rp-seat.is-invited .rp-seat-nom { color: var(--text-secondary); }
-.rp-seat-cancel {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    margin-left: 2px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: background .2s ease, color .2s ease;
-}
-/* La croix est petite ; sa zone de clic ne l'est pas. */
-.rp-seat-cancel::after { content: ''; position: absolute; inset: -10px; }
-.rp-seat-cancel:hover { background: rgba(var(--primary-rgb), .12); color: var(--danger); }
-.rp-seat-cancel:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
-.rp-seat-cancel:disabled { opacity: .5; cursor: default; }
-
-@media (max-width: 480px) {
-    .rp-invite { padding: 16px 14px 14px; }
-    .rp-result { gap: 10px; padding: 9px 8px 9px 10px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .rp-search-spin { animation-duration: 2s; }
-    .rp-invite-btn:hover:not(:disabled) { transform: none; }
-}
-
-/* ==================== DATE DU REPÊCHAGE ====================
-   Le rendez-vous fixé à la création, ou l'invitation à en fixer un. La date
-   prévue porte l'accent du site ; une date manquée, l'avertissement ; l'absence
-   de date reste discrète — c'est le cas ordinaire, pas un manque. */
-
-.rp-date {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin: 0 0 18px;
-    padding: 14px 16px;
-    border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border-light));
-    border-radius: 14px;
-    background: color-mix(in srgb, var(--primary) 7%, var(--card));
-}
-.rp-date.is-open {
-    border: 1px dashed var(--border-gray);
-    background: none;
-}
-.rp-date.is-missed {
-    border-color: color-mix(in srgb, var(--warning) 35%, var(--border-light));
-    background: color-mix(in srgb, var(--warning) 8%, var(--card));
-}
-
-.rp-date-ico {
+.rp-row:hover { background: var(--s-me); }
+.rp-row:disabled { opacity: .6; cursor: default; }
+/* La carte coupe ce qui déborde : le contour du focus se pose en dedans. */
+.rp-salon .rp-row:focus-visible { outline-offset: -3px; }
+.rp-row-ico {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    flex: none;
     width: 40px;
     height: 40px;
-    border-radius: 11px;
-    background: var(--card);
-    color: var(--primary-text);
+    border-radius: 12px;
+    background: var(--s-chip);
+    color: var(--s-ink2);
 }
-.rp-date.is-open .rp-date-ico { background: var(--bg-gray-light); color: var(--text-secondary); }
-.rp-date.is-missed .rp-date-ico { color: var(--warning); }
+.rp-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rp-row-txt strong { font: 600 14px/1.15 'Saira', sans-serif; }
+.rp-row-txt small { font: 400 12px/16px 'Saira', sans-serif; color: var(--s-faint); overflow-wrap: anywhere; }
+.rp-row > .rp-ico { color: var(--s-dim); }
+.rp-row-action { flex: none; font: 600 13px/1 'Saira', sans-serif; color: var(--s-red-ink); }
+/* Quitter la file : offert, jamais poussé. Le rouge n'apparaît qu'au
+   survol, pour dire ce que le clic va faire sans crier avant. */
+.rp-row.is-danger:hover strong { color: var(--s-red-ink); }
 
-.rp-date-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.rp-date-label {
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-}
-.rp-date.is-missed .rp-date-label { color: var(--warning); }
-.rp-date-quand { font-size: 1.02rem; font-weight: 800; color: var(--text-main); }
-.rp-date-quand::first-letter { text-transform: uppercase; }
-.rp-date-sub { font-size: .84rem; line-height: 1.45; color: var(--text-secondary); }
+/* ==================== CHARGEMENT ==================== */
 
-.rp-date-tools { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
-.rp-date-btn {
-    font: inherit;
-    font-size: .84rem;
-    font-weight: 700;
-    min-height: 36px;
-    padding: 0 14px;
-    border: 1px solid var(--border-gray);
-    border-radius: 10px;
-    background: var(--card);
-    color: var(--text-main);
-    cursor: pointer;
-}
-.rp-date-btn:hover { border-color: var(--primary); color: var(--primary-text); }
-.rp-date-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-/* « Ajouter au calendrier » : le geste que tout le monde doit faire. */
-.rp-date-btn.is-main {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    border-color: color-mix(in srgb, var(--primary) 45%, var(--border-gray));
-    color: var(--primary-text);
-}
-.rp-date-btn.is-main svg { width: 15px; height: 15px; flex-shrink: 0; }
+/* La page en os (repechage.html), aux classes de rendreSalon(). Les os
+   viennent de fzSquelette.css. */
+.rp-sk-puce { width: 112px; height: 24px; border-radius: 999px; }
+.rp-sk-titre { width: 170px; max-width: 100%; height: 28px; border-radius: 6px; }
+.rp-sk-lead { width: 92%; height: 13px; border-radius: 4px; }
+.rp-sk-lead.is-short { width: 58%; }
+.rp-sk-tuile { height: 86px; border-radius: 14px; }
+.rp-sk-seat { height: 44px; border-radius: 12px; }
+.rp-sk-carte { display: flex; flex-direction: column; gap: 12px; padding: 16px 14px; }
+.rp-sk-label { width: 180px; max-width: 100%; height: 16px; border-radius: 4px; }
+.rp-sk-rangee { height: 40px; border-radius: 12px; }
 
-/* La fenêtre « Ajouter au calendrier » : un bouton par application. */
-.rp-cal-choix { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 12px; }
-.rp-cal-choix .rp-btn { display: block; }
+.rp-loading { padding: 70px 20px; text-align: center; color: var(--s-mute); font-family: 'Saira', 'Barlow', system-ui, sans-serif; }
+.rp-loading p { margin: 16px 0 0; font-size: 15px; }
+.rp-loading strong { color: var(--s-ink); }
 
-/* Téléphone : les boutons passent sous le texte, pleine largeur. */
-@media (max-width: 520px) {
-    .rp-date { flex-wrap: wrap; }
-    .rp-date-tools { flex: 1 1 100%; }
-    .rp-date-btn { flex: 1; }
-    .rp-date-btn.is-main { flex: 1 1 100%; }
+.rp-spinner {
+    width: 34px;
+    height: 34px;
+    margin: 0 auto;
+    border: 3px solid var(--s-line);
+    border-top-color: var(--s-red);
+    border-radius: 50%;
+    animation: rp-spin .8s linear infinite;
 }
 
-/* Le champ de la fenêtre « Fixer la date » : le sélecteur natif suit le
-   thème du site. */
-.rp-date-champ { color-scheme: dark; min-height: 50px; }
-html[data-theme="light"] .rp-date-champ { color-scheme: light; }
-
-/* ============================================================
-   LA ROUE — l'ordre du premier tour, tiré un rang à la fois
-   ------------------------------------------------------------
-   repechage.js dessine la roue en SVG et la fait tourner vers
-   l'équipe que le serveur a tirée. La pointe, fixe, est en haut.
-   ============================================================ */
-.rp-roue-zone {
-    position: relative;
-    width: min(260px, 72vw);
-    margin: 10px auto 18px;
-}
-.rp-roue {
-    display: block;
-    width: 100%;
-    height: auto;
-    transform: rotate(0deg);
-    will-change: transform;
-}
-.rp-roue-pointe {
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    z-index: 1;
-    width: 0;
-    height: 0;
-    transform: translateX(-50%);
-    border-left: 11px solid transparent;
-    border-right: 11px solid transparent;
-    border-top: 20px solid var(--text-main);
-    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .25));
-}
-.rp-roue-bord { fill: var(--border-gray); }
-.rp-roue-seg { stroke: var(--card); stroke-width: 1.5; }
-.rp-roue-txt { fill: #fff; font-weight: 800; font-family: inherit; letter-spacing: .01em; }
-.rp-roue-moyeu { fill: var(--card); stroke: var(--border-gray); stroke-width: 2; }
-
-.rp-order-roue .is-libre .rp-order-nom { font-weight: 600; color: var(--text-secondary); }
-.rp-order-roue .is-tourne .rp-order-nom { color: var(--primary-text); }
-
-.rp-roue-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+@keyframes rp-spin { to { transform: rotate(360deg); } }
 
 .rp-sr {
     position: absolute;
@@ -754,10 +715,63 @@ html[data-theme="light"] .rp-date-champ { color-scheme: light; }
     border: 0;
 }
 
-@media (max-width: 560px) {
-    .rp-roue-actions .rp-btn { flex: 1; }
+/* ==================== FENÊTRES (fzDialog) ==================== */
+
+.rp-note { margin: 0 0 18px; font-size: .84rem; color: var(--text-secondary); line-height: 1.5; }
+
+.rp-btn {
+    font-family: inherit;
+    text-align: center;
+    background: none;
+    padding: 11px 20px;
+    border-radius: 11px;
+    font-weight: 800;
+    font-size: .92rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform .18s ease, border-color .18s ease, color .18s ease;
+}
+.rp-btn.primary { background: var(--primary); color: var(--on-primary); }
+.rp-btn.primary:hover { transform: translateY(-1px); }
+.rp-btn.secondary { background: var(--bg-gray-light); border-color: var(--border-gray); color: var(--text-secondary); }
+.rp-btn.secondary:hover { border-color: var(--primary); color: var(--primary-text); }
+
+/* « Ajouter au calendrier » : un bouton par application. */
+.rp-cal-choix { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 12px; }
+.rp-cal-choix .rp-btn { display: block; }
+
+/* « Fixer la date » : le sélecteur natif suit le thème du site. */
+.rp-date-champ { color-scheme: dark; min-height: 50px; }
+html[data-theme="light"] .rp-date-champ { color-scheme: light; }
+
+/* « Lancer maintenant ? » : ce qui part, et dans quel ordre. */
+.rp-recap { margin: 14px 0 0; border: 1px solid var(--border-light); border-radius: 14px; overflow: hidden; text-align: left; }
+.rp-recap > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 14px; font-size: .86rem; }
+.rp-recap > div + div { border-top: 1px solid var(--border-light); }
+.rp-recap dt { flex: none; color: var(--text-secondary); font-weight: 600; }
+.rp-recap dd { margin: 0; min-width: 0; color: var(--text-main); font-weight: 700; text-align: right; overflow-wrap: anywhere; }
+
+/* ==================== BUREAU ==================== */
+
+@media (min-width: 769px) {
+    .rp-hero { gap: 18px; padding: 24px 22px 22px; }
+    .rp-title { font-size: 38px; line-height: 38px; }
+    .rp-lead { font-size: 15px; line-height: 22px; }
+    .rp-roue-zone { width: 240px; height: 240px; }
+}
+
+@media (max-width: 359px) {
+    .rp-title { font-size: 26px; line-height: 26px; }
+    .rp-tuile { padding: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .rp-spinner { animation-duration: 2.4s; }
+    .rp-search-spin { animation-duration: 2s; }
+    .rp-progress-fill { transition: none; }
     .rp-roue { transition: none !important; }
+    .rp-launch-btn:active:not(:disabled),
+    .rp-roue-btn:active:not(:disabled),
+    .rp-invite-btn:active:not(:disabled) { transform: none; }
 }
