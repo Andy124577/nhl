@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="classement.css?v=20261009d" />
-    <link rel="stylesheet" href="classement-premium.css?v=20261022a" />
+    <link rel="stylesheet" href="classement-premium.css?v=20261023a" />
     <link rel="stylesheet" href="index.css?v=20261009d" />
     <link rel="stylesheet" href="injuries.css?v=20260926b" />
     <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
@@ -35,6 +35,10 @@
     <link rel="stylesheet" href="career-modal.css?v=20261018b">
     <link rel="stylesheet" href="bilanSoiree.css?v=20261016a">
     <link rel="stylesheet" href="draftFinPopup.css?v=20260926b">
+    <!-- Langage 6b Éditorial (maquette « Classement ») : Saira, intertitres
+         Saira Condensed. La feuille passe après toutes les autres. -->
+    <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Saira+Condensed:wght@800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="classementReskin.css?v=20261023a">
 </head>
 <body class="fz-classement">
     <nav class="navbar">
@@ -54,8 +58,13 @@
         </div>
 
         <!-- Page Title -->
-        <!-- En os jusqu'à showPoolStandings(), qui y pose l'image et le nom du pool. -->
-        <h1 id="pageTitle" class="page-title"><span class="fz-bone st-sk-pool-img" aria-hidden="true"></span><span class="fz-bone st-sk-pool-name" aria-hidden="true"></span><span class="st-sk-sr">Classement</span></h1>
+        <!-- « Classement » en surtitre, le nom du pool en os jusqu'à
+             showPoolStandings(). À droite, la fraîcheur des totaux
+             (majFraicheur), posée par le rendu cumulatif. -->
+        <header class="st-tete">
+            <h1 id="pageTitle" class="page-title"><span class="st-titre-sur">Classement</span><span class="fz-bone st-sk-titre" aria-hidden="true"></span></h1>
+            <p class="st-maj" id="stMaj" hidden></p>
+        </header>
 
         <!-- Sous-titre d'un pool H2H : mode de ligue, nombre de participants
              et état de la saison. Rempli par showPoolStandings(). -->
@@ -107,92 +116,94 @@
                 <div id="h2hMatchupsList" class="h2h-matchups-list"></div>
             </div>
 
-            <!-- Squelette du classement (Claude Design, « Classement Skeleton ») :
-                 les mêmes classes que la liste chargée — la même bande sur
-                 téléphone et sur bureau —, donc rien ne bouge à l'arrivée
-                 des données. Un seul reflet balaie tous les os à la fois ; les
-                 rangées montent l'une après l'autre. Le nombre de rangées suit
-                 celui des équipes dès que le pool est connu
-                 (ajusterSqueletteClassement). Les vrais libellés (PJ, 7 j, Pts…)
-                 restent lisibles : on sait déjà ce qui arrive. -->
+            <!-- Squelette du classement : les classes de la carte chargée
+                 (rangeeClassementHTML) — la même sur téléphone et sur bureau —,
+                 donc rien ne bouge à l'arrivée des données. Un seul reflet
+                 balaie tous les os à la fois ; les rangées montent l'une après
+                 l'autre. Le nombre de rangées suit celui des équipes dès que le
+                 pool est connu (ajusterSqueletteClassement). Les vrais libellés
+                 (Saison, PJ, 7 j…) restent lisibles : on sait déjà ce qui arrive. -->
             <div class="st-sk" id="standingsSkeleton" aria-busy="true">
                 <p class="st-sk-sr" role="status">Chargement du classement…</p>
                 <div class="st-sk-body" inert>
-                    <div class="st-mobile-list st-sk-list">
-                        <div class="st-mobile-row" style="--i:0">
-                            <span class="st-mobile-rank">1</span>
-                            <span class="st-mobile-logo fz-bone"></span>
-                            <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(96px, 46%)"></span><span class="st-sk-pill"></span></span>
-                                <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
+                    <div class="st-periodes"><span class="st-periode is-on">Saison</span><span class="st-periode">Hier</span><span class="st-periode">7 jours</span><span class="st-periode">30 jours</span></div>
+                    <section class="st-carte">
+                        <div class="st-rangees st-sk-list">
+                            <div class="st-rangee" style="--i:0">
+                                <span class="st-rang">1</span>
+                                <span class="st-logo fz-bone"></span>
+                                <span class="st-centre">
+                                    <span class="st-nom-ligne"><span class="fz-bone st-sk-nom" style="--w:min(96px, 46%)"></span></span>
+                                    <span class="st-chiffres"><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>PJ</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:10px"></span><small>1 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:14px"></span><small>7 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>30 j</small></span></span>
+                                </span>
+                                <span class="st-total"><span class="fz-bone st-sk-total"></span><span class="fz-bone-flat st-sk-ecart"></span></span>
+                                <svg class="st-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                             </div>
-                            <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
-                            <span class="st-mobile-chev">›</span>
-                        </div>
-                        <div class="st-mobile-row" style="--i:1">
-                            <span class="st-mobile-rank">2</span>
-                            <span class="st-mobile-logo fz-bone"></span>
-                            <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(162px, 78%)"></span><span class="st-sk-pill"></span></span>
-                                <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
+                            <div class="st-rangee" style="--i:1">
+                                <span class="st-rang">2</span>
+                                <span class="st-logo fz-bone"></span>
+                                <span class="st-centre">
+                                    <span class="st-nom-ligne"><span class="fz-bone st-sk-nom" style="--w:min(162px, 78%)"></span></span>
+                                    <span class="st-chiffres"><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>PJ</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:10px"></span><small>1 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:14px"></span><small>7 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>30 j</small></span></span>
+                                </span>
+                                <span class="st-total"><span class="fz-bone st-sk-total"></span><span class="fz-bone-flat st-sk-ecart"></span></span>
+                                <svg class="st-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                             </div>
-                            <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
-                            <span class="st-mobile-chev">›</span>
-                        </div>
-                        <div class="st-mobile-row" style="--i:2">
-                            <span class="st-mobile-rank">3</span>
-                            <span class="st-mobile-logo fz-bone"></span>
-                            <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(121px, 58%)"></span><span class="st-sk-pill"></span></span>
-                                <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
+                            <div class="st-rangee" style="--i:2">
+                                <span class="st-rang">3</span>
+                                <span class="st-logo fz-bone"></span>
+                                <span class="st-centre">
+                                    <span class="st-nom-ligne"><span class="fz-bone st-sk-nom" style="--w:min(121px, 58%)"></span></span>
+                                    <span class="st-chiffres"><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>PJ</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:10px"></span><small>1 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:14px"></span><small>7 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>30 j</small></span></span>
+                                </span>
+                                <span class="st-total"><span class="fz-bone st-sk-total"></span><span class="fz-bone-flat st-sk-ecart"></span></span>
+                                <svg class="st-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                             </div>
-                            <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
-                            <span class="st-mobile-chev">›</span>
-                        </div>
-                        <div class="st-mobile-row" style="--i:3">
-                            <span class="st-mobile-rank">4</span>
-                            <span class="st-mobile-logo fz-bone"></span>
-                            <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(171px, 82%)"></span><span class="st-sk-pill"></span></span>
-                                <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
+                            <div class="st-rangee" style="--i:3">
+                                <span class="st-rang">4</span>
+                                <span class="st-logo fz-bone"></span>
+                                <span class="st-centre">
+                                    <span class="st-nom-ligne"><span class="fz-bone st-sk-nom" style="--w:min(171px, 82%)"></span></span>
+                                    <span class="st-chiffres"><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>PJ</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:10px"></span><small>1 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:14px"></span><small>7 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>30 j</small></span></span>
+                                </span>
+                                <span class="st-total"><span class="fz-bone st-sk-total"></span><span class="fz-bone-flat st-sk-ecart"></span></span>
+                                <svg class="st-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                             </div>
-                            <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
-                            <span class="st-mobile-chev">›</span>
-                        </div>
-                        <div class="st-mobile-row" style="--i:4">
-                            <span class="st-mobile-rank">5</span>
-                            <span class="st-mobile-logo fz-bone"></span>
-                            <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(92px, 44%)"></span><span class="st-sk-pill"></span></span>
-                                <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
+                            <div class="st-rangee" style="--i:4">
+                                <span class="st-rang">5</span>
+                                <span class="st-logo fz-bone"></span>
+                                <span class="st-centre">
+                                    <span class="st-nom-ligne"><span class="fz-bone st-sk-nom" style="--w:min(92px, 44%)"></span></span>
+                                    <span class="st-chiffres"><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>PJ</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:10px"></span><small>1 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:14px"></span><small>7 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>30 j</small></span></span>
+                                </span>
+                                <span class="st-total"><span class="fz-bone st-sk-total"></span><span class="fz-bone-flat st-sk-ecart"></span></span>
+                                <svg class="st-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                             </div>
-                            <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
-                            <span class="st-mobile-chev">›</span>
-                        </div>
-                        <div class="st-mobile-row" style="--i:5">
-                            <span class="st-mobile-rank">6</span>
-                            <span class="st-mobile-logo fz-bone"></span>
-                            <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(133px, 64%)"></span><span class="st-sk-pill"></span></span>
-                                <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
+                            <div class="st-rangee" style="--i:5">
+                                <span class="st-rang">6</span>
+                                <span class="st-logo fz-bone"></span>
+                                <span class="st-centre">
+                                    <span class="st-nom-ligne"><span class="fz-bone st-sk-nom" style="--w:min(133px, 64%)"></span></span>
+                                    <span class="st-chiffres"><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>PJ</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:10px"></span><small>1 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:14px"></span><small>7 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>30 j</small></span></span>
+                                </span>
+                                <span class="st-total"><span class="fz-bone st-sk-total"></span><span class="fz-bone-flat st-sk-ecart"></span></span>
+                                <svg class="st-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                             </div>
-                            <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
-                            <span class="st-mobile-chev">›</span>
-                        </div>
-                        <div class="st-mobile-row" style="--i:6">
-                            <span class="st-mobile-rank">7</span>
-                            <span class="st-mobile-logo fz-bone"></span>
-                            <div class="st-mobile-info">
-                                <span class="st-mobile-name"><span class="fz-bone st-sk-mname" style="--w:min(104px, 50%)"></span><span class="st-sk-pill"></span></span>
-                                <div class="st-mini-row"><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:14px"></span><span class="st-mini-l">PJ</span></div><div class="st-mini has-sep"><span class="fz-bone st-sk-mv" style="--w:8px"></span><span class="st-mini-l">1 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">7 j</span></div><div class="st-mini"><span class="fz-bone st-sk-mv" style="--w:12px"></span><span class="st-mini-l">30 j</span></div></div>
+                            <div class="st-rangee" style="--i:6">
+                                <span class="st-rang">7</span>
+                                <span class="st-logo fz-bone"></span>
+                                <span class="st-centre">
+                                    <span class="st-nom-ligne"><span class="fz-bone st-sk-nom" style="--w:min(104px, 50%)"></span></span>
+                                    <span class="st-chiffres"><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>PJ</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:10px"></span><small>1 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:14px"></span><small>7 j</small></span><span class="st-chiffre"><span class="fz-bone st-sk-v" style="--w:16px"></span><small>30 j</small></span></span>
+                                </span>
+                                <span class="st-total"><span class="fz-bone st-sk-total"></span><span class="fz-bone-flat st-sk-ecart"></span></span>
+                                <svg class="st-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                             </div>
-                            <div class="st-mobile-pts"><span class="fz-bone st-sk-mpts"></span><span class="st-mini-l">Pts</span></div>
-                            <span class="st-mobile-chev">›</span>
                         </div>
-                    </div>
-                    <details class="st-legend st-sk-legend"><summary>Comment lire ce classement</summary></details>
-                    <!-- Rempli par classement.js (hofChargementHTML) : les mêmes
-                         tuiles fantômes que le temple en chargement. -->
+                        <details class="st-aide st-sk-aide"><summary><span>Comment lire ce classement</span></summary></details>
+                    </section>
+                    <!-- Rempli par classement.js (hofChargementHTML) : le même
+                         temple fantôme que pendant sa lecture. -->
                     <div class="standings-insights st-sk-insights">
                         <div class="hall-of-fame" id="standingsSkeletonHof"></div>
                     </div>
@@ -285,7 +296,7 @@
     <script defer src="draftkitData.js?v=20260925"></script>
     <!-- Récapitulatif « Ton équipe est complète », ouvert par classement.js (?recap=1). -->
     <script defer src="draftFinPopup.js?v=20261022b"></script>
-    <script defer src="classement.js?v=20261022b"></script>
+    <script defer src="classement.js?v=20261023a"></script>
     <script defer src="navbar.js?v=20261023b"></script>
     <script defer src="installerApp.js?v=20261010a"></script>
     <!-- Bilan de la soirée : surgit une fois le dernier match du soir fini. -->

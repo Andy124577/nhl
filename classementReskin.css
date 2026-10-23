@@ -1,0 +1,683 @@
+/* ============================================================
+   CLASSEMENT — maquette « Classement » (langage 6b Éditorial)
+   ------------------------------------------------------------
+   Même langage que l'accueil de saison et le salon du repêchage : Saira,
+   intertitres Saira Condensed, gris chauds, cartes arrondies. Couvre le
+   niveau 2 d'un pool cumulatif — l'en-tête, les périodes, la carte du
+   classement, sa légende — et le temple de la renommée, en cumulatif comme
+   en H2H. La carte du record reste sombre dans les deux thèmes, comme
+   « Ma position » à l'accueil ; le reste suit le thème par les jetons --s-*.
+
+   Chargé APRÈS classement.css et classement-premium.css. Les onglets H2H,
+   la fiche d'équipe et la fiche joueur gardent leur habillage.
+
+   Téléphone : une colonne, à 10 px des bords. Bureau : la même colonne,
+   plus large ; le temple met sa carte et sa liste côte à côte.
+   ============================================================ */
+
+body.fz-classement {
+    --s-bg: #0B0B0C;
+    --s-card: #141416;
+    --s-line: #1F1F23;
+    --s-chip: #1C1C1F;
+    --s-chip2: #232327;
+    --s-btn-line: #2A2A2F;
+    --s-me: #17171A;
+    --s-hover: #1A1A1D;
+    --s-ink: #F3F1EE;
+    --s-ink2: #C9C7C4;
+    --s-mute: #A8A6A3;
+    --s-soft: #8E8B88;
+    --s-faint: #7E7C79;
+    --s-ghost: #4A4A50;
+    --s-red: #E5372B;
+    --s-red-soft: rgba(229, 55, 43, .16);
+    --s-red-ink: #FF8A80;
+    --s-green: #7FD49B;
+    --s-green-soft: rgba(127, 212, 155, .14);
+    --s-or: #E8B95A;
+    --s-or-ink: #B9A27A;
+    --s-or-soft: rgba(232, 185, 90, .16);
+    /* La gouttière du conteneur : 32 px au bureau, 10 px au téléphone.
+       La fiche d'équipe s'en sert pour aller d'un bord à l'autre. */
+    --st-gouttiere: 32px;
+    background: var(--s-bg);
+}
+html[data-theme="light"] body.fz-classement {
+    --s-bg: #F3F2EF;
+    --s-card: #FFFFFF;
+    --s-line: #ECEAE6;
+    --s-chip: #EEECE8;
+    --s-chip2: #E6E4E0;
+    --s-btn-line: #DDDAD5;
+    --s-me: #F4F2EE;
+    --s-hover: #F6F5F2;
+    --s-ink: #141416;
+    --s-ink2: #34343A;
+    --s-mute: #5E5C59;
+    --s-soft: #6A6764;
+    --s-faint: #74716D;
+    --s-ghost: #B5B2AD;
+    --s-red: #D52B1E;
+    --s-red-soft: rgba(213, 43, 30, .1);
+    --s-red-ink: #B3241A;
+    --s-green: #1D8048;
+    --s-green-soft: rgba(29, 128, 72, .1);
+    --s-or: #976111;
+    --s-or-ink: #8A6A2E;
+    --s-or-soft: rgba(151, 97, 17, .1);
+}
+
+body.fz-classement .container {
+    padding-left: var(--st-gouttiere);
+    padding-right: var(--st-gouttiere);
+}
+@media (max-width: 680px) {
+    body.fz-classement { --st-gouttiere: 10px; }
+}
+
+body.fz-classement .breadcrumb { font-family: 'Saira', 'Barlow', system-ui, sans-serif; color: var(--s-faint); }
+
+@keyframes stPouls { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* ==================== EN-TÊTE ==================== */
+
+body.fz-classement .st-tete {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 14px;
+}
+body.fz-view-roster .st-tete { display: none; }
+body.fz-classement .st-tete .page-title {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    text-align: left;
+    font: 800 32px/30px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+    color: var(--s-ink);
+}
+body.fz-classement .st-titre-sur {
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    color: var(--s-soft);
+}
+body.fz-classement .st-titre-nom { overflow-wrap: anywhere; text-wrap: balance; }
+body.fz-classement .st-maj {
+    flex: none;
+    margin: 0;
+    padding-bottom: 3px;
+    font: 500 12px/1 'Saira', sans-serif;
+    color: var(--s-faint);
+    white-space: nowrap;
+}
+body.fz-classement .st-maj[hidden] { display: none; }
+body.fz-classement .st-maj-direct { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--s-green); }
+body.fz-classement .st-maj-direct i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: stPouls 1.6s infinite; }
+body.fz-classement .st-sk-titre { display: block; width: 150px; max-width: 60vw; height: 26px; border-radius: 6px; }
+
+/* ==================== PÉRIODES ==================== */
+
+body.fz-classement .st-periodes {
+    display: flex;
+    gap: 4px;
+    margin: 0 0 10px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+}
+body.fz-classement .st-periode {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--s-mute);
+    font: 600 13px/1 'Saira', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+}
+body.fz-classement button.st-periode:hover { color: var(--s-ink); }
+body.fz-classement .st-periode.is-on,
+body.fz-classement button.st-periode.is-on:hover { background: var(--s-ink); color: var(--s-bg); }
+body.fz-classement .st-periode:focus-visible { outline: 2px solid var(--s-red); outline-offset: 1px; }
+
+/* ==================== LA CARTE DU CLASSEMENT ==================== */
+
+body.fz-classement .st-carte {
+    border-radius: 20px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    overflow: hidden;
+    color: var(--s-ink);
+    font-variant-numeric: tabular-nums;
+}
+body.fz-classement .st-rangee {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 12px 14px 14px;
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+body.fz-classement .st-rangee + .st-rangee { border-top: 1px solid var(--s-line); }
+body.fz-classement .st-rangee.is-me { background: var(--s-me); }
+/* Sa propre équipe : un filet rouge sur le bord. */
+body.fz-classement .st-rangee.is-me::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--s-red);
+}
+body.fz-classement .st-rangee.is-clickable:hover,
+body.fz-classement .st-rangee.is-clickable:focus-visible { background: var(--s-hover); }
+body.fz-classement .st-rangee:focus-visible { outline: 2px solid var(--s-red); outline-offset: -2px; }
+
+body.fz-classement .st-rang {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--s-chip2);
+    color: var(--s-ink2);
+    font: 800 15px/1 'Saira Condensed', 'Barlow Condensed', sans-serif;
+}
+/* Le podium : or, argent, bronze, chiffre sombre sur les trois. */
+body.fz-classement .st-rang.is-or { background: #E8B95A; color: #0B0B0C; }
+body.fz-classement .st-rang.is-argent { background: #C9C7C4; color: #0B0B0C; }
+body.fz-classement .st-rang.is-bronze { background: #B07A4E; color: #0B0B0C; }
+
+body.fz-classement .st-logo {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+body.fz-classement .st-logo img { width: 42px; height: 42px; object-fit: contain; }
+body.fz-classement .st-logo .st-avatar-fallback {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--s-chip);
+    font: 700 14px/1 'Saira', sans-serif;
+    color: var(--s-ink2);
+}
+body.fz-classement .st-logo.fz-bone { border-radius: 50%; }
+
+body.fz-classement .st-centre { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+body.fz-classement .st-nom-ligne { display: flex; align-items: center; gap: 6px; min-width: 0; }
+body.fz-classement .st-nom {
+    min-width: 0;
+    font: 600 16px/1.1 'Saira', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body.fz-classement .st-toi {
+    flex: none;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 5px;
+    background: var(--s-ink);
+    color: var(--s-bg);
+    font: 700 9px/18px 'Saira', sans-serif;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+/* Le mouvement de la soirée, à côté du nom (evolutionBadgeHTML). */
+body.fz-classement .st-rangee .st-evo {
+    flex: none;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 5px;
+    font: 700 10px/1 'Saira', sans-serif;
+}
+body.fz-classement .st-rangee .st-evo svg { fill: currentColor; }
+body.fz-classement .st-rangee .st-evo-up { background: var(--s-green-soft); color: var(--s-green); }
+body.fz-classement .st-rangee .st-evo-down { background: var(--s-red-soft); color: var(--s-red-ink); }
+body.fz-classement .st-rangee .st-evo-flat { background: var(--s-chip); color: var(--s-soft); }
+
+body.fz-classement .st-chiffres { display: flex; gap: 12px; }
+body.fz-classement .st-chiffre { display: flex; flex-direction: column; gap: 3px; }
+body.fz-classement .st-chiffre b { font: 600 13px/1 'Saira', sans-serif; color: var(--s-mute); }
+body.fz-classement .st-chiffre.is-zero b { color: var(--s-faint); }
+/* La période choisie s'allume dans chaque rangée. */
+body.fz-classement .st-chiffre.is-on b { color: var(--s-ink); }
+body.fz-classement .st-chiffre small {
+    font: 500 9px/1 'Saira', sans-serif;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--s-soft);
+}
+
+body.fz-classement .st-total { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+body.fz-classement .st-total-v {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: 800 30px/26px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    color: var(--s-ink);
+}
+body.fz-classement .st-ecart { font: 500 11px/1 'Saira', sans-serif; color: var(--s-soft); white-space: nowrap; }
+body.fz-classement .st-ecart sup { font-size: .75em; }
+body.fz-classement .st-ecart.is-tete { color: var(--s-or); }
+body.fz-classement .st-rangee > .st-ico { flex: none; margin-left: -4px; color: var(--s-ghost); }
+
+/* Ce que le soir a ajouté au total, en direct (pointsSoirHTML). */
+body.fz-classement .st-total-v .st-live-pts {
+    margin: 0;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: var(--s-green-soft);
+    color: var(--s-green);
+    font: 700 11px/1 'Saira', sans-serif;
+    vertical-align: baseline;
+}
+
+body.fz-classement .st-empty { padding: 40px 16px; text-align: center; font-family: 'Saira', sans-serif; }
+body.fz-classement .st-empty-title { margin: 0 0 6px; font: 600 15px/1.3 'Saira', sans-serif; color: var(--s-ink); }
+body.fz-classement .st-empty-hint { margin: 0; font: 400 13px/1.4 'Saira', sans-serif; color: var(--s-faint); }
+
+/* ---- Comment lire ce classement ---- */
+body.fz-classement .st-aide { border-top: 1px solid var(--s-line); }
+body.fz-classement .st-aide summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    list-style: none;
+    font: 500 13px/1 'Saira', sans-serif;
+    color: var(--s-mute);
+    cursor: pointer;
+}
+body.fz-classement .st-aide summary::-webkit-details-marker { display: none; }
+body.fz-classement .st-aide summary > span { flex: 1; }
+body.fz-classement .st-aide summary:hover { color: var(--s-ink); }
+body.fz-classement .st-aide summary:focus-visible { outline: 2px solid var(--s-red); outline-offset: -2px; }
+body.fz-classement .st-aide summary .st-ico:last-child { transition: transform .25s ease; }
+body.fz-classement .st-aide[open] summary .st-ico:last-child { transform: rotate(180deg); }
+body.fz-classement .st-aide dl {
+    display: grid;
+    grid-template-columns: minmax(64px, 110px) minmax(0, 1fr);
+    gap: 8px 12px;
+    margin: 0;
+    padding: 0 14px 14px 40px;
+    font: 400 12px/16px 'Saira', sans-serif;
+    color: var(--s-mute);
+}
+body.fz-classement .st-aide dt { font: 600 11px/16px 'Saira', sans-serif; color: var(--s-ink); }
+body.fz-classement .st-aide dd { margin: 0; }
+@media (max-width: 400px) {
+    body.fz-classement .st-aide dl { grid-template-columns: minmax(0, 1fr); gap: 2px; padding-left: 14px; }
+    body.fz-classement .st-aide dd { margin-bottom: 8px; }
+}
+
+/* ==================== TEMPLE DE LA RENOMMÉE ==================== */
+
+body.fz-classement .hall-of-fame {
+    container: hof / inline-size;
+    margin-top: 28px;
+    padding-top: 0;
+    border-top: 0;
+    font-family: 'Saira', 'Barlow', system-ui, sans-serif;
+    color: var(--s-ink);
+}
+body.fz-classement .hof-tete { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 0 6px; }
+body.fz-classement .hof-trophee { flex: none; width: 22px; height: 22px; fill: currentColor; color: var(--s-or); }
+body.fz-classement .hof-title {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font: 800 20px/22px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--s-ink);
+}
+body.fz-classement .hof-saison {
+    flex: none;
+    height: 26px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--s-chip);
+    border: 1px solid var(--s-btn-line);
+    font: 600 12px/24px 'Saira', sans-serif;
+    color: var(--s-ink2);
+}
+body.fz-classement .hof-corps { display: flex; flex-direction: column; gap: 12px; }
+body.fz-classement .hof-ico { flex: none; }
+
+/* ---- La carte du record : sombre et dorée dans les deux thèmes ---- */
+body.fz-classement .hof-vedette {
+    --fz-bone: rgba(255, 255, 255, .07);
+    --fz-bone-shine: rgba(255, 255, 255, .14);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 16px 16px;
+    border-radius: 22px;
+    color: #F3F1EE;
+    background:
+        radial-gradient(90% 110% at 100% 0%, rgba(232, 185, 90, .2) 0%, rgba(232, 185, 90, 0) 60%),
+        linear-gradient(135deg, #1C1A16 0%, #151517 55%, #101012 100%);
+    border: 1px solid #2A2720;
+}
+body.fz-classement .hof-vedette::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 60%;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(255, 255, 255, .1) 1px, transparent 1.5px);
+    background-size: 9px 9px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 75%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 75%);
+}
+html[data-theme="light"] body.fz-classement .hof-vedette { box-shadow: 0 10px 28px rgba(40, 30, 10, .16); }
+
+body.fz-classement .hof-vedette-haut { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+body.fz-classement .hof-puce {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: rgba(232, 185, 90, .14);
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #E8B95A;
+}
+body.fz-classement .hof-direct {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #7FD49B;
+}
+body.fz-classement .hof-direct i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: stPouls 1.6s infinite; }
+
+body.fz-classement .hof-record { display: flex; align-items: flex-end; gap: 14px; min-width: 0; }
+/* Le chiffre en or : le dégradé passe à travers le texte ; « pts » reste uni. */
+body.fz-classement .hof-gros {
+    flex: none;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font: 800 72px/60px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    background: linear-gradient(170deg, #FBE3A6 0%, #E8B95A 40%, #B9822E 75%, #F0CB7A 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+body.fz-classement .hof-gros small {
+    font: 700 13px/1 'Saira', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #B9A27A;
+    -webkit-text-fill-color: #B9A27A;
+}
+body.fz-classement .hof-qui {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    padding-bottom: 4px;
+}
+body.fz-classement .hof-equipe,
+body.fz-classement .hof-pire-equipe {
+    min-width: 0;
+    max-width: 100%;
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+}
+body.fz-classement .hof-equipe { gap: 7px; font: 600 16px/1.15 'Saira', sans-serif; color: #F3F1EE; text-align: right; }
+body.fz-classement .hof-nom { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Le nom d'équipe ouvre sa fiche, comme une rangée du classement. */
+body.fz-classement :is(.hof-equipe, .hof-pire-equipe).is-link { cursor: pointer; }
+body.fz-classement :is(.hof-equipe, .hof-pire-equipe).is-link:hover .hof-nom { text-decoration: underline; text-underline-offset: 3px; }
+body.fz-classement :is(.hof-equipe, .hof-pire-equipe).is-link:focus-visible { outline: 2px solid #E8B95A; outline-offset: 2px; border-radius: 4px; }
+body.fz-classement .hof-toi {
+    flex: none;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 5px;
+    background: #F3F1EE;
+    color: #0B0B0C;
+    font: 700 9px/18px 'Saira', sans-serif;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+body.fz-classement .hof-quand { font: 400 12px/1.2 'Saira', sans-serif; color: #A8A6A3; }
+body.fz-classement .hof-logo { flex: none; display: inline-flex; align-items: center; justify-content: center; }
+body.fz-classement .hof-logo .st-avatar-fallback {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .1);
+    font: 700 8px/1 'Saira', sans-serif;
+    color: #C9C7C4;
+}
+
+body.fz-classement .hof-pire {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 13px;
+    background: rgba(10, 10, 11, .6);
+    border: 1px solid rgba(255, 255, 255, .06);
+}
+body.fz-classement .hof-pire-l { font: 600 10px/1 'Saira', sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: #8E8B88; }
+body.fz-classement .hof-pire-pts { display: flex; align-items: baseline; gap: 3px; font: 800 20px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; color: #C9C7C4; }
+body.fz-classement .hof-pire-pts small { font: 600 10px/1 'Saira', sans-serif; text-transform: uppercase; color: #8E8B88; }
+body.fz-classement .hof-pire-equipe { flex: 1; gap: 6px; font: 500 13px/1.2 'Saira', sans-serif; color: #C9C7C4; text-align: left; }
+body.fz-classement .hof-pire-equipe .hof-toi { height: 16px; padding: 0 5px; border-radius: 4px; background: #2A2A2F; color: #C9C7C4; line-height: 16px; }
+body.fz-classement .hof-pire-quand {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 400 12px/1 'Saira', sans-serif;
+    color: #8E8B88;
+    white-space: nowrap;
+}
+/* Une semaine ou un mois pas fini : le pire peut encore tomber. */
+body.fz-classement .hof-live { font: 600 9.5px/1 'Saira', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #7FD49B; }
+
+/* ---- La liste des périodes : elle choisit le record de la carte ---- */
+body.fz-classement .hof-liste {
+    border-radius: 20px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    overflow: hidden;
+}
+body.fz-classement .hof-rangee {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 14px;
+    border: 0;
+    background: none;
+    color: var(--s-ink);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color .2s ease;
+}
+body.fz-classement .hof-rangee + .hof-rangee { border-top: 1px solid var(--s-line); }
+body.fz-classement button.hof-rangee:hover,
+body.fz-classement .hof-rangee.is-on { background: var(--s-hover); }
+body.fz-classement .hof-rangee:focus-visible { outline: 2px solid var(--s-red); outline-offset: -2px; }
+body.fz-classement .hof-rangee-ico {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--s-chip);
+    color: var(--s-soft);
+    transition: background-color .2s ease, color .2s ease;
+}
+body.fz-classement .hof-rangee.is-on .hof-rangee-ico { background: var(--s-or-soft); color: var(--s-or); }
+body.fz-classement .hof-rangee-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+body.fz-classement .hof-rangee-titre { display: flex; align-items: center; gap: 6px; font: 600 14px/1 'Saira', sans-serif; }
+body.fz-classement .hof-point { width: 6px; height: 6px; border-radius: 50%; background: var(--s-green); animation: stPouls 1.6s infinite; }
+body.fz-classement .hof-grille { display: grid; grid-template-columns: 34px auto minmax(0, 1fr); align-items: center; gap: 4px 8px; }
+body.fz-classement .hof-k { font: 600 9px/1 'Saira', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--s-or-ink); }
+body.fz-classement .hof-k.is-pire { color: var(--s-soft); }
+body.fz-classement .hof-v { font: 800 18px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; color: var(--s-ink); }
+body.fz-classement .hof-rangee.is-on .hof-v:not(.is-pire) { color: var(--s-or); }
+body.fz-classement .hof-v.is-pire { color: var(--s-soft); }
+body.fz-classement .hof-e {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    font: 400 12px/1.2 'Saira', sans-serif;
+    color: var(--s-mute);
+    white-space: nowrap;
+    overflow: hidden;
+}
+body.fz-classement .hof-e.is-pire { color: var(--s-faint); }
+body.fz-classement .hof-e-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+body.fz-classement .hof-e .st-avatar-fallback { width: 14px; height: 14px; font-size: 6px; background: var(--s-chip); color: var(--s-ink2); }
+body.fz-classement .hof-rangee > .st-ico { flex: none; align-self: center; color: var(--s-ghost); }
+
+/* ---- Pas encore de records ---- */
+body.fz-classement .hall-of-fame .fz-empty {
+    padding: 28px 16px;
+    border-radius: 20px;
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    text-align: center;
+}
+body.fz-classement .hall-of-fame .fz-empty-icon { color: var(--s-or); }
+body.fz-classement .hall-of-fame .fz-empty-title { font: 600 15px/1.3 'Saira', sans-serif; color: var(--s-ink); }
+body.fz-classement .hall-of-fame .fz-empty-hint { font: 400 13px/1.4 'Saira', sans-serif; color: var(--s-faint); }
+
+/* En H2H, le temple vit dans la colonne de gauche, sans le cadre des
+   autres cartes : il porte déjà les siens. */
+body.fz-classement .standings-insights.is-h2h > #hallOfFame {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    overflow: visible;
+}
+
+/* Bloc large : la carte et la liste côte à côte. */
+@container hof (min-width: 640px) {
+    body.fz-classement .hof-corps {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        align-items: stretch;
+    }
+    body.fz-classement .hof-vedette { justify-content: space-between; }
+}
+
+/* ==================== CHARGEMENT ==================== */
+
+body.fz-classement .st-sk-list .st-rangee {
+    cursor: default;
+    opacity: 0;
+    animation: fzOsMonte .35s ease-out forwards;
+    animation-delay: calc(var(--i, 0) * 45ms);
+}
+body.fz-classement .st-sk-nom { display: block; width: var(--w); max-width: 100%; height: 14px; margin: 1px 0; border-radius: 4px; }
+body.fz-classement .st-sk-v { display: block; width: var(--w); height: 11px; margin: 1px 0; border-radius: 3px; }
+body.fz-classement .st-sk-total { display: block; width: 44px; height: 26px; border-radius: 6px; }
+body.fz-classement .st-sk-ecart { display: block; width: 52px; height: 9px; border-radius: 3px; }
+body.fz-classement .st-sk .st-chiffre small,
+body.fz-classement .st-sk .st-periode,
+body.fz-classement .st-sk-aide summary { opacity: .6; }
+body.fz-classement .st-sk .st-periode.is-on { opacity: 1; }
+
+body.fz-classement .hof-rangee.is-loading { cursor: default; }
+body.fz-classement .hof-vedette.is-loading .hof-puce,
+body.fz-classement .hof-vedette.is-loading .hof-pire-l,
+body.fz-classement .hof-rangee.is-loading .hof-rangee-titre,
+body.fz-classement .hof-rangee.is-loading .hof-k { opacity: .6; }
+body.fz-classement .hof-sk-gros { display: block; width: 96px; height: 56px; border-radius: 8px; }
+body.fz-classement .hof-sk-nom { display: block; width: 110px; height: 14px; border-radius: 4px; }
+body.fz-classement .hof-sk-quand { display: block; width: 70px; height: 10px; border-radius: 3px; }
+body.fz-classement .hof-sk-pire { flex: 1; height: 12px; border-radius: 4px; }
+body.fz-classement .hof-sk-v { display: block; width: 22px; height: 14px; border-radius: 3px; }
+body.fz-classement .hof-sk-e { display: block; width: 120px; max-width: 100%; height: 10px; border-radius: 3px; }
+body.fz-classement .hof-sk-e.is-court { width: 90px; }
+
+/* ==================== TÉLÉPHONE, BUREAU ==================== */
+
+@media (max-width: 680px) {
+    body.fz-classement .st-tete { margin-bottom: 12px; padding: 4px 6px 0; }
+}
+@media (max-width: 359px) {
+    body.fz-classement .st-tete .page-title { font-size: 28px; line-height: 27px; }
+    body.fz-classement .st-rangee { gap: 9px; padding-left: 10px; }
+    body.fz-classement .st-logo,
+    body.fz-classement .st-logo img,
+    body.fz-classement .st-logo .st-avatar-fallback { width: 34px; height: 34px; }
+    body.fz-classement .st-chiffres { gap: 9px; }
+    body.fz-classement .hof-gros { font-size: 60px; line-height: 52px; }
+}
+@media (min-width: 681px) {
+    body.fz-classement .st-tete .page-title { font-size: 40px; line-height: 38px; }
+    body.fz-classement .st-rangee { gap: 14px; padding: 16px 18px 16px 18px; }
+    body.fz-classement .st-chiffres { gap: 18px; }
+    body.fz-classement .hall-of-fame { margin-top: 36px; }
+    body.fz-classement .hof-tete { padding: 0 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.fz-classement .st-sk-list .st-rangee { opacity: 1; animation: none; }
+    body.fz-classement :is(.st-maj-direct i, .hof-direct i, .hof-point) { animation: none; }
+    body.fz-classement .st-aide summary .st-ico:last-child { transition: none; }
+}
