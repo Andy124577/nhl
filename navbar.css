@@ -643,54 +643,38 @@ html[data-theme="light"] .theme-switch-thumb {
 }
 
 /* ============================================================
-   BARRE DU BAS (téléphone) — Claude Design, « Footer Nav »
+   BARRE DU BAS (téléphone) — maquette « Fantazy Nav Options »,
+   1b « Ligne lumineuse »
    ------------------------------------------------------------
-   Verre dépoli, filet d'un pixel, et une pastille teintée de 56 × 32 qui
-   glisse d'un onglet à l'autre (navbar.js, initPastilleBas) : plus de
-   trait rouge au-dessus de l'onglet, plus de halo autour de l'icône.
-   L'onglet actif prend la couleur de marque, un trait d'icône et un
-   libellé plus appuyés, et une icône un peu plus grande.
+   Plate et calme, sur le fond de la page, filet d'un pixel. Aucun
+   indicateur : l'onglet choisi a son icône pleine et claire, qui monte
+   de 2px et grandit un peu, et un libellé plus appuyé. Au repos, icône
+   au contour fin, gris.
 
-   Le toucher se répond en quatre temps (navbar.js, jouerGeste) :
-     1. au contact, avant le relâcher : l'icône s'enfonce, l'onglet
-        rougit, une onde part du doigt — la réponse arrive sous les
-        100 ms, et naît là où l'on a touché ;
-     2. au relâcher : un tic haptique, et l'icône rebondit ;
-     3. la pastille s'étire dans le sens de sa course, d'autant plus
-        que le trajet est long : l'élan se lit dans sa forme ;
-     4. posée, elle lâche un anneau — la fin du geste, celle dont on
-        se souvient.
+   Le toucher (navbar.js, initToucherBas) : l'onglet s'enfonce et une
+   onde part du doigt dès le contact, puis un tic haptique au relâcher.
 
    Ces règles reprennent celles de la feuille minifiée en tête de fichier
    et des blocs plus haut ; venues après, elles l'emportent.
    ============================================================ */
-/* Maquette « Fantazy Nav Options », 1a « Pastille glissante » : barre
-   pleine (plus de verre dépoli), cinq onglets, icônes au contour au repos
-   et pleines une fois choisies, pastille teintée de 60 × 32 en ressort. */
 body {
-    --bn-bg: #141416;
+    --bn-bg: #0B0B0C;
     --bn-line: #1F1F23;
-    --bn-ink: #8E8B88;
-    --bn-ink-active: #FF5A4E;
-    --bn-pill: rgba(229, 55, 43, .20);
-    --bn-pill-edge: transparent;
+    --bn-ink: #6E6C69;
+    --bn-ink-active: #F3F1EE;
     --bn-wave: rgba(255, 255, 255, .14);
-    --bn-ring: rgba(229, 55, 43, .55);
     --bn-spring: cubic-bezier(.34, 1.6, .64, 1);
 }
-/* Clair : le même rouge, foncé pour tenir 4,5:1 sur le blanc. */
 html[data-theme="light"] body {
     --bn-bg: #FFFFFF;
     --bn-line: #E7E5E2;
-    --bn-ink: #6E6C69;
-    --bn-ink-active: #C42A1F;
-    --bn-pill: rgba(229, 55, 43, .12);
+    --bn-ink: #8E8B88;
+    --bn-ink-active: #141416;
     --bn-wave: rgba(20, 20, 22, .07);
-    --bn-ring: rgba(229, 55, 43, .40);
 }
 
 .bottom-nav {
-    padding: 8px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    padding: 0 4px env(safe-area-inset-bottom, 0px);
     background: var(--bn-bg);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -699,104 +683,70 @@ html[data-theme="light"] body {
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Sous l'icône de l'onglet actif : le haut de l'onglet. Invisible
-   tant que navbar.js ne l'a pas posée (is-placed). */
-.bottom-nav-pill {
-    position: absolute;
-    top: 8px;
-    left: 0;
-    width: 60px;
-    height: 32px;
-    border-radius: 16px;
-    background: var(--bn-pill);
-    box-shadow: inset 0 0 0 1px var(--bn-pill-edge);
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 450ms cubic-bezier(.34, 1.45, .64, 1), opacity 200ms ease;
-    will-change: transform;
-}
-.bottom-nav-pill.is-placed { opacity: 1; }
-
-/* L'anneau d'arrivée : invisible au repos, il s'élargit et s'efface quand
-   la pastille se pose (navbar.js). Assez petit pour ne pas déborder de
-   la barre par le haut. */
-.bottom-nav-pill-ring {
-    position: absolute;
-    inset: 0;
-    border: 1.5px solid var(--bn-ring);
-    border-radius: inherit;
-    opacity: 0;
-}
-
 .bottom-nav-item {
     flex: 1 1 0;
     min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    gap: 4px;
-    min-height: 56px;
-    padding: 0 0 4px;
+    justify-content: center;
+    gap: 5px;
+    min-height: 64px;
+    padding: 0;
     border-radius: 14px;
     background: none;
     color: var(--bn-ink);
     text-decoration: none;
     touch-action: manipulation;
-    /* L'onde se glisse sous l'icône et le libellé sans passer sous la
-       pastille : z-index -1 ne quitte pas l'onglet. */
+    /* L'onde se glisse sous l'icône et le libellé : z-index -1 ne quitte
+       pas l'onglet. */
     isolation: isolate;
-    transition: color 200ms ease;
+    transition: color 250ms ease, transform 120ms ease;
 }
-.bottom-nav-item:hover { background: none; color: var(--bn-ink); }
-.bottom-nav-item.active,
-.bottom-nav-item.active:hover { background: none; color: var(--bn-ink-active); }
+/* Couleurs posées sous .bottom-nav : les liens de <nav> d'une page
+   (stats-premium.css, « body.fz-stats nav a ») ne les reprennent pas. */
+.bottom-nav .bottom-nav-item { color: var(--bn-ink); }
+.bottom-nav .bottom-nav-item:hover { background: none; color: var(--bn-ink); }
+.bottom-nav .bottom-nav-item.active,
+.bottom-nav .bottom-nav-item.active:hover { background: none; color: var(--bn-ink-active); }
 .bottom-nav-item.active::before { content: none; }
 /* Posée au pointerdown par navbar.js plutôt que :active, que Safari iOS
-   n'applique pas sans écouteur tactile : l'onglet rougit dès le contact. */
-.bottom-nav-item.is-pressed { color: var(--bn-ink-active); transition-duration: 80ms; }
-.bottom-nav-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+   n'applique pas sans écouteur tactile. */
+.bottom-nav-item.is-pressed { transform: scale(.9); transition-duration: 80ms; }
+.bottom-nav-item:focus-visible { outline: 2px solid var(--bn-ink-active); outline-offset: -2px; }
 
+/* Deux tracés superposés (navbar.js, iconeBarre) : le contour au repos,
+   le plein une fois choisi, qui éclot de 40 % en ressort. Le conteneur
+   porte la montée et l'agrandissement de l'onglet choisi. */
 .bottom-nav-icon,
 .bottom-nav-item:hover .bottom-nav-icon,
 .bottom-nav-item.active .bottom-nav-icon {
+    position: relative;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 32px;
+    width: 25px;
+    height: 25px;
     margin: 0;
     color: inherit;
     font-size: inherit;
     filter: none;
     transform: none;
-    /* Le retour après un toucher annulé rebondit ; l'enfoncement, lui,
-       est sec (règle suivante). */
-    transition: transform 320ms var(--bn-spring);
+    transition: transform 400ms var(--bn-spring);
 }
-.bottom-nav-item.is-pressed .bottom-nav-icon {
-    transform: scale(.84);
-    transition: transform 100ms ease-out;
-}
-/* Deux tracés superposés (navbar.js, iconeBarre) : le contour au repos,
-   le plein une fois choisi, qui éclot de 40 % en ressort. La taille de
-   repos de l'onglet actif vit sur les SVG, le rebond sur leur conteneur
-   (navbar.js) : les deux se composent sans se disputer. */
-.bottom-nav-icon { position: relative; width: 60px; }
+.bottom-nav-item.active .bottom-nav-icon { transform: translateY(-2px) scale(1.1); }
 .bottom-nav-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 25px;
+    height: 25px;
     fill: currentColor;
-    transition: opacity 250ms ease, transform 400ms var(--bn-spring);
+    transition: opacity 250ms ease, transform 350ms cubic-bezier(.34, 1.5, .64, 1);
 }
 .bottom-nav-icon .bn-plein {
     position: absolute;
-    top: 4px;
-    left: 18px;
+    inset: 0;
     opacity: 0;
     transform: scale(.4);
 }
-.bottom-nav-item.active .bn-contour { opacity: 0; transform: scale(1.08); }
-.bottom-nav-item.active .bn-plein { opacity: 1; transform: scale(1.08); }
+.bottom-nav-item.active .bn-contour { opacity: 0; }
+.bottom-nav-item.active .bn-plein { opacity: 1; transform: none; }
 
 /* L'onde du toucher : un disque né sous le doigt (navbar.js, ondeOnglet),
    borné à l'onglet. Le calque est créé au premier toucher. */
@@ -818,9 +768,9 @@ html[data-theme="light"] body {
 .bottom-nav-label {
     max-width: 100%;
     overflow: hidden;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
-    line-height: 14px;
+    line-height: 13px;
     letter-spacing: .01em;
     text-overflow: ellipsis;
     text-transform: none;
@@ -829,19 +779,15 @@ html[data-theme="light"] body {
 .bottom-nav-item.active .bottom-nav-label { font-weight: 600; }
 
 /* Le point ou le compte, au coin haut droit de l'icône. */
-.bottom-nav-item .notif-badge { top: 1px; right: auto; left: calc(50% + 6px); border-color: var(--bn-bg); }
-
-/* Cinq onglets : « Classement » tient à 12px dès 360px ; en deçà, 11px. */
-@media (max-width: 359px) {
-    .bottom-nav-label { font-size: 11px; letter-spacing: 0; }
-}
+.bottom-nav-item .notif-badge { top: 6px; right: auto; left: calc(50% + 6px); border-color: var(--bn-bg); }
 
 /* Mouvement réduit : la couleur, le tic et un éclat sans expansion
-   (navbar.js) disent encore le toucher ; rien ne glisse ni ne rebondit. */
+   (navbar.js) disent encore le toucher ; rien ne monte ni ne rebondit. */
 @media (prefers-reduced-motion: reduce) {
-    .bottom-nav-pill { transition: opacity 200ms ease; }
+    .bottom-nav-item,
     .bottom-nav-icon,
-    .bottom-nav-item.active .bottom-nav-icon,
+    .bottom-nav-item.active .bottom-nav-icon { transition: color 150ms ease; }
+    .bottom-nav-item.is-pressed { transform: none; }
     .bottom-nav-icon svg { transition: opacity 150ms ease; }
-    .bottom-nav-item.is-pressed .bottom-nav-icon { transform: none; }
+    .bottom-nav-icon .bn-plein { transform: none; }
 }
