@@ -1,0 +1,488 @@
+/* ============================================================
+   STATS — « TOUS LES JOUEURS », MAQUETTE 2c « BARRE AU POUCE »
+   ------------------------------------------------------------
+   Même langage que le classement et l'accueil (6b Éditorial) : Saira,
+   titre en Saira Condensed, gris chauds. La liste prend toute la hauteur ;
+   la recherche, la position, le tri et « Libres » descendent dans une
+   barre collée au bas de l'écran, juste au-dessus de la barre du bas
+   (statsPouce.js). L'en-tête et les onglets valent pour les trois onglets ;
+   le compte et la saison ne s'affichent que sur « Tous les joueurs ».
+
+   Chargé en dernier : il spécialise index.css et stats-premium.css. Les
+   règles du tableau passent par #tableContainer #playerTable : deux
+   identifiants, pour primer sur les :not() en chaîne d'index.css.
+   Téléphone : liste bord à bord. Bureau : la même liste dans une carte,
+   la barre centrée au bas de la colonne.
+   ============================================================ */
+
+body.fz-stats {
+    --sj-bg: #0B0B0C;
+    --sj-card: #141416;
+    --sj-line: #1F1F23;
+    --sj-row: #18181B;
+    --sj-chip: #1C1C1F;
+    --sj-chip-on: #26262A;
+    --sj-btn-line: #2A2A2F;
+    --sj-ink: #F3F1EE;
+    --sj-ink2: #C9C7C4;
+    --sj-mute: #A8A6A3;
+    --sj-soft: #8E8B88;
+    --sj-faint: #6E6C69;
+    --sj-on-ink-cap: #55524E;
+    --sj-red: #E5372B;
+    --sj-on-red: #FFFFFF;
+    --sj-gold: #E0B341;
+    --sj-gold-soft: rgba(224, 179, 65, .16);
+    --sj-att: rgb(110, 214, 138);
+    --sj-att-soft: rgba(110, 214, 138, .16);
+    --sj-def: rgb(120, 170, 255);
+    --sj-def-soft: rgba(120, 170, 255, .16);
+    --sj-gar: rgb(255, 138, 128);
+    --sj-gar-soft: rgba(255, 138, 128, .16);
+    --sj-shadow: 0 10px 30px rgba(0, 0, 0, .6);
+    --sj-shadow-pop: 0 -10px 30px rgba(0, 0, 0, .55);
+    /* Hauteur de la barre du haut, collante : l'en-tête du tableau colle dessous. */
+    --sj-nav-h: 70px;
+    /* Barre du bas (navbar.css, 64px) + 10px d'air. */
+    --sj-pouce-bas: calc(74px + env(safe-area-inset-bottom, 0px));
+    background: var(--sj-bg);
+    font-family: 'Saira', 'Barlow', system-ui, sans-serif;
+}
+html[data-theme="light"] body.fz-stats {
+    --sj-bg: #F3F2EF;
+    --sj-card: #FFFFFF;
+    --sj-line: #E7E5E2;
+    --sj-row: #ECEAE6;
+    --sj-chip: #FFFFFF;
+    --sj-chip-on: #EEECE8;
+    --sj-btn-line: #DDDAD5;
+    --sj-ink: #141416;
+    --sj-ink2: #34343A;
+    --sj-mute: #5E5C59;
+    --sj-soft: #6A6764;
+    --sj-faint: #74716D;
+    --sj-on-ink-cap: #B5B2AD;
+    --sj-red: #D52B1E;
+    --sj-gold: #976111;
+    --sj-gold-soft: rgba(151, 97, 17, .12);
+    --sj-att: #1D8048;
+    --sj-att-soft: rgba(29, 128, 72, .1);
+    --sj-def: #2F5FB8;
+    --sj-def-soft: rgba(47, 95, 184, .1);
+    --sj-gar: #B83A2E;
+    --sj-gar-soft: rgba(184, 58, 46, .1);
+    --sj-shadow: 0 10px 30px rgba(20, 20, 22, .14);
+    --sj-shadow-pop: 0 -10px 30px rgba(20, 20, 22, .12);
+}
+@media (max-width: 768px) { body.fz-stats { --sj-nav-h: 60px; } }
+@media (max-width: 480px) { body.fz-stats { --sj-nav-h: 56px; } }
+@media (min-width: 769px) { body.fz-stats { --sj-pouce-bas: 20px; } }
+
+/* ==================== EN-TÊTE ==================== */
+body.fz-stats .stats-hero { padding: 12px 16px 0; text-align: left; }
+body.fz-stats .stats-hero-inner.sj-head {
+    max-width: 1380px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    /* Au-dessus de l'en-tête collant du tableau : le menu de la saison le chevauche. */
+    z-index: 40;
+}
+body.fz-stats .sj-titre { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+body.fz-stats .sj-compte {
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--sj-soft);
+    min-height: 11px;
+}
+body.fz-stats .stats-hero-title {
+    font: 800 32px/30px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--sj-ink);
+    margin: 0;
+}
+body.fz-stats:not([data-stats-tab="tous"]) .sj-compte,
+body.fz-stats:not([data-stats-tab="tous"]) .sj-source { display: none; }
+
+/* Saison : une pastille et son menu. */
+body.fz-stats .sj-source { position: relative; flex: none; }
+body.fz-stats .sj-source-btn {
+    height: 34px;
+    padding: 0 8px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--sj-btn-line);
+    border-radius: 999px;
+    background: var(--sj-chip);
+    color: var(--sj-ink);
+    font: 600 13px/1 'Saira', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+body.fz-stats .sj-source-btn svg { color: var(--sj-soft); transition: transform .2s; }
+body.fz-stats .sj-source-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+body.fz-stats .sj-source-btn:focus-visible { outline: 2px solid var(--sj-ink); outline-offset: 2px; }
+body.fz-stats .sj-source-menu {
+    position: absolute;
+    right: 0;
+    top: 40px;
+    z-index: 30;
+    min-width: 180px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--sj-btn-line);
+    border-radius: 12px;
+    background: var(--sj-chip);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+}
+body.fz-stats .sj-source-menu[hidden] { display: none; }
+body.fz-stats .sj-source-menu button {
+    height: 38px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--sj-ink);
+    font: 500 13px/1 'Saira', sans-serif;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+body.fz-stats .sj-source-menu button[aria-checked="true"] { background: var(--sj-chip-on); }
+body.fz-stats .sj-source-menu button:hover { background: var(--sj-chip-on); }
+body.fz-stats .sj-source-menu svg { color: var(--sj-red); flex: none; }
+
+/* ==================== ONGLETS EN SEGMENTS ==================== */
+body.fz-stats .stats-subnav { padding: 14px 10px 0; margin: 0; background: none; border: 0; }
+body.fz-stats .stats-subnav-inner {
+    max-width: 1380px;
+    margin: 0 auto;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--sj-line);
+    border-radius: 14px;
+    background: var(--sj-card);
+    box-shadow: none;
+}
+body.fz-stats .stats-subnav-btn {
+    flex: 1;
+    height: 36px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--sj-mute);
+    font: 600 13px/36px 'Saira', sans-serif;
+    white-space: nowrap;
+    box-shadow: none;
+}
+body.fz-stats .stats-subnav-btn:hover { color: var(--sj-ink); background: transparent; }
+body.fz-stats .stats-subnav-btn.active,
+body.fz-stats .stats-subnav-btn.active:hover { background: var(--sj-ink); color: var(--sj-bg); box-shadow: none; }
+
+/* ==================== LA LISTE ==================== */
+/* La liste remplit au moins l'écran : avec trois résultats, la barre reste
+   en bas et son panneau s'ouvre sur du vide, pas sur les résultats. La
+   hauteur de l'en-tête (≈ 186px au téléphone, 220px au bureau) est approchée. */
+body.fz-stats [data-stats-panel="tous"] .stats-container {
+    padding: 10px 0 0;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 186px - var(--sj-pouce-bas));
+    min-height: calc(100dvh - 186px - var(--sj-pouce-bas));
+}
+body.fz-stats .table-container {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--sj-line);
+    border-radius: 0;
+}
+body.fz-stats #tableContainer #playerTable thead th {
+    top: var(--sj-nav-h);
+    height: 36px;
+    padding: 0 2px;
+    background: var(--sj-bg);
+    border-bottom: 1px solid var(--sj-line);
+    color: var(--sj-faint);
+    font: 700 10px/1 'Saira', sans-serif;
+    letter-spacing: 1px;
+    text-align: center;
+}
+body.fz-stats #tableContainer #playerTable thead th.player-col { text-align: left; font-weight: 600; }
+body.fz-stats #tableContainer #playerTable thead th.rank-col { text-align: left; padding-left: 14px; font-weight: 600; letter-spacing: 0; }
+body.fz-stats #tableContainer #playerTable thead th.points-column { text-align: right; padding-right: 14px; }
+body.fz-stats #tableContainer #playerTable thead th.is-sorted,
+body.fz-stats #tableContainer #playerTable thead th.is-sorted:hover { color: var(--sj-red); }
+body.fz-stats #tableContainer #playerTable thead th.sortable:hover { color: var(--sj-ink); }
+body.fz-stats #tableContainer #playerTable .sort-caret { font-size: 1em; margin-left: 1px; }
+body.fz-stats #tableContainer #playerTable .sort-caret::before { content: none; }
+
+body.fz-stats #tableContainer #playerTable tbody tr,
+body.fz-stats #tableContainer #playerTable tbody tr:nth-child(even) {
+    background: transparent;
+    border-bottom: 1px solid var(--sj-row);
+}
+body.fz-stats #tableContainer #playerTable tbody tr.is-clickable:hover { background: var(--sj-card); }
+body.fz-stats #tableContainer #playerTable tbody td {
+    height: auto;
+    padding: 8px 2px;
+    color: var(--sj-mute);
+    font: 500 13px/1 'Saira', sans-serif;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    border: 0;
+}
+body.fz-stats #tableContainer #playerTable tbody td.player-col { text-align: left; padding-left: 0; color: var(--sj-ink); }
+body.fz-stats #tableContainer #playerTable tbody td.rank-col,
+body.fz-stats #tableContainer #playerTable tbody tr:nth-child(-n+3) td.rank-col {
+    padding-left: 14px;
+    text-align: left;
+    font: 700 13px/1 'Saira Condensed', sans-serif;
+    color: var(--sj-faint);
+}
+body.fz-stats #tableContainer #playerTable tbody tr:nth-child(-n+3) td.rank-col { color: var(--sj-ink); }
+body.fz-stats #tableContainer #playerTable tbody td.points-column {
+    padding-right: 14px;
+    text-align: right;
+    font: 800 21px/1 'Saira Condensed', sans-serif;
+    color: var(--sj-mute);
+}
+body.fz-stats #tableContainer #playerTable tbody td.is-sorted-col { color: var(--sj-ink); }
+
+/* Colonnes : rang, joueur, puis chiffres serrés (20 · 1fr · 28 · 28 · 28 · 40
+   dans la maquette, plus les 14px de marge aux deux bouts). */
+body.fz-stats #tableContainer #playerTable colgroup col:first-child { width: 38px; }
+body.fz-stats #tableContainer #playerTable colgroup col:nth-child(2) { width: auto; }
+body.fz-stats #tableContainer #playerTable:has(col:nth-child(6):last-child) col:nth-child(n+3) { width: 32px; }
+body.fz-stats #tableContainer #playerTable:has(col:nth-child(6):last-child) col:last-child { width: 58px; }
+body.fz-stats #tableContainer #playerTable:has(col:nth-child(7):last-child) col:nth-child(n+3) { width: 34px; }
+body.fz-stats #tableContainer #playerTable:has(col:nth-child(7):last-child) col:last-child { width: 54px; }
+/* Gardiens : six colonnes chiffrées, toutes à l'écran sur un téléphone. */
+body.fz-stats #tableContainer #playerTable:has(col:nth-child(9)) col:nth-child(n+3) { width: 28px; }
+body.fz-stats #tableContainer #playerTable:has(col:nth-child(9)) col:nth-child(7) { width: 40px; }
+body.fz-stats #tableContainer #playerTable:has(col:nth-child(9)) col:last-child { width: 46px; }
+
+body.fz-stats { --d-photo: 36px; }
+body.fz-stats .player-cell { gap: 9px; }
+body.fz-stats .player-initials { font-size: 12px; }
+body.fz-stats .team-logo-cell { width: 32px; height: 32px; }
+body.fz-stats #tableContainer #playerTable .player-ident { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+body.fz-stats #tableContainer #playerTable .player-name {
+    font: 600 14px/18px 'Saira', sans-serif;
+    color: var(--sj-ink);
+}
+body.fz-stats .player-meta { gap: 5px; margin-top: 0; flex-wrap: nowrap; }
+body.fz-stats .player-team { font: 500 10px/1 'Saira', sans-serif; letter-spacing: 0; color: var(--sj-soft); }
+
+/* Pastilles : position, recrue, TOI / LIBRE. */
+body.fz-stats .pos-tag,
+body.fz-stats .sj-tag {
+    flex: none;
+    min-width: 0;
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 4px;
+    font: 700 9px/15px 'Saira', sans-serif;
+    letter-spacing: 0;
+    text-decoration: none;
+}
+body.fz-stats .pos-tag[data-pos="C"],
+body.fz-stats .pos-tag[data-pos="L"],
+body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: var(--sj-att-soft); --pos-fg: var(--sj-att); }
+body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: var(--sj-def-soft); --pos-fg: var(--sj-def); }
+body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: var(--sj-gar-soft); --pos-fg: var(--sj-gar); }
+body.fz-stats .sj-tag-recrue { background: var(--sj-gold-soft); color: var(--sj-gold); }
+body.fz-stats .sj-tag { box-sizing: border-box; line-height: 13px; border: 1px solid transparent; }
+body.fz-stats .sj-tag-recrue { line-height: 13px; }
+body.fz-stats .sj-tag-moi { background: var(--sj-ink); border-color: var(--sj-ink); color: var(--sj-bg); letter-spacing: .4px; }
+body.fz-stats .sj-tag-libre { background: transparent; border-color: var(--sj-ink); color: var(--sj-ink); letter-spacing: .4px; }
+
+/* La fiche (pastille blessure, « À surveiller ») garde sa place après le nom. */
+body.fz-stats #tableContainer #playerTable .player-name > :not(.pn-full):not(.pn-short) { vertical-align: 1px; }
+
+/* Voir plus, état vide : discrets, sur les jetons de la page. */
+body.fz-stats .stats-pagination { padding: 16px 16px 4px; }
+body.fz-stats .stats-page-info { font: 500 12px/1 'Saira', sans-serif; color: var(--sj-soft); }
+body.fz-stats .stats-show-more,
+body.fz-stats .table-empty-reset {
+    height: 40px;
+    min-height: 0;
+    padding: 0 18px;
+    border: 1px solid var(--sj-btn-line);
+    border-radius: 999px;
+    background: var(--sj-chip);
+    color: var(--sj-ink);
+    font: 600 13px/1 'Saira', sans-serif;
+    box-shadow: none;
+}
+body.fz-stats .stats-show-more:hover,
+body.fz-stats .table-empty-reset:hover { transform: none; box-shadow: none; background: var(--sj-chip-on); }
+body.fz-stats .table-empty-title { font-family: 'Saira', sans-serif; color: var(--sj-ink); }
+body.fz-stats .table-empty-hint { font-family: 'Saira', sans-serif; color: var(--sj-soft); }
+
+/* ==================== LA BARRE AU POUCE ==================== */
+body.fz-stats .sj-pouce {
+    position: sticky;
+    bottom: var(--sj-pouce-bas);
+    z-index: 20;
+    margin: auto 10px 0;
+}
+/* L'air entre la liste et la barre : la marge du haut est prise par auto. */
+body.fz-stats .sj-pouce::before { content: ""; display: block; height: 12px; }
+body.fz-stats .sj-barre {
+    height: 56px;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--sj-btn-line);
+    border-radius: 28px;
+    background: var(--sj-chip);
+    box-shadow: var(--sj-shadow);
+}
+body.fz-stats .sj-outil {
+    flex: 1;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: 0;
+    border-radius: 22px;
+    background: transparent;
+    color: var(--sj-ink);
+    cursor: pointer;
+    transition: background-color .2s, color .2s;
+    -webkit-tap-highlight-color: transparent;
+}
+body.fz-stats .sj-outil[hidden] { display: none; }
+body.fz-stats .sj-outil-rond { flex: none; width: 44px; padding: 0; }
+body.fz-stats .sj-outil-rond [data-icon] { display: flex; }
+body.fz-stats .sj-cap {
+    font: 600 9px/1 'Saira', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--sj-soft);
+}
+body.fz-stats .sj-val { font: 600 13px/1 'Saira', sans-serif; white-space: nowrap; }
+body.fz-stats .sj-outil.is-open,
+body.fz-stats .sj-outil.is-on { background: var(--sj-ink); color: var(--sj-bg); }
+body.fz-stats .sj-outil.is-open .sj-cap,
+body.fz-stats .sj-outil.is-on .sj-cap { color: var(--sj-on-ink-cap); }
+body.fz-stats .sj-outil[aria-pressed="true"] { background: var(--sj-red); color: var(--sj-on-red); }
+body.fz-stats .sj-outil[aria-pressed="true"] .sj-cap { color: rgba(255, 255, 255, .75); }
+body.fz-stats .sj-outil:disabled { opacity: .45; cursor: default; }
+body.fz-stats .sj-outil:focus-visible { outline: 2px solid var(--sj-ink); outline-offset: 1px; }
+
+body.fz-stats .sj-pop {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 8px);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid var(--sj-btn-line);
+    border-radius: 20px;
+    background: var(--sj-chip);
+    box-shadow: var(--sj-shadow-pop);
+}
+body.fz-stats .sj-pop[hidden],
+body.fz-stats .sj-panneau[hidden] { display: none; }
+body.fz-stats .sj-pop-titre {
+    padding: 2px 4px 0;
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--sj-soft);
+}
+body.fz-stats .sj-pop .st-chips {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow: visible;
+}
+body.fz-stats .sj-pop .st-chip {
+    flex: none;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--sj-btn-line);
+    border-radius: 999px;
+    background: var(--sj-card);
+    color: var(--sj-ink2);
+    font: 600 13px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+body.fz-stats .sj-pop .st-chip:hover { color: var(--sj-ink); border-color: var(--sj-ink2); }
+body.fz-stats .sj-pop .st-chip[aria-pressed="true"] { background: var(--sj-red); border-color: var(--sj-red); color: var(--sj-on-red); }
+body.fz-stats .sj-pop .st-search {
+    height: 44px;
+    padding: 0 12px;
+    gap: 8px;
+    border: 1px solid var(--sj-btn-line);
+    border-radius: 12px;
+    background: var(--sj-bg);
+}
+body.fz-stats .sj-pop .st-search:focus-within { border-color: var(--sj-ink2); box-shadow: none; }
+body.fz-stats .sj-pop .st-search-icon { color: var(--sj-soft); }
+body.fz-stats .sj-pop .st-search input {
+    height: 100%;
+    color: var(--sj-ink);
+    font: 500 16px/1 'Saira', sans-serif;
+}
+body.fz-stats .sj-pop .st-search input::placeholder { color: var(--sj-faint); }
+
+/* ==================== BUREAU ==================== */
+@media (min-width: 769px) {
+    body.fz-stats .stats-hero { padding: 24px 24px 0; }
+    body.fz-stats .stats-hero-title { font-size: 40px; line-height: 38px; }
+    body.fz-stats .stats-subnav { padding: 16px 24px 0; }
+    body.fz-stats .stats-subnav-inner { max-width: 1380px; }
+    body.fz-stats .stats-subnav-btn { flex: 0 1 180px; }
+    body.fz-stats [data-stats-panel="tous"] .stats-container {
+        padding: 14px 24px 0;
+        min-height: calc(100vh - 240px);
+    }
+    body.fz-stats .table-container {
+        border: 1px solid var(--sj-line);
+        border-radius: 16px;
+        background: var(--sj-card);
+    }
+    body.fz-stats #tableContainer #playerTable thead th { background: var(--sj-card); }
+    body.fz-stats #tableContainer #playerTable thead th:first-child { border-top-left-radius: 16px; }
+    body.fz-stats #tableContainer #playerTable thead th:last-child { border-top-right-radius: 16px; }
+    body.fz-stats #tableContainer #playerTable tbody tr.is-clickable:hover { background: var(--sj-chip-on); }
+    body.fz-stats #tableContainer #playerTable tbody td { padding-top: 10px; padding-bottom: 10px; font-size: 14px; }
+    body.fz-stats #tableContainer #playerTable colgroup col:first-child { width: 52px; }
+    body.fz-stats #tableContainer #playerTable thead th.rank-col,
+    body.fz-stats #tableContainer #playerTable tbody td.rank-col { padding-left: 20px; }
+    body.fz-stats #tableContainer #playerTable thead th.points-column,
+    body.fz-stats #tableContainer #playerTable tbody td.points-column { padding-right: 20px; }
+    body.fz-stats #tableContainer #playerTable:has(col:nth-child(6):last-child) col:nth-child(n+3) { width: 90px; }
+    body.fz-stats #tableContainer #playerTable:has(col:nth-child(6):last-child) col:last-child { width: 100px; }
+    body.fz-stats #tableContainer #playerTable:has(col:nth-child(7):last-child) col:nth-child(n+3) { width: 90px; }
+    body.fz-stats #tableContainer #playerTable:has(col:nth-child(7):last-child) col:last-child { width: 100px; }
+    body.fz-stats #tableContainer #playerTable:has(col:nth-child(9)) col:nth-child(n+3) { width: 72px; }
+    body.fz-stats #tableContainer #playerTable:has(col:nth-child(9)) col:last-child { width: 90px; }
+    body.fz-stats { --d-photo: 40px; }
+    body.fz-stats #tableContainer #playerTable .player-name { font-size: 15px; }
+    body.fz-stats .sj-pouce { max-width: 560px; width: 100%; margin: auto auto 0; }
+}

@@ -82,9 +82,9 @@ function libellerModesSaison() {
     if (!reel || !projete) return;
     const saison = statsCourantesPretes() ? libelleSaison(currentStats.season) : "";
     // L'année d'abord : sur téléphone, le sélecteur tronque la fin du libellé.
-    reel.textContent = saison || "Réelle";
+    reel.textContent = saison ? `Stats ${saison}` : "Stats réelles";
     const kit = "undefined" != typeof FZDraftKit ? libelleSaison(FZDraftKit.saison) : "";
-    projete.textContent = kit ? `${kit} projetée` : "Projections";
+    projete.textContent = kit ? `Projetées ${kit}` : "Projections";
 }
 
 async function changerModeSaison() {
@@ -204,6 +204,17 @@ function getTeamLogoPath(t) {
  */
 let statsFilter = "all";
 let statsSort = "points";
+// « Libres » de la barre au pouce (statsPouce.js) : les seuls joueurs que
+// personne n'a dans le pool actif.
+let statsLibres = false;
+
+/** 'moi', 'pris', 'libre', ou null sans pool repêché (statsPouce.js). */
+function proprioJoueur(nom) {
+    return "function" == typeof window.fzStatsProprio ? window.fzStatsProprio(nom) : null;
+}
+function estLibre(nom) {
+    return !statsLibres || "libre" === proprioJoueur(nom);
+}
 
 /** La clé de tri d'un tableau : celle choisie si l'une de ses colonnes la porte. */
 function cleDeTri(columns) {
@@ -258,7 +269,8 @@ function updateTable() {
     }
     if ("goalies" === t) {
         const e = cleDeTri(GOALIE_COLUMNS);
-        return void populateGoalieTable(gardiens.filter(g => correspondRecherche(a, g.goalieFullName, () => clubJoueur(g)))
+        return void populateGoalieTable(gardiens.filter(g => estLibre(g.goalieFullName)
+            && correspondRecherche(a, g.goalieFullName, () => clubJoueur(g)))
             .sort((t, a) => comparerParStat(
                 valeurDeTri(t, t.goalieFullName, t.playerId, e, !0),
                 valeurDeTri(a, a.goalieFullName, a.playerId, e, !0),
@@ -274,6 +286,7 @@ function updateTable() {
     else if ("rookies" === t) n = projete ? patineurs.filter(j => j.isRookie) : rookiePlayerData.slice();
     else n = patineurs.slice();
     if (a) n = n.filter(j => correspondRecherche(a, j.skaterFullName, () => clubJoueur(j)));
+    if (statsLibres) n = n.filter(j => estLibre(j.skaterFullName));
     n.sort((t, a) => comparerParStat(
         valeurDeTri(t, t.skaterFullName, t.playerId, e, !1),
         valeurDeTri(a, a.skaterFullName, a.playerId, e, !1),
@@ -307,6 +320,7 @@ function reinitialiserFiltres() {
     viderRecherche();
     choisirFiltre("all");
     statsSort = "points";
+    statsLibres = false;
     updateTable();
 }
 
@@ -398,7 +412,7 @@ function buildTableHead(columns, activeSort, count) {
 
 /** Vrai dès que la recherche ou une pastille restreint la liste. */
 function filtresActifs() {
-    return "all" !== statsFilter || !!document.getElementById("searchInput")?.value.trim();
+    return "all" !== statsFilter || statsLibres || !!document.getElementById("searchInput")?.value.trim();
 }
 
 /**
@@ -418,7 +432,32 @@ function buildEmptyState(colspan, message, hint) {
     </td></tr></tbody>`;
 }
 
+/**
+ * Chaque rendu le dit : la barre au pouce et le compte de l'en-tête
+ * (statsPouce.js) suivent le tableau sans relire son contenu.
+ */
+function annoncerRendu(total, sorte) {
+    document.dispatchEvent(new CustomEvent("fz:stats-rendu", { detail: { total, sorte } }));
+}
+
+/** Les joueurs de la liste des recrues, pour la pastille « R ». */
+let recruesIds = null;
+function estRecrue(joueur) {
+    if (modeProjection()) return !!joueur.isRookie;
+    if (!recruesIds) recruesIds = new Set(rookiePlayerData.map(r => r.playerId));
+    return recruesIds.has(joueur.playerId);
+}
+
+/** Pastilles après la position : « R » d'une recrue, puis TOI ou LIBRE dans le pool actif. */
+function pastillesJoueur(nom, recrue) {
+    const proprio = proprioJoueur(nom);
+    return (recrue ? '<abbr class="sj-tag sj-tag-recrue" title="Recrue">R</abbr>' : "")
+        + ("moi" === proprio ? '<span class="sj-tag sj-tag-moi" title="Dans ton équipe">TOI</span>'
+            : "libre" === proprio ? '<span class="sj-tag sj-tag-libre" title="Personne ne l’a dans ce pool">LIBRE</span>' : "");
+}
+
 async function populatePlayerTable(t) {
+    annoncerRendu(t.length, "joueurs");
     await fetchImageData();
     const e = document.getElementById("playerTable");
     const visible = t.slice(0, statsVisibleCount);
@@ -458,7 +497,7 @@ async function populatePlayerTable(t) {
         const g = photoJoueur(d, o, a),
             p = n?.position || t.positionCode || "N/A",
             y = document.createElement("tr");
-        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, o)}${watchBadge(a, o)}</span>${metaJoueur(o, p)}</div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
+        y.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${g}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, o)}${watchBadge(a, o)}</span>${metaJoueur(o, p, pastillesJoueur(a, estRecrue(t)))}</div></div></td>\n            <td>${c}</td>\n            <td>${u}</td>\n            <td>${m}</td>\n            <td class="points-column">${h}</td>\n        `;
         // Une fiche de la trousse sans identifiant LNH n'a pas de fiche à ouvrir.
         t.playerId && makeRowInteractive(y, () => showCareerStats(t.playerId, t.skaterFullName, !1),
             `Voir la fiche de ${a}`);
@@ -517,11 +556,11 @@ const POSITIONS_FR = {
     D: ['D', 'Défenseur'], G: ['G', 'Gardien']
 };
 
-function metaJoueur(equipe, position) {
+function metaJoueur(equipe, position, extra = "") {
     const pos = POSITIONS_FR[position];
     const club = equipe && "null" !== equipe ? `<span class="player-team">${equipe}</span>` : "";
     const pastille = pos ? `<abbr class="pos-tag" data-pos="${position}" title="${pos[1]}">${pos[0]}</abbr>` : "";
-    return club || pastille ? `<span class="player-meta">${club}${pastille}</span>` : "";
+    return club || pastille || extra ? `<span class="player-meta">${club}${pastille}${extra}</span>` : "";
 }
 
 /** Le tri se lit dans la colonne entière, pas seulement dans son en-tête. */
@@ -609,6 +648,7 @@ function clearStatsPagination() {
 }
 
 function populateGoalieTable(t) {
+    annoncerRendu(t.length, "gardiens");
     const e = document.getElementById("playerTable");
     const sortKey = cleDeTri(GOALIE_COLUMNS);
     if (!t.length) {
@@ -635,7 +675,7 @@ function populateGoalieTable(t) {
         const clubG = n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim(),
             h = photoJoueur(s || (t.playerId && clubG ? buildHeadshotUrl(t.playerId, clubG) : null), clubG, a),
             g = document.createElement("tr");
-        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span>${metaJoueur(n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}</div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
+        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span>${metaJoueur(n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim(), "G", pastillesJoueur(a, !1))}</div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
         t.playerId && makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
             `Voir la fiche de ${a}`);
         tbody.appendChild(g)
@@ -661,6 +701,7 @@ function getTeamAbbreviation(t) {
 }
 
 function populateTeamTable(t) {
+    annoncerRendu(t.length, "équipes");
     const e = document.getElementById("playerTable");
     const TEAM_COLUMNS = [
         { label: '#', cls: 'rank-col', title: 'Rang', w: '6%' },
