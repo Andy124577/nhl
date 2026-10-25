@@ -204,16 +204,24 @@ function getTeamLogoPath(t) {
  */
 let statsFilter = "all";
 let statsSort = "points";
-// « Libres » de la barre au pouce (statsPouce.js) : les seuls joueurs que
-// personne n'a dans le pool actif.
+// La feuille de filtres (statsFiltres.js) : « Agents libres seulement », les
+// joueurs que personne n'a dans le pool actif ; et un club de la LNH.
 let statsLibres = false;
+let statsClub = "";
 
-/** 'moi', 'pris', 'libre', ou null sans pool repêché (statsPouce.js). */
+/** 'moi', 'pris', 'libre', ou null sans pool repêché (statsFiltres.js). */
 function proprioJoueur(nom) {
     return "function" == typeof window.fzStatsProprio ? window.fzStatsProprio(nom) : null;
 }
 function estLibre(nom) {
     return !statsLibres || "libre" === proprioJoueur(nom);
+}
+/** Le club actuel : le dernier sigle d'un joueur échangé en cours de saison. */
+function clubActuel(joueur) {
+    return String(clubJoueur(joueur) || "").split(",").pop().trim();
+}
+function estDuClub(joueur) {
+    return !statsClub || clubActuel(joueur) === statsClub;
 }
 
 /** La clé de tri d'un tableau : celle choisie si l'une de ses colonnes la porte. */
@@ -269,7 +277,7 @@ function updateTable() {
     }
     if ("goalies" === t) {
         const e = cleDeTri(GOALIE_COLUMNS);
-        return void populateGoalieTable(gardiens.filter(g => estLibre(g.goalieFullName)
+        return void populateGoalieTable(gardiens.filter(g => estLibre(g.goalieFullName) && estDuClub(g)
             && correspondRecherche(a, g.goalieFullName, () => clubJoueur(g)))
             .sort((t, a) => comparerParStat(
                 valeurDeTri(t, t.goalieFullName, t.playerId, e, !0),
@@ -287,6 +295,7 @@ function updateTable() {
     else n = patineurs.slice();
     if (a) n = n.filter(j => correspondRecherche(a, j.skaterFullName, () => clubJoueur(j)));
     if (statsLibres) n = n.filter(j => estLibre(j.skaterFullName));
+    if (statsClub) n = n.filter(estDuClub);
     n.sort((t, a) => comparerParStat(
         valeurDeTri(t, t.skaterFullName, t.playerId, e, !1),
         valeurDeTri(a, a.skaterFullName, a.playerId, e, !1),
@@ -321,6 +330,7 @@ function reinitialiserFiltres() {
     choisirFiltre("all");
     statsSort = "points";
     statsLibres = false;
+    statsClub = "";
     updateTable();
 }
 
@@ -412,7 +422,7 @@ function buildTableHead(columns, activeSort, count) {
 
 /** Vrai dès que la recherche ou une pastille restreint la liste. */
 function filtresActifs() {
-    return "all" !== statsFilter || statsLibres || !!document.getElementById("searchInput")?.value.trim();
+    return "all" !== statsFilter || statsLibres || !!statsClub || !!document.getElementById("searchInput")?.value.trim();
 }
 
 /**
@@ -433,8 +443,8 @@ function buildEmptyState(colspan, message, hint) {
 }
 
 /**
- * Chaque rendu le dit : la barre au pouce et le compte de l'en-tête
- * (statsPouce.js) suivent le tableau sans relire son contenu.
+ * Chaque rendu le dit : la feuille de filtres et ses pastilles
+ * (statsFiltres.js) suivent le tableau sans relire son contenu.
  */
 function annoncerRendu(total, sorte) {
     document.dispatchEvent(new CustomEvent("fz:stats-rendu", { detail: { total, sorte } }));

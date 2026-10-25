@@ -1,18 +1,17 @@
 /* ============================================================
-   STATS — « TOUS LES JOUEURS », MAQUETTE 2c « BARRE AU POUCE »
+   STATS — « TOUS LES JOUEURS », MAQUETTE 2b « FEUILLE DE FILTRES »
    ------------------------------------------------------------
    Même langage que le classement et l'accueil (6b Éditorial) : Saira,
-   titre en Saira Condensed, gris chauds. La liste prend toute la hauteur ;
-   la recherche, la position, le tri et « Libres » descendent dans une
-   barre collée au bas de l'écran, juste au-dessus de la barre du bas
-   (statsPouce.js). L'en-tête et les onglets valent pour les trois onglets ;
-   le compte et la saison ne s'affichent que sur « Tous les joueurs ».
+   titre en Saira Condensed, gris chauds. Une recherche et un bouton
+   « Filtres » ; les filtres actifs en pastilles retirables dessous ; la
+   feuille (statsFiltres.js) monte du bas sur téléphone et s'ouvre au
+   centre au bureau. L'en-tête et les onglets valent pour les trois
+   onglets ; la saison ne s'affiche que sur « Tous les joueurs ».
 
    Chargé en dernier : il spécialise index.css et stats-premium.css. Les
    règles du tableau passent par #tableContainer #playerTable : deux
    identifiants, pour primer sur les :not() en chaîne d'index.css.
-   Téléphone : liste bord à bord. Bureau : la même liste dans une carte,
-   la barre centrée au bas de la colonne.
+   Téléphone : liste bord à bord. Bureau : la même liste dans une carte.
    ============================================================ */
 
 body.fz-stats {
@@ -23,6 +22,7 @@ body.fz-stats {
     --sj-chip: #1C1C1F;
     --sj-chip-on: #26262A;
     --sj-btn-line: #2A2A2F;
+    --sj-switch-off: #3A3A40;
     --sj-ink: #F3F1EE;
     --sj-ink2: #C9C7C4;
     --sj-mute: #A8A6A3;
@@ -43,8 +43,6 @@ body.fz-stats {
     --sj-shadow-pop: 0 -10px 30px rgba(0, 0, 0, .55);
     /* Hauteur de la barre du haut, collante : l'en-tête du tableau colle dessous. */
     --sj-nav-h: 70px;
-    /* Barre du bas (navbar.css, 64px) + 10px d'air. */
-    --sj-pouce-bas: calc(74px + env(safe-area-inset-bottom, 0px));
     background: var(--sj-bg);
     font-family: 'Saira', 'Barlow', system-ui, sans-serif;
 }
@@ -56,6 +54,7 @@ html[data-theme="light"] body.fz-stats {
     --sj-chip: #FFFFFF;
     --sj-chip-on: #EEECE8;
     --sj-btn-line: #DDDAD5;
+    --sj-switch-off: #CFCCC7;
     --sj-ink: #141416;
     --sj-ink2: #34343A;
     --sj-mute: #5E5C59;
@@ -76,7 +75,6 @@ html[data-theme="light"] body.fz-stats {
 }
 @media (max-width: 768px) { body.fz-stats { --sj-nav-h: 60px; } }
 @media (max-width: 480px) { body.fz-stats { --sj-nav-h: 56px; } }
-@media (min-width: 769px) { body.fz-stats { --sj-pouce-bas: 20px; } }
 
 /* ==================== EN-TÊTE ==================== */
 body.fz-stats .stats-hero { padding: 12px 16px 0; text-align: left; }
@@ -84,14 +82,10 @@ body.fz-stats .stats-hero-inner.sj-head {
     max-width: 1380px;
     margin: 0 auto;
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 8px;
-    /* Au-dessus de l'en-tête collant du tableau : le menu de la saison le chevauche. */
-    z-index: 40;
+    flex-direction: column;
+    gap: 6px;
 }
-body.fz-stats .sj-titre { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-body.fz-stats .sj-compte {
+body.fz-stats .sj-saison {
     font: 600 11px/1 'Saira', sans-serif;
     letter-spacing: 1.2px;
     text-transform: uppercase;
@@ -105,63 +99,7 @@ body.fz-stats .stats-hero-title {
     color: var(--sj-ink);
     margin: 0;
 }
-body.fz-stats:not([data-stats-tab="tous"]) .sj-compte,
-body.fz-stats:not([data-stats-tab="tous"]) .sj-source { display: none; }
-
-/* Saison : une pastille et son menu. */
-body.fz-stats .sj-source { position: relative; flex: none; }
-body.fz-stats .sj-source-btn {
-    height: 34px;
-    padding: 0 8px 0 12px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    border: 1px solid var(--sj-btn-line);
-    border-radius: 999px;
-    background: var(--sj-chip);
-    color: var(--sj-ink);
-    font: 600 13px/1 'Saira', sans-serif;
-    white-space: nowrap;
-    cursor: pointer;
-}
-body.fz-stats .sj-source-btn svg { color: var(--sj-soft); transition: transform .2s; }
-body.fz-stats .sj-source-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
-body.fz-stats .sj-source-btn:focus-visible { outline: 2px solid var(--sj-ink); outline-offset: 2px; }
-body.fz-stats .sj-source-menu {
-    position: absolute;
-    right: 0;
-    top: 40px;
-    z-index: 30;
-    min-width: 180px;
-    padding: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    border: 1px solid var(--sj-btn-line);
-    border-radius: 12px;
-    background: var(--sj-chip);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
-}
-body.fz-stats .sj-source-menu[hidden] { display: none; }
-body.fz-stats .sj-source-menu button {
-    height: 38px;
-    padding: 0 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--sj-ink);
-    font: 500 13px/1 'Saira', sans-serif;
-    text-align: left;
-    white-space: nowrap;
-    cursor: pointer;
-}
-body.fz-stats .sj-source-menu button[aria-checked="true"] { background: var(--sj-chip-on); }
-body.fz-stats .sj-source-menu button:hover { background: var(--sj-chip-on); }
-body.fz-stats .sj-source-menu svg { color: var(--sj-red); flex: none; }
+body.fz-stats:not([data-stats-tab="tous"]) .sj-saison { display: none; }
 
 /* ==================== ONGLETS EN SEGMENTS ==================== */
 body.fz-stats .stats-subnav { padding: 14px 10px 0; margin: 0; background: none; border: 0; }
@@ -193,21 +131,13 @@ body.fz-stats .stats-subnav-btn.active,
 body.fz-stats .stats-subnav-btn.active:hover { background: var(--sj-ink); color: var(--sj-bg); box-shadow: none; }
 
 /* ==================== LA LISTE ==================== */
-/* La liste remplit au moins l'écran : avec trois résultats, la barre reste
-   en bas et son panneau s'ouvre sur du vide, pas sur les résultats. La
-   hauteur de l'en-tête (≈ 186px au téléphone, 220px au bureau) est approchée. */
-body.fz-stats [data-stats-panel="tous"] .stats-container {
-    padding: 10px 0 0;
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100vh - 186px - var(--sj-pouce-bas));
-    min-height: calc(100dvh - 186px - var(--sj-pouce-bas));
-}
+body.fz-stats [data-stats-panel="tous"] .stats-container { padding: 10px 0 24px; }
 body.fz-stats .table-container {
     background: transparent;
     border: 0;
     border-top: 1px solid var(--sj-line);
     border-radius: 0;
+    margin-top: 10px;
 }
 body.fz-stats #tableContainer #playerTable thead th {
     top: var(--sj-nav-h);
@@ -332,87 +262,184 @@ body.fz-stats .table-empty-reset:hover { transform: none; box-shadow: none; back
 body.fz-stats .table-empty-title { font-family: 'Saira', sans-serif; color: var(--sj-ink); }
 body.fz-stats .table-empty-hint { font-family: 'Saira', sans-serif; color: var(--sj-soft); }
 
-/* ==================== LA BARRE AU POUCE ==================== */
-body.fz-stats .sj-pouce {
-    position: sticky;
-    bottom: var(--sj-pouce-bas);
-    z-index: 20;
-    margin: auto 10px 0;
-}
-/* L'air entre la liste et la barre : la marge du haut est prise par auto. */
-body.fz-stats .sj-pouce::before { content: ""; display: block; height: 12px; }
-body.fz-stats .sj-barre {
-    height: 56px;
-    padding: 0 6px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    border: 1px solid var(--sj-btn-line);
-    border-radius: 28px;
-    background: var(--sj-chip);
-    box-shadow: var(--sj-shadow);
-}
-body.fz-stats .sj-outil {
+/* ==================== RECHERCHE ET FILTRES ==================== */
+body.fz-stats .sj-outils { margin: 0 10px 0; display: flex; gap: 8px; }
+body.fz-stats .sj-outils .st-search {
     flex: 1;
-    min-width: 44px;
+    min-width: 0;
     height: 44px;
-    padding: 0 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    border: 0;
-    border-radius: 22px;
-    background: transparent;
+    padding: 0 12px;
+    gap: 8px;
+    border: 1px solid var(--sj-line);
+    border-radius: 12px;
+    background: var(--sj-card);
+}
+body.fz-stats .sj-outils .st-search:focus-within { border-color: var(--sj-ink2); box-shadow: none; }
+body.fz-stats .sj-outils .st-search-icon { color: var(--sj-soft); }
+body.fz-stats .sj-outils .st-search input {
+    height: 100%;
     color: var(--sj-ink);
-    cursor: pointer;
-    transition: background-color .2s, color .2s;
-    -webkit-tap-highlight-color: transparent;
+    font: 500 15px/1 'Saira', sans-serif;
 }
-body.fz-stats .sj-outil[hidden] { display: none; }
-body.fz-stats .sj-outil-rond { flex: none; width: 44px; padding: 0; }
-body.fz-stats .sj-outil-rond [data-icon] { display: flex; }
-body.fz-stats .sj-cap {
-    font: 600 9px/1 'Saira', sans-serif;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--sj-soft);
-}
-body.fz-stats .sj-val { font: 600 13px/1 'Saira', sans-serif; white-space: nowrap; }
-body.fz-stats .sj-outil.is-open,
-body.fz-stats .sj-outil.is-on { background: var(--sj-ink); color: var(--sj-bg); }
-body.fz-stats .sj-outil.is-open .sj-cap,
-body.fz-stats .sj-outil.is-on .sj-cap { color: var(--sj-on-ink-cap); }
-body.fz-stats .sj-outil[aria-pressed="true"] { background: var(--sj-red); color: var(--sj-on-red); }
-body.fz-stats .sj-outil[aria-pressed="true"] .sj-cap { color: rgba(255, 255, 255, .75); }
-body.fz-stats .sj-outil:disabled { opacity: .45; cursor: default; }
-body.fz-stats .sj-outil:focus-visible { outline: 2px solid var(--sj-ink); outline-offset: 1px; }
+body.fz-stats .sj-outils .st-search input::placeholder { color: var(--sj-faint); }
+@media (max-width: 768px) { body.fz-stats .sj-outils .st-search input { font-size: 16px; } }
 
-body.fz-stats .sj-pop {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(100% + 8px);
-    padding: 10px;
+body.fz-stats .sj-filtres-btn {
+    flex: none;
+    height: 44px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid var(--sj-line);
+    border-radius: 12px;
+    background: var(--sj-card);
+    color: var(--sj-ink);
+    font: 600 14px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+body.fz-stats .sj-filtres-btn.is-actif { background: var(--sj-chip-on); border-color: var(--sj-ink); }
+body.fz-stats .sj-filtres-btn:focus-visible { outline: 2px solid var(--sj-ink); outline-offset: 2px; }
+body.fz-stats .sj-badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: var(--sj-ink);
+    color: var(--sj-bg);
+    font: 700 11px/20px 'Saira', sans-serif;
+    text-align: center;
+}
+body.fz-stats .sj-badge[hidden] { display: none; }
+
+/* Filtres actifs : une rangée qui défile, chaque pastille se retire. */
+body.fz-stats .sj-actifs {
+    margin-top: 10px;
+    padding: 0 10px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+body.fz-stats .sj-actifs::-webkit-scrollbar { display: none; }
+body.fz-stats .sj-actifs[hidden] { display: none; }
+body.fz-stats .sj-actif {
+    flex: none;
+    height: 30px;
+    padding: 0 6px 0 11px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    border: 1px solid var(--sj-btn-line);
+    border-radius: 999px;
+    background: var(--sj-chip);
+    color: var(--sj-ink);
+    font: 600 12px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+body.fz-stats .sj-actif svg { color: var(--sj-soft); }
+body.fz-stats .sj-actif:hover svg { color: var(--sj-ink); }
+body.fz-stats .sj-lien {
+    flex: none;
+    height: 30px;
+    padding: 0 8px;
+    border: 0;
+    background: none;
+    color: var(--sj-soft);
+    font: 600 12px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+body.fz-stats .sj-lien:hover { color: var(--sj-ink); }
+
+/* ==================== LA FEUILLE ==================== */
+body.fz-stats .sj-feuille {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    border: 1px solid var(--sj-btn-line);
-    border-radius: 20px;
-    background: var(--sj-chip);
-    box-shadow: var(--sj-shadow-pop);
+    justify-content: flex-end;
 }
-body.fz-stats .sj-pop[hidden],
-body.fz-stats .sj-panneau[hidden] { display: none; }
-body.fz-stats .sj-pop-titre {
-    padding: 2px 4px 0;
-    font: 600 10px/1 'Saira', sans-serif;
+body.fz-stats .sj-feuille[hidden] { display: none; }
+body.fz-stats.sj-feuille-ouverte { overflow: hidden; }
+body.fz-stats .sj-voile {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: rgba(0, 0, 0, .62);
+    opacity: 0;
+    transition: opacity .2s;
+    cursor: pointer;
+}
+body.fz-stats .sj-feuille-corps {
+    position: relative;
+    max-height: 86%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    padding: 10px 16px calc(30px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-top: 1px solid var(--sj-btn-line);
+    border-radius: 24px 24px 0 0;
+    background: var(--sj-card);
+    color: var(--sj-ink);
+    transform: translateY(100%);
+    transition: transform .28s cubic-bezier(.2, .8, .2, 1);
+}
+body.fz-stats .sj-feuille.is-ouverte .sj-voile { opacity: 1; }
+body.fz-stats .sj-feuille.is-ouverte .sj-feuille-corps { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+    body.fz-stats .sj-voile, body.fz-stats .sj-feuille-corps { transition: none; }
+}
+body.fz-stats .sj-poignee {
+    align-self: center;
+    flex: none;
+    width: 38px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--sj-btn-line);
+}
+body.fz-stats .sj-feuille-tete { display: flex; align-items: center; justify-content: space-between; }
+body.fz-stats .sj-feuille-tete h2 {
+    margin: 0;
+    font: 800 24px/1 'Saira Condensed', sans-serif;
+    text-transform: uppercase;
+    color: var(--sj-ink);
+}
+body.fz-stats .sj-feuille-tete .sj-lien { height: 32px; font-size: 13px; color: var(--sj-mute); }
+body.fz-stats .sj-groupe { display: flex; flex-direction: column; gap: 10px; }
+body.fz-stats .sj-etiquette {
+    font: 600 11px/1 'Saira', sans-serif;
     letter-spacing: 1.2px;
     text-transform: uppercase;
     color: var(--sj-soft);
 }
-body.fz-stats .sj-pop .st-chips {
+
+/* Données : deux segments. */
+body.fz-stats .sj-seg {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--sj-line);
+    border-radius: 12px;
+    background: var(--sj-bg);
+}
+body.fz-stats .sj-seg button {
+    flex: 1;
+    height: 36px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--sj-mute);
+    font: 600 13px/1 'Saira', sans-serif;
+    cursor: pointer;
+}
+body.fz-stats .sj-seg button[aria-checked="true"] { background: var(--sj-ink); color: var(--sj-bg); }
+
+/* Position : pastilles, la choisie en rouge. */
+body.fz-stats .sj-feuille .st-chips {
     margin: 0;
     padding: 0;
     display: flex;
@@ -420,7 +447,7 @@ body.fz-stats .sj-pop .st-chips {
     gap: 6px;
     overflow: visible;
 }
-body.fz-stats .sj-pop .st-chip {
+body.fz-stats .sj-feuille .st-chip {
     flex: none;
     height: 34px;
     padding: 0 14px;
@@ -431,24 +458,82 @@ body.fz-stats .sj-pop .st-chip {
     font: 600 13px/1 'Saira', sans-serif;
     cursor: pointer;
 }
-body.fz-stats .sj-pop .st-chip:hover { color: var(--sj-ink); border-color: var(--sj-ink2); }
-body.fz-stats .sj-pop .st-chip[aria-pressed="true"] { background: var(--sj-red); border-color: var(--sj-red); color: var(--sj-on-red); }
-body.fz-stats .sj-pop .st-search {
-    height: 44px;
-    padding: 0 12px;
-    gap: 8px;
+body.fz-stats .sj-feuille .st-chip:hover { color: var(--sj-ink); border-color: var(--sj-ink2); }
+body.fz-stats .sj-feuille .st-chip[aria-pressed="true"] { background: var(--sj-red); border-color: var(--sj-red); color: var(--sj-on-red); }
+
+/* Agents libres : un interrupteur. */
+body.fz-stats .sj-libres {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+}
+body.fz-stats .sj-libres[hidden] { display: none; }
+body.fz-stats .sj-libres-texte { display: flex; flex-direction: column; gap: 5px; }
+body.fz-stats .sj-libres-titre { font: 600 15px/1.1 'Saira', sans-serif; color: var(--sj-ink); }
+body.fz-stats .sj-libres-sous { font: 500 12px/1.2 'Saira', sans-serif; color: var(--sj-soft); }
+body.fz-stats .sj-switch {
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    flex: none;
+    width: 50px;
+    height: 30px;
+    margin: 0;
+    border-radius: 15px;
+    background: var(--sj-switch-off);
+    cursor: pointer;
+    transition: background-color .2s;
+}
+body.fz-stats .sj-switch::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+    transition: left .2s;
+}
+body.fz-stats .sj-switch:checked { background: var(--sj-red); }
+body.fz-stats .sj-switch:checked::after { left: 24px; }
+body.fz-stats .sj-switch:disabled { opacity: .45; cursor: default; }
+body.fz-stats .sj-switch:focus-visible { outline: 2px solid var(--sj-ink); outline-offset: 2px; }
+
+/* Équipe : la grille des logos. */
+body.fz-stats .sj-clubs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+body.fz-stats .sj-club {
+    height: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     border: 1px solid var(--sj-btn-line);
-    border-radius: 12px;
-    background: var(--sj-bg);
+    border-radius: 10px;
+    background: var(--sj-card);
+    color: var(--sj-ink2);
+    font: 600 10px/1 'Saira', sans-serif;
+    letter-spacing: .6px;
+    cursor: pointer;
 }
-body.fz-stats .sj-pop .st-search:focus-within { border-color: var(--sj-ink2); box-shadow: none; }
-body.fz-stats .sj-pop .st-search-icon { color: var(--sj-soft); }
-body.fz-stats .sj-pop .st-search input {
-    height: 100%;
-    color: var(--sj-ink);
-    font: 500 16px/1 'Saira', sans-serif;
+body.fz-stats .sj-club img { width: 24px; height: 24px; object-fit: contain; }
+body.fz-stats .sj-club[aria-pressed="true"] { background: var(--sj-chip-on); border-color: var(--sj-ink); color: var(--sj-ink); }
+
+body.fz-stats .sj-voir {
+    flex: none;
+    height: 52px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--sj-red);
+    color: var(--sj-on-red);
+    font: 700 15px/1 'Saira', sans-serif;
+    cursor: pointer;
 }
-body.fz-stats .sj-pop .st-search input::placeholder { color: var(--sj-faint); }
+body.fz-stats .sj-voir:focus-visible { outline: 2px solid var(--sj-ink); outline-offset: 2px; }
 
 /* ==================== BUREAU ==================== */
 @media (min-width: 769px) {
@@ -457,10 +542,10 @@ body.fz-stats .sj-pop .st-search input::placeholder { color: var(--sj-faint); }
     body.fz-stats .stats-subnav { padding: 16px 24px 0; }
     body.fz-stats .stats-subnav-inner { max-width: 1380px; }
     body.fz-stats .stats-subnav-btn { flex: 0 1 180px; }
-    body.fz-stats [data-stats-panel="tous"] .stats-container {
-        padding: 14px 24px 0;
-        min-height: calc(100vh - 240px);
-    }
+    body.fz-stats [data-stats-panel="tous"] .stats-container { padding: 14px 24px 44px; }
+    body.fz-stats .sj-outils { margin: 0; max-width: 640px; }
+    body.fz-stats .sj-actifs { padding: 0; flex-wrap: wrap; overflow: visible; }
+    body.fz-stats .table-container { margin-top: 14px; }
     body.fz-stats .table-container {
         border: 1px solid var(--sj-line);
         border-radius: 16px;
@@ -484,5 +569,20 @@ body.fz-stats .sj-pop .st-search input::placeholder { color: var(--sj-faint); }
     body.fz-stats #tableContainer #playerTable:has(col:nth-child(9)) col:last-child { width: 90px; }
     body.fz-stats { --d-photo: 40px; }
     body.fz-stats #tableContainer #playerTable .player-name { font-size: 15px; }
-    body.fz-stats .sj-pouce { max-width: 560px; width: 100%; margin: auto auto 0; }
+    /* La feuille devient une fenêtre au centre de l'écran. */
+    body.fz-stats .sj-feuille { align-items: center; justify-content: center; padding: 24px; }
+    body.fz-stats .sj-feuille-corps {
+        width: 100%;
+        max-width: 520px;
+        max-height: min(760px, 100%);
+        border: 1px solid var(--sj-btn-line);
+        border-radius: 24px;
+        padding: 20px 22px 22px;
+        transform: translateY(12px);
+        opacity: 0;
+        transition: transform .2s, opacity .2s;
+    }
+    body.fz-stats .sj-feuille.is-ouverte .sj-feuille-corps { opacity: 1; }
+    body.fz-stats .sj-poignee { display: none; }
+    body.fz-stats .sj-clubs { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 }

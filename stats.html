@@ -35,10 +35,10 @@
     <link rel="stylesheet" href="career-modal.css?v=20261018b">
     <link rel="stylesheet" href="draft-watch.css?v=20260926b">
     <link rel="stylesheet" href="bilanSoiree.css?v=20261016a">
-    <!-- Maquette 2c « Barre au pouce » : en dernier, elle habille l'en-tête,
-         les onglets et la liste « Tous les joueurs ». -->
+    <!-- Maquette 2b « Feuille de filtres » : en dernier, elle habille
+         l'en-tête, les onglets et la liste « Tous les joueurs ». -->
     <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Saira+Condensed:wght@700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="statsPouce.css?v=20261025a">
+    <link rel="stylesheet" href="statsFiltres.css?v=20261025b">
 </head>
 <body data-page="stats" class="fz-stats" data-stats-tab="tous">
     <nav class="navbar"></nav>
@@ -46,29 +46,12 @@
     <!-- ============================================================ -->
     <!-- HERO HEADER                                                   -->
     <!-- ============================================================ -->
-    <!-- Le compte et la saison ne servent qu'à « Tous les joueurs » :
-         statsPouce.css les cache sur les deux autres onglets. -->
+    <!-- La saison affichée ne sert qu'à « Tous les joueurs » :
+         statsFiltres.css la cache sur les deux autres onglets. -->
     <header class="stats-hero">
         <div class="stats-hero-inner sj-head">
-            <div class="sj-titre">
-                <span class="sj-compte" id="sjCompte"></span>
-                <h1 class="stats-hero-title">Statistiques</h1>
-            </div>
-            <!-- Libellés complétés par index.js : la saison réelle suit
-                 /current-stats, celle des projections suit la trousse. Le
-                 <select> garde l'état ; statsPouce.js en fait un menu. -->
-            <div class="sj-source" id="sjSource">
-                <label for="seasonMode" class="lu-sr">Saison</label>
-                <select id="seasonMode" class="lu-sr" tabindex="-1" aria-hidden="true">
-                    <option value="stats">Stats réelles</option>
-                    <option value="projection">Projections</option>
-                </select>
-                <button type="button" class="sj-source-btn" id="sjSourceBtn" aria-haspopup="true" aria-expanded="false" aria-controls="sjSourceMenu">
-                    <span id="sjSourceLbl">Stats réelles</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-                <div class="sj-source-menu" id="sjSourceMenu" role="menu" hidden></div>
-            </div>
+            <span class="sj-saison" id="sjSaison"></span>
+            <h1 class="stats-hero-title">Statistiques</h1>
         </div>
     </header>
 
@@ -167,6 +150,27 @@
     <!-- ============================================================ -->
     <div class="stats-tab-panel" data-stats-panel="tous">
         <div class="stats-container">
+            <!-- Recherche et bouton Filtres sur une ligne ; dessous, les
+                 filtres actifs, chacun retirable d'un geste (statsFiltres.js).
+                 On trie en touchant l'en-tête d'une colonne
+                 (initStatsHeaderSorting, index.js). -->
+            <div class="sj-outils">
+                <div class="st-search">
+                    <span class="st-search-icon" data-icon="search" data-icon-size="18" aria-hidden="true"></span>
+                    <label for="searchInput" class="lu-sr">Rechercher un joueur</label>
+                    <input type="search" id="searchInput" placeholder="Rechercher"
+                           autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+                    <button type="button" class="st-search-clear" id="searchClear" aria-label="Effacer la recherche" hidden>
+                        <span data-icon="x" data-icon-size="12" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <button type="button" class="sj-filtres-btn" id="sjFiltresBtn" aria-haspopup="dialog" aria-controls="sjFeuille" aria-expanded="false">
+                    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    Filtres<span class="sj-badge" id="sjBadge" hidden></span>
+                </button>
+            </div>
+            <div class="sj-actifs" id="sjActifs" hidden></div>
+
             <!-- Table Container -->
             <div class="table-container" id="tableContainer">
                 <!-- Actual Content -->
@@ -207,58 +211,6 @@
                     <p>Essayez de modifier vos filtres ou critères de recherche</p>
                 </div>
             </div>
-
-            <!-- Barre au pouce (maquette 2c, statsPouce.js) : collée au bas de
-                 l'écran, juste au-dessus de la barre du bas. Chaque outil ouvre
-                 son panneau au-dessus d'elle. Plus de sélecteur « Trier par »
-                 en haut : on trie ici, ou en touchant l'en-tête d'une colonne
-                 (initStatsHeaderSorting, index.js). -->
-            <div class="sj-pouce" id="sjPouce">
-                <div class="sj-pop" id="sjPop" hidden>
-                    <span class="sj-pop-titre" id="sjPopTitre"></span>
-                    <div class="sj-panneau" data-panneau="search" hidden>
-                        <div class="st-search">
-                            <span class="st-search-icon" data-icon="search" data-icon-size="18" aria-hidden="true"></span>
-                            <label for="searchInput" class="lu-sr">Rechercher un joueur</label>
-                            <input type="search" id="searchInput" placeholder="Rechercher un joueur"
-                                   autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
-                            <button type="button" class="st-search-clear" id="searchClear" aria-label="Effacer la recherche" hidden>
-                                <span data-icon="x" data-icon-size="12" aria-hidden="true"></span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="sj-panneau" data-panneau="pos" hidden>
-                        <div class="st-chips" id="playerFilter" role="group" aria-label="Filtrer par position">
-                            <button type="button" class="st-chip" data-filter="all" aria-pressed="true">Tous</button>
-                            <button type="button" class="st-chip" data-filter="offensive" aria-pressed="false">Attaquants</button>
-                            <button type="button" class="st-chip" data-filter="C" aria-pressed="false">Centres</button>
-                            <button type="button" class="st-chip" data-filter="L" aria-pressed="false">Ailiers G</button>
-                            <button type="button" class="st-chip" data-filter="R" aria-pressed="false">Ailiers D</button>
-                            <button type="button" class="st-chip" data-filter="defensive" aria-pressed="false">Défenseurs</button>
-                            <button type="button" class="st-chip" data-filter="goalies" aria-pressed="false">Gardiens</button>
-                            <button type="button" class="st-chip" data-filter="rookies" aria-pressed="false">Recrues</button>
-                            <button type="button" class="st-chip" data-filter="teams" aria-pressed="false">Équipes</button>
-                        </div>
-                    </div>
-                    <div class="sj-panneau" data-panneau="sort" hidden>
-                        <div class="st-chips" id="sjTris" role="group" aria-label="Trier par"></div>
-                    </div>
-                </div>
-                <div class="sj-barre" role="toolbar" aria-label="Filtres de la liste">
-                    <button type="button" class="sj-outil sj-outil-rond" data-outil="search" aria-label="Rechercher" aria-expanded="false">
-                        <span data-icon="search" data-icon-size="20" aria-hidden="true"></span>
-                    </button>
-                    <button type="button" class="sj-outil" data-outil="pos" aria-expanded="false">
-                        <span class="sj-cap">Position</span><span class="sj-val" id="sjValPos">Tous ▾</span>
-                    </button>
-                    <button type="button" class="sj-outil" data-outil="sort" aria-expanded="false">
-                        <span class="sj-cap">Trier</span><span class="sj-val" id="sjValTri">Points ▾</span>
-                    </button>
-                    <button type="button" class="sj-outil" id="sjLibres" aria-pressed="false" hidden>
-                        <span class="sj-cap">Libres</span><span class="sj-val" id="sjValLibres">Non</span>
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -267,6 +219,67 @@
     <!-- ============================================================ -->
     <!-- Shared player profile, mounted by careerModal.js. -->
     <div id="careerStatsModal" class="modal"></div>
+
+    <!-- ============================================================ -->
+    <!-- FEUILLE DE FILTRES (maquette 2b, statsFiltres.js)             -->
+    <!-- ------------------------------------------------------------ -->
+    <!-- Monte du bas sur téléphone, s'ouvre au centre au bureau. Chaque -->
+    <!-- choix s'applique tout de suite ; « Voir N joueurs » referme.   -->
+    <!-- ============================================================ -->
+    <div class="sj-feuille" id="sjFeuille" hidden>
+        <button type="button" class="sj-voile" data-fermer aria-label="Fermer les filtres" tabindex="-1"></button>
+        <div class="sj-feuille-corps" role="dialog" aria-modal="true" aria-labelledby="sjFeuilleTitre">
+            <span class="sj-poignee" aria-hidden="true"></span>
+            <div class="sj-feuille-tete">
+                <h2 id="sjFeuilleTitre">Filtres</h2>
+                <button type="button" class="sj-lien" id="sjReset">Réinitialiser</button>
+            </div>
+
+            <!-- Libellés complétés par index.js : la saison réelle suit
+                 /current-stats, celle des projections suit la trousse. Le
+                 <select> garde l'état ; statsFiltres.js en fait deux segments. -->
+            <div class="sj-groupe">
+                <span class="sj-etiquette" id="sjDonneesLbl">Données</span>
+                <label for="seasonMode" class="lu-sr">Saison</label>
+                <select id="seasonMode" class="lu-sr" tabindex="-1" aria-hidden="true">
+                    <option value="stats">Stats réelles</option>
+                    <option value="projection">Projections</option>
+                </select>
+                <div class="sj-seg" id="sjDonnees" role="radiogroup" aria-labelledby="sjDonneesLbl"></div>
+            </div>
+
+            <div class="sj-groupe">
+                <span class="sj-etiquette">Position</span>
+                <div class="st-chips" id="playerFilter" role="group" aria-label="Filtrer par position">
+                    <button type="button" class="st-chip" data-filter="all" aria-pressed="true">Tous</button>
+                    <button type="button" class="st-chip" data-filter="offensive" aria-pressed="false">Attaquants</button>
+                    <button type="button" class="st-chip" data-filter="C" aria-pressed="false">Centres</button>
+                    <button type="button" class="st-chip" data-filter="L" aria-pressed="false">Ailiers G</button>
+                    <button type="button" class="st-chip" data-filter="R" aria-pressed="false">Ailiers D</button>
+                    <button type="button" class="st-chip" data-filter="defensive" aria-pressed="false">Défenseurs</button>
+                    <button type="button" class="st-chip" data-filter="goalies" aria-pressed="false">Gardiens</button>
+                    <button type="button" class="st-chip" data-filter="rookies" aria-pressed="false">Recrues</button>
+                    <button type="button" class="st-chip" data-filter="teams" aria-pressed="false">Équipes</button>
+                </div>
+            </div>
+
+            <!-- Sans pool repêché, personne n'est « pris » : la ligne reste cachée. -->
+            <label class="sj-libres" id="sjLibresLigne" hidden>
+                <span class="sj-libres-texte">
+                    <span class="sj-libres-titre">Agents libres seulement</span>
+                    <span class="sj-libres-sous">Masquer les joueurs déjà repêchés</span>
+                </span>
+                <input type="checkbox" role="switch" class="sj-switch" id="sjLibres">
+            </label>
+
+            <div class="sj-groupe">
+                <span class="sj-etiquette">Équipe</span>
+                <div class="sj-clubs" id="sjClubs" role="group" aria-label="Filtrer par équipe"></div>
+            </div>
+
+            <button type="button" class="sj-voir" id="sjVoir" data-fermer>Voir les joueurs</button>
+        </div>
+    </div>
 
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script defer src="lazy-load.js"></script>
@@ -281,9 +294,9 @@
          le fichier allégé draftkit-watchlist.json, pas la trousse entière. -->
     <script defer src="draftkitData.js?v=20260930a"></script>
     <script defer src="draft-watch.js?v=20260925"></script>
-    <script defer src="index.js?v=20261025a"></script>
-    <!-- Barre au pouce et menu de la saison : après index.js, dont il lit l'état. -->
-    <script defer src="statsPouce.js?v=20261025a"></script>
+    <script defer src="index.js?v=20261025b"></script>
+    <!-- Feuille de filtres : après index.js, dont il lit l'état. -->
+    <script defer src="statsFiltres.js?v=20261025b"></script>
     <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
     <script defer src="statsLeaders.js?v=20260925c"></script>
     <!-- Meilleurs joueurs : lit BASE_URL (index.js) et escapeHTML (statsLeaders.js). -->
