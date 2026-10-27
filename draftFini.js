@@ -310,13 +310,17 @@ function renderTeamStatsTable(teams) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><span class="${badgeClass}">${position}</span></td>
-            <td><span class="team-name" onclick="showPlayerDetails('${team.teamName}', ${index})">${team.teamName}</span></td>
-            <td>${team.members.join(', ')}</td>
+            <td><span class="team-name">${echapperHtml(team.teamName)}</span></td>
+            <td>${echapperHtml(team.members.join(', '))}</td>
             <td>${team.totalGP}</td>
             <td>${team.totalG}</td>
             <td>${team.totalA}</td>
             <td class="stats-pts">${team.totalPTS}</td>
         `;
+
+        // Le clic passe par un écouteur, pas par un `onclick` interpolé : une
+        // apostrophe dans le nom d'équipe (« L'Équipe ») cassait le bouton.
+        row.querySelector('.team-name').addEventListener('click', () => showPlayerDetails(team.teamName, index));
 
         // Store player details on the row for later access
         row.dataset.playerDetails = JSON.stringify(team.playerDetails);
@@ -324,6 +328,19 @@ function renderTeamStatsTable(teams) {
 
         tbody.appendChild(row);
     });
+}
+
+/**
+ * Échappe un texte pour du HTML. Les noms d'équipe et de membres viennent
+ * des autres participants du pool : un nom porteur de balisage s'exécutait
+ * ici chez tout le monde.
+ */
+function echapperHtml(texte) {
+    // \x22 et \x27 : les guillemets " et ', écrits ainsi pour les outils qui
+    // lisent ce fichier sans comprendre les expressions régulières.
+    return String(texte == null ? '' : texte).replace(/[&<>\x22\x27]/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
 }
 
 function showPlayerDetails(teamName, rowIndex) {
@@ -362,7 +379,7 @@ function showPlayerDetails(teamName, rowIndex) {
         // Build image HTML
         let imageHTML = '';
         if (imagePath) {
-            imageHTML = `<img src="${imagePath}" alt="${player.name}" class="player-face">`;
+            imageHTML = `<img src="${imagePath}" alt="${echapperHtml(player.name)}" class="player-face">`;
         }
         if (logoPath && player.type !== 'team') {
             imageHTML += `<img src="${logoPath}" alt="Team logo" class="player-team-logo-overlay">`;
@@ -384,13 +401,13 @@ function showPlayerDetails(teamName, rowIndex) {
         playerCard.innerHTML = `
             <div class="pick-number">${pickNumber}</div>
             <div class="player-photo">
-                ${imageHTML || `<div class="no-photo">${player.position}</div>`}
+                ${imageHTML || `<div class="no-photo">${echapperHtml(player.position)}</div>`}
             </div>
             <div class="player-info">
                 <div class="player-name-row">
-                    <span class="player-name">${player.name}</span>
-                    ${logoPath && player.type !== 'team' ? `<img src="${logoPath}" class="nhl-team-logo" alt="${player.teamAbbrev}">` : ''}
-                    <span class="player-position">${player.position}</span>
+                    <span class="player-name">${echapperHtml(player.name)}</span>
+                    ${logoPath && player.type !== 'team' ? `<img src="${logoPath}" class="nhl-team-logo" alt="${echapperHtml(player.teamAbbrev)}">` : ''}
+                    <span class="player-position">${echapperHtml(player.position)}</span>
                 </div>
                 <div class="player-stats-row">
                     <span>GP: ${player.gp}</span>

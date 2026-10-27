@@ -16,9 +16,12 @@
 'use strict';
 
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const { contientGrossierete } = require('../profanity.js');
 const poolOps = require('../lib/poolOps.js');
+const { erreurNom, erreurMotDePasse } = require('../lib/reglesCompte.js');
+const { creerLimiteTentatives, adresseClient, refuserTropDeTentatives } = require('../lib/limiteTentatives.js');
 
 /**
  * Réponse volontairement identique pour « compte inconnu » et « mot de passe
@@ -26,9 +29,29 @@ const poolOps = require('../lib/poolOps.js');
  */
 const ECHEC_CONNEXION = "Nom d'utilisateur ou mot de passe incorrect.";
 
+/** Coût bcrypt des empreintes de comptes. */
+const TOURS_BCRYPT = 10;
+
+/**
+ * Une vraie empreinte, au même coût que celles des comptes, à comparer quand
+ * le compte n'existe pas. La constante qui en tenait lieu n'en était pas une
+ * (66 caractères au lieu de 60) : bcrypt la rejetait sans rien calculer, et un
+ * nom inconnu répondait des centaines de fois plus vite qu'un mot de passe
+ * faux. Calculée au premier besoin, une fois par processus.
+ */
+let empreinteFictive = null;
+function empreinteDeComparaison() {
+    if (!empreinteFictive) empreinteFictive = bcrypt.hash(crypto.randomBytes(18).toString('base64'), TOURS_BCRYPT);
+    return empreinteFictive;
+}
+
 function monter(app, ctx) {
     const { auth, store, db, usePostgres, chargerUtilisateurs, sauvegarderUtilisateurs,
             photos, diffusion, logger = console } = ctx;
+    // Partagé avec routes/google.js et routes/pools.js par server.js : un
+    // compte visé par /login et par /auth/google/lier n'a qu'un compteur.
+    const tentatives = ctx.tentatives || creerLimiteTentatives();
+    const adresseDe = ctx.adresseClient || adresseClient;
 
     /** Récupère un compte avec son empreinte, quel que soit le magasin. */
     async function lireCompte(username) {
@@ -47,11 +70,29 @@ function monter(app, ctx) {
             // Comparaison malgré tout : sans elle, un compte inexistant
             // répondrait nettement plus vite qu'un mot de passe faux, ce qui
             // suffit à énumérer les comptes.
-            await bcrypt.compare(String(password), '$2a$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinv');
+            await bcrypt.compare(String(password), await empreinteDeComparaison());
             return null;
         }
         const correspond = await bcrypt.compare(String(password), compte.password);
         return correspond ? compte : null;
+    }
+
+    /**
+     * `verifier`, derrière le compteur de tentatives (lib/limiteTentatives.js).
+     *
+     * Renvoie { compte } — null si refusé — ou { attenteMs } quand il faut
+     * patienter : la vérification n'a alors même pas lieu. Un appel sans nom
+     * ou sans mot de passe n'est pas un essai et ne compte pas.
+     */
+    async function verifierAvecLimite(req, username, password) {
+        const qui = { compte: username, adresse: adresseDe(req) };
+        const attenteMs = tentatives.attente('connexion', qui);
+        if (attenteMs > 0) return { compte: null, attenteMs };
+
+        const compte = await verifier(username, password);
+        if (compte) tentatives.reussite('connexion', qui);
+        else if (username && password) tentatives.echec('connexion', qui);
+        return { compte, attenteMs: 0 };
     }
 
     /**
@@ -69,7 +110,10 @@ function monter(app, ctx) {
                 ? { compte }
                 : { message: "Le nom d'utilisateur saisi ne correspond pas." };
         }
-        const verifie = await verifier(req.auth.username, req.body?.password);
+        // Compté comme une connexion : une session volée ne doit pas servir à
+        // deviner le mot de passe par l'export ou la suppression.
+        const { compte: verifie, attenteMs } = await verifierAvecLimite(req, req.auth.username, req.body?.password);
+        if (attenteMs) return { attenteMs };
         return verifie ? { compte: verifie } : { message: "Mot de passe incorrect." };
     }
 
@@ -89,23 +133,20 @@ function monter(app, ctx) {
             if (!username || !password) {
                 return res.status(400).json({ message: "Nom d'utilisateur et mot de passe requis." });
             }
-            if (username.length > 40) {
-                return res.status(400).json({ message: "Le nom d'utilisateur ne peut pas dépasser 40 caractères." });
-            }
-            // bcrypt ignore silencieusement tout octet au-delà du 72e : mieux
-            // vaut refuser que tronquer sans le dire.
-            if (String(password).length < 6 || String(password).length > 72) {
-                return res.status(400).json({ message: "Le mot de passe doit contenir entre 6 et 72 caractères." });
-            }
-            // Le contrôle vit ici et pas seulement dans le formulaire : la
-            // route est ouverte, un client n'est pas obligé d'y passer.
+            // Les contrôles vivent ici et pas seulement dans le formulaire : la
+            // route est ouverte, un client n'est pas obligé d'y passer. Un nom
+            // limité à lettres, chiffres et « _ » ne peut pas porter de HTML.
+            const refusNom = erreurNom(username);
+            if (refusNom) return res.status(400).json({ message: refusNom });
             if (contientGrossierete(username)) {
                 return res.status(400).json({
                     message: "Ce nom d'utilisateur contient un terme inapproprié. Choisissez-en un autre."
                 });
             }
+            const refusMotDePasse = erreurMotDePasse(password, { username });
+            if (refusMotDePasse) return res.status(400).json({ message: refusMotDePasse });
 
-            const empreinte = await bcrypt.hash(String(password), 10);
+            const empreinte = await bcrypt.hash(password, TOURS_BCRYPT);
 
             if (usePostgres) {
                 if (await db.getUserByUsername(username)) {
@@ -139,7 +180,8 @@ function monter(app, ctx) {
     app.post('/login', async (req, res) => {
         try {
             const { username, password } = req.body || {};
-            const compte = await verifier(username, password);
+            const { compte, attenteMs } = await verifierAvecLimite(req, username, password);
+            if (attenteMs) return refuserTropDeTentatives(res, attenteMs);
             if (!compte) return res.status(401).json({ message: ECHEC_CONNEXION });
 
             const identifiant = usePostgres ? await db.getUserId(compte.username) : compte.username;
@@ -172,7 +214,8 @@ function monter(app, ctx) {
     app.post('/admin-login', async (req, res) => {
         try {
             const { username, password } = req.body || {};
-            const compte = await verifier(username, password);
+            const { compte, attenteMs } = await verifierAvecLimite(req, username, password);
+            if (attenteMs) return refuserTropDeTentatives(res, attenteMs);
             if (!compte || !compte.isAdmin) {
                 return res.status(401).json({ message: "Identifiants d'administration invalides." });
             }
@@ -239,6 +282,89 @@ function monter(app, ctx) {
         });
     });
 
+    // ───────────────────────────── Mot de passe ─────────────────────────────
+
+    /**
+     * Changer son mot de passe.
+     *
+     * Le mot de passe actuel est exigé, et compté comme une tentative de
+     * connexion : une session volée ne doit ni suffire à le changer, ni servir
+     * à le deviner. Le changement ferme toutes les sessions du compte — c'est
+     * ce qu'on attend en changeant un mot de passe qu'on croit connu d'autrui —
+     * puis rouvre celle de ce navigateur.
+     *
+     * Refusé pendant une bascule d'administration : dépanner un compte n'est
+     * pas en prendre possession.
+     */
+    app.post('/account/password', auth.requireAuth, async (req, res) => {
+        try {
+            if (req.auth.impersonatedBy) {
+                return res.status(403).json({
+                    message: "Impossible de changer le mot de passe d'un compte pendant une bascule d'administration.",
+                    code: 'bascule'
+                });
+            }
+            const username = req.auth.username;
+            const actuel = req.body?.currentPassword;
+            const nouveau = req.body?.newPassword;
+
+            const existant = await lireCompte(username);
+            if (!existant) return res.status(404).json({ message: "Compte introuvable." });
+            if (!existant.password) {
+                return res.status(400).json({
+                    message: "Ce compte se connecte avec Google : il n'a pas de mot de passe à changer.",
+                    code: 'compte_google'
+                });
+            }
+            if (typeof actuel !== 'string' || !actuel) {
+                return res.status(400).json({ message: "Saisissez votre mot de passe actuel." });
+            }
+
+            // Le nouveau d'abord : une faute de frappe dans le nouveau mot de
+            // passe ne doit pas coûter un essai sur l'actuel.
+            const refus = erreurMotDePasse(nouveau, { username });
+            if (refus) return res.status(400).json({ message: refus });
+            if (nouveau === actuel) {
+                return res.status(400).json({ message: "Le nouveau mot de passe doit être différent de l'actuel." });
+            }
+
+            const { compte, attenteMs } = await verifierAvecLimite(req, username, actuel);
+            if (attenteMs) return refuserTropDeTentatives(res, attenteMs);
+            if (!compte) return res.status(401).json({ message: "Mot de passe actuel incorrect." });
+
+            const empreinte = await bcrypt.hash(nouveau, TOURS_BCRYPT);
+            let ecrit = false;
+            if (usePostgres) {
+                ecrit = await db.updateUserPassword(username, empreinte);
+            } else {
+                const utilisateurs = await chargerUtilisateurs();
+                const ligne = utilisateurs.find(u => u.username === username);
+                if (ligne && ligne.password) {
+                    ligne.password = empreinte;
+                    await sauvegarderUtilisateurs(utilisateurs);
+                    ecrit = true;
+                }
+            }
+            if (!ecrit) return res.status(404).json({ message: "Compte introuvable." });
+
+            // Toutes les sessions tombent, celle-ci comprise, puis celle-ci est
+            // rouverte : ce navigateur reste connecté, les autres non.
+            await auth.revoquerTout(req.auth.userId);
+            await auth.ouvrirSession(res, {
+                id: req.auth.userId,
+                username,
+                isAdmin: !!compte.isAdmin,
+                avatarUrl: compte.avatarUrl || ''
+            }, req);
+
+            logger.log(`🔑 Mot de passe changé : ${username}`);
+            res.json({ message: "Mot de passe changé. Vos autres appareils ont été déconnectés." });
+        } catch (erreur) {
+            logger.error('Erreur au changement de mot de passe :', erreur);
+            res.status(500).json({ message: "Erreur interne du serveur." });
+        }
+    });
+
     // ───────────────────── Droits Loi 25 : export, suppression ─────────────────────
 
     /**
@@ -247,7 +373,8 @@ function monter(app, ctx) {
      */
     app.post('/account/export', auth.requireAuth, async (req, res) => {
         try {
-            const { compte, message } = await confirmer(req);
+            const { compte, message, attenteMs } = await confirmer(req);
+            if (attenteMs) return refuserTropDeTentatives(res, attenteMs);
             if (!compte) return res.status(401).json({ message });
 
             const username = req.auth.username;
@@ -315,7 +442,8 @@ function monter(app, ctx) {
      */
     app.post('/account/delete', auth.requireAuth, async (req, res) => {
         try {
-            const { compte, message } = await confirmer(req);
+            const { compte, message, attenteMs } = await confirmer(req);
+            if (attenteMs) return refuserTropDeTentatives(res, attenteMs);
             if (!compte) return res.status(401).json({ message });
 
             const username = req.auth.username;
@@ -483,7 +611,7 @@ function monter(app, ctx) {
         }
     });
 
-    return { verifier, lireCompte, identifiantDe };
+    return { verifier, verifierAvecLimite, lireCompte, identifiantDe };
 }
 
 module.exports = { monter, ECHEC_CONNEXION };

@@ -125,12 +125,14 @@
      *   ou { title, text, icon }), type, icon, confirmLabel, cancelLabel
      *   (null = pas de bouton Annuler), danger, align ('center' | 'start'),
      *   wide, dismissible (Échap, clic à côté, croix — vrai par défaut),
-     *   password / confirmation (champ à remplir), copyValue (lien à
-     *   copier), onSubmit(valeur) -> message d'erreur ou rien : la fenêtre
-     *   reste ouverte tant qu'il y a une erreur.
+     *   password / confirmation (champ à remplir), fields (plusieurs champs :
+     *   [{ name, type, label, autocomplete }]), copyValue (lien à copier),
+     *   onSubmit(valeur) -> message d'erreur ou rien : la fenêtre reste
+     *   ouverte tant qu'il y a une erreur.
      *
-     * Résout : la valeur saisie si un champ est présent, sinon true ;
-     * null si la fenêtre est fermée sans confirmer.
+     * Résout : la valeur saisie si un champ est présent — avec `fields`, un
+     * objet { name: valeur } —, sinon true ; null si la fenêtre est fermée
+     * sans confirmer.
      */
     function ouvrir(options) {
         const opts = options || {};
@@ -138,7 +140,8 @@
         const type = TYPES[typeNom];
         const icone = ICONES[opts.icon] || ICONES[type.icon];
         const danger = !!opts.danger || typeNom === 'danger';
-        const champ = !!(opts.password || opts.confirmation);
+        const champs = Array.isArray(opts.fields) ? opts.fields.filter(c => c && c.name) : [];
+        const champ = !!(opts.password || opts.confirmation || champs.length);
         const annulerLibelle = opts.cancelLabel === undefined ? 'Annuler' : opts.cancelLabel;
         const confirmerLibelle = opts.confirmLabel || (annulerLibelle ? 'Confirmer' : 'OK');
         const fermable = opts.dismissible !== false;
@@ -164,6 +167,11 @@
             opts.confirmation ? `
                 <input type="text" class="fzd-input" autocomplete="off" autocapitalize="off"
                        spellcheck="false" placeholder="Votre nom d’utilisateur" aria-label="Nom d’utilisateur">` : '',
+            champs.map(c => `
+                <input type="${c.type === 'password' ? 'password' : 'text'}" class="fzd-input"
+                       name="${echapper(c.name)}" autocomplete="${echapper(c.autocomplete || 'off')}"
+                       autocapitalize="off" spellcheck="false"
+                       placeholder="${echapper(c.label || '')}" aria-label="${echapper(c.label || c.name)}">`).join(''),
             opts.copyValue != null ? `
                 <div class="fzd-copy">
                     <input type="text" class="fzd-input" readonly value="${echapper(opts.copyValue)}"
@@ -226,8 +234,18 @@
 
             async function soumettre() {
                 if (terminee || ok.disabled) return;
-                const valeur = champ ? (saisie.value || '') : true;
-                if (champ && !valeur) {
+                if (champs.length) {
+                    const vide = Array.from(overlay.querySelectorAll('.fzd-input[name]')).find(el => !el.value);
+                    if (vide) {
+                        erreur.textContent = 'Veuillez remplir tous les champs.';
+                        vide.focus();
+                        return;
+                    }
+                }
+                const valeur = champs.length
+                    ? Object.fromEntries(Array.from(overlay.querySelectorAll('.fzd-input[name]')).map(el => [el.name, el.value]))
+                    : (champ ? (saisie.value || '') : true);
+                if (champ && !champs.length && !valeur) {
                     erreur.textContent = opts.password
                         ? 'Veuillez saisir votre mot de passe.'
                         : 'Veuillez saisir votre nom d’utilisateur.';
@@ -247,7 +265,10 @@
 
                 if (probleme) {
                     if (erreur) erreur.textContent = probleme;
-                    if (saisie) { saisie.value = ''; saisie.focus(); }
+                    // Plusieurs champs : rien n'est vidé, le message dit
+                    // lequel corriger.
+                    if (saisie && !champs.length) saisie.value = '';
+                    if (saisie) saisie.focus();
                     return;
                 }
                 fermer(valeur);
@@ -285,8 +306,8 @@
                 else if (bouton.dataset.fzd === 'copy') copier(bouton);
             });
 
-            if (saisie) {
-                saisie.addEventListener('keydown', e => {
+            for (const el of overlay.querySelectorAll('.fzd-body .fzd-input:not([readonly])')) {
+                el.addEventListener('keydown', e => {
                     if (e.key === 'Enter') { e.preventDefault(); soumettre(); }
                 });
             }

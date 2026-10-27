@@ -24,6 +24,7 @@ const google = require('../lib/googleAuth.js');
 const session = require('../lib/session.js');
 const { contientGrossierete } = require('../profanity.js');
 const { ECHEC_CONNEXION } = require('./identity.js');
+const { refuserTropDeTentatives } = require('../lib/limiteTentatives.js');
 
 const ATTENTE_EXPIREE = "Votre connexion Google a expiré. Recommencez.";
 const NOM_GROSSIER = "Ce nom d'utilisateur contient un terme inapproprié. Choisissez-en un autre.";
@@ -248,8 +249,11 @@ function monter(app, ctx) {
             const profil = attenteDe(req);
             if (!profil) return res.status(401).json({ message: ATTENTE_EXPIREE, code: 'attente_expiree' });
 
+            // Même compteur de tentatives que /login : ce formulaire vérifie
+            // le même mot de passe, il ne doit pas servir à le deviner.
             const { username, password } = req.body || {};
-            const compte = await identite.verifier(username, password);
+            const { compte, attenteMs } = await identite.verifierAvecLimite(req, username, password);
+            if (attenteMs) return refuserTropDeTentatives(res, attenteMs);
             if (!compte) return res.status(401).json({ message: ECHEC_CONNEXION });
 
             if (compte.googleSub && compte.googleSub !== profil.sub) {

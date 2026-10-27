@@ -386,6 +386,18 @@ async function linkGoogleAccount(username, googleSub) {
     return result.rowCount > 0;
 }
 
+/**
+ * Remplace l'empreinte du mot de passe. Jamais sur un compte qui n'en a pas
+ * (ouvert par Google) : y poser un mot de passe se ferait par une autre porte.
+ */
+async function updateUserPassword(username, hashedPassword) {
+    const result = await pool.query(
+        'UPDATE users SET password = $2 WHERE username = $1 AND password IS NOT NULL RETURNING username',
+        [username, hashedPassword]
+    );
+    return result.rowCount > 0;
+}
+
 /** `verifiee` : l'analyse automatique a-t-elle regardé la photo ? */
 async function updateUserAvatar(username, avatarUrl, verifiee = null) {
     await pool.query(
@@ -1628,6 +1640,7 @@ module.exports = {
     linkGoogleAccount,
     createUser,
     deleteUser,
+    updateUserPassword,
     updateUserAvatar,
     clearUserAvatar,
     listUploadedAvatars,

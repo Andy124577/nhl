@@ -35,6 +35,12 @@ services:
         # resubscribe on their own. Without it, the key is derived from
         # DATABASE_URL.
         generateValue: true
+      # Optional, not declared here (set them in the dashboard only if needed):
+      #   ALLOWED_ORIGINS — other origins (comma-separated) allowed to call the
+      #     API with the session cookie. Leave unset: pages are served by this
+      #     service, and in production an empty list means same origin only.
+      #   CSP_MODE — Content-Security-Policy: "enforce" (default), "report"
+      #     (only log refusals, via /csp-report) or "off". See lib/securite.js.
       - key: ANTHROPIC_API_KEY
         # Set this manually in Render Dashboard. Used to check uploaded avatars and
         # pool images (services/moderationImage.js). Without it, uploads are still

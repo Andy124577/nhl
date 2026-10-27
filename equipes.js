@@ -98,10 +98,13 @@ function getTeamLogoHTML(nhlTeams) {
         class="cm-team-logo" onerror="this.style.display='none'">`;
 }
 
+// Le menu du compte (déconnexion, bascule d'administration) est celui de
+// navbar.js. Une ancienne copie vivait ici : elle écrivait dans des éléments
+// qu'aucune page n'a plus, affichait les noms de comptes sans les échapper,
+// et ses `logout` / `switchToUser` globaux n'étaient sauvés que par l'ordre
+// de chargement des scripts.
 $(document).ready(function() {
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const username = localStorage.getItem("username");
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
 
     if (!isLoggedIn) {
         // La redirection attend la fermeture : sinon la fenêtre disparaîtrait
@@ -115,107 +118,9 @@ $(document).ready(function() {
             dismissible: false
         }).then(() => { window.location.href = "login.html"; });
     } else {
-        if (isAdmin) {
-            // Admin mode - show Utilisateur dropdown and normal logout
-            $("#admin-users-link").css('display', 'block').html(`
-                <div class="admin-dropdown-container">
-                    <a href="#" class="admin-dropdown-toggle" onclick="toggleAdminDropdown(event)">
-                        Utilisateur ▼
-                    </a>
-                    <div class="admin-dropdown-menu" id="adminDropdown">
-                        <div class="admin-dropdown-header">Changer d'utilisateur</div>
-                        <div id="adminUserList" class="admin-user-list">Chargement...</div>
-                    </div>
-                </div>
-            `);
-            $("#login-link").html(`<a href="#" onclick="logout(event)">Déconnexion (${username})</a>`);
-            loadAdminUsers();
-        } else {
-            // Regular user - show normal logout
-            $("#login-link").html(`<a href="#" onclick="logout(event)">Déconnexion (${username})</a>`);
-        }
         loadClans(); // 🔄 Charge les clans uniquement si l'utilisateur est connecté
     }
 });
-
-function toggleAdminDropdown(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    const dropdown = document.getElementById('adminDropdown');
-    dropdown.classList.toggle('show');
-}
-
-// Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
-    const dropdown = document.getElementById('adminDropdown');
-    if (dropdown && !event.target.closest('.admin-dropdown-container')) {
-        dropdown.classList.remove('show');
-    }
-});
-
-async function loadAdminUsers() {
-    try {
-        const response = await fetch(`${BASE_URL}/admin-users?adminToken=admin`);
-        const data = await response.json();
-
-        if (response.ok) {
-            const regularUsers = data.users.filter(u => u !== 'admin').slice(0, 4);
-            const userListEl = document.getElementById('adminUserList');
-
-            if (regularUsers.length === 0) {
-                userListEl.innerHTML = '<div class="admin-no-users">Aucun utilisateur</div>';
-            } else {
-                userListEl.innerHTML = regularUsers.map(username => `
-                    <a href="#" class="admin-dropdown-item" onclick="switchToUser(event, '${username}')">
-                        <span class="user-avatar">${username.charAt(0).toUpperCase()}</span>
-                        <span class="user-name">${username}</span>
-                    </a>
-                `).join('');
-            }
-        }
-    } catch (error) {
-        console.error('Error loading users:', error);
-        document.getElementById('adminUserList').innerHTML = '<div class="admin-no-users">Erreur</div>';
-    }
-}
-
-async function switchToUser(event, username) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    try {
-        const response = await fetch(`${BASE_URL}/admin-switch-user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                adminToken: 'admin',
-                targetUsername: username
-            })
-        });
-
-        if (response.ok) {
-            localStorage.setItem('username', username);
-            localStorage.setItem('activeUser', username);
-            // Keep isAdmin flag - admin privileges persist across user switches
-            window.location.reload();
-        } else {
-            fzAlert({ type: 'error', title: 'Changement impossible', message: 'Le changement d’utilisateur a échoué.' });
-        }
-    } catch (error) {
-        console.error('Error switching user:', error);
-        fzAlert({ type: 'error', icon: 'offline', title: 'Connexion impossible', message: 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.' });
-    }
-}
-
-// 🔑 Fonction de déconnexion
-function logout(event) {
-    if (event) event.preventDefault();
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("username");
-    localStorage.removeItem("isAdmin");
-    localStorage.removeItem("activeUser");
-    location.reload();
-}
 
 // 🔄 Charge et met à jour la liste des clans
 async function loadClans() {

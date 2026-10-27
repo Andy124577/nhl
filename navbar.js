@@ -123,6 +123,7 @@ const NAV_ICON = {
     logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
     shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
     shieldCheck: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11.2 13.7 15.2 9.7"/></svg>`,
+    key: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>`,
     fileText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`,
     smartphone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>`,
     sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>`,
@@ -202,11 +203,25 @@ function fzToggleTheme() {
     fzSetTheme(_themeIsDark() ? 'light' : 'dark');
 }
 
+/**
+ * Échappe un texte pour du HTML. Le nom affiché ici est celui de la session —
+ * pendant une bascule d'administration, celui d'un autre compte : il passe
+ * par ici comme n'importe quelle donnée reçue.
+ */
+function _navEsc(texte) {
+    // \x22 et \x27 : les guillemets " et ', écrits ainsi pour les outils qui
+    // lisent ce fichier sans comprendre les expressions régulières.
+    return String(texte == null ? '' : texte).replace(/[&<>\x22\x27]/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+}
+
 // ==================== AVATAR HELPERS ====================
 function _buildAvatarInner(username) {
     const av = localStorage.getItem('avatarUrl') || '';
-    if (av) return `<img src="${av}" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`;
-    return `<img src="Icons/grayUser.png" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`;
+    const initiale = _navEsc(username.charAt(0).toUpperCase());
+    if (av) return `<img src="${_navEsc(av)}" class="user-avatar-img" alt="${initiale}" id="navAvatarImg">`;
+    return `<img src="Icons/grayUser.png" class="user-avatar-img" alt="${initiale}" id="navAvatarImg">`;
 }
 
 async function refreshNavbarAvatar(username) {
@@ -219,9 +234,10 @@ async function refreshNavbarAvatar(username) {
         localStorage.setItem('avatarUrl', url);
         const btn = document.getElementById('userAvatarBtn');
         if (!btn) return;
+        const initiale = _navEsc(username.charAt(0).toUpperCase());
         btn.innerHTML = url
-            ? `<img src="${url}" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`
-            : `<img src="Icons/grayUser.png" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`;
+            ? `<img src="${_navEsc(url)}" class="user-avatar-img" alt="${initiale}" id="navAvatarImg">`
+            : `<img src="Icons/grayUser.png" class="user-avatar-img" alt="${initiale}" id="navAvatarImg">`;
     } catch { /* silent */ }
 }
 
@@ -317,7 +333,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                  et l'avatar suffisent à remplir cette barre. -->
             <div class="navbar-right">
                 <div class="user-menu">
-                    <button class="user-avatar" id="userAvatarBtn" title="${username}"
+                    <button class="user-avatar" id="userAvatarBtn" title="${_navEsc(username)}"
                             aria-haspopup="true" aria-expanded="false" aria-controls="userDropdownMenu">
                         ${_buildAvatarInner(username)}
                     </button>
@@ -336,7 +352,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                                 <span class="nav-sr-only">Changer la photo de profil</span>
                             </label>
                             <div class="udh-identity">
-                                <span class="udh-name">${username}</span>
+                                <span class="udh-name">${_navEsc(username)}</span>
                                 <span class="udh-role ${isAdmin ? 'is-admin' : ''}">
                                     ${isAdmin ? `${NAV_ICON.shield}<span>Administrateur</span>` : '<span>Membre</span>'}
                                 </span>
@@ -408,6 +424,17 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                                     <span class="dropdown-hint">Les règles du service</span>
                                 </span>
                             </a>
+                        </div>
+
+                        <div class="dropdown-group">
+                            <p class="dropdown-label">Sécurité</p>
+                            <button class="dropdown-item" role="menuitem" onclick="changerMotDePasse()">
+                                <span class="dropdown-icon">${NAV_ICON.key}</span>
+                                <span class="dropdown-text">
+                                    <span class="dropdown-title">Changer mon mot de passe</span>
+                                    <span class="dropdown-hint">Déconnecte vos autres appareils</span>
+                                </span>
+                            </button>
                         </div>
 
                         <div class="dropdown-group">
@@ -624,7 +651,7 @@ async function uploadUserAvatar(input) {
         // Update navbar avatar immediately
         const btn = document.getElementById('userAvatarBtn');
         if (btn) {
-            btn.innerHTML = `<img src="${d.avatarUrl}" class="user-avatar-img" alt="${username.charAt(0).toUpperCase()}" id="navAvatarImg">`;
+            btn.innerHTML = `<img src="${_navEsc(d.avatarUrl)}" class="user-avatar-img" alt="${_navEsc(username.charAt(0).toUpperCase())}" id="navAvatarImg">`;
         }
         // Close dropdown
         document.getElementById('userDropdownMenu')?.classList.remove('show');
@@ -1140,6 +1167,64 @@ async function compteAMotDePasse() {
     } catch {
         return true;
     }
+}
+
+/**
+ * Changer son mot de passe (POST /account/password). Le serveur ferme les
+ * autres sessions du compte et garde celle-ci ouverte.
+ */
+async function changerMotDePasse() {
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    if (!(await compteAMotDePasse())) {
+        await fzAlert({
+            type: 'info',
+            icon: 'lock',
+            title: 'Connexion avec Google',
+            message: "Ce compte se connecte avec Google : il n'a pas de mot de passe à changer."
+        });
+        return;
+    }
+
+    const change = await fzModal({
+        title: 'Changer mon mot de passe',
+        bodyHTML: `<p>Au moins 6 caractères, et pas un mot de passe trop courant.
+            Vos autres appareils seront déconnectés.</p>`,
+        confirmLabel: 'Changer',
+        icon: 'lock',
+        align: 'start',
+        fields: [
+            { name: 'actuel', type: 'password', label: 'Mot de passe actuel', autocomplete: 'current-password' },
+            { name: 'nouveau', type: 'password', label: 'Nouveau mot de passe', autocomplete: 'new-password' },
+            { name: 'confirmation', type: 'password', label: 'Confirmer le nouveau mot de passe', autocomplete: 'new-password' }
+        ],
+        onSubmit: async (valeurs) => {
+            if (valeurs.nouveau !== valeurs.confirmation) {
+                return 'Les deux nouveaux mots de passe ne correspondent pas.';
+            }
+            try {
+                const res = await fetch(`${navbarBaseUrl()}/account/password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: valeurs.actuel, newPassword: valeurs.nouveau })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) return data.message || 'Changement impossible.';
+                return null;
+            } catch (err) {
+                console.error('Erreur changement de mot de passe :', err);
+                return 'Impossible de joindre le serveur.';
+            }
+        }
+    });
+    if (!change) return;
+
+    await fzAlert({
+        type: 'success',
+        title: 'Mot de passe changé',
+        message: 'Vos autres appareils ont été déconnectés.'
+    });
 }
 
 /** Le corps envoyé à /account/export et /account/delete. */

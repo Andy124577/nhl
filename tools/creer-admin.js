@@ -37,12 +37,10 @@ const fs = require('fs');
 const path = require('path');
 
 const { contientGrossierete } = require('../profanity.js');
+// Les mêmes règles que `/signup` (lib/reglesCompte.js) : un compte créé ici
+// doit pouvoir se reconnecter par la porte normale.
+const { erreurNom, erreurMotDePasse } = require('../lib/reglesCompte.js');
 
-// Les mêmes règles que `/signup`, pour la même raison : bcrypt ignore
-// silencieusement tout octet au-delà du 72e, et un compte créé ici doit
-// pouvoir se reconnecter par la porte normale.
-const LONGUEUR_MIN = 6;
-const LONGUEUR_MAX = 72;
 const TOURS_BCRYPT = 10;
 
 const USE_POSTGRES = !!process.env.DATABASE_URL;
@@ -87,10 +85,8 @@ function valider(nom, motDePasse) {
     if (contientGrossierete(nom)) throw new Error("Ce nom d'utilisateur contient un terme inapproprié.");
 
     if (motDePasse !== null) {
-        const taille = Buffer.byteLength(String(motDePasse), 'utf8');
-        if (taille < LONGUEUR_MIN || taille > LONGUEUR_MAX) {
-            throw new Error(`Le mot de passe doit contenir entre ${LONGUEUR_MIN} et ${LONGUEUR_MAX} octets.`);
-        }
+        const refus = erreurMotDePasse(String(motDePasse), { username: nom });
+        if (refus) throw new Error(refus);
     }
 }
 
@@ -193,6 +189,12 @@ async function principal() {
 
     try {
         const existait = !!(await magasin.lireCompte(nom));
+        // Un compte existant se promeut sous le nom qu'il a déjà ; un nouveau
+        // suit la règle de /signup (lettres, chiffres, « _ », 3 à 20).
+        if (!existait) {
+            const refusNom = erreurNom(nom);
+            if (refusNom) throw new Error(refusNom);
+        }
 
         // Sur un compte existant sans mot de passe donné, on promeut et on n'y
         // touche pas : la personne garde celui qu'elle connaît.

@@ -25,6 +25,7 @@ const evenements = require('../lib/events.js');
 const { checkIfDraftComplete } = require('../lib/draft.js');
 const { seasonIdForDate } = require('../lib/season.js');
 const calendrier = require('../lib/calendrier.js');
+const { creerLimiteTentatives, adresseClient, refuserTropDeTentatives } = require('../lib/limiteTentatives.js');
 
 /** Fisher-Yates : `sort(() => Math.random() - 0.5)` ne brasse pas uniformément. */
 function melangerEquipes(liste) {
@@ -47,7 +48,8 @@ const NOM_VALIDE = /^[\p{L}\p{N}\s'\-_]+$/u;
 const reduire = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /** Bornes du mot de passe d'un pool. La haute vient de bcrypt, qui ignore
- *  tout octet au-delà du 72e. */
+ *  tout OCTET au-delà du 72e : elle se compte en octets, pas en caractères
+ *  (une lettre accentuée en vaut deux). */
 const MOT_DE_PASSE_MIN = 4;
 const MOT_DE_PASSE_MAX = 72;
 
@@ -72,6 +74,24 @@ function monter(app, ctx) {
     // le pool garde sa seule empreinte, comme avant.
     const coffre = ctx.coffre || null;
     const { ErreurMetier } = store;
+    // Le mot de passe d'un pool se devine comme celui d'un compte : mêmes
+    // compteurs, espace « pool » (lib/limiteTentatives.js).
+    const tentatives = ctx.tentatives || creerLimiteTentatives();
+    const adresseDe = ctx.adresseClient || adresseClient;
+
+    /**
+     * Vérifie le mot de passe d'un pool, derrière le compteur de tentatives.
+     * Renvoie { ok } ou { attenteMs } ; compté par pool et par adresse.
+     */
+    async function motDePasseDuPool(req, nomPool, fourni, passwordHash) {
+        const qui = { compte: reduire(nomPool), adresse: adresseDe(req) };
+        const attenteMs = tentatives.attente('pool', qui);
+        if (attenteMs > 0) return { ok: false, attenteMs };
+        const ok = await bcrypt.compare(fourni, passwordHash);
+        if (ok) tentatives.reussite('pool', qui);
+        else tentatives.echec('pool', qui);
+        return { ok, attenteMs: 0 };
+    }
 
     /**
      * L'empreinte qui ouvre la porte, et la copie que seule la personne qui a
@@ -80,6 +100,9 @@ function monter(app, ctx) {
     async function protegerMotDePasse(motDePasse) {
         if (motDePasse.length < MOT_DE_PASSE_MIN || motDePasse.length > MOT_DE_PASSE_MAX) {
             return { refus: `Le mot de passe du pool doit contenir entre ${MOT_DE_PASSE_MIN} et ${MOT_DE_PASSE_MAX} caractères.` };
+        }
+        if (Buffer.byteLength(motDePasse, 'utf8') > MOT_DE_PASSE_MAX) {
+            return { refus: `Le mot de passe du pool est trop long : ${MOT_DE_PASSE_MAX} octets au plus (une lettre accentuée en compte deux).` };
         }
         let passwordSecret = null;
         if (coffre) {
@@ -455,7 +478,8 @@ function monter(app, ctx) {
                 if (typeof fourni !== 'string' || fourni.length === 0) {
                     return res.status(401).json({ message: "Ce pool est protégé par un mot de passe.", passwordRequired: true });
                 }
-                const correspond = await bcrypt.compare(fourni, enveloppe.data.passwordHash);
+                const { ok: correspond, attenteMs } = await motDePasseDuPool(req, nom, fourni, enveloppe.data.passwordHash);
+                if (attenteMs) return refuserTropDeTentatives(res, attenteMs);
                 if (!correspond) {
                     return res.status(401).json({ message: "Mot de passe incorrect.", passwordRequired: true });
                 }
@@ -512,7 +536,9 @@ function monter(app, ctx) {
                 if (typeof fourni !== 'string' || fourni.length === 0) {
                     return res.status(401).json({ message: "Ce pool est protégé par un mot de passe.", passwordRequired: true });
                 }
-                if (!await bcrypt.compare(fourni, enveloppe.data.passwordHash)) {
+                const { ok, attenteMs } = await motDePasseDuPool(req, nom, fourni, enveloppe.data.passwordHash);
+                if (attenteMs) return refuserTropDeTentatives(res, attenteMs);
+                if (!ok) {
                     return res.status(401).json({ message: "Mot de passe incorrect.", passwordRequired: true });
                 }
             }

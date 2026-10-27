@@ -42,6 +42,9 @@ const authz = require("./lib/authz.js");
 const poolOps = require("./lib/poolOps.js");
 const evenementsLib = require("./lib/events.js");
 const { creerAuth } = require("./middleware/auth.js");
+const { origineAutorisee } = require("./lib/session.js");
+const { creerLimiteTentatives, adresseClient } = require("./lib/limiteTentatives.js");
+const securite = require("./lib/securite.js");
 const { creerGardeStatique } = require("./middleware/staticAssets.js");
 const { creerPoolStore } = require("./services/poolStore.js");
 const { creerDiffusion } = require("./services/diffusion.js");
@@ -148,17 +151,36 @@ const server = http.createServer(app);
  * reviendrait à laisser n'importe quelle page du web agir au nom de la personne
  * connectée. La liste vient de l'environnement ; elle est vide en local, où
  * l'hôte servi suffit (voir origineAutorisee dans lib/session.js).
+ *
+ * Liste vide : en développement, toute origine est renvoyée (la page peut
+ * être servie par un autre port que l'API). En production, AUCUNE : les pages
+ * sont servies par ce serveur et lui parlent depuis la même origine, qui n'a
+ * pas besoin de CORS. Renvoyer n'importe quelle origine avec
+ * `credentials: true` laissait n'importe quel site lire nos réponses, pour
+ * peu que le navigateur y joigne le cookie.
  */
 const ORIGINES_AUTORISEES = (process.env.ALLOWED_ORIGINS || "")
     .split(",").map(o => o.trim()).filter(Boolean);
+const EN_PRODUCTION = process.env.NODE_ENV === 'production';
+const ORIGINE_CORS = ORIGINES_AUTORISEES.length > 0 ? ORIGINES_AUTORISEES : !EN_PRODUCTION;
 
 const io = socketIo(server, {
     cors: {
         // `credentials: true` interdit le joker : le navigateur refuse
         // d'envoyer un cookie vers une origine « * ».
-        origin: ORIGINES_AUTORISEES.length > 0 ? ORIGINES_AUTORISEES : true,
+        origin: ORIGINE_CORS,
         credentials: true
-    }
+    },
+    // CORS ne s'applique pas à l'ouverture d'un WebSocket : une page d'un
+    // autre site pourrait ouvrir une connexion au nom de la personne
+    // connectée. En production, la poignée de main doit venir de chez nous,
+    // comme les requêtes mutantes (csrfGuard).
+    allowRequest: (req, rappel) => rappel(null, !EN_PRODUCTION || origineAutorisee({
+        origin: req.headers.origin,
+        referer: req.headers.referer,
+        host: req.headers.host,
+        autorisees: ORIGINES_AUTORISEES
+    }))
 });
 
 // ✅ Gzip — AVANT tout ce qui écrit une réponse, sinon il n'a plus rien à
@@ -177,7 +199,7 @@ const io = socketIo(server, {
 app.use(compression());
 
 app.use(cors({
-    origin: ORIGINES_AUTORISEES.length > 0 ? ORIGINES_AUTORISEES : true,
+    origin: ORIGINE_CORS,
     credentials: true
 }));
 app.use(express.json());
@@ -212,6 +234,10 @@ const presence = creerPresence();
 // Départs de repêchage prévus, en mémoire : la passe de chaque minute ne lit
 // la base que lorsqu'un départ est dû (services/agendaDeparts.js).
 const agendaDeparts = creerAgendaDeparts({ lireDepartsPrevus: () => poolStore.lireDepartsPrevus() });
+
+// CSP : appliquée par défaut ; CSP_MODE=report la passe en simple rapport,
+// CSP_MODE=off la retire (voir lib/securite.js).
+const MODE_CSP = securite.modeCsp(process.env.CSP_MODE);
 
 // Cache control middleware (must come BEFORE static file serving)
 app.use((req, res, next) => {
@@ -252,6 +278,12 @@ app.use((req, res, next) => {
     // Security headers
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    // CSP et HSTS (lib/securite.js). Le protocole d'origine vient de Render,
+    // qui termine le HTTPS et transmet la requête en clair.
+    const https = String(req.headers['x-forwarded-proto'] || req.protocol || '').split(',')[0].trim() === 'https';
+    for (const [nom, valeur] of securite.entetesDeSecurite({ production: EN_PRODUCTION, https, mode: MODE_CSP })) {
+        res.setHeader(nom, valeur);
+    }
 
     next();
 });
@@ -277,6 +309,25 @@ app.get('/healthz', (req, res) => {
     res.set('Cache-Control', 'no-store');
     res.json({ ok: true, uptimeS: Math.round(process.uptime()) });
 });
+
+// Rapports de la CSP (lib/securite.js) : chaque ressource refusée par un
+// navigateur, journalisée une fois par heure et par couple directive/source —
+// une page ouverte cent fois ne doit pas noyer les journaux. Avant la session
+// et la garde d'origine : un rapport ne porte ni compte ni origine fiable.
+const rapportsCspVus = new Map();
+app.post(securite.CHEMIN_RAPPORT,
+    express.json({ type: ['application/csp-report', 'application/reports+json', 'application/json'], limit: '20kb' }),
+    (req, res) => {
+        const maintenant = Date.now();
+        for (const refus of securite.lireRapportCsp(req.body)) {
+            const cle = `${refus.directive}|${refus.bloque}`;
+            if (maintenant - (rapportsCspVus.get(cle) || 0) < 60 * 60 * 1000) continue;
+            rapportsCspVus.set(cle, maintenant);
+            if (rapportsCspVus.size > 500) rapportsCspVus.delete(rapportsCspVus.keys().next().value);
+            console.warn(`🛡️ CSP : ${refus.directive} a refusé ${refus.bloque || '(en ligne)'} sur ${refus.page}`);
+        }
+        res.status(204).end();
+    });
 
 app.use(creerGardeStatique());
 app.use(express.static(__dirname, {
@@ -553,9 +604,32 @@ async function construireCalendrierH2H(nomPool) {
  * (`loadUsers`, `saveUsers`) sont déclarées plus bas dans ce fichier, et une
  * référence directe ici les lirait avant leur initialisation.
  */
+/**
+ * L'adresse d'un client pour le compteur de tentatives (lib/limiteTentatives.js)
+ * — et, une fois par démarrage, d'où elle a été lue. Sur Render, ce doit être
+ * CF-Connecting-IP : si le journal annonce autre chose, le compteur par
+ * adresse se contourne, et seul celui par compte protège encore.
+ */
+let sourceAdresseAnnoncee = false;
+function adresseDuClient(req) {
+    if (!sourceAdresseAnnoncee) {
+        sourceAdresseAnnoncee = true;
+        const h = req.headers || {};
+        const source = h['cf-connecting-ip'] ? 'CF-Connecting-IP'
+            : h['x-forwarded-for'] ? 'X-Forwarded-For (début de liste, falsifiable)'
+            : 'la connexion directe';
+        console.log(`🔐 Tentatives de mot de passe : adresse des clients lue depuis ${source}`);
+    }
+    return adresseClient(req);
+}
+
 const contexteRoutes = {
     auth,
     db,
+    // Un seul compteur pour tout le site : un compte visé par /login et par
+    // /auth/google/lier n'a qu'un nombre d'essais.
+    tentatives: creerLimiteTentatives(),
+    adresseClient: adresseDuClient,
     store: poolStore,
     diffusion,
     presence,
