@@ -65,7 +65,7 @@ test('sans session, rien', async () => {
     assert.equal((await h.appeler('POST', '/api/notifications/read', { auth: null })).statusCode, 401);
 });
 
-test('une alerte de tour expirée sort de la pastille sans disparaître de la liste', async () => {
+test('une alerte de tour expirée disparaît de la liste et de la pastille', async () => {
     const h = banc();
     poser(h, {
         type: evenements.NOTIFICATION.VOTRE_TOUR,
@@ -76,9 +76,7 @@ test('une alerte de tour expirée sort de la pastille sans disparaître de la li
     const res = await h.appeler('GET', '/api/notifications', { auth: ALICE });
     assert.equal(res.body.nonLues, 0,
         'la pastille ne doit pas réclamer indéfiniment une action qui n existe plus');
-    assert.equal(res.body.notifications.length, 1, "elle reste consultable dans l'historique");
-    assert.equal(res.body.notifications[0].expiree, true);
-    assert.equal(res.body.notifications[0].urgent, false);
+    assert.equal(res.body.notifications.length, 0, "l'information est dépassée : elle ne s'affiche plus");
 });
 
 test('marquer comme lu est volontaire et ciblé', async () => {
@@ -106,14 +104,34 @@ test('lire ne résout pas : l offre attend toujours une réponse', async () => {
         'la lecture est un geste de la personne, la résolution est un fait du monde');
 });
 
-test('une notification résolue le dit, et change de texte', async () => {
+test('une offre réglée disparaît de la liste', async () => {
     const h = banc();
     poser(h, { resolvedAt: new Date() });
+    poser(h, { subject: { tradeId: 43, poolName: 'Ligue', fromTeam: 'Équipe 2' } });
 
     const res = await h.appeler('GET', '/api/notifications', { auth: ALICE });
-    assert.equal(res.body.notifications[0].resolue, true);
-    assert.equal(res.body.notifications[0].urgent, false);
-    assert.match(res.body.notifications[0].detail, /Rien à faire/);
+    assert.deepEqual(res.body.notifications.map(n => n.id), ['trade:43']);
+    assert.equal(res.body.nonLues, 1);
+    assert.equal((await h.appeler('GET', '/api/notifications/count', { auth: ALICE })).body.nonLues, 1);
+});
+
+test('« Repêchage commencé » disparaît une fois le repêchage terminé', async () => {
+    const h = banc(); // pool « Ligue » au repêchage terminé
+    poser(h, { type: evenements.NOTIFICATION.REPECHAGE_DEMARRE, subject: { poolName: 'Ligue' } });
+    poser(h, { type: evenements.NOTIFICATION.CHOIX_AUTO, subject: { poolName: 'Ligue', pickIndex: 0 } });
+    poser(h, { type: evenements.NOTIFICATION.ECHANGE_RESULTAT,
+        subject: { tradeId: 7, poolName: 'Ligue', resultat: 'accepte', fromTeam: 'Équipe 1', toTeam: 'Équipe 2' } });
+
+    const res = await h.appeler('GET', '/api/notifications', { auth: ALICE });
+    assert.deepEqual(res.body.notifications.map(n => n.kind), [evenements.NOTIFICATION.ECHANGE_RESULTAT],
+        "l'issue d'un échange reste vraie ; le repêchage, lui, est fini");
+});
+
+test('un pool quitté emporte ses notifications', async () => {
+    const h = banc();
+    poser(h, { pour: 'carl' });
+    const res = await h.appeler('GET', '/api/notifications', { auth: CARL });
+    assert.equal(res.body.notifications.length, 0);
 });
 
 test('marquer les identifiants de quelqu un d autre ne fait rien', async () => {
