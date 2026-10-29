@@ -503,7 +503,9 @@ function fzhHeroAvant(options) {
         titre: prevu ? (bientot ? 'Le repêchage commence ' : 'Le repêchage va commencer') : 'Repêchage en préparation',
         compteARebours: prevu && bientot ? { iso: prevu, texte: bientot } : null,
         sousTitre: null,
-        cta: auto ? { libelle: 'Voir les joueurs', href: 'stats.html' } : { libelle: 'Préparer ma liste', href: 'stats.html' },
+        // La personne qui a créé le pool va droit à l'organisation (mode, début, ordre, lancement).
+        cta: jeSuisCreateur ? { libelle: 'Organiser le pool', href: salon }
+            : auto ? { libelle: 'Voir les joueurs', href: 'stats.html' } : { libelle: 'Préparer ma liste', href: 'stats.html' },
         temps: { libelle: 'Début', valeur: prevu ? heure : (jeSuisCreateur ? 'Quand tu veux' : 'À confirmer'), avant: true },
         cases: fzhHeroCasesAvant(poolData, teamName),
         ordreTitre: annonce ? 'Ordre de sélection' : 'Participants',

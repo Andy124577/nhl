@@ -232,7 +232,10 @@ describe('héros du repêchage — modèle', () => {
         egal(m.panneau.etapes.map(e => e.titre), ['Participants', 'Départ']);
         assert.equal(m.panneau.meta, '1 sur 2');
         assert.equal(m.liste, null, 'pas de carte « Pour ta liste »');
-        assert.equal(m.cta.libelle, 'Voir les joueurs');
+        assert.equal(m.cta.libelle, 'Organiser le pool', 'la personne qui a créé le pool organise');
+        assert.equal(m.cta.href, 'repechage.html?pool=P');
+        const autre = H.fzhHeroModele({ poolData: avant({ draftAuto: true }), poolName: 'P', teamName: 'Zèbres', username: 'bob', maintenant: MAINTENANT });
+        assert.equal(autre.cta.libelle, 'Voir les joueurs');
     });
 
     test('avant le départ, sans date, vu par un autre membre', () => {
@@ -246,6 +249,7 @@ describe('héros du repêchage — modèle', () => {
 
         const autre = H.fzhHeroModele({ poolData: avant(), poolName: 'P', teamName: 'Zèbres', username: 'bob', maintenant: MAINTENANT });
         assert.equal(autre.temps.valeur, 'À confirmer');
+        egal(autre.cta, { libelle: 'Préparer ma liste', href: 'stats.html' }, 'les autres membres préparent leur liste');
         assert.equal(autre.panneau.etapes[2].detail, 'alice lancera le repêchage');
         assert.equal(autre.panneau.etapes[2].action, null, 'seule la personne qui a créé le pool le lance');
         assert.equal(autre.panneau.etapes[1].action, null);
