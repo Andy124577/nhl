@@ -32,6 +32,7 @@ const authz = require('../lib/authz.js');
 const poolOps = require('../lib/poolOps.js');
 const priorite = require('../lib/priority.js');
 const evenements = require('../lib/events.js');
+const perimees = require('../lib/notificationsPerimees.js');
 const dates = require('../lib/dates.js');
 const instantDraft = require('../lib/instantDraft.js');
 const { creerMemoireLectures } = require('../lib/memoireLectures.js');
@@ -394,7 +395,13 @@ function creerServiceAujourdhui({ store, db, usePostgres, pointage, serviceH2H,
                 });
                 const userId = lu ? lu.userId : null;
                 if (userId) {
-                    const notifications = lu.notifications;
+                    // Les alertes dépassées (lib/notificationsPerimees.js) ne
+                    // remontent pas ici non plus : la cloche les a déjà retirées.
+                    const parNom = new Map(pools.map(p => [p.nom, p.data]));
+                    const notifications = await perimees.filtrerActuelles(lu.notifications, {
+                        lirePool: async nom => parNom.has(nom) ? { data: parNom.get(nom) } : store.lire(nom),
+                        username
+                    });
                     for (const notification of notifications) {
                         if (notification.type === evenements.NOTIFICATION.ECHANGE_RECU && !notification.resolvedAt) {
                             elements.push(elementEchange(notification));
