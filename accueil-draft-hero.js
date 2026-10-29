@@ -280,7 +280,7 @@ function fzhHeroCases(poolData, teamName) {
 }
 
 /** Avant le départ : les équipes inscrites, dans l'ordre s'il est connu. */
-function fzhHeroCasesAvant(poolData, teamName) {
+function fzhHeroCasesAvant(poolData, teamName, admin = false) {
     const annonce = fzhHeroOrdreAnnonce(poolData);
     const equipes = poolData.teams || {};
     // Sans ordre connu, mon équipe d'abord, puis les autres par nom.
@@ -292,7 +292,7 @@ function fzhHeroCasesAvant(poolData, teamName) {
         return {
             numero: annonce ? String(i + 1) : '',
             nom: mien ? 'Toi' : nom,
-            sous: mien ? 'Inscrit' : membres[0] && membres[0] !== nom ? membres[0] : '',
+            sous: mien ? (admin ? 'Admin' : 'Inscrit') : membres[0] && membres[0] !== nom ? membres[0] : '',
             etat: 'avenir',
             mien
         };
@@ -507,10 +507,11 @@ function fzhHeroAvant(options) {
         cta: jeSuisCreateur ? { libelle: 'Organiser le pool', href: salon }
             : auto ? { libelle: 'Voir les joueurs', href: 'stats.html' } : { libelle: 'Préparer ma liste', href: 'stats.html' },
         temps: { libelle: 'Début', valeur: prevu ? heure : (jeSuisCreateur ? 'Quand tu veux' : 'À confirmer'), avant: true },
-        cases: fzhHeroCasesAvant(poolData, teamName),
+        cases: fzhHeroCasesAvant(poolData, teamName, jeSuisCreateur),
         ordreTitre: annonce ? 'Ordre de sélection' : 'Participants',
         ordreDetail: annonce ? 'Ronde 1' : 'Ordre tiré au hasard',
-        inviter: true,
+        admin: jeSuisCreateur,
+        reglages: { libelle: 'Réglages du pool', href: 'pool.html?onglet=apercu' },
         panneau: { type: 'avant', titre: 'Avant le début', meta: `${etapes.filter(e => e.ok).length} sur ${etapes.length}`, etapes },
         liste: auto ? null : { titre: 'Pour ta liste', favoris: liste }
     };
@@ -527,7 +528,8 @@ const FZH_HERO_ICONES = {
     etoile: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9Z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     coche: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
-    inviter: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5a6 6 0 0 1 12 0V20M19 8v6M16 11h6"/>',
+    reglages: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+    bouclier: '<path d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6Z"/>',
     fleche: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
     chevron: '<path d="m9 6 6 6-6 6"/>'
 };
@@ -728,13 +730,16 @@ function fzhHeroHTML(modele) {
     const sous = modele.sousTitre == null ? fzhHeroEsc(modele.meta)
         : fzhHeroEsc(modele.sousTitre) + (a ? ` · <span${a.eta ? ` data-fzh-eta="${fzhHeroEsc(JSON.stringify(a.eta))}"` : ''}>${fzhHeroEsc(a.valeur)}</span>` : '');
     const n = modele.cases.length;
-    const inviter = modele.inviter
-        ? `<li class="fzh-case is-inviter" style="--reste:${(4 - n % 4) || 4};--reste-large:${(8 - n % 8) || 8}"><button type="button" data-fzh-inviter="${fzhHeroEsc(modele.poolName)}">${fzhHeroIcone('inviter', 18)}<span>Inviter</span></button></li>` : '';
+    const r = modele.reglages;
+    const reglages = r
+        ? `<li class="fzh-case is-reglages" style="--reste:${(4 - n % 4) || 4};--reste-large:${(8 - n % 8) || 8}"><a href="${fzhHeroEsc(r.href)}">${fzhHeroIcone('reglages', 18)}<span>${fzhHeroEsc(r.libelle)}</span></a></li>` : '';
+    // La personne qui a créé le pool le voit d'un coup d'œil : c'est elle qui l'administre.
+    const admin = modele.admin ? `<span class="fzh-puce is-admin" title="Tu administres ce pool">${fzhHeroIcone('bouclier', 13)}Admin</span>` : '';
     return `
         <section class="fzh-hero is-${modele.phase}${modele.vif ? ' is-vif' : ''}" aria-labelledby="fzhHeroTitre">
             <div class="fzh-hero-haut">
                 <div class="fzh-hero-copie">
-                    <span class="fzh-puce">${modele.vif ? '<i class="fzs-dot" aria-hidden="true"></i>' : modele.phase === 'pre' ? '<i class="fzh-point" aria-hidden="true"></i>' : ''}${fzhHeroEsc(modele.puce)}</span>
+                    <div class="fzh-puces"><span class="fzh-puce">${modele.vif ? '<i class="fzs-dot" aria-hidden="true"></i>' : modele.phase === 'pre' ? '<i class="fzh-point" aria-hidden="true"></i>' : ''}${fzhHeroEsc(modele.puce)}</span>${admin}</div>
                     <h1 id="fzhHeroTitre">${titre}</h1>
                     <p>${sous}</p>
                 </div>
@@ -742,7 +747,7 @@ function fzhHeroHTML(modele) {
             </div>
             <div class="fzh-ordre">
                 ${modele.ordreTitre ? `<div class="fzh-ordre-tete"><span>${fzhHeroEsc(modele.ordreTitre)}</span><span>${fzhHeroEsc(modele.ordreDetail)}</span></div>` : ''}
-                <ol class="fzh-cases" aria-label="Ordre de sélection">${fzhHeroCasesHTML(modele.cases)}${inviter}</ol>
+                <ol class="fzh-cases" aria-label="Ordre de sélection">${fzhHeroCasesHTML(modele.cases)}${reglages}</ol>
             </div>
             <a class="fzh-hero-cta" href="${fzhHeroEsc(modele.cta.href)}">${fzhHeroEsc(modele.cta.libelle)}${fzhHeroIcone('fleche', 20)}</a>
         </section>`;
@@ -842,17 +847,11 @@ function fzhHeroBasculerFavori(nom) {
     c.root.querySelector(`[data-fzh-favori="${CSS.escape(nom)}"]`)?.focus({ preventScroll: true });
 }
 
-/** Choisir, confirmer, annuler, favori, inviter : un seul écouteur, posé une fois sur la racine. */
+/** Choisir, confirmer, annuler, favori : un seul écouteur, posé une fois sur la racine. */
 function fzhHeroBrancher(root) {
     if (root.dataset.fzhHeroBranche) return;
     root.dataset.fzhHeroBranche = '1';
     root.addEventListener('click', e => {
-        const inviter = e.target.closest('[data-fzh-inviter]');
-        if (inviter) {
-            // La feuille de partage du téléphone, sinon le presse-papiers (accueil-mobile.js).
-            if (typeof fzmInviter === 'function') { inviter.dataset.fzmInviter = inviter.dataset.fzhInviter; fzmInviter(inviter); }
-            return;
-        }
         const favori = e.target.closest('[data-fzh-favori]');
         if (favori) { fzhHeroBasculerFavori(favori.dataset.fzhFavori); return; }
         const c = fzhHeroCourant;
