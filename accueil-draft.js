@@ -56,15 +56,19 @@ function renderDraftHome({ tonight, activeName }) {
     const started = state.mode === 'draft';
     const salle = `draftActif.html?pool=${encodeURIComponent(activeName)}`;
     const banc = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(poolData) : 0;
+    // En repêchage automatique, pas de liste de favoris à préparer : « Avant
+    // le début » prend la place de « Pour ta liste », à droite du héros.
+    const auto = !started && poolData.draftAuto === true;
+    const panneau = '<div class="fzh-place" data-fzh-panneau></div>';
     root.innerHTML = `
         <div class="fzs-col fzs-col-a">
             <div class="fzh-hero-place" data-fzh-hero></div>
-            <div class="fzh-place" data-fzh-panneau></div>
+            ${auto ? '' : panneau}
         </div>
         <div class="fzs-col fzs-col-b">
             ${started
                 ? fzhHeroBesoinsHTML(fzhHeroBesoins(poolData, team.name, banc), salle) + fzhHeroDerniersHTML(fzhHeroDerniers(poolData, team.name))
-                : '<div class="fzh-place" data-fzh-liste></div>'}
+                : auto ? panneau : '<div class="fzh-place" data-fzh-liste></div>'}
         </div>
         ${typeof fzsAlignementsHTML === 'function' ? fzsAlignementsHTML() : ''}
         <div class="fzs-slot fzs-read" data-fz-bloc="actualites"></div>`;
