@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadStatsLeaders(), loadPendingTrades()
     ]);
 
+    memoriserRangsPools();
+
     // The pool-glance/roster card, "Mes classements", and the Activité tab
     // are now rendered by accueil-dash.js (new dashboard design) — this
     // file just keeps the stories carousel gated the same way it always was.
@@ -84,6 +86,36 @@ async function loadPools() {
     } catch (err) {
         console.error('Error loading pools:', err);
     }
+}
+
+/**
+ * Le rang de chaque pool, pour le menu « Mes pools » (poolNav.js).
+ *
+ * L'accueil a déjà tout en main pour classer : le menu, lui, vit sur chaque
+ * page et ne charge pas /current-stats. On garde ici, dans ce navigateur,
+ * « 2e sur 8 · 642 pts » pour chaque pool repêché. Rien n'est écrit en base.
+ * Hors saison (totaux de l'an dernier), on ne note rien.
+ */
+function memoriserRangsPools() {
+    const stats = userData.statsData;
+    if (!stats || !Array.isArray(stats.players) || stats.seasonStarted === false) return;
+    if (!(userData.userPools || []).length) return;
+    let rangs = {};
+    try { rangs = JSON.parse(localStorage.getItem('fzPoolsRangs') || '{}') || {}; } catch (e) { rangs = {}; }
+    const garder = new Set();
+    (userData.userPools || []).forEach(pool => {
+        garder.add(pool.name);
+        if (!window.FZPool || FZPool.draftState(pool.data).etat !== 'termine') { delete rangs[pool.name]; return; }
+        const scores = buildTeamScores(pool);
+        const inscrites = scores.filter(t => t.memberCount > 0);
+        const classement = inscrites.length ? inscrites : scores;
+        const i = classement.findIndex(t => t.isCurrentUser);
+        if (i < 0) return;
+        rangs[pool.name] = { rang: i + 1, sur: classement.length, pts: classement[i].score, t: Date.now() };
+    });
+    Object.keys(rangs).forEach(nom => { if (!garder.has(nom)) delete rangs[nom]; });
+    try { localStorage.setItem('fzPoolsRangs', JSON.stringify(rangs)); } catch (e) { /* navigation privée */ }
+    if (window.FZNav) FZNav.render();
 }
 
 // ============================================================

@@ -1,8 +1,9 @@
 /* ============================================================
    NAVIGATION DES POOLS — rail latéral, tiroir mobile, cloche
    ------------------------------------------------------------
-   Reprend les variables de index.css : rien n'est codé en dur, le
-   thème clair suit sans règle supplémentaire.
+   Le menu « Mes pools » (maquette « Fantazy Menu ») a ses propres
+   jetons --m-*, sombres par défaut, clairs sous html[data-theme="light"] :
+   voir la fin du fichier.
 
    Répartition des surfaces :
      ≥ 1100px  rail fixe à gauche
@@ -11,7 +12,7 @@
    ============================================================ */
 
 :root {
-    --fz-rail-w: 268px;
+    --fz-rail-w: 304px;
     --fz-nav-h: 70px;
 }
 
@@ -24,13 +25,15 @@
     left: 0;
     bottom: 0;
     width: var(--fz-rail-w);
-    padding: 20px 16px 28px;
-    background: var(--navbar-bg);
-    border-right: 1px solid var(--navbar-border);
+    padding: 0 0 28px;
+    background: var(--m-panneau, var(--navbar-bg));
+    border-right: 1px solid var(--m-trait, var(--navbar-border));
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-width: none;
     z-index: 900;
 }
+.fz-sidebar::-webkit-scrollbar { display: none; }
 
 @media (min-width: 1100px) {
     .fz-sidebar { display: block; }
@@ -45,277 +48,8 @@
     }
 }
 
-.fz-rail-label {
-    margin: 0 0 10px 4px;
-    font-size: .7rem;
-    font-weight: 800;
-    letter-spacing: .09em;
-    text-transform: uppercase;
-    color: var(--text-gray);
-}
-
-/* ==================== BLOC POOL ACTIF ==================== */
-
-.fz-pool-block { position: relative; margin-bottom: 26px; }
-
-/* Le pool actif et le bouton « changer de pool » tiennent sur une ligne.
-   Le pool prend la place restante ; le chevron garde la sienne. */
-.fz-pool-row { display: flex; align-items: stretch; gap: 6px; }
-.fz-pool-row .fz-active-pool { flex: 1; min-width: 0; }
-
-.fz-pool-switch {
-    display: grid;
-    place-items: center;
-    width: 32px;
-    flex-shrink: 0;
-    padding: 0;
-    color: var(--text-secondary);
-    background: var(--card);
-    border: 1px solid var(--border-gray);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: color .18s ease, border-color .18s ease, background .18s ease;
-}
-
-.fz-pool-switch:hover,
-.fz-pool-switch.is-open {
-    color: var(--primary-text);
-    border-color: var(--primary);
-    background: var(--bg-hover);
-}
-
-/* Invitations envoyées et encore sans réponse, pour la personne qui a
-   créé le pool. */
-.fz-pool-invites {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    font-size: .7rem;
-    font-weight: 800;
-    color: var(--primary-text);
-    background: rgba(var(--primary-rgb), .14);
-    border-radius: 999px;
-}
-
-.fz-active-pool {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    width: 100%;
-    padding: 11px 12px;
-    background: var(--card);
-    border: 1px solid var(--border-gray);
-    border-radius: 14px;
-    cursor: pointer;
-    text-align: left;
-    color: inherit;
-    text-decoration: none;
-    transition: border-color .2s ease, box-shadow .2s ease;
-}
-
-/* Un lien vers la page du pool ; allumé quand on y est. */
-.fz-active-pool:hover,
-.fz-active-pool:focus-visible,
-.fz-active-pool.is-active {
-    border-color: var(--primary);
-    box-shadow: var(--glow-primary);
-}
-
-.fz-active-pool-img {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.fz-active-pool-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-
-.fz-active-pool-name {
-    font-weight: 800;
-    font-size: .97rem;
-    color: var(--text-main);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.fz-active-pool-meta {
-    font-size: .78rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.fz-chevron { width: 17px; height: 17px; color: var(--text-secondary); flex-shrink: 0; transition: transform .2s ease; }
-.fz-chevron svg { width: 100%; height: 100%; }
-.fz-pool-switch.is-open .fz-chevron { transform: rotate(180deg); }
-
-/* Pastille d'état du pool actif, sous le sélecteur. */
-.fz-pool-state {
-    display: inline-block;
-    margin: 8px 0 0 4px;
-    padding: 3px 9px;
-    border-radius: 999px;
-    font-size: .7rem;
-    font-weight: 800;
-    letter-spacing: .02em;
-}
-
-/* Le rail en os (monterRailSquelette, poolNav.js) : les os aux hauteurs des
-   lignes qu'ils remplacent — le bloc du pool garde sa taille. */
-.fz-sidebar [data-fz-sk] .fz-active-pool { cursor: default; }
 .fz-sk-rail-name { width: 104px; max-width: 100%; height: 14px; margin: 2px 0 3px; }
 .fz-sk-rail-meta { width: 70px; height: 10px; margin: 2px 0; }
-.fz-sk-rail-state { width: 88px; height: 20px; margin: 8px 0 0 4px; border-radius: 999px; }
-.fz-sidebar [data-fz-sk] .fz-rail-icon { border-radius: 5px; }
-.fz-sk-rail-title { width: var(--w); height: 13px; margin: 3px 0; }
-.fz-sk-rail-detail { width: var(--w); height: 9px; margin: 3px 0 2px; }
-
-.fz-state-encours { background: rgba(var(--primary-rgb), .16); color: var(--danger); }
-.fz-state-pret    { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
-.fz-state-attente { background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); }
-.fz-state-termine { background: rgba(var(--primary-rgb), .14); color: var(--primary-text); }
-
-/* ==================== LISTE DES POOLS ==================== */
-
-.fz-pool-list {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    right: 0;
-    margin: 0;
-    padding: 6px;
-    list-style: none;
-    background: var(--card-white);
-    border: 1px solid var(--border-gray);
-    border-radius: 14px;
-    box-shadow: 0 12px 34px var(--shadow-lg);
-    max-height: 340px;
-    overflow-y: auto;
-    z-index: 20;
-}
-
-.fz-pool-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 9px 10px;
-    background: none;
-    border: 0;
-    border-radius: 10px;
-    cursor: pointer;
-    text-align: left;
-    transition: background .18s ease;
-}
-
-.fz-pool-option:hover { background: var(--bg-hover); }
-
-.fz-pool-option.is-active {
-    background: rgba(var(--primary-rgb), .12);
-    box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), .35);
-}
-
-.fz-pool-option.is-loading { opacity: .55; pointer-events: none; }
-
-.fz-pool-option-img { width: 32px; height: 32px; border-radius: 9px; object-fit: cover; flex-shrink: 0; }
-.fz-pool-option-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-
-.fz-pool-option-name {
-    font-weight: 700;
-    font-size: .9rem;
-    color: var(--text-main);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.fz-pool-option-meta {
-    font-size: .74rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.fz-pool-option-check { width: 16px; height: 16px; color: var(--primary-text); opacity: 0; flex-shrink: 0; }
-.fz-pool-option-check svg { width: 100%; height: 100%; }
-.fz-pool-option.is-active .fz-pool-option-check { opacity: 1; }
-
-/* ==================== AUCUN POOL ==================== */
-
-.fz-pool-empty {
-    padding: 16px 14px;
-    background: var(--card);
-    border: 1px dashed var(--border-gray);
-    border-radius: 14px;
-    text-align: center;
-}
-
-.fz-pool-empty p { margin: 0 0 12px; font-size: .85rem; color: var(--text-secondary); line-height: 1.45; }
-
-.fz-pool-empty-cta {
-    display: block;
-    padding: 9px 14px;
-    background: var(--primary);
-    color: var(--on-primary);
-    border-radius: 10px;
-    font-weight: 800;
-    font-size: .88rem;
-    text-decoration: none;
-}
-
-.fz-pool-empty-link {
-    display: block;
-    margin-top: 9px;
-    font-size: .78rem;
-    color: var(--text-secondary);
-    text-decoration: none;
-}
-
-.fz-pool-empty-link:hover { color: var(--primary-text); }
-
-/* ==================== LIENS DE GESTION ==================== */
-
-.fz-rail-nav { display: flex; flex-direction: column; gap: 4px; }
-
-.fz-rail-link {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 10px 12px;
-    border-radius: 11px;
-    text-decoration: none;
-    color: var(--text-secondary);
-    transition: background .18s ease, color .18s ease;
-    /* « Mon équipe » est un <button> au milieu de liens : il n'ouvre pas de
-       page, il déplie le panneau de réglages sur place. */
-    width: 100%;
-    font: inherit;
-    text-align: left;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-}
-
-.fz-rail-link:hover { background: var(--bg-hover); color: var(--text-main); }
-
-.fz-rail-link.is-active {
-    background: rgba(var(--primary-rgb), .12);
-    color: var(--text-main);
-    box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), .3);
-}
-
-.fz-rail-icon { width: 19px; height: 19px; flex-shrink: 0; color: var(--primary-text); }
-.fz-rail-icon svg { width: 100%; height: 100%; }
-.fz-rail-txt { display: flex; flex-direction: column; min-width: 0; }
-.fz-rail-title { font-weight: 700; font-size: .92rem; }
-.fz-rail-detail { font-size: .74rem; color: var(--text-gray); }
 
 /* ==================== PUCE POOL (BARRE DU HAUT, TÉLÉPHONE) ====================
    Sous 769px, la marque cède sa place au pool actif : sur l'écran où le
@@ -412,73 +146,24 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: min(340px, 88vw);
-    padding: 0 16px 28px;
-    background: var(--navbar-bg);
-    border-right: 1px solid var(--navbar-border);
-    box-shadow: 8px 0 34px var(--shadow-lg);
+    width: min(328px, 86vw);
+    padding: env(safe-area-inset-top) 0 0;
+    box-sizing: border-box;
+    background: var(--m-panneau);
+    border-right: 1px solid var(--m-trait);
+    box-shadow: 8px 0 34px rgba(0, 0, 0, .35);
     overflow-y: auto;
+    scrollbar-width: none;
     overscroll-behavior: contain;
     transform: translateX(-100%);
     transition: transform .22s ease;
     z-index: 1401;
 }
 
+.fz-drawer::-webkit-scrollbar { display: none; }
+.fz-drawer-body { display: flex; flex-direction: column; min-height: 100%; }
 .fz-drawer.is-open { transform: translateX(0); }
 body.fz-drawer-open { overflow: hidden; }
-
-.fz-drawer-head {
-    position: sticky;
-    top: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 0 14px;
-    background: var(--navbar-bg);
-    border-bottom: 1px solid var(--navbar-border);
-    margin-bottom: 18px;
-    z-index: 2;
-}
-
-.fz-drawer-title { font-weight: 800; font-size: 1.05rem; color: var(--text-main); }
-
-.fz-drawer-close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: none;
-    border: 0;
-    border-radius: 9px;
-    color: var(--text-secondary);
-    cursor: pointer;
-}
-
-.fz-drawer-close svg { width: 20px; height: 20px; }
-.fz-drawer-close:hover { background: var(--bg-hover); color: var(--text-main); }
-
-.fz-drawer-pages { display: flex; flex-direction: column; gap: 3px; margin-top: 24px; }
-
-.fz-drawer-page {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    border-radius: 11px;
-    text-decoration: none;
-    color: var(--text-secondary);
-    font-weight: 700;
-    font-size: .92rem;
-    transition: background .18s ease, color .18s ease;
-}
-
-.fz-drawer-page:hover { background: var(--bg-hover); color: var(--text-main); }
-.fz-drawer-page.is-active { background: rgba(var(--primary-rgb), .12); color: var(--text-main); }
-.fz-drawer-page-img { display: inline-flex; width: 20px; height: 20px; color: var(--text-secondary); flex-shrink: 0; }
-.fz-drawer-page-img svg { width: 100%; height: 100%; }
-.fz-drawer-page.is-active .fz-drawer-page-img,
-.fz-drawer-page:hover .fz-drawer-page-img { color: var(--primary-text); }
 
 /* ==================== CLOCHE DE NOTIFICATIONS ==================== */
 
@@ -1087,34 +772,10 @@ html[data-theme="light"] .fz-notif-toast {
 
 @media (prefers-reduced-motion: reduce) {
     .fz-drawer { transition: none; }
-    .fz-chevron { transition: none; }
     .fz-notif-toast { animation: none; }
 }
 
-/* Thème clair : le voile des pastilles descend à 7 % — au-delà, le texte
-   sémantique passe sous 4,5:1 sur le fond clair du rail. */
-html[data-theme="light"] .fz-state-encours,
-html[data-theme="light"] .fz-state-termine { background: rgba(var(--primary-rgb), .07); }
-html[data-theme="light"] .fz-state-pret    { background: color-mix(in srgb, var(--success) 7%, transparent); }
-html[data-theme="light"] .fz-state-attente { background: color-mix(in srgb, var(--warning) 7%, transparent); }
-
-/* ==================== RACCOURCIS & BASCULE DU RAIL ==================== */
-
-.fz-rail-nav + .fz-rail-nav { margin-top: 22px; }
-.fz-rail-badge {
-    margin-left: auto;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    background: var(--danger-deep);
-    color: var(--on-primary);
-    font-size: .72rem;
-    font-weight: 800;
-}
+/* ==================== BASCULE DU RAIL ==================== */
 
 /* Le bouton qui range le rail : une languette posée sur son bord droit,
    qui glisse au bord de la fenêtre quand le rail est rangé. */
@@ -1148,4 +809,307 @@ html[data-theme="light"] .fz-state-attente { background: color-mix(in srgb, var(
     body.fz-rail-ferme .fz-sidebar { display: none; }
     body.fz-rail-ferme .fz-rail-toggle { left: 10px; }
     body.fz-rail-ferme .fz-rail-toggle svg { transform: rotate(-90deg); }
+}
+
+/* ==================== MENU « MES POOLS » ====================
+   Maquette « Fantazy Menu ». Le même rendu sert au tiroir (téléphone,
+   tablette), au rail (ordinateur) et à « Tous mes pools ». Les tuiles
+   Rejoindre et Créer restent sombres dans les deux thèmes, comme les
+   cartes de l'accueil sans pool (accueil-nouveau.css). */
+
+.fzm {
+    --m-panneau: #121214;
+    --m-fond: #0B0B0C;
+    --m-carte: #1A1A1D;
+    --m-carte-trait: #2E2E33;
+    --m-champ: #141416;
+    --m-trait: #1F1F23;
+    --m-trait2: #26262A;
+    --m-anneau: #3A3A40;
+    --m-puce: #26262A;
+    --m-ink: #F3F1EE;
+    --m-ink2: #C9C7C4;
+    --m-mute: #A8A6A3;
+    --m-faint: #8E8B88;
+    --m-dim: #6E6C69;
+    --m-off: #4A4A50;
+    --m-survol: rgba(255, 255, 255, .04);
+    --m-rouge: #E5372B;
+    --m-rouge-doux: rgba(229, 55, 43, .18);
+    --m-rouge-ink: #FF8A80;
+    --m-nav-on: rgba(229, 55, 43, .14);
+    --m-vert: #7FD49B;
+    --m-vert-doux: rgba(127, 212, 155, .14);
+    --m-or: #E8B26A;
+    --m-or-doux: rgba(232, 178, 106, .14);
+    color: var(--m-ink);
+    font: 400 14px/1.3 'Saira', 'Barlow', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+html[data-theme="light"] .fzm {
+    --m-panneau: #FFFFFF;
+    --m-fond: #F3F2EF;
+    --m-carte: #F6F5F2;
+    --m-carte-trait: #E2E0DC;
+    --m-champ: #F6F5F2;
+    --m-trait: #ECEAE6;
+    --m-trait2: #E2E0DC;
+    --m-anneau: #CFCCC7;
+    --m-puce: #EEECE8;
+    --m-ink: #141416;
+    --m-ink2: #34343A;
+    --m-mute: #5E5C59;
+    --m-faint: #74716D;
+    --m-dim: #8A8782;
+    --m-off: #B5B2AD;
+    --m-survol: rgba(0, 0, 0, .035);
+    --m-rouge: #D52B1E;
+    --m-rouge-doux: rgba(213, 43, 30, .1);
+    --m-rouge-ink: #B3241A;
+    --m-nav-on: rgba(213, 43, 30, .09);
+    --m-vert: #1D8048;
+    --m-vert-doux: rgba(29, 128, 72, .1);
+    --m-or: #976111;
+    --m-or-doux: rgba(151, 97, 17, .1);
+}
+.fzm :is(p, ul) { margin: 0; padding: 0; }
+.fzm ul { list-style: none; }
+.fzm a { color: inherit; text-decoration: none; }
+.fzm button { font-family: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
+.fzm :is(a, button, input):focus-visible { outline: 2px solid var(--m-rouge); outline-offset: 2px; }
+.fzm-ms { width: 22px; height: 22px; flex: none; fill: currentColor; }
+
+/* ---- En-tête ---- */
+.fzm-tete { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 8px 0 18px; flex: none; }
+.fzm-titre { font: 800 24px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .01em; }
+.fzm-icone-btn {
+    width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; background: none;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--m-ink2);
+}
+.fzm-icone-btn:hover { background: var(--m-survol); color: var(--m-ink); }
+.fzm-vide { margin: 0 18px 4px !important; font-size: 13px; line-height: 18px; color: var(--m-faint); text-wrap: pretty; }
+
+/* ---- Mes pools ---- */
+.fzm-pools { display: flex; flex-direction: column; gap: 6px; padding: 4px 10px 0; }
+.fzm-pool { border-radius: 18px; border: 1px solid transparent; overflow: hidden; }
+.fzm-pool.is-on { background: var(--m-carte); border-color: var(--m-carte-trait); }
+.fzm-pool-tete {
+    width: 100%; border: 0; background: none; padding: 12px;
+    display: flex; align-items: center; gap: 12px; text-align: left;
+}
+button.fzm-pool-tete { cursor: pointer; border-radius: 17px; transition: background-color .15s; }
+button.fzm-pool-tete:hover { background: var(--m-survol); }
+.fzm .is-loading { opacity: .5; pointer-events: none; }
+.fzm-ava {
+    position: relative; width: 42px; height: 42px; flex: none; border-radius: 11px; overflow: hidden;
+    background: var(--c, #4A5A70); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font: 800 16px/1 'Saira Condensed', 'Barlow Condensed', sans-serif;
+}
+.fzm-ava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fzm-ava.fz-bone { background: var(--m-trait2); }
+.fzm-pool-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fzm-pool-nom { font: 600 16px/20px 'Saira', 'Barlow', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzm-pool-sous { font-size: 12px; line-height: 16px; color: var(--m-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzm-actif {
+    flex: none; height: 24px; padding: 0 9px 0 6px; border-radius: 999px; background: var(--m-rouge-doux); color: var(--m-rouge-ink);
+    display: flex; align-items: center; gap: 4px; font: 600 11px/1 'Saira', sans-serif;
+}
+.fzm-actif .fzm-ms { width: 15px; height: 15px; }
+.fzm-aller {
+    width: 30px; height: 30px; flex: none; box-sizing: border-box; border-radius: 50%; border: 1.5px solid var(--m-anneau);
+    display: flex; align-items: center; justify-content: center; color: var(--m-ink2);
+}
+.fzm-aller .fzm-ms { width: 18px; height: 18px; }
+.fzm-pool-corps { display: flex; flex-direction: column; gap: 10px; padding: 0 12px 12px; }
+.fzm-pool-etat { display: flex; align-items: center; gap: 8px; min-width: 0; font: 500 12px/1 'Saira', sans-serif; color: var(--m-mute); }
+.fzm-pool-etat > span:last-child:not(.fzm-statut) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzm-statut { flex: none; height: 22px; padding: 0 8px; border-radius: 6px; font: 600 11px/22px 'Saira', sans-serif; }
+.fzm-statut.is-green { background: var(--m-vert-doux); color: var(--m-vert); }
+.fzm-statut.is-red { background: var(--m-rouge-doux); color: var(--m-rouge-ink); }
+.fzm-statut.is-gold { background: var(--m-or-doux); color: var(--m-or); }
+.fzm-statut.is-grey { background: var(--m-puce); color: var(--m-mute); }
+.fzm-liens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.fzm-lien {
+    position: relative; height: 56px; border-radius: 12px; background: var(--m-fond); border: 1px solid var(--m-trait2);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    font: 500 11px/1 'Saira', sans-serif; color: var(--m-ink2) !important; transition: border-color .15s;
+}
+html[data-theme="light"] .fzm-lien { background: var(--m-panneau); }
+.fzm-lien .fzm-ms { width: 20px; height: 20px; color: var(--m-ink); }
+.fzm-lien:hover, .fzm-lien.is-on { border-color: var(--m-anneau); }
+.fzm-badge {
+    min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px;
+    background: var(--m-rouge); color: #fff; font: 700 11px/18px 'Saira', sans-serif; text-align: center;
+}
+.fzm-lien .fzm-badge { position: absolute; top: 5px; right: 6px; }
+
+.fzm-tous-btn {
+    height: 48px; border: 0; border-radius: 14px; background: none; padding: 0 12px;
+    display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+}
+.fzm-tous-btn:hover { background: var(--m-survol); }
+.fzm-tous-ico { width: 42px; display: flex; justify-content: center; color: var(--m-ink2); }
+.fzm-tous-txt { flex: 1; font: 600 14px/1 'Saira', sans-serif; }
+.fzm-compte-n {
+    min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 11px;
+    background: var(--m-puce); color: var(--m-ink2); font: 600 12px/22px 'Saira', sans-serif; text-align: center;
+}
+.fzm-chev { width: 20px; height: 20px; color: var(--m-faint); }
+
+/* ---- Rejoindre, Créer ---- */
+.fzm-tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px 10px 0; }
+.fzm-tuile {
+    --c-fort: rgba(240, 64, 48, .5); --c-doux: rgba(255, 90, 70, .18); --c-raie: 255, 72, 56;
+    --c-fond: #2A1213, #171214 55%, #100E10;
+    --c-puce: rgba(229, 55, 43, .2); --c-puce-ink: #FF8A80;
+    position: relative; isolation: isolate; overflow: hidden;
+    min-height: 92px; padding: 12px; box-sizing: border-box; border-radius: 16px;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+    color: #F3F1EE !important;
+    background:
+        radial-gradient(90% 120% at 0% 100%, var(--c-fort) 0%, transparent 62%),
+        radial-gradient(70% 90% at 100% 0%, var(--c-doux) 0%, transparent 60%),
+        linear-gradient(135deg, var(--c-fond));
+    transition: transform .15s;
+}
+.fzm-tuile.is-creer {
+    --c-fort: rgba(48, 120, 240, .5); --c-doux: rgba(90, 160, 255, .18); --c-raie: 64, 140, 255;
+    --c-fond: #101A2E, #121520 55%, #0E0F14;
+    --c-puce: rgba(60, 130, 240, .22); --c-puce-ink: #8FBFFF;
+}
+.fzm-tuile::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(160deg, transparent 22%, rgba(var(--c-raie), .6) 23%, transparent 31%, transparent 38%, rgba(var(--c-raie), .38) 39.5%, transparent 50%);
+}
+.fzm-tuile::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 62%; z-index: -1; pointer-events: none;
+    background-image: radial-gradient(rgba(255, 255, 255, .13) 1px, transparent 1.5px);
+    background-size: 9px 9px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+}
+html[data-theme="light"] .fzm-tuile { box-shadow: 0 6px 18px rgba(20, 20, 30, .14); }
+.fzm-tuile:active { transform: scale(.98); }
+.fzm-tuile-ico { width: 32px; height: 32px; border-radius: 9px; background: var(--c-puce); color: var(--c-puce-ink); display: flex; align-items: center; justify-content: center; }
+.fzm-tuile-ico .fzm-ms { width: 19px; height: 19px; }
+.fzm-tuile-txt { display: flex; flex-direction: column; gap: 3px; }
+.fzm-tuile-txt strong { font: 800 18px/20px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+.fzm-tuile-txt small { font: 400 11px/14px 'Saira', sans-serif; color: #C9C7C4; }
+
+/* ---- Naviguer ---- */
+.fzm-etiquette {
+    margin: 22px 18px 8px !important; font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1.4px; text-transform: uppercase;
+    color: var(--m-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fzm-nav { display: flex; flex-direction: column; gap: 2px; padding: 0 10px; }
+.fzm-nav-lien {
+    height: 46px; border-radius: 12px; padding: 0 12px; display: flex; align-items: center; gap: 14px;
+    font: 600 15px/1 'Saira', sans-serif; color: var(--m-mute) !important; transition: background-color .15s, color .15s;
+}
+.fzm-nav-lien:hover { background: var(--m-survol); color: var(--m-ink) !important; }
+.fzm-nav-lien.is-on { background: var(--m-nav-on); color: var(--m-ink) !important; }
+.fzm-nav-lien .fzm-ms-plein, .fzm-nav-lien.is-on .fzm-ms-contour { display: none; }
+.fzm-nav-lien.is-on .fzm-ms-plein { display: block; }
+.fzm-nav-lien .fzm-badge { margin-left: auto; }
+
+/* ---- Compte ---- */
+.fzm-ressort { flex: 1; min-height: 20px; }
+.fzm-compte {
+    margin: 0 10px calc(24px + env(safe-area-inset-bottom)); padding: 10px 12px; border-radius: 16px;
+    border: 1px solid var(--m-trait); background: none; cursor: pointer;
+    display: flex; align-items: center; gap: 12px; text-align: left; flex: none;
+}
+.fzm-compte:hover { background: var(--m-survol); }
+.fzm-compte-ava {
+    position: relative; width: 38px; height: 38px; flex: none; border-radius: 50%; overflow: hidden;
+    background: #E9E7E4; color: #6E6C69; display: flex; align-items: flex-end; justify-content: center;
+}
+.fzm-compte-ava .fzm-ms { width: 34px; height: 34px; margin-bottom: -3px; }
+.fzm-compte-ava img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.fzm-compte-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.fzm-compte-txt strong { font: 600 14px/1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fzm-compte-txt small { font: 400 12px/1 'Saira', sans-serif; color: var(--m-faint); }
+.fzm-compte-reg { color: var(--m-faint); }
+
+/* ---- Rail (ordinateur) : Mes pools et les tuiles, sans fermer ---- */
+.fzm-rail { padding-top: 6px; }
+.fzm-rail .fzm-tete { height: 48px; }
+.fzm-rail .fzm-titre { font-size: 21px; }
+.fzm-rail .fzm-tuile { min-height: 84px; }
+
+/* ---- Tous mes pools ----
+   Téléphone : plein écran, comme la maquette. Au-delà : un panneau à
+   gauche, par-dessus le tiroir ou le rail. */
+.fzm-tous {
+    position: fixed; inset: 0; z-index: 1402;
+    display: flex; flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+    background: var(--m-fond);
+    transform: translateX(-100%); transition: transform .2s ease;
+}
+.fzm-tous[hidden] { display: none; }
+.fzm-tous.is-open { transform: translateX(0); }
+@media (min-width: 600px) {
+    .fzm-tous { right: auto; width: 400px; border-right: 1px solid var(--m-trait); box-shadow: 8px 0 34px rgba(0, 0, 0, .35); }
+}
+.fzm-tous-tete { gap: 4px; padding: 0 16px 0 4px; justify-content: flex-start; }
+.fzm-tous-tete .fzm-titre { flex: 1; }
+.fzm-tous-tete .fzm-icone-btn { color: var(--m-ink); }
+.fzm-tous-n { font: 600 13px/1 'Saira', sans-serif; color: var(--m-faint); }
+.fzm-tous-outils { display: flex; flex-direction: column; gap: 10px; padding: 4px 12px 0; flex: none; }
+.fzm-cherche {
+    height: 46px; border-radius: 14px; background: var(--m-champ); border: 1px solid var(--m-trait);
+    display: flex; align-items: center; gap: 8px; padding: 0 6px 0 14px; color: var(--m-faint);
+}
+.fzm-cherche > .fzm-ms { width: 20px; height: 20px; }
+.fzm-cherche:focus-within { border-color: var(--m-anneau); }
+.fzm-cherche input {
+    flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; padding: 0;
+    color: var(--m-ink); font: 500 16px/1 'Saira', 'Barlow', sans-serif; -webkit-appearance: none; appearance: none;
+}
+.fzm-cherche input::placeholder { color: var(--m-faint); }
+.fzm-cherche input::-webkit-search-cancel-button { display: none; }
+.fzm-cherche input:focus-visible { outline: none; }
+.fzm-cherche-effacer {
+    width: 34px; height: 34px; flex: none; border: 0; border-radius: 50%; background: var(--m-puce); color: var(--m-ink2);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.fzm-cherche-effacer[hidden] { display: none; }
+.fzm-cherche-effacer .fzm-ms { width: 18px; height: 18px; }
+.fzm-filtres { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.fzm-filtres::-webkit-scrollbar { display: none; }
+.fzm-filtre {
+    flex: none; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--m-trait2);
+    background: var(--m-champ); color: var(--m-ink2) !important; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; font: 600 13px/1 'Saira', sans-serif;
+}
+.fzm-filtre small { font: 600 11px/1 'Saira', sans-serif; opacity: .7; }
+.fzm-filtre.is-on { background: var(--m-ink); border-color: var(--m-ink); color: var(--m-fond) !important; }
+.fzm-tous-liste { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0 12px calc(30px + env(safe-area-inset-bottom)); scrollbar-width: none; }
+.fzm-tous-liste::-webkit-scrollbar { display: none; }
+.fzm-tous-liste .fzm-etiquette { margin: 14px 4px 8px !important; }
+.fzm-groupe { border-radius: 18px; background: var(--m-champ); border: 1px solid var(--m-trait); overflow: hidden; }
+html[data-theme="light"] .fzm-groupe { background: var(--m-panneau); }
+.fzm-tous-ligne { display: flex; align-items: center; }
+.fzm-tous-ligne + .fzm-tous-ligne { border-top: 1px solid var(--m-trait); }
+.fzm-tous-choix {
+    flex: 1; min-width: 0; border: 0; background: none; padding: 12px 4px 12px 12px;
+    display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+}
+.fzm-tous-choix .fzm-ava { width: 40px; height: 40px; font-size: 15px; }
+.fzm-tous-choix .fzm-pool-nom { font-size: 15px; }
+.fzm-epingle {
+    width: 40px; height: 44px; flex: none; border: 0; background: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: var(--m-off);
+}
+.fzm-epingle .fzm-ms { width: 19px; height: 19px; }
+.fzm-epingle:hover, .fzm-epingle.is-on { color: var(--m-ink); }
+.fzm-tous-etat { width: 44px; flex: none; display: flex; align-items: center; justify-content: center; padding-right: 6px; }
+.fzm-coche { width: 26px; height: 26px; color: var(--m-rouge); }
+.fzm-rien { padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; font: 500 14px/1 'Saira', sans-serif; color: var(--m-mute); }
+.fzm-rien .fzm-ms { width: 28px; height: 28px; color: var(--m-off); }
+
+@media (prefers-reduced-motion: reduce) {
+    .fzm-tous { transition: none; }
 }
