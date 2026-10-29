@@ -6,8 +6,8 @@
    repêchage (draftReskin.css) : Saira, intertitres Saira Condensed,
    gris chauds, cartes arrondies, rouge pour le choix actif.
    Les jetons --s-* reprennent ceux de ces feuilles, dans les deux
-   thèmes ; la carte du repêchage instantané reste sombre dans les deux,
-   comme les héros des accueils.
+   thèmes. Le repêchage instantané n'est qu'une ligne discrète au-dessus
+   de la liste.
    Chargé APRÈS pool.css : seule la modale « Rejoindre le pool » y est
    encore lue, et elle est rhabillée ici.
    Téléphone : une colonne bord à bord. Bureau : la même colonne, centrée.
@@ -298,53 +298,38 @@ html[data-theme="light"] .fz-pool-form .fzp-seats > span:not(.is-on):not(.is-me)
 /* ============================================================
    REJOINDRE
    ============================================================ */
+/* Repêchage instantané : une ligne discrète au-dessus de la liste, comme
+   à l'accueil sans pool (accueil-nouveau.css). Les sièges deviennent des
+   pastilles ; instantDraft.js y écrit toujours initiales et anneaux,
+   simplement tus ici. */
 .fzp-instant {
-    --fzo-line: #3A3A40; --fzo-faint: #C9C7C4; --fzo-muted: #4A4A50;
-    --fzo-fill: #F3F1EE; --fzo-on-fill: #0B0B0C;
-    position: relative; isolation: isolate; overflow: hidden;
-    display: flex; flex-direction: column; gap: 14px;
-    margin: 16px 10px 0; padding: 16px; border-radius: 22px; color: #F3F1EE;
-    background:
-        radial-gradient(90% 120% at 0% 100%, rgba(240, 64, 48, .5) 0%, rgba(240, 64, 48, 0) 62%),
-        radial-gradient(70% 90% at 100% 0%, rgba(255, 90, 70, .18) 0%, rgba(255, 90, 70, 0) 60%),
-        linear-gradient(135deg, #2A1213 0%, #171214 55%, #100E10 100%);
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
+    margin: 16px 10px 0; padding: 10px 10px 10px 12px; border-radius: 16px;
+    background: var(--s-card); border: 1px solid var(--s-line2);
 }
-.fzp-instant::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: linear-gradient(160deg, transparent 22%, rgba(255, 72, 56, .6) 23%, transparent 31%, transparent 38%, rgba(255, 72, 56, .38) 39.5%, transparent 50%);
-}
-.fzp-instant::after {
-    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 62%; z-index: -1; pointer-events: none;
-    background-image: radial-gradient(rgba(255, 255, 255, .13) 1px, transparent 1.5px);
-    background-size: 9px 9px;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
-}
-html[data-theme="light"] .fzp-instant { box-shadow: 0 10px 28px rgba(60, 20, 18, .18); }
-.fzp-instant-copie { display: flex; flex-direction: column; gap: 6px; }
-.fzp-puce {
-    align-self: flex-start; display: inline-flex; align-items: center; gap: 5px;
-    height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(229, 55, 43, .2); color: #FF8A80;
-    font: 600 10px/1 'Saira', sans-serif; letter-spacing: 1.2px; text-transform: uppercase;
-}
-.fzp-puce svg { fill: currentColor; stroke: none; }
-.fzp-instant h2 { font: 800 24px/24px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; color: #F3F1EE; }
-.fzp-instant-copie p { font: 400 13px/18px 'Saira', sans-serif; color: #C9C7C4; text-wrap: pretty; }
-.fzp-instant-file { display: flex; align-items: center; gap: 8px; }
-.fzp-instant .fzo-seats { gap: 8px; }
-.fzp-instant .fzo-seat { width: 40px; height: 40px; font: 800 12px/1 'Saira Condensed', sans-serif; letter-spacing: 0; }
-.fzp-instant .fzo-seat.is-free { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .1); background: rgba(10, 10, 11, .5); }
-.fzp-instant .fzo-seat-ring { inset: 12px; border-width: 2px; }
-.fzp-instant .fzo-seat svg { width: 18px; height: 18px; }
-.fzp-instant .fzo-start-status { flex: 1; min-width: 0; margin: 0; text-align: right; font: 600 12px/16px 'Saira', sans-serif; color: #C9C7C4; }
+.fzp-instant-ico { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 10px; background: var(--s-chip); color: var(--s-mute); }
+.fzp-instant-copie { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fzp-instant h2 { font: 600 14px/18px 'Saira', sans-serif; color: var(--s-ink); }
+.fzp-instant-file { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.fzp-instant .fzo-seats { gap: 4px; flex: none; }
+.fzp-instant .fzo-seat { width: 8px; height: 8px; font-size: 0; }
+.fzp-instant .fzo-seat > :not(.fzo-sr) { display: none; }
+.fzp-instant .fzo-seat.is-free { background: transparent; box-shadow: inset 0 0 0 1.5px var(--s-dim); }
+.fzp-instant .fzo-seat.is-me { background: var(--s-ink); }
+.fzp-instant .fzo-start-status { min-width: 0; margin: 0; font: 400 12px/16px 'Saira', sans-serif; color: var(--s-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fzp-instant .fzo-start-button {
-    width: 100%; height: 46px; padding: 0 16px; border: 0; border-radius: 13px;
-    background: #F3F1EE; color: #0B0B0C; font: 600 15px/1 'Saira', sans-serif;
+    height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--s-line);
+    background: transparent; color: var(--s-ink); font: 600 13px/1 'Saira', sans-serif;
 }
-.fzp-instant .fzo-start-button:hover { background: #fff; }
-.fzp-instant .fzo-start-button:active { transform: scale(.98); }
-.fzp-instant .fzo-start-button[data-instant-action="quitter"] { background: rgba(255, 255, 255, .1); color: #C9C7C4; }
-.fzp-instant .fzo-start-button[data-instant-action="aller"] { background: #7FD49B; color: #0B0B0C; }
+.fzp-instant .fzo-start-button:hover { background: var(--s-chip); }
+.fzp-instant .fzo-start-button:active { transform: scale(.97); }
+.fzp-instant .fzo-start-button[data-instant-action="quitter"] { color: var(--s-mute); }
+.fzp-instant .fzo-start-button[data-instant-action="aller"] { border-color: transparent; background: var(--s-green); color: #0B0B0C; }
+html[data-theme="light"] .fzp-instant .fzo-start-button[data-instant-action="aller"] { color: #fff; }
+@media (max-width: 400px) {
+    .fzp-instant { grid-template-columns: minmax(0, 1fr) auto; }
+    .fzp-instant-ico { display: none; }
+}
 
 .fzp-sec.is-list { margin-top: 26px; }
 .fzp-sh-count { margin-left: auto; font: 500 12px/1 'Saira', sans-serif; letter-spacing: 0; text-transform: none; color: var(--s-faint); }
@@ -459,11 +444,8 @@ html[data-theme="light"] .fzp-instant { box-shadow: 0 10px 28px rgba(60, 20, 18,
     .fzp-instant, .fzp-search, .fzp-list { margin-left: 0; margin-right: 0; }
     .fzp-chips { padding-left: 0; padding-right: 0; }
     .fzp-pad { padding: 18px; }
-    .fzp-instant { display: grid; grid-template-columns: minmax(0, 1fr) 260px; align-items: center; column-gap: 28px; row-gap: 12px; margin-top: 24px; padding: 24px; }
-    .fzp-instant-copie { grid-row: 1 / span 2; }
-    .fzp-instant-file { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .fzp-instant .fzo-start-status { text-align: left; }
-    .fzp-instant h2 { font-size: 30px; line-height: 30px; }
+    .fzp-instant { margin-top: 24px; padding: 10px 12px 10px 14px; }
+    .fzp-instant-copie { flex-direction: row; align-items: center; gap: 14px; }
     .fzp-cta-bar { bottom: 0; padding: 28px 0 20px; }
     .fzp-step-row { padding-left: 18px; padding-right: 12px; }
     .fzp-list > ul > li { padding: 14px 14px 14px 18px; }
