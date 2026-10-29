@@ -227,6 +227,14 @@ describe('héros du repêchage — modèle', () => {
         assert.equal(m.panneau.etapes[2].action.href, 'repechage.html?pool=Les%20Boys', 'la personne qui a créé le pool organise le départ');
     });
 
+    test('avant le départ, repêchage automatique : pas de liste de favoris à préparer', () => {
+        const m = H.fzhHeroModele({ poolData: avant({ draftAuto: true }), poolName: 'P', teamName: 'Aigles', username: 'alice', maintenant: MAINTENANT, favoris: [] });
+        egal(m.panneau.etapes.map(e => e.titre), ['Participants', 'Départ']);
+        assert.equal(m.panneau.meta, '1 sur 2');
+        assert.equal(m.liste, null, 'pas de carte « Pour ta liste »');
+        assert.equal(m.cta.libelle, 'Voir les joueurs');
+    });
+
     test('avant le départ, sans date, vu par un autre membre', () => {
         const m = H.fzhHeroModele({ poolData: avant({ teams: { Aigles: equipeVide(['alice']) } }), poolName: 'P', teamName: 'Aigles', username: 'alice', maintenant: MAINTENANT });
         assert.equal(m.titre, 'Repêchage en préparation');

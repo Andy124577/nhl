@@ -470,9 +470,11 @@ function fzhHeroAvant(options) {
     const bientot = prevu ? fzhHeroAvantDebut(restant) : null;
 
     // Trois favoris au moins : de quoi choisir même si les deux premiers partent.
+    // En repêchage automatique, Fantazy choisit pour tout le monde : pas de liste à préparer.
+    const auto = poolData.draftAuto === true;
     const liste = favoris.length;
     const etapes = [
-        {
+        !auto && {
             ok: liste >= FZH_HERO_LISTE_MIN,
             titre: 'Ta liste de favoris',
             detail: liste >= FZH_HERO_LISTE_MIN ? `${liste} joueurs ajoutés`
@@ -494,21 +496,21 @@ function fzhHeroAvant(options) {
                 : `${createur || 'Le créateur du pool'} lancera le repêchage`,
             action: jeSuisCreateur ? { libelle: prevu ? 'Changer' : 'Organiser', href: salon } : null
         }
-    ];
+    ].filter(Boolean);
 
     return {
         puce: 'Bientôt',
         titre: prevu ? (bientot ? 'Le repêchage commence ' : 'Le repêchage va commencer') : 'Repêchage en préparation',
         compteARebours: prevu && bientot ? { iso: prevu, texte: bientot } : null,
         sousTitre: null,
-        cta: { libelle: 'Préparer ma liste', href: 'stats.html' },
+        cta: auto ? { libelle: 'Voir les joueurs', href: 'stats.html' } : { libelle: 'Préparer ma liste', href: 'stats.html' },
         temps: { libelle: 'Début', valeur: prevu ? heure : (jeSuisCreateur ? 'Quand tu veux' : 'À confirmer'), avant: true },
         cases: fzhHeroCasesAvant(poolData, teamName),
         ordreTitre: annonce ? 'Ordre de sélection' : 'Participants',
         ordreDetail: annonce ? 'Ronde 1' : 'Ordre tiré au hasard',
         inviter: true,
         panneau: { type: 'avant', titre: 'Avant le début', meta: `${etapes.filter(e => e.ok).length} sur ${etapes.length}`, etapes },
-        liste: { titre: 'Pour ta liste', favoris: liste }
+        liste: auto ? null : { titre: 'Pour ta liste', favoris: liste }
     };
 }
 
