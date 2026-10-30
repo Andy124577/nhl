@@ -289,6 +289,30 @@ describe('resolveId', () => {
     });
 });
 
+describe('fichiers livrés', () => {
+    // Les identifiants de retraités mal étiquetés (FZ_IDS_ERRONES, draftkitData.js).
+    const source = fs.readFileSync(path.join(__dirname, '../../draftkitData.js'), 'utf8');
+    const errones = new Set(source.match(/FZ_IDS_ERRONES = \[([\s\S]*?)\]/)[1].match(/\b\d{7}\b/g).map(Number));
+    const trousse = JSON.parse(fs.readFileSync(path.join(__dirname, '../../draftkit.json'), 'utf8'));
+    const stats = JSON.parse(fs.readFileSync(path.join(__dirname, '../../nhl_filtered_stats.json'), 'utf8'));
+
+    test('aucun joueur de la trousse ne porte l\'identifiant d\'un retraité mal étiqueté', () => {
+        const fautifs = [...trousse.skaters, ...trousse.goalies].filter(p => errones.has(p.playerId));
+        assert.deepEqual(fautifs.map(p => p.fullName), []);
+    });
+
+    test('nhl_filtered_stats.json ne contient aucune de ces lignes', () => {
+        const fautifs = Object.values(stats).flat().filter(p => errones.has(p.playerId));
+        assert.deepEqual(fautifs.map(p => p.skaterFullName || p.goalieFullName), []);
+    });
+
+    test('Zachary Bolduc est le joueur du Canadien, pas le retraité Zack Smith', () => {
+        const bolduc = trousse.skaters.find(p => p.lastName === 'Bolduc');
+        assert.equal(bolduc.fullName, 'Zachary Bolduc');
+        assert.equal(bolduc.playerId, 8482737);
+    });
+});
+
 describe('parseTopPicks', () => {
     test('lit un choix de patineur avec sa projection', () => {
         const lignes = ['1. Leo Carlsson (C) - (27B, 36P) 63 pts'];

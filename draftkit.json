@@ -1,7 +1,7 @@
 {
  "source": "Trousse de repêchage NHL 2026-2027 (PoolExpert.com)",
  "season": "2026-2027",
- "generatedAt": "2026-09-05T23:18:59.624Z",
+ "generatedAt": "2026-10-30T13:51:56.135Z",
  "counts": {
   "teams": 32,
   "skaters": 919,
@@ -13730,14 +13730,14 @@
   },
   {
    "rank": 333,
-   "firstName": "Zack",
+   "firstName": "Zachary",
    "lastName": "Bolduc",
-   "fullName": "Zack Bolduc",
+   "fullName": "Zachary Bolduc",
    "age": 23,
    "team": "MTL",
    "position": "C",
    "positionLabel": "C",
-   "playerId": 8474250,
+   "playerId": 8482737,
    "lastSeason": {
     "gamesPlayed": 78,
     "goals": 12,
@@ -44789,7 +44789,7 @@
        "assists": 16,
        "points": 28
       },
-      "fullName": "Zack Bolduc",
+      "fullName": "Zachary Bolduc",
       "playerTeam": "MTL"
      },
      {

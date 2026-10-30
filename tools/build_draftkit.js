@@ -139,8 +139,9 @@ const ID_SOURCES = [
 /* Rows whose id belongs to a different player than the name on them. Chief
  * offender: 8467408 is the retired Matt Walker, but current_stats.json labels
  * it "Matt Savoie" — attaching it stole the real 22-year-old Oiler's identity.
+ * Same story for 8474250, the retired Zack Smith, once labelled "Zack Bolduc".
  * Keep aligned with FZ_IDS_ERRONES in draftkitData.js. */
-const BAD_IDS = new Set([8469770, 8470324, 8470724, 8470594, 8470600, 8467408]);
+const BAD_IDS = new Set([8469770, 8470324, 8470724, 8470594, 8470600, 8467408, 8474250]);
 
 /* The kit and the NHL spell a few players differently. Only entries verified
  * to be the same person belong here — a shared surname is NOT enough
@@ -152,6 +153,15 @@ const ID_NAME_ALIASES = {
     'benjamin kindel': 'Ben Kindel',
     'dmitriy simashev': 'Dmitri Simashev'
 };
+
+/* First names the pool sheets shorten where the NHL — and the kit's own team
+ * pages — write them in full. Shown as the NHL writes them; the sheet's
+ * spelling stays in ALIAS (lib/choixAuto.js, draftkitData.js) so a pick saved
+ * under it keeps its player. */
+const KIT_FIRST_NAMES = {
+    'zack bolduc': 'Zachary'
+};
+const firstNameOf = (firstName, lastName) => KIT_FIRST_NAMES[nameKey(`${firstName} ${lastName}`)] || firstName;
 
 const TEAM_FIX = { LA: 'LAK', SJ: 'SJS', TB: 'TBL', NJ: 'NJD', WIN: 'WPG' };
 const normTeam = t => {
@@ -235,7 +245,7 @@ function buildSkaters(idIndex) {
         const rank = int(r[0]);
         if (!rank || !r[2]) continue;
         const { name: lastName, injury } = splitName(r[2]);
-        const firstName = splitName(r[1]).name;
+        const firstName = firstNameOf(splitName(r[1]).name, lastName);
         const kitTeam = r[4];
         const team = KIT_TO_NHL[kitTeam];
         if (!team) warn(`skater #${rank} ${firstName} ${lastName}: unknown team "${kitTeam}"`);
@@ -283,7 +293,7 @@ function buildGoalies(idIndex) {
         const rank = int(r[0]);
         if (!rank || !r[2]) continue;
         const { name: lastName, injury } = splitName(r[2]);
-        const firstName = splitName(r[1]).name;
+        const firstName = firstNameOf(splitName(r[1]).name, lastName);
         const kitTeam = r[4];
         const team = KIT_TO_NHL[kitTeam];
         if (!team) warn(`goalie #${rank} ${firstName} ${lastName}: unknown team "${kitTeam}"`);

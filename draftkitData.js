@@ -23,7 +23,7 @@
 (function (global) {
     'use strict';
 
-    var FICHIER = 'draftkit.json?v=20260905c';
+    var FICHIER = 'draftkit.json?v=20261030';
     var FICHIER_WATCHLIST = 'draftkit-watchlist.json?v=20260915';
 
     /**
@@ -45,7 +45,8 @@
         8470724, // Kyle Quincey — retraité 2018
         8470594, // Marc-André Fleury — retraité après 2024-25
         8470600, // Ryan Suter — sans contrat / retraité après 2024-25
-        8467408  // Matt Walker (retraité), étiqueté « Matt Savoie »
+        8467408, // Matt Walker (retraité), étiqueté « Matt Savoie »
+        8474250  // Zack Smith (retraité), étiqueté « Zack Bolduc »
     ];
 
     var promesse = null;
@@ -224,6 +225,7 @@
        ------------------------------------------------------------------ */
     var ALIAS = {
         'mitchell marner': 'Mitch Marner',
+        'zack bolduc': 'Zachary Bolduc',
         'utah hockey club': 'Utah Mammoth'
     };
 

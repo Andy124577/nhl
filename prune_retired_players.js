@@ -45,12 +45,14 @@ const REMOVE_IDS = new Map([
   [8470594, 'Marc-André Fleury — retired after 2024-25'],
   [8470600, 'Ryan Suter — unsigned/retired after 2024-25'],
   [8467408, "Matt Walker (id 8467408) — was mislabeled 'Matt Savoie', a retired defenceman; real Savoie re-added below as 8483512"],
+  [8474250, "Zack Smith (id 8474250) — was mislabeled 'Zack Bolduc', a retired centre; real Bolduc re-added below as 8482737"],
 ]);
 
 /* Real players the regeneration dropped or corrupted. Section is where the
  * entry belongs; stats are pulled live so a stale line can't creep back. */
 const ADD_PLAYERS = [
   { section: 'Top_100_Offensive_Players', playerId: 8483512, skaterFullName: 'Matt Savoie', teamAbbrevs: 'EDM', positionCode: 'C' },
+  { section: 'Top_100_Offensive_Players', playerId: 8482737, skaterFullName: 'Zachary Bolduc', teamAbbrevs: 'MTL', positionCode: 'R' },
 ];
 
 const SKATER_SECTIONS = ['Top_50_Defenders', 'Top_100_Offensive_Players'];
