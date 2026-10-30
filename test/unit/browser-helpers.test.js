@@ -404,6 +404,13 @@ describe('draftkitData — FZDraftKit', () => {
         assert.equal(FZDraftKit.nomCanonique(''), '');
     });
 
+    test('sans trousse chargée, un alias s’applique déjà', () => {
+        // La page Stats ne télécharge la trousse qu'en projection : un choix
+        // enregistré sous l'ancienne graphie doit tout de même s'y reconnaître.
+        assert.equal(FZDraftKit.nomCanonique('Zack Bolduc'), 'Zachary Bolduc');
+        assert.equal(FZDraftKit.nomCanonique('Mitchell Marner'), 'Mitch Marner');
+    });
+
     test('sans trousse chargée, guide et watchlist sont vides', () => {
         assert.equal(FZDraftKit.guide('MTL'), null);
         assert.deepEqual(FZDraftKit.watchlist(), []);
@@ -882,6 +889,121 @@ describe('stats — tri sur une seule saison', () => {
         const { valeurDeTri, modeProjection } = charger([{ playerName: 'Joueur Actif', playerId: 2, points: 10 }], 'projection', null);
         assert.equal(modeProjection(), false);
         assert.equal(valeurDeTri({ points: 95 }, 'Joueur Actif', 2, 'points', false), 10);
+    });
+});
+
+// ── Recherche de la page Stats : toutes les positions ───────────────────────
+describe('stats — la recherche fouille toutes les positions', () => {
+    const GARDIENS = [
+        { playerId: 10, goalieFullName: 'Jakub Dobeš', teamAbbrevs: 'MTL', wins: 26, shutouts: 0, otLosses: 4 },
+        { playerId: 11, goalieFullName: 'Sam Montembeault', teamAbbrevs: 'MTL', wins: 20, shutouts: 1, otLosses: 3 },
+        { playerId: 12, goalieFullName: 'Andrei Vasilevskiy', teamAbbrevs: 'TBL', wins: 39, shutouts: 2, otLosses: 4 }
+    ];
+    const CLUBS = [
+        { teamFullName: 'Montréal Canadiens', points: 90 },
+        { teamFullName: 'St. Louis Blues', points: 80 },
+        { teamFullName: 'Tampa Bay Lightning', points: 100 }
+    ];
+    const SOURCES = { gardiens: GARDIENS, clubs: CLUBS };
+
+    // `club` : le filtre d'équipe ; `pris` : ce que le pool actif a déjà,
+    // avec « Agents libres seulement » coché.
+    function charger({ club = '', pris = null } = {}) {
+        return chargerFonctions('index.js', [
+            'statsCourantesPretes', 'modeProjection', 'nombreStat', 'valeurDeTri', 'comparerParStat',
+            'normaliserRecherche', 'correspondRecherche', 'proprioJoueur', 'estLibre', 'clubJoueur',
+            'clubActuel', 'estDuClub', 'cleDeTri', 'getTeamAbbreviation', 'sigleClub',
+            'clubsCourantsPrets', 'gardiensTrouves', 'clubsTrouves', 'autresResultats'
+        ], {
+            statsMode: 'stats', projectionPools: null, currentStats: null, currentTeams: null,
+            statsSort: 'points', statsLibres: !!pris, statsClub: club,
+            GOALIE_COLUMNS: [{ sort: 'gamesPlayed' }, { sort: 'points' }],
+            goaliePoolPoints: require('../../lib/scoring.js').goaliePoolPoints,
+            getCurrentPlayerStats: () => null,
+            getCurrentTeamStats: () => null,
+            // Le sigle d'après le nom complet, comme la fiche du joueur le lit.
+            fzCareerTeamCode: nom => ({ 'St. Louis Blues': 'STL' })[nom] || '',
+            window: { fzStatsProprio: nom => (pris ? (pris.includes(nom) ? 'pris' : 'libre') : null) }
+        });
+    }
+    // Copiés hors du bac à sable : ses tableaux n'ont pas le prototype d'ici.
+    const noms = (r) => ({
+        gardiens: Array.from(r.gardiens, g => g.goalieFullName),
+        clubs: Array.from(r.clubs, c => c.teamFullName)
+    });
+
+    test('un nom de gardien le trouve, sans les accents', () => {
+        const { autresResultats, normaliserRecherche } = charger();
+        assert.deepEqual(noms(autresResultats(normaliserRecherche('Dobes'), SOURCES)),
+            { gardiens: ['Jakub Dobeš'], clubs: [] });
+    });
+
+    test('un nom de club trouve le club', () => {
+        const { autresResultats } = charger();
+        assert.deepEqual(noms(autresResultats('canadiens', SOURCES)), { gardiens: [], clubs: ['Montréal Canadiens'] });
+    });
+
+    test('un sigle trouve les gardiens et le club, les gardiens au pointage de pool', () => {
+        // Dobeš : 26 V et 4 DP = 56 ; Montembeault : 1 BL, 19 V, 3 DP = 46.
+        const { autresResultats } = charger();
+        assert.deepEqual(noms(autresResultats('mtl', SOURCES)),
+            { gardiens: ['Jakub Dobeš', 'Sam Montembeault'], clubs: ['Montréal Canadiens'] });
+    });
+
+    test('le sigle d’un club se lit dans son nom complet : « stl » trouve St. Louis', () => {
+        // getTeamAbbreviation seul devinait « SLB ».
+        const { autresResultats, sigleClub } = charger();
+        assert.equal(sigleClub({ teamFullName: 'St. Louis Blues' }), 'STL');
+        assert.deepEqual(noms(autresResultats('stl', SOURCES)).clubs, ['St. Louis Blues']);
+    });
+
+    test('le filtre d’équipe vaut aussi pour les gardiens et les clubs trouvés', () => {
+        const { autresResultats } = charger({ club: 'MTL' });
+        assert.deepEqual(noms(autresResultats('a', SOURCES)),
+            { gardiens: ['Jakub Dobeš', 'Sam Montembeault'], clubs: ['Montréal Canadiens'] });
+    });
+
+    test('« Agents libres seulement » écarte le gardien et le club déjà pris', () => {
+        const { autresResultats } = charger({ pris: ['Jakub Dobeš', 'Montréal Canadiens'] });
+        assert.deepEqual(noms(autresResultats('mtl', SOURCES)), { gardiens: ['Sam Montembeault'], clubs: [] });
+    });
+});
+
+// ── Fiche du joueur : à qui il appartient dans le pool actif ────────────────
+describe('fiche du joueur — son équipe dans le pool', () => {
+    const POOL = {
+        teams: {
+            'Équipe 1': {
+                members: ['marie'], offensive: ['Nick Suzuki'],
+                bench: [{ nom: 'Zack Bolduc', categorie: 'offensive' }]
+            },
+            'Les Glorieux': { members: ['andy', 'bob'], offensive: ['Mitchell Marner'], goalie: ['Jakub Dobeš'] }
+        }
+    };
+    // fzNomsChoisis (activePool.js) : toutes les cases, banc compris.
+    const nomsChoisis = equipe => [].concat(equipe.offensive || [], equipe.defensive || [],
+        equipe.goalie || [], equipe.rookie || [], equipe.teams || [], (equipe.bench || []).map(b => b.nom));
+    const { fzEquipeDuJoueur } = chargerFonctions('careerModal.js', ['fzEquipeDuJoueur'], {
+        window: { fzNomsChoisis: nomsChoisis, FZDraftKit }
+    });
+
+    test('rend l’équipe et ses membres', () => {
+        // Copiée hors du bac à sable : son objet n'a pas le prototype d'ici.
+        const equipe = noms => ({ ...fzEquipeDuJoueur(POOL, noms) });
+        assert.deepEqual(equipe(['Nick Suzuki']), { nom: 'Équipe 1', membres: ['marie'] });
+        assert.deepEqual(equipe(['Jakub Dobes']), { nom: 'Les Glorieux', membres: ['andy', 'bob'] });
+    });
+
+    test('un choix enregistré sous une autre graphie est reconnu, banc compris', () => {
+        // Choisi « Zack Bolduc » avant le changement de nom ; la LNH dit « Zachary ».
+        assert.equal(fzEquipeDuJoueur(POOL, [undefined, 'Zachary Bolduc']).nom, 'Équipe 1');
+        assert.equal(fzEquipeDuJoueur(POOL, ['Mitch Marner']).nom, 'Les Glorieux');
+    });
+
+    test('un joueur que personne n’a, ou sans pool, rend null', () => {
+        assert.equal(fzEquipeDuJoueur(POOL, ['Cole Caufield']), null);
+        assert.equal(fzEquipeDuJoueur(null, ['Nick Suzuki']), null);
+        assert.equal(fzEquipeDuJoueur(POOL, [undefined, '']), null);
     });
 });
 

@@ -242,11 +242,14 @@
      * Nom tel qu'il est écrit dans la trousse, à partir de n'importe quelle
      * variante enregistrée. Rend le nom reçu si rien ne correspond : un choix
      * inconnu reste inconnu plutôt que d'être rapproché du mauvais joueur.
+     * Les ALIAS valent avant la trousse : la page Stats ne la télécharge
+     * qu'en projection, et un choix « Zack Bolduc » doit y rester le sien.
      */
     function nomCanonique(nom) {
-        if (!nom || !donnees) return nom;
-        if (!indexNoms) construireIndex();
+        if (!nom) return nom;
         var cle = cleNom(nom);
+        if (!donnees) return ALIAS[cle] || nom;
+        if (!indexNoms) construireIndex();
         return ALIAS[cle] || indexNoms[cle] || nom;
     }
 

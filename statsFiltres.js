@@ -184,7 +184,10 @@
 
     // ==================== QUI A QUI DANS LE POOL ACTIF ====================
 
-    const cle = nom => String(nom || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    // Ramenée à la graphie de la trousse : un choix enregistré « Zack Bolduc »
+    // reste le « Zachary Bolduc » du tableau (ALIAS, draftkitData.js).
+    const canonique = nom => (window.FZDraftKit ? FZDraftKit.nomCanonique(nom) : nom);
+    const cle = nom => String(canonique(nom) || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
         .toLowerCase().replace(/[^a-z]/g, '');
     let proprio = null;   // Map clé → 'moi' | 'pris', ou null sans pool repêché
 

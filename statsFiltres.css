@@ -139,7 +139,8 @@ body.fz-stats .table-container {
     border-radius: 0;
     margin-top: 10px;
 }
-body.fz-stats #tableContainer #playerTable thead th {
+body.fz-stats #tableContainer #playerTable thead th,
+body.fz-stats #tableContainer #playerTable tbody.sj-section th {
     top: var(--sj-nav-h);
     height: 36px;
     padding: 0 2px;
@@ -150,9 +151,15 @@ body.fz-stats #tableContainer #playerTable thead th {
     letter-spacing: 1px;
     text-align: center;
 }
-body.fz-stats #tableContainer #playerTable thead th.player-col { text-align: left; font-weight: 600; }
-body.fz-stats #tableContainer #playerTable thead th.rank-col { text-align: left; padding-left: 14px; font-weight: 600; letter-spacing: 0; }
-body.fz-stats #tableContainer #playerTable thead th.points-column { text-align: right; padding-right: 14px; }
+body.fz-stats #tableContainer #playerTable :is(thead, tbody.sj-section) th.player-col { text-align: left; font-weight: 600; }
+body.fz-stats #tableContainer #playerTable :is(thead, tbody.sj-section) th.rank-col { text-align: left; padding-left: 14px; font-weight: 600; letter-spacing: 0; }
+body.fz-stats #tableContainer #playerTable :is(thead, tbody.sj-section) th.points-column { text-align: right; padding-right: 14px; }
+/* Une recherche sous « Tous » ajoute les gardiens et les clubs trouvés, chacun
+   sous son en-tête (ajouterSections, index.js) : l'en-tête du tableau, en
+   rangée ordinaire — détaché de la section du dessus, ni collant ni survolable. */
+body.fz-stats #tableContainer #playerTable tbody.sj-section th { height: auto; padding-top: 26px; padding-bottom: 11px; }
+body.fz-stats #tableContainer #playerTable tbody.sj-section tr,
+body.fz-stats #tableContainer #playerTable tbody.sj-section tr:hover { background: transparent !important; cursor: default; }
 body.fz-stats #tableContainer #playerTable thead th.is-sorted,
 body.fz-stats #tableContainer #playerTable thead th.is-sorted:hover { color: var(--sj-red); }
 body.fz-stats #tableContainer #playerTable thead th.sortable:hover { color: var(--sj-ink); }

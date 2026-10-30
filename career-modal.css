@@ -36,6 +36,13 @@
 #careerStatsModal .cmh-position { margin-bottom:8px; white-space:pre-wrap; }
 #careerStatsModal #careerPlayerName { margin:0 0 10px; color:var(--text-main); font:800 clamp(38px,4.4vw,64px)/.98 'Barlow Condensed','Arial Narrow',Impact,sans-serif; text-transform:uppercase; overflow-wrap:anywhere; letter-spacing:-.3px; }
 #careerStatsModal .cmh-team-badge { display:inline-block; max-width:100%; padding:6px 18px; border:1px solid var(--team-edge); border-radius:7px; background:var(--team-surface); box-shadow:inset 0 1px 8px #ffffff0d; color:#fff; font-size:13px; font-weight:700; letter-spacing:.34em; text-transform:uppercase; }
+/* À qui le joueur appartient dans le pool actif (renderOwner, careerModal.js). */
+#careerStatsModal .cmh-owner { display:flex; align-items:center; gap:10px; margin:14px 0 0; min-width:0; }
+#careerStatsModal .cmh-owner[hidden] { display:none; }
+#careerStatsModal .cmh-owner svg { flex:0 0 32px; width:32px; height:32px; padding:6px; border:1px solid var(--team-edge); border-radius:50%; color:var(--team-trim); }
+#careerStatsModal .cmh-owner-txt { display:flex; flex-direction:column; gap:3px; min-width:0; }
+#careerStatsModal .cmh-owner strong { color:var(--text-main); font:700 18px/1.15 'Barlow','Segoe UI',sans-serif; overflow-wrap:anywhere; }
+#careerStatsModal .cmh-owner-team { color:var(--text-gray); font-size:13px; line-height:1.2; overflow-wrap:anywhere; }
 #careerStatsModal .cmh-actions { grid-column:3; align-self:center; display:grid; gap:12px; }
 #careerStatsModal .cmh-action { display:flex; justify-content:center; align-items:center; gap:16px; min-height:54px; padding:10px 14px; border:1px solid var(--border-gray); border-radius:10px; background:var(--card); box-shadow:inset 0 0 0 1px #ffffff06; color:var(--text-main); font:600 17px/1.2 'Barlow','Segoe UI',sans-serif; cursor:pointer; }
 #careerStatsModal .cmh-action svg { flex:0 0 26px; width:26px; height:26px; }
@@ -167,6 +174,10 @@
   #careerStatsModal .cmh-position { font-size:9px; letter-spacing:.1em; margin-bottom:7px; }
   #careerStatsModal #careerPlayerName { font-size:clamp(29px,7.8vw,44px); margin-bottom:8px; }
   #careerStatsModal .cmh-team-badge { font-size:9px; padding:5px 7px; letter-spacing:.13em; }
+  #careerStatsModal .cmh-owner { gap:8px; margin-top:10px; }
+  #careerStatsModal .cmh-owner svg { flex-basis:26px; width:26px; height:26px; padding:5px; }
+  #careerStatsModal .cmh-owner strong { font-size:15px; }
+  #careerStatsModal .cmh-owner-team { font-size:11px; }
   #careerStatsModal .cmh-actions { grid-column:1/-1; }
   #careerStatsModal .cmh-action { min-height:46px; font-size:13px; }
   #careerStatsModal .cmh-action svg { width:21px; height:21px; flex-basis:21px; }
@@ -202,6 +213,7 @@ html[data-theme="light"] #careerStatsModal .career-modal { box-shadow:0 30px 90p
 html[data-theme="light"] #careerStatsModal .career-profile-body { background:linear-gradient(132deg,transparent 0 54%,#00000003 54% 62%,transparent 62%),var(--bg); }
 html[data-theme="light"] #careerStatsModal .career-profile-body button:focus-visible, html[data-theme="light"] #careerStatsModal .career-profile-body select:focus-visible, html[data-theme="light"] #careerStatsModal .career-profile-body [tabindex]:focus-visible { outline-color:var(--team-surface); }
 html[data-theme="light"] #careerStatsModal .cmh-portrait { box-shadow:0 8px 20px #0003,inset 0 0 30px #000; }
+html[data-theme="light"] #careerStatsModal .cmh-owner svg { border-color:var(--team-surface); color:var(--team-surface); }
 html[data-theme="light"] #careerStatsModal .cmh-action { box-shadow:0 1px 2px #0000000d; }
 html[data-theme="light"] #careerStatsModal .cmh-action:hover { border-color:var(--team-surface); background-color:var(--bg-gray-light); }
 html[data-theme="light"] #careerStatsModal .cmh-action[aria-pressed="true"] svg { color:var(--team-surface); fill:var(--team-surface); }

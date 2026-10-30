@@ -1,5 +1,30 @@
 /* Shared player profile presentation. Page adapters retain their existing
  * career tables, game logs and draft confirmation flow. */
+
+/**
+ * L'équipe du pool qui a ce joueur, ou null : { nom, membres }.
+ *
+ * Les choix sont enregistrés par nom, sous la graphie du repêchage. La fiche
+ * en connaît deux — celui que la page lui passe et celui de la LNH — et les
+ * compare sans accents ni ponctuation, chacun ramené aussi à la graphie de la
+ * trousse (FZDraftKit.nomCanonique) : un choix « Zack Bolduc » est bien le
+ * « Zachary Bolduc » de la LNH. Le banc compte (fzNomsChoisis, activePool.js).
+ */
+function fzEquipeDuJoueur(poolData, noms) {
+    const kit = window.FZDraftKit;
+    const cle = nom => String(nom || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const cles = nom => [cle(nom), cle(kit ? kit.nomCanonique(nom) : nom)].filter(Boolean);
+    const cherchees = new Set(noms.flatMap(cles));
+    if (!cherchees.size || typeof window.fzNomsChoisis !== 'function') return null;
+    for (const [nom, equipe] of Object.entries((poolData && poolData.teams) || {})) {
+        if (window.fzNomsChoisis(equipe).some(choix => cles(choix).some(c => cherchees.has(c)))) {
+            return { nom, membres: (equipe && equipe.members) || [] };
+        }
+    }
+    return null;
+}
+
 (function () {
     'use strict';
 
@@ -51,7 +76,8 @@
                         <div class="player-headshot-container" id="playerHeadshotContainer"></div>
                         <figcaption><b id="careerJerseyNumber"></b><span id="careerPortraitTeam"></span></figcaption>
                     </figure>
-                    <div class="cmh-ident-text"><div class="cmh-position" id="careerPlayerPosition"></div><h2 id="careerPlayerName">Fiche du joueur</h2><span class="cmh-team-badge" id="careerPlayerTeam"></span></div>
+                    <div class="cmh-ident-text"><div class="cmh-position" id="careerPlayerPosition"></div><h2 id="careerPlayerName">Fiche du joueur</h2><span class="cmh-team-badge" id="careerPlayerTeam"></span>
+                        <p class="cmh-owner" id="careerOwner" hidden></p></div>
                     <div class="cmh-actions" id="careerActions"><button type="button" class="cmh-action" id="careerFavorite">${icon('star')}<span>Ajouter aux favoris</span></button><button type="button" class="cmh-action cmh-action-pick" id="careerPick">${icon('plus')}<span>Choisir ce joueur</span></button></div>
                     <div class="cmh-stats">
                         <div class="cmh-stat-row"><span class="cmh-mini-lbl">Taille / Poids</span><span class="cmh-stat-val"><span id="playerHeight">—</span>, <span id="playerWeight">—</span></span></div>
@@ -162,6 +188,41 @@
         return active && typeof selectPlayer === 'function' && typeof isUserTurn === 'function' && isUserTurn()
             && typeof checkIfUserTeamIsDone === 'function' && !checkIfUserTeamIsDone()
             && !(typeof fzPickedSet === 'function' && fzPickedSet().has(active.playerName));
+    }
+
+    /**
+     * À qui le joueur appartient dans le pool actif : « Dans l'équipe de
+     * Marie », et le nom de son équipe quand elle en a choisi un. Un échange
+     * déplace le joueur : c'est l'équipe qui l'a aujourd'hui, pas forcément
+     * celle qui l'a repêché.
+     */
+    function renderOwner(noms) {
+        const owner = el('careerOwner');
+        const pool = window.FZPool;
+        const equipe = pool ? fzEquipeDuJoueur(pool.data(), noms) : null;
+        owner.hidden = !equipe;
+        if (!equipe) { owner.replaceChildren(); return; }
+        const moi = pool.team();
+        const mienne = Boolean(moi) && moi.name === equipe.nom;
+        const personnes = equipe.membres.join(' et ');
+        // « Équipe 3 » est le nom donné d'office : il n'apprend rien de plus.
+        const nomChoisi = /^Équipe \d+$/.test(equipe.nom) ? '' : equipe.nom;
+        const texte = document.createElement('span');
+        texte.className = 'cmh-owner-txt';
+        const libelle = document.createElement('span');
+        libelle.className = 'cmh-mini-lbl';
+        libelle.textContent = mienne ? 'Dans le pool' : 'Dans l’équipe de';
+        const qui = document.createElement('strong');
+        qui.textContent = mienne ? 'Ton équipe' : (personnes || equipe.nom);
+        texte.append(libelle, qui);
+        if (nomChoisi && qui.textContent !== nomChoisi) {
+            const nomEquipe = document.createElement('span');
+            nomEquipe.className = 'cmh-owner-team';
+            nomEquipe.textContent = nomChoisi;
+            texte.append(nomEquipe);
+        }
+        owner.innerHTML = icon('person');
+        owner.append(texte);
     }
 
     function seasonDisplay(season) {
@@ -429,6 +490,7 @@
         el('careerBannerName').textContent = playerName || 'Fiche du joueur';
         el('careerPlayerName').textContent = playerName || 'Fiche du joueur';
         el('careerWatchBanner').hidden = true;
+        el('careerOwner').hidden = true;
         el('careerActions').hidden = repechageTermine();
         poserVue('career'); el('leagueFilter').value = 'nhl'; el('gameTypeFilter').value = 'regular';
         poserSquelette(playerName);
@@ -439,6 +501,7 @@
             adapter.onData(data);
             activeId = playerId;
             renderProfile(data, playerId);
+            renderOwner([playerName, data.playerName]);
             retirerSquelette();
             suivreDirect();
             adapter.renderStats();

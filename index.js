@@ -255,36 +255,92 @@ function positionJoueur(joueur) {
     return getCurrentPlayerStats(joueur.skaterFullName, joueur.playerId)?.position || joueur.positionCode;
 }
 
+/**
+ * Le sigle d'un club de la LNH. La trousse le porte ; la liste de la saison
+ * n'a que le nom complet, que la fiche du joueur sait lire (careerModal.js)
+ * — getTeamAbbreviation devinait « SLB » pour St. Louis.
+ */
+function sigleClub(club) {
+    return club.teamAbbrev
+        || ("function" == typeof fzCareerTeamCode && fzCareerTeamCode(club.teamFullName))
+        || getTeamAbbreviation(club.teamFullName);
+}
+
+/* ==================== RECHERCHE : TOUTES LES POSITIONS ====================
+ *
+ * Sous « Tous », le tableau liste les patineurs, recrues comprises : les
+ * gardiens et les clubs ont leurs propres colonnes. Une recherche, elle,
+ * fouille tout — « Dobes » trouve le gardien, « Canadiens » le club, « MTL »
+ * les trois — et ajoute sous les patineurs une section par sorte trouvée.
+ * Chaque section garde six colonnes, celles du tableau, sous ses propres
+ * libellés (SECTION_GARDIENS, SECTION_CLUBS).
+ */
+let statsAutres = null;
+
+/** Les listes du tableau : la saison réelle, ou les projections de la trousse. */
+function sourcesDuTableau() {
+    const projete = modeProjection();
+    return {
+        patineurs: projete ? projectionPools.skaters : fullPlayerData,
+        gardiens: projete ? projectionPools.goalies : goalieData,
+        clubs: projete ? projectionPools.teams : teamData
+    };
+}
+
+/** Les gardiens que la recherche et les filtres laissent, triés comme leur onglet. */
+function gardiensTrouves(recherche, gardiens) {
+    const e = cleDeTri(GOALIE_COLUMNS);
+    return gardiens.filter(g => estLibre(g.goalieFullName) && estDuClub(g)
+        && correspondRecherche(recherche, g.goalieFullName, () => clubJoueur(g)))
+        .sort((t, a) => comparerParStat(
+            valeurDeTri(t, t.goalieFullName, t.playerId, e, !0),
+            valeurDeTri(a, a.goalieFullName, a.playerId, e, !0),
+            t.goalieFullName, a.goalieFullName
+        ));
+}
+
+/**
+ * Vrai quand le classement des clubs se lit dans /current-teams. Les clubs
+ * souffraient du même mélange que les joueurs : un club absent de
+ * /current-teams était classé sur ses points de l'an passé.
+ */
+function clubsCourantsPrets() {
+    return !modeProjection() && !!(currentTeams && currentTeams.teams && currentTeams.teams.length);
+}
+
+/** Les clubs que la recherche laisse, au classement de la LNH. */
+function clubsTrouves(recherche, clubs) {
+    const clubsPrets = clubsCourantsPrets();
+    return clubs.filter(c => correspondRecherche(recherche, c.teamFullName, () => sigleClub(c))).sort((t, e) => {
+        const a = clubsPrets ? getCurrentTeamStats(t.teamFullName) : t,
+            n = clubsPrets ? getCurrentTeamStats(e.teamFullName) : e;
+        return comparerParStat(nombreStat(a && a.points), nombreStat(n && n.points),
+            t.teamFullName, e.teamFullName)
+    });
+}
+
+/**
+ * Ce qu'une recherche sous « Tous » trouve en plus des patineurs. Les filtres
+ * affichés valent pour tout ce qui est listé : un club pris dans le pool
+ * n'est pas un agent libre, et le filtre d'équipe ne garde que son club.
+ */
+function autresResultats(recherche, sources) {
+    return {
+        gardiens: gardiensTrouves(recherche, sources.gardiens),
+        clubs: clubsTrouves(recherche, sources.clubs).filter(c => estLibre(c.teamFullName)
+            && (!statsClub || sigleClub(c) === statsClub))
+    };
+}
+
 function updateTable() {
     const t = statsFilter,
         a = normaliserRecherche(document.getElementById("searchInput").value);
     clearStatsPagination();
-    const projete = modeProjection(),
-        patineurs = projete ? projectionPools.skaters : fullPlayerData,
-        gardiens = projete ? projectionPools.goalies : goalieData,
-        clubs = projete ? projectionPools.teams : teamData;
-    if ("teams" === t) {
-        // Les clubs souffraient du même mélange : un club absent de
-        // /current-teams était classé sur ses points de l'an passé.
-        const clubsPrets = !projete && !!(currentTeams && currentTeams.teams && currentTeams.teams.length);
-        return void populateTeamTable(clubs.filter(c => correspondRecherche(a, c.teamFullName,
-            () => c.teamAbbrev || getTeamAbbreviation(c.teamFullName))).sort((t, e) => {
-            const a = clubsPrets ? getCurrentTeamStats(t.teamFullName) : t,
-                n = clubsPrets ? getCurrentTeamStats(e.teamFullName) : e;
-            return comparerParStat(nombreStat(a && a.points), nombreStat(n && n.points),
-                t.teamFullName, e.teamFullName)
-        }))
-    }
-    if ("goalies" === t) {
-        const e = cleDeTri(GOALIE_COLUMNS);
-        return void populateGoalieTable(gardiens.filter(g => estLibre(g.goalieFullName) && estDuClub(g)
-            && correspondRecherche(a, g.goalieFullName, () => clubJoueur(g)))
-            .sort((t, a) => comparerParStat(
-                valeurDeTri(t, t.goalieFullName, t.playerId, e, !0),
-                valeurDeTri(a, a.goalieFullName, a.playerId, e, !0),
-                t.goalieFullName, a.goalieFullName
-            )))
-    }
+    const sources = sourcesDuTableau(),
+        patineurs = sources.patineurs;
+    statsAutres = null;
+    if ("teams" === t) return void populateTeamTable(clubsTrouves(a, sources.clubs));
+    if ("goalies" === t) return void populateGoalieTable(gardiensTrouves(a, sources.gardiens));
     const e = cleDeTri(SKATER_COLUMNS);
     let n;
     if ("offensive" === t) n = patineurs.filter(j => ["C", "R", "L"].includes(j.positionCode));
@@ -296,6 +352,7 @@ function updateTable() {
     if (a) n = n.filter(j => correspondRecherche(a, j.skaterFullName, () => clubJoueur(j)));
     if (statsLibres) n = n.filter(j => estLibre(j.skaterFullName));
     if (statsClub) n = n.filter(estDuClub);
+    if ("all" === t && a) statsAutres = autresResultats(a, sources);
     n.sort((t, a) => comparerParStat(
         valeurDeTri(t, t.skaterFullName, t.playerId, e, !1),
         valeurDeTri(a, a.skaterFullName, a.playerId, e, !1),
@@ -331,6 +388,14 @@ function reinitialiserFiltres() {
     statsSort = "points";
     statsLibres = false;
     statsClub = "";
+    updateTable();
+}
+
+/** Une rangée de club mène à ses joueurs : le filtre d'équipe, sans la recherche qui l'a trouvée. */
+function voirClub(sigle) {
+    statsClub = sigle;
+    viderRecherche();
+    choisirFiltre("all");
     updateTable();
 }
 
@@ -400,12 +465,6 @@ const GOALIE_COLUMNS = [
  * `count`, s'il est donné, suit le libellé de la colonne joueur : « Joueur · 312 ».
  */
 function buildTableHead(columns, activeSort, count) {
-    // La largeur passe par une variable CSS et non par `width` en ligne : un
-    // style en ligne l'emporte sur toute feuille de style, ce qui rendait les
-    // ajustements responsive impossibles sans !important.
-    const cols = columns
-        .map(c => `<col${c.w ? ` style="--col-w:${c.w}"` : ''}>`)
-        .join('');
     const cells = columns.map(c => {
         const cls = [c.cls, c.sort ? 'sortable' : ''].filter(Boolean).join(' ');
         const actif = c.sort && c.sort === activeSort;
@@ -417,7 +476,14 @@ function buildTableHead(columns, activeSort, count) {
             + (actif ? ' aria-sort="descending"' : '')
             + `>${c.label}${compte}${actif ? '<span class="sort-caret" aria-hidden="true">▼</span>' : ''}</th>`;
     }).join('');
-    return `<colgroup>${cols}</colgroup><thead><tr>${cells}</tr></thead>`;
+    return `${colgroupDe(columns)}<thead><tr>${cells}</tr></thead>`;
+}
+
+function colgroupDe(columns) {
+    // La largeur passe par une variable CSS et non par `width` en ligne : un
+    // style en ligne l'emporte sur toute feuille de style, ce qui rendait les
+    // ajustements responsive impossibles sans !important.
+    return `<colgroup>${columns.map(c => `<col${c.w ? ` style="--col-w:${c.w}"` : ''}>`).join('')}</colgroup>`;
 }
 
 /** Vrai dès que la recherche ou une pastille restreint la liste. */
@@ -428,8 +494,13 @@ function filtresActifs() {
 /**
  * Message d'état vide : une recherche infructueuse doit expliquer quoi faire,
  * et offrir la sortie d'un geste quand ce sont les filtres qui ont tout caché.
+ * Une recherche faite sous une position peut viser un joueur d'une autre :
+ * elle se relance alors sous « Tous », qui fouille tout.
  */
 function buildEmptyState(colspan, message, hint) {
+    const partout = "all" !== statsFilter && !!document.getElementById("searchInput")?.value.trim()
+        ? '<button type="button" class="table-empty-reset" data-action="search-all">Chercher dans toutes les positions</button>'
+        : '';
     const sortie = filtresActifs()
         ? '<button type="button" class="table-empty-reset" data-action="reset-filters">Réinitialiser les filtres</button>'
         : '';
@@ -437,9 +508,50 @@ function buildEmptyState(colspan, message, hint) {
         <div class="table-empty">
             <p class="table-empty-title">${message}</p>
             ${hint ? `<p class="table-empty-hint">${hint}</p>` : ''}
-            ${sortie}
+            ${partout || sortie ? `<div class="table-empty-actions">${partout}${sortie}</div>` : ''}
         </div>
     </td></tr></tbody>`;
+}
+
+/* Sections d'une recherche sous « Tous » : les six colonnes du tableau,
+   relibellées. PTS est le pointage de pool, comme dans chaque onglet. */
+const SECTION_GARDIENS = {
+    titre: 'Gardiens',
+    colonnes: [['PJ', 'Parties jouées'], ['V', 'Victoires'], ['BL', 'Blanchissages'], ['PTS', 'Points']]
+};
+const SECTION_CLUBS = {
+    titre: 'Équipes',
+    colonnes: [['PJ', 'Parties jouées'], ['V', 'Victoires'], ['D', 'Défaites'], ['PTS', 'Points']]
+};
+
+/** La ligne d'en-tête d'une section : « Gardiens · 2 » et ses colonnes. */
+function enteteSection(section, compte) {
+    const titre = colonnesDuMode(section.colonnes.map(([label, title]) => ({ label, title })));
+    return `<tr><th class="rank-col" scope="col"></th>`
+        + `<th class="player-col" scope="col">${section.titre}<span class="th-count"> · ${compte}</span></th>`
+        + titre.map((c, i) => `<th scope="col" title="${c.title}"${i === titre.length - 1 ? ' class="points-column"' : ''}>${c.label}</th>`).join('')
+        + `</tr>`;
+}
+
+/**
+ * Ajoute au tableau les gardiens et les clubs trouvés. Chaque section a son
+ * en-tête et son propre corps : les trois premiers rangs de chacune
+ * ressortent (statsFiltres.css), comme dans un onglet. `enTete` : aucun
+ * patineur trouvé, la première section prend l'en-tête du tableau.
+ */
+function ajouterSections(table, autres, enTete) {
+    const sections = [
+        [SECTION_GARDIENS, autres.gardiens, rangeeGardienSection],
+        [SECTION_CLUBS, autres.clubs, rangeeClubSection]
+    ].filter(([, liste]) => liste.length);
+    sections.forEach(([section, liste, rangee], i) => {
+        const tete = document.createElement(enTete && 0 === i ? "thead" : "tbody");
+        if ("TBODY" === tete.tagName) tete.className = "sj-section";
+        tete.innerHTML = enteteSection(section, liste.length);
+        const corps = document.createElement("tbody");
+        liste.forEach((ligne, index) => corps.appendChild(rangee(ligne, index)));
+        table.append(tete, corps);
+    });
 }
 
 /**
@@ -467,17 +579,27 @@ function pastillesJoueur(nom, recrue) {
 }
 
 async function populatePlayerTable(t) {
-    annoncerRendu(t.length, "joueurs");
+    const autres = statsAutres || { gardiens: [], clubs: [] },
+        total = t.length + autres.gardiens.length + autres.clubs.length;
+    annoncerRendu(total, statsAutres ? "résultats" : "joueurs");
     await fetchImageData();
     const e = document.getElementById("playerTable");
     const visible = t.slice(0, statsVisibleCount);
     const sortKey = cleDeTri(SKATER_COLUMNS);
 
-    if (!t.length) {
+    if (!total) {
         const recherche = document.getElementById("searchInput").value.trim();
         e.innerHTML = buildTableHead(colonnesDuMode(SKATER_COLUMNS), sortKey, 0)
             + buildEmptyState(SKATER_COLUMNS.length, 'Aucun joueur trouvé',
                 recherche ? 'Vérifiez l\'orthographe, ou cherchez le sigle d\'un club (MTL).' : '');
+        renderStatsPagination(0);
+        return;
+    }
+
+    if (!t.length) {
+        // Seulement des gardiens ou des clubs : pas d'en-tête de patineurs vide.
+        e.innerHTML = colgroupDe(SKATER_COLUMNS);
+        ajouterSections(e, autres, true);
         renderStatsPagination(0);
         return;
     }
@@ -513,6 +635,7 @@ async function populatePlayerTable(t) {
             `Voir la fiche de ${a}`);
         tbody.appendChild(y)
     });
+    ajouterSections(e, autres, false);
     marquerColonneTriee(e);
     renderStatsPagination(t.length)
 }
@@ -573,11 +696,15 @@ function metaJoueur(equipe, position, extra = "") {
     return club || pastille || extra ? `<span class="player-meta">${club}${pastille}${extra}</span>` : "";
 }
 
-/** Le tri se lit dans la colonne entière, pas seulement dans son en-tête. */
+/**
+ * Le tri se lit dans la colonne entière, pas seulement dans son en-tête —
+ * celle du premier corps seulement : sous une recherche, les sections de
+ * gardiens et de clubs ont d'autres colonnes à la même place.
+ */
 function marquerColonneTriee(table) {
     const th = table.querySelector("thead th.is-sorted");
     if (!th) return;
-    table.querySelectorAll("tbody tr").forEach(tr => tr.cells[th.cellIndex]?.classList.add("is-sorted-col"));
+    [...(table.tBodies[0]?.rows || [])].forEach(tr => tr.cells[th.cellIndex]?.classList.add("is-sorted-col"));
 }
 
 /**
@@ -615,6 +742,7 @@ function initStatsHeaderSorting() {
 
     table.addEventListener('click', e => {
         if (e.target.closest('[data-action="reset-filters"]')) { reinitialiserFiltres(); return; }
+        if (e.target.closest('[data-action="search-all"]')) { choisirFiltre("all"); updateTable(); return; }
         trier(e.target.closest('th[data-sort]'));
     });
     table.addEventListener('keydown', e => {
@@ -670,27 +798,53 @@ function populateGoalieTable(t) {
     const tbody = document.createElement("tbody");
     e.appendChild(tbody);
     t.forEach((t, index) => {
-        const a = t.goalieFullName,
-            n = getCurrentPlayerStats(a, t.playerId),
-            s = getMatchingImage(a),
-            l = n?.teamAbbrev ? `teams/${n.teamAbbrev}.png` : getTeamLogoPath(t.teamAbbrevs);
+        const { stats: srcG, identite } = ficheGardien(t);
         let o, r, d, i, c, u, m;
-        const srcG = !modeProjection() && statsCourantesPretes() ? n : t;
         o = nombreStat(srcG && srcG.gamesPlayed), r = nombreStat(srcG && srcG.wins),
         d = nombreStat(srcG && srcG.losses), i = nombreStat(srcG && srcG.otLosses),
         // Sans partie jouée, ou sans pourcentage connu (0 = donnée absente,
         // voir lib/savePct.js), pas de pourcentage : « — », pas 0.000.
         c = o > 0 && nombreStat(srcG && srcG.savePct) > 0 ? nombreStat(srcG.savePct) : null, u = nombreStat(srcG && srcG.shutouts),
-        m = valeurDeTri(t, a, t.playerId, "points", !0);
-        const clubG = n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim(),
-            h = photoJoueur(s || (t.playerId && clubG ? buildHeadshotUrl(t.playerId, clubG) : null), clubG, a),
-            g = document.createElement("tr");
-        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell">${h}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim())}${watchBadge(a, n?.teamAbbrev || t.teamAbbrevs)}</span>${metaJoueur(n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim(), "G", pastillesJoueur(a, !1))}</div></div></td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
-        t.playerId && makeRowInteractive(g, () => showCareerStats(t.playerId, t.goalieFullName, !0),
-            `Voir la fiche de ${a}`);
+        m = valeurDeTri(t, t.goalieFullName, t.playerId, "points", !0);
+        const g = document.createElement("tr");
+        g.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col">${identite}</td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td>${d}</td>\n            <td>${i}</td>\n            <td>${c != null ? c.toFixed(3) : "—"}</td>\n            <td>${u}</td>\n            <td class="points-column">${m}</td>\n        `;
+        rendreGardienActivable(g, t);
         tbody.appendChild(g)
     });
     marquerColonneTriee(e)
+}
+
+/**
+ * Ce qu'une rangée de gardien affiche, onglet ou section : la ligne de
+ * statistiques de la saison montrée, et la cellule « Gardien » — photo, nom,
+ * pastilles, club.
+ */
+function ficheGardien(t) {
+    const a = t.goalieFullName,
+        n = getCurrentPlayerStats(a, t.playerId),
+        club = n?.teamAbbrev || t.teamAbbrevs?.split(",").pop().trim(),
+        photo = photoJoueur(getMatchingImage(a) || (t.playerId && club ? buildHeadshotUrl(t.playerId, club) : null), club, a);
+    return {
+        stats: !modeProjection() && statsCourantesPretes() ? n : t,
+        identite: `<div class="player-cell">${photo}<div class="player-ident"><span class="player-name">${nomJoueurHTML(a)}${injBadge(a, club)}${watchBadge(a, club)}</span>${metaJoueur(club, "G", pastillesJoueur(a, !1))}</div></div>`
+    };
+}
+
+function rendreGardienActivable(rangee, t) {
+    t.playerId && makeRowInteractive(rangee, () => showCareerStats(t.playerId, t.goalieFullName, !0),
+        `Voir la fiche de ${t.goalieFullName}`);
+}
+
+/** Un gardien trouvé par la recherche : PJ, V, BL et son pointage de pool (SECTION_GARDIENS). */
+function rangeeGardienSection(t, index) {
+    const { stats, identite } = ficheGardien(t),
+        rangee = document.createElement("tr");
+    rangee.innerHTML = `<td class="rank-col">${index + 1}</td><td class="player-col">${identite}</td>`
+        + `<td>${nombreStat(stats && stats.gamesPlayed)}</td><td>${nombreStat(stats && stats.wins)}</td>`
+        + `<td>${nombreStat(stats && stats.shutouts)}</td>`
+        + `<td class="points-column">${valeurDeTri(t, t.goalieFullName, t.playerId, "points", !0)}</td>`;
+    rendreGardienActivable(rangee, t);
+    return rangee;
 }
 
 function getTeamAbbreviation(t) {
@@ -731,46 +885,49 @@ function populateTeamTable(t) {
     const tbody = document.createElement("tbody");
     e.appendChild(tbody);
     t.forEach((t, index) => {
-        const a = `teams/${t.teamAbbrev || getTeamAbbreviation(t.teamFullName)}.png`,
-            n = getCurrentTeamStats(t.teamFullName);
+        const { stats: srcT, identite } = ficheClub(t);
         let s, l, o, r, d;
-        const srcT = !modeProjection() && (currentTeams && currentTeams.teams && currentTeams.teams.length) ? n : t;
         s = nombreStat(srcT && srcT.gamesPlayed), l = nombreStat(srcT && srcT.wins),
         o = nombreStat(srcT && srcT.losses), r = nombreStat(srcT && srcT.otLosses),
         d = nombreStat(srcT && srcT.points) || 2 * l + 1 * r;
         const i = document.createElement("tr");
-        i.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col"><div class="player-cell"><img src="${a}" alt="" class="team-logo-cell"><div class="player-ident"><span class="player-name">${t.teamFullName}</span></div></div></td>\n            <td>${s}</td>\n            <td>${l}</td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td class="points-column">${d}</td>\n        `;
-        makeRowInteractive(i, () => showLastYearStats(t, "team"),
-            `Voir les statistiques de ${t.teamFullName}`);
+        i.innerHTML = `\n            <td class="rank-col">${index + 1}</td>\n            <td class="player-col">${identite}</td>\n            <td>${s}</td>\n            <td>${l}</td>\n            <td>${o}</td>\n            <td>${r}</td>\n            <td class="points-column">${d}</td>\n        `;
+        rendreClubActivable(i, t);
         tbody.appendChild(i)
     })
 }
 
-function showLastYearStats(t, e) {
-    const a = document.getElementById("lastYearModal"),
-        n = document.getElementById("modalPlayerName"),
-        s = document.getElementById("modalStats");
-    let l = null,
-        o = "";
-    if ("player" === e ? (o = t.skaterFullName, l = fullPlayerData.find(t => t.skaterFullName === o)) : "goalie" === e ? (o = t.goalieFullName, l = goalieData.find(t => t.goalieFullName === o)) : "team" === e && (o = t.teamFullName, l = teamData.find(t => t.teamFullName === o)), n.textContent = o, l) {
-        let t = "";
-        if ("player" === e) t = `\n                <div class="stat-item">\n                    <div class="stat-label">Matchs joués</div>\n                    <div class="stat-value">${l.gamesPlayed||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Buts</div>\n                    <div class="stat-value">${l.goals||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Passes</div>\n                    <div class="stat-value">${l.assists||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Points</div>\n                    <div class="stat-value">${l.points||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">+/-</div>\n                    <div class="stat-value">${l.plusMinus||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">PIM</div>\n                    <div class="stat-value">${l.penaltyMinutes||0}</div>\n                </div>\n            `;
-        else if ("goalie" === e) {
-            const e = l.points || 0;
-            t = `\n                <div class="stat-item">\n                    <div class="stat-label">Matchs joués</div>\n                    <div class="stat-value">${l.gamesPlayed||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Victoires</div>\n                    <div class="stat-value">${l.wins||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Défaites</div>\n                    <div class="stat-value">${l.losses||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Prol.</div>\n                    <div class="stat-value">${l.otLosses||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">% Arrêts</div>\n                    <div class="stat-value">${l.savePct ? l.savePct.toFixed(3) : "—"}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Blanchissages</div>\n                    <div class="stat-value">${l.shutouts||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Points</div>\n                    <div class="stat-value">${e}</div>\n                </div>\n            `
-        } else "team" === e && (t = `\n                <div class="stat-item">\n                    <div class="stat-label">Matchs joués</div>\n                    <div class="stat-value">${l.gamesPlayed||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Victoires</div>\n                    <div class="stat-value">${l.wins||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Défaites</div>\n                    <div class="stat-value">${l.losses||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Prol.</div>\n                    <div class="stat-value">${l.otLosses||0}</div>\n                </div>\n                <div class="stat-item">\n                    <div class="stat-label">Points</div>\n                    <div class="stat-value">${l.points||0}</div>\n                </div>\n            `);
-        s.innerHTML = t
-    } else s.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucune statistique disponible</p>';
-    a.style.display = "block"
+/** La ligne de la saison montrée d'un club, et sa cellule « Équipe » : logo et nom. */
+function ficheClub(t) {
+    return {
+        stats: clubsCourantsPrets() ? getCurrentTeamStats(t.teamFullName) : t,
+        identite: `<div class="player-cell"><img src="teams/${sigleClub(t)}.png" alt="" class="team-logo-cell"><div class="player-ident"><span class="player-name">${t.teamFullName}</span></div></div>`
+    };
 }
 
-function closeLastYearModal() {
-    document.getElementById("lastYearModal").style.display = "none"
+/**
+ * Une rangée de club mène à ses joueurs (voirClub). Elle ouvrait une fenêtre
+ * de statistiques que stats.html ne contient plus : le clic levait une erreur.
+ */
+function rendreClubActivable(rangee, t) {
+    makeRowInteractive(rangee, () => voirClub(sigleClub(t)), `Voir les joueurs de ${t.teamFullName}`);
 }
+
+/** Un club trouvé par la recherche : PJ, V, D et ses points (SECTION_CLUBS). */
+function rangeeClubSection(t, index) {
+    const { stats, identite } = ficheClub(t),
+        victoires = nombreStat(stats && stats.wins),
+        rangee = document.createElement("tr");
+    rangee.innerHTML = `<td class="rank-col">${index + 1}</td><td class="player-col">${identite}</td>`
+        + `<td>${nombreStat(stats && stats.gamesPlayed)}</td><td>${victoires}</td>`
+        + `<td>${nombreStat(stats && stats.losses)}</td>`
+        + `<td class="points-column">${nombreStat(stats && stats.points) || 2 * victoires + nombreStat(stats && stats.otLosses)}</td>`;
+    rendreClubActivable(rangee, t);
+    return rangee;
+}
+
 window.onclick = function(t) {
-    const e = document.getElementById("lastYearModal"),
-        a = document.getElementById("careerStatsModal");
-    t.target === e && closeLastYearModal(), t.target === a && closeCareerModal()
+    t.target === document.getElementById("careerStatsModal") && closeCareerModal()
 };
 let currentCareerData = null;
 async function showCareerStats(playerId, playerName, isGoalie = false) {

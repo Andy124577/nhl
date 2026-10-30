@@ -641,6 +641,10 @@ body.fz-stats .table-empty-reset {
 }
 body.fz-stats .table-empty-reset:hover { background: var(--fzs-bg); }
 body.fz-stats .table-empty-reset:focus-visible { outline: 2px solid var(--fzs-accent); outline-offset: 2px; }
+/* « Chercher dans toutes les positions » et « Réinitialiser » côte à côte,
+   l'un sous l'autre quand la largeur manque. */
+body.fz-stats .table-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+body.fz-stats .table-empty-actions .table-empty-reset { margin-top: 0; }
 
 /* Chargement : rangées du tableau, palmarès et cartes en os (stats.html).
    Os de fzSquelette.css, aux hauteurs des lignes qu'ils remplacent. */
