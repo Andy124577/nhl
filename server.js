@@ -31,6 +31,7 @@ const fichesCarriere = ficheCarriere.creerMemoireFiches();
 const gardeLNH = require("./lib/gardeLNH.js");
 const { getStatsRefreshStatus } = require("./lib/statsCache.js");
 const joueursRepeches = require("./lib/joueursRepeches.js");
+const choixAuto = require("./lib/choixAuto.js");
 const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
     seasonPhase, statsSeasonId, statsSeasonString, cachedStatsSeasonString,
     getStatsSeason } = require("./lib/season.js");
@@ -673,7 +674,11 @@ const pointage = creerServicePointage({
     apportsEnDirect: () => pointsEnDirect.lireParMatch(),
     resultatsClubs: (demande) => resultatsClubsLNH(demande),
     idDuJoueur: (nom) => {
-        const ligne = (memStatsCache.players || []).find(p => p.playerName === nom);
+        // Le nom du choix, ramené à celui du relevé : « Zack Bolduc » y est
+        // « Zachary Bolduc » (ALIAS, lib/choixAuto.js).
+        const joueurs = memStatsCache.players || [];
+        const cle = choixAuto.cle(nom);
+        const ligne = joueurs.find(p => p.playerName === nom) || joueurs.find(p => choixAuto.cle(p.playerName) === cle);
         return ligne ? ligne.playerId : null;
     }
 });
@@ -1532,7 +1537,8 @@ function triggerBackgroundStatsRefresh(reason) {
 }
 
 /**
- * Les repêchés sans ligne dans le relevé, relevés seuls.
+ * Les joueurs sans ligne dans le relevé, relevés seuls : les repêchés, et
+ * ceux de la liste de suivi.
  *
  * Sans quoi un joueur repêché hors de nhl_filtered_stats.json attendait la
  * collecte de minuit : jusqu'à un jour à zéro au classement. Quelques appels
@@ -1565,12 +1571,16 @@ async function completerRepeches() {
 
     const presents = new Set((releve.players || []).map(p => Number(p.playerId)));
     const maintenant = Date.now();
-    const manquants = (await repechesHorsSuivi()).filter(p =>
-        !presents.has(Number(p.playerId)) &&
+    // La liste de suivi aussi : un joueur qui y entre, ou dont l'identifiant
+    // y est corrigé (Zachary Bolduc, qui portait celui du retraité Zack
+    // Smith), n'a pas de ligne avant la collecte de minuit.
+    const suivis = loadAllPlayers();
+    const manquants = [...suivis, ...await repechesHorsSuivi(suivis)].filter(p =>
+        p.playerId && !presents.has(Number(p.playerId)) &&
         maintenant - (repechesSansReponse.get(p.playerId) || 0) > REESSAI_REPECHES_MS);
     if (!manquants.length) return 0;
 
-    console.log(`➕ ${manquants.length} repêché(s) sans statistiques : relevé(s) sans attendre minuit`);
+    console.log(`➕ ${manquants.length} joueur(s) sans statistiques : relevé(s) sans attendre minuit`);
     const fenetreDuPaquet = lecteurFenetreReleve(saison);
     const lignes = [];
     // Même cadence que la collecte complète : la LNH limite au-delà.
@@ -1598,7 +1608,7 @@ async function completerRepeches() {
     const { stats, ajoutees } = joueursRepeches.fusionnerReleves(courant, lignes);
     if (!ajoutees) return 0;
     memStatsCache = stats;
-    console.log(`✅ ${ajoutees} repêché(s) ajouté(s) au relevé`);
+    console.log(`✅ ${ajoutees} joueur(s) ajouté(s) au relevé`);
     return ajoutees;
 }
 

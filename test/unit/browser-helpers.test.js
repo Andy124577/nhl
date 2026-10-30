@@ -685,6 +685,41 @@ describe('classement — chaque choix paraît et compte', () => {
 
         assert.equal(calculateTeamPoints({ teams: ['Utah Mammoth'] }).points, 7);
     });
+
+    test('Bolduc, choisi « Zack » ou « Zachary », et Matthews comptent leurs vrais points', () => {
+        // Les vrais fichiers du dépôt. Le relevé de production garde encore,
+        // en tête, la ligne du retraité Zack Smith étiquetée « Zack Bolduc »
+        // (8474250, zéro point) : elle ne doit plus rien attraper.
+        const filtres = require('../../nhl_filtered_stats.json');
+        const releve = require('../../current_stats.json').players;
+        const trousse = { donnees: require('../../draftkit.json'), nomCanonique: FZDraftKit.nomCanonique };
+        const { ficheJoueur, calculateTeamPoints } = chargerFonctions('classement.js', [
+            'indexerNoms', 'chercherNom', 'indexerFiches', 'ficheJoueur', 'ficheClub',
+            'indexDuReleve', 'ligneDuReleveParNom', 'getCurrentPlayerStats', 'getCurrentTeamStats',
+            'seasonStat', 'calculateTeamPoints'
+        ], {
+            fullPlayerData: [...filtres.Top_50_Defenders, ...filtres.Top_100_Offensive_Players, ...filtres.Top_Rookies],
+            goalieData: filtres.Top_50_Goalies,
+            teamData: filtres.Teams,
+            fichesIndex: null,
+            releveIndex: { joueurs: null },
+            currentStats: { players: [{ playerId: 8474250, playerName: 'Zack Bolduc', points: 0, goals: 0, assists: 0 }, ...releve] },
+            currentTeams: { teams: [] },
+            seasonStarted: true,
+            cleDeNom, CLUBS_RENOMMES, goaliePoolPoints, clubPoolPoints,
+            FZDraftKit: trousse,
+            window: { location: { pathname: '/' }, FZDraftKit: trousse, FZ_IDS_ERRONES: [8474250] }
+        });
+        const points = id => releve.find(p => p.playerId === id).points;
+
+        assert.equal(ficheJoueur('Zack Bolduc', 'offensive').playerId, 8482737);
+        assert.equal(ficheJoueur('Zachary Bolduc', 'offensive').playerId, 8482737);
+        assert.ok(points(8482737) > 0 && points(8479318) > 0);
+        for (const bolduc of ['Zack Bolduc', 'Zachary Bolduc']) {
+            assert.equal(calculateTeamPoints({ offensive: [bolduc, 'Auston Matthews'] }).points,
+                points(8482737) + points(8479318), bolduc);
+        }
+    });
 });
 
 describe('statsLeaders — escapeHTML', () => {

@@ -312,3 +312,24 @@ test('l alignement se lit quel que soit le format des entrées', () => {
     assert.deepEqual(lu.clubs, ['Canadiens de Montréal']);
     assert.equal(lu.joueurs.length, 3, 'une entrée vide ne doit pas produire un joueur fantôme');
 });
+
+test('un choix enregistré sous une ancienne graphie compte ses matchs, sous son nom', async () => {
+    // Choisi « Zack Bolduc » ; ses feuilles sont enregistrées sous le nom de
+    // la LNH, « Zachary Bolduc » (ALIAS, lib/choixAuto.js). La requête exacte
+    // ne lui trouvait aucun match : zéro point en tête-à-tête.
+    const lignes = [
+        feuille('Zachary Bolduc', '2026-11-03', { playerId: 8482737, stats: { goals: 1 } }),
+        feuille('Auston Matthews', '2026-11-04', { playerId: 8479318, stats: { goals: 2 } })
+    ];
+    const pointage = creerServicePointage({ db: creerDb(lignes), calendrierDuJour: async () => 1 });
+
+    const detail = await pointage.detailEquipe(equipe({ offensive: ['Zack Bolduc', 'Auston Matthews'] }), {
+        debut: '2026-11-02', fin: '2026-11-09', saison: SAISON
+    });
+
+    const bolduc = detail.find(j => j.name === 'Zack Bolduc');
+    assert.equal(bolduc.matchs, 1);
+    assert.equal(bolduc.goals, 1);
+    assert.equal(bolduc.playerId, 8482737);
+    assert.equal(detail.find(j => j.name === 'Auston Matthews').goals, 2);
+});

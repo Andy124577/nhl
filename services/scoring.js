@@ -32,6 +32,7 @@
 const scoring = require('../lib/scoring.js');
 const dates = require('../lib/dates.js');
 const lineup = require('../lib/lineup.js');
+const { ALIAS, cleNom } = require('../lib/choixAuto.js');
 const { pointsApport } = require('../lib/pointsEnDirect.js');
 const { creerMemoireLectures } = require('../lib/memoireLectures.js');
 
@@ -117,8 +118,21 @@ function creerServicePointage({
      */
     async function feuilles({ noms, debut, fin, saison }) {
         if (!noms || noms.length === 0) return [];
-        const cle = `feuilles|${saison}|${String(debut)}|${String(fin)}|${[...noms].sort().join('\u0001')}`;
-        return lectures.obtenir(cle, () => lireFeuilles({ noms, debut, fin, saison }));
+        // Un choix enregistré sous une ancienne graphie (« Zack Bolduc »,
+        // lib/choixAuto.js) a ses feuilles sous le nom de la LNH (« Zachary
+        // Bolduc ») : la requête exacte ne lui trouvait aucun match. On lit
+        // les deux, et chaque ligne revient sous le nom du choix.
+        const choixDe = new Map();
+        for (const nom of noms) {
+            const enBase = ALIAS[cleNom(nom)];
+            if (enBase && enBase !== nom && !noms.includes(enBase)) choixDe.set(enBase, nom);
+        }
+        const lus = [...noms, ...choixDe.keys()];
+        const cle = `feuilles|${saison}|${String(debut)}|${String(fin)}|${[...lus].sort().join('\u0001')}`;
+        const lignes = await lectures.obtenir(cle, () => lireFeuilles({ noms: lus, debut, fin, saison }));
+        return choixDe.size
+            ? lignes.map(l => (choixDe.has(l.player_name) ? { ...l, player_name: choixDe.get(l.player_name) } : l))
+            : lignes;
     }
 
     async function lireFeuilles({ noms, debut, fin, saison }) {
