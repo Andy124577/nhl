@@ -18,12 +18,12 @@
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
     <link rel="stylesheet" href="index.css?v=20260926b">
     <link rel="stylesheet" href="pool.css?v=20261023a">
-    <link rel="stylesheet" href="poolNav.css?v=20261003a">
+    <link rel="stylesheet" href="poolNav.css?v=20261029m">
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="instantDraft.css?v=20261003a">
     <!-- Habillage « Fantazy Créer / Rejoindre » : en dernier, il a le mot de la fin. -->
-    <link rel="stylesheet" href="poolForm.css?v=20261023a">
+    <link rel="stylesheet" href="poolForm.css?v=20261029a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
@@ -43,26 +43,23 @@
             <h1 class="fzp-titre">Rejoindre un pool</h1>
         </header>
 
-        <!-- Le chemin le plus court : aucun choix à faire. Placé avant la
-             liste parce que c'est ce que cherche la majorité de ceux qui
-             arrivent ici — jouer, pas comparer des ligues. Même carte que
-             l'accueil sans pool (index.html) : les sièges, la ligne d'état
-             et le bouton suivent la file en direct (instantDraft.js,
-             rendreCarte). -->
+        <!-- Le chemin le plus court, en une ligne discrète au-dessus de la
+             liste : même ligne que l'accueil sans pool (index.html). Les
+             sièges (ici de simples pastilles), la ligne d'état et le bouton
+             suivent la file en direct (instantDraft.js, rendreCarte). -->
         <section class="fzp-instant" data-instant-card aria-labelledby="fzoInstantTitle">
+            <span class="fzp-instant-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m13 2-9 12h7l-1 8 10-13h-8Z"/></svg></span>
             <div class="fzp-instant-copie">
-                <span class="fzp-puce"><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><polygon points="13,2 4,14 11,14 10,22 20,9 13,9"/></svg>Pool rapide</span>
                 <h2 id="fzoInstantTitle">Repêchage instantané</h2>
-                <p>Le repêchage démarre dès que 4 joueurs sont là.</p>
-            </div>
-            <div class="fzp-instant-file">
-                <ul class="fzo-seats" data-instant-seats aria-label="Places du pool rapide">
-                    <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
-                    <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
-                    <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
-                    <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
-                </ul>
-                <p class="fzo-start-status" data-instant-status role="status">0 / 4 joueurs · encore 4 places</p>
+                <div class="fzp-instant-file">
+                    <ul class="fzo-seats" data-instant-seats aria-label="Places du pool rapide">
+                        <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                        <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                        <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                        <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                    </ul>
+                    <p class="fzo-start-status" data-instant-status role="status">0 / 4 joueurs</p>
+                </div>
             </div>
             <button type="button" class="fzo-start-button" data-instant-action="rejoindre">Repêcher maintenant</button>
         </section>
@@ -130,12 +127,12 @@
     <script defer src="avatars.js?v=20261026a"></script>
     <script src="profanity.js"></script>
     <script defer src="equipes.js?v=20261026a"></script>
-    <script defer src="instantDraft.js?v=20261003a"></script>
+    <script defer src="instantDraft.js?v=20261029a"></script>
     <script defer src="navbar.js?v=20261026a"></script>
     <script defer src="installerApp.js?v=20261010a"></script>
     <script defer src="poolSettings.js?v=20261022a"></script>
-    <script defer src="poolNav.js?v=20261022a"></script>
+    <script defer src="poolNav.js?v=20261029m"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
-    <script defer src="notifications.js?v=20261023a"></script>
+    <script defer src="notifications.js?v=20261028a"></script>
 </body>
 </html>

@@ -65,16 +65,16 @@ describe('notifications — receiving and deliberately reading updates', () => {
         assert.equal(findItem(browser, 'trade:two').classList.contains('is-unread'), true);
     });
 
-    test('read history survives refresh, navigation, and disappearance from pending trades', async () => {
+    test('read history survives refresh, and a settled offer stays gone after it', async () => {
         const browser = await createNotificationBrowser({ trades: [trade('one'), trade('two')] });
         findItem(browser, 'trade:one').click();
         browser.setTrades([trade('two')]);
         await browser.emit('tradeUpdated');
-        assert.equal(browser.items().length, 2);
-        assert.equal(browser.state().items.find(entry => entry.id === 'trade:one').read, true);
+        assert.equal(browser.items().length, 1);
+        assert.equal(browser.state().items.find(entry => entry.id === 'trade:one'), undefined);
 
         const refreshed = await createNotificationBrowser({ storage: browser.storage, trades: [trade('two')] });
-        assert.equal(refreshed.items().length, 2);
+        assert.equal(refreshed.items().length, 1);
         assert.equal(unread(refreshed), 1);
         assert.equal(refreshed.element('fzNotifBadge').textContent, '1');
         assert.equal(refreshed.element('fzNotifToast').hidden, true);
@@ -173,13 +173,13 @@ describe('notifications — receiving and deliberately reading updates', () => {
         assert.equal(aliceAgain.element('fzNotifBadge').hidden, true);
     });
 
-    test('an unread notification is retained when it disappears from the pending feed', async () => {
+    test('an offer that leaves the pending feed is removed, read or not', async () => {
         const browser = await createNotificationBrowser({ trades: [trade('withdrawn')] });
         browser.setTrades([]);
         await browser.emit('tradeUpdated');
-        assert.equal(browser.items().length, 1);
-        assert.equal(unread(browser), 1);
-        assert.equal(browser.element('fzNotifBadge').textContent, '1');
+        assert.equal(browser.items().length, 0);
+        assert.equal(unread(browser), 0);
+        assert.equal(browser.element('fzNotifBadge').hidden, true);
     });
 
     test('corrupt saved history does not prevent new notifications or deliberate reads', async () => {
@@ -370,9 +370,10 @@ describe('notifications — receiving and deliberately reading updates', () => {
             data: { etat: 'termine' }
         }]);
         await browser.updatePools();
-        assert.match(toastLink(browser).textContent, /terminé/);
-        assert.match(toastLink(browser).getAttribute('href'), /^draftFini\.html\?/);
-        assert.equal(unread(browser), 3);
+        // Le repêchage est fini : son départ et le tour s'en vont, l'offre reste.
+        assert.equal(toastLink(browser).dataset.notificationId, 'trade:offer');
+        assert.deepEqual([...browser.items()].map(el => el.dataset.notificationId), ['trade:offer']);
+        assert.equal(unread(browser), 1);
     });
 
     test('an urgent arrival does not replace the popup link being hovered or focused', async () => {
@@ -453,16 +454,12 @@ describe('notifications — receiving and deliberately reading updates', () => {
         assert.equal(browser.items().filter(item => item.classList.contains('is-unread')).length, 0);
     });
 
-    test('an offer that no longer awaits an answer says so plainly', async () => {
-        const browser = await createNotificationBrowser({ trades: [trade('gone')] });
-        browser.setTrades([]);
+    test('an offer that no longer awaits an answer leaves the list', async () => {
+        const browser = await createNotificationBrowser({ trades: [trade('gone'), trade('kept')] });
+        browser.setTrades([trade('kept')]);
         await browser.emit('tradeUpdated');
-        const item = findItem(browser, 'trade:gone');
-        assert.match(item.textContent, /clôturé/);
-        assert.match(item.textContent, /Rien à faire/);
-        assert.equal(item.querySelector('.fz-notif-pair'), null);
-        assert.equal(item.querySelector('.fz-notif-action'), null);
-        assert.equal(item.closest('.fz-notif-group').classList.contains('is-todo'), false);
+        assert.equal([...browser.items()].some(el => el.dataset.notificationId === 'trade:gone'), false);
+        assert.ok(findItem(browser, 'trade:kept'));
     });
 });
 

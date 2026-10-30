@@ -3004,3 +3004,28 @@ function fzdActualiserPointsDirect() {
     // montrent aussi, sans attendre le prochain passage (accueil-season.js).
     if (typeof fzsRafraichirSoiree === 'function') fzsRafraichirSoiree();
 }
+
+/**
+ * « Comment ça marche » (accueil sans pool) : le point de la carte visible
+ * suit le défilement du carrousel. Au bureau, les cartes sont en grille et
+ * les points sont masqués (accueil-nouveau.css).
+ */
+(function fznSuivreEtapes() {
+    const brancher = () => {
+        const piste = document.querySelector('#fzDashOnboard .fzn-etapes');
+        const points = document.querySelectorAll('#fzDashOnboard .fzn-points i');
+        if (!piste || !points.length) return;
+        let courant = 0;
+        piste.addEventListener('scroll', () => {
+            const carte = piste.firstElementChild;
+            const pas = carte ? carte.getBoundingClientRect().width + 10 : 296;
+            const i = Math.min(points.length - 1, Math.round(piste.scrollLeft / pas));
+            if (i === courant) return;
+            points[courant].classList.remove('is-on');
+            points[i].classList.add('is-on');
+            courant = i;
+        }, { passive: true });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', brancher);
+    else brancher();
+})();

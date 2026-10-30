@@ -21,6 +21,12 @@
  * Seuls un clic sur une notification ou « Tout marquer lu » changent la
  * lecture. Ouvrir le panneau ne marque rien.
  *
+ * Une notification dépassée disparaît : le serveur ne renvoie plus que celles
+ * encore d'actualité (lib/notificationsPerimees.js) — repêchage fini, tour
+ * joué, offre réglée, semaine remplacée —, et la cloche retire ce qu'il a
+ * cessé de renvoyer. Le retrait est noté (`retires`) pour qu'un autre onglet,
+ * ou l'historique de ce navigateur, ne la fasse pas revenir.
+ *
  * Le panneau se lit d'un coup d'œil : ce qui attend une réponse d'abord
  * (« À faire »), puis le reste par jour. Chaque ligne tient en quatre
  * éléments — une icône dont la couleur dit l'issue, un titre court, un
@@ -52,6 +58,11 @@
     const DUREE_POPUP = 8000;
 
     let compte, cle, elements = [], initialise = false;
+    // Identifiant retiré → date du fait retiré. Un fait plus récent sous le
+    // même identifiant (le repêchage de la saison suivante) revient, lui.
+    let retires = new Map();
+    const RETRAITS_MAX = 300;
+    const RETRAIT_DUREE = 90 * 86400000;
     let draftsInitialises = false, echangesInitialises = false;
     // null = pas encore demandé, true = le serveur fait foi, false = repli.
     let serveurDisponible = null;
@@ -83,16 +94,49 @@
                 && ['echange', 'repechage', 'semaine', 'invitation'].includes(el.type) && typeof el.pool === 'string'
                 && /^(trade|repechage|draftActif|draftFini|classement|index)\.html\?/.test(el.href)
                 && Number.isFinite(el.date));
+            sauvegarde.retires = Array.isArray(sauvegarde.retires)
+                ? sauvegarde.retires.filter(r => Array.isArray(r) && typeof r[0] === 'string' && Number.isFinite(r[1]))
+                : [];
             return sauvegarde;
         } catch { return null; }
+    }
+
+    const estRetire = el => retires.has(el.id) && retires.get(el.id) >= el.date;
+
+    /**
+     * Retire des notifications dépassées.
+     *
+     * Le retrait est noté : l'entrée gardée par un autre onglet ne revient pas
+     * à la prochaine fusion, mais un fait plus récent sous le même
+     * identifiant, oui.
+     */
+    function retirer(ids) {
+        const cibles = new Set(ids);
+        if (!cibles.size) return false;
+        // La trace porte la date du fait retiré, pas l'heure du retrait : rien
+        // ne dépend ainsi de l'horloge de l'appareil face à celle du serveur.
+        elements.filter(el => cibles.has(el.id)).forEach(el => {
+            if (!(retires.get(el.id) >= el.date)) retires.set(el.id, el.date);
+        });
+        const avant = elements.length;
+        elements = elements.filter(el => !cibles.has(el.id));
+        const avaitPopup = popupIds.length > 0;
+        popupIds = popupIds.filter(id => !cibles.has(id));
+        if (avaitPopup && !popupIds.length) fermerPopup();
+        return elements.length !== avant;
     }
 
     // Une lecture est monotone : un onglet ne peut pas annuler celle d'un autre.
     function fusionnerStockage() {
         const sauvegarde = lireStockage();
         if (!sauvegarde) return;
+        sauvegarde.retires.forEach(([id, instant]) => {
+            if (!(retires.get(id) >= instant)) retires.set(id, instant);
+        });
+        elements = elements.filter(el => !estRetire(el));
         const connus = new Map(elements.map(el => [el.id, el]));
         sauvegarde.items.forEach(el => {
+            if (estRetire(el)) return;
             if (connus.has(el.id)) {
                 connus.get(el.id).read = connus.get(el.id).read === true || el.read === true;
             } else {
@@ -107,7 +151,11 @@
         if (!compteActuel()) return;
         fusionnerStockage();
         try {
-            localStorage.setItem(cle, JSON.stringify({ version: 1, initialized: initialise, items: elements }));
+            const limite = Date.now() - RETRAIT_DUREE;
+            const traces = [...retires].filter(([, instant]) => instant > limite)
+                .sort((a, b) => b[1] - a[1]).slice(0, RETRAITS_MAX);
+            retires = new Map(traces);
+            localStorage.setItem(cle, JSON.stringify({ version: 1, initialized: initialise, items: elements, retires: traces }));
             erreurStockage = false;
         } catch {
             // Le clic et la navigation restent utilisables si le stockage est plein.
@@ -146,6 +194,7 @@
         // son jour pendant le clic ferait sauter la liste sous le doigt.
         parId('fzNotifList').querySelectorAll('[data-notification-id]').forEach(lien => {
             const el = elements.find(item => item.id === lien.dataset.notificationId);
+            if (!el) return;
             lien.classList.toggle('is-unread', !el.read);
             const etat = lien.querySelector('.fz-notif-state');
             if (etat) etat.textContent = el.read ? '' : 'Non lue';
@@ -185,8 +234,8 @@
      * foi. poolInvites.js les charge et fait surgir leur fenêtre ; ici on ne
      * fait que les ranger — sans aperçu en bas d'écran, la fenêtre suffit.
      *
-     * Une invitation acceptée, refusée ou annulée reste lisible, mais cesse
-     * de réclamer une réponse.
+     * Une invitation acceptée, refusée ou annulée disparaît : il n'y a plus
+     * rien à y répondre.
      */
     function rafraichirInvitations(liste) {
         if (!compteActuel()) return;
@@ -203,15 +252,9 @@
                 urgent: true
             };
         });
+        // Acceptée, refusée ou annulée : il n'y a plus rien à y répondre.
         const actives = new Set(nouveaux.map(el => el.id));
-        elements.filter(el => el.type === 'invitation' && !actives.has(el.id)).forEach(el => {
-            el.read = true;
-            el.urgent = false;
-            el.titre = 'Invitation traitée';
-            el.detail = 'Rien à faire de votre côté.';
-            el.action = 'Voir mes pools';
-            el.href = `index.html?${lienPool(el.pool)}`;
-        });
+        retirer(elements.filter(el => el.type === 'invitation' && !actives.has(el.id)).map(el => el.id));
         integrer(nouveaux, false);
     }
 
@@ -268,34 +311,29 @@
         return liste;
     }
 
+    /**
+     * Sans le serveur, la cloche juge elle-même ce qui est dépassé, avec les
+     * mêmes règles (lib/notificationsPerimees.js) : un repêchage fini emporte
+     * ses alertes, un tour joué la sienne, un repêchage parti son « prêt ».
+     */
     function actualiserHistorique() {
-        // Quand le serveur fait foi, il a déjà décidé du texte et de l'urgence
-        // de chaque entrée : les réécrire ici ferait diverger la cloche du
-        // reste du site, ce que ce changement existe justement pour éviter.
+        // Quand le serveur fait foi, il a déjà fait ce tri.
         if (serveurDisponible === true) return;
-        const pools = new Map(FZPool.mine().map(pool => [pool.name, pool]));
-        elements.filter(el => el.type === 'repechage').forEach(el => {
+        let pools;
+        try { pools = new Map(FZPool.mine().map(pool => [pool.name, pool])); } catch { return; }
+        const depassees = elements.filter(el => el.type === 'repechage').filter(el => {
             const pool = pools.get(el.pool);
-            if (!pool) { el.urgent = false; return; }
+            // Pool quitté ou supprimé : plus rien à y faire. Une liste vide
+            // peut aussi être une lecture ratée : dans le doute, on garde.
+            if (!pool) return pools.size > 0;
             const etat = FZPool.draftState(pool.data);
-            if (etat.etat === 'termine') {
-                el.urgent = false;
-                el.detail = 'Le repêchage est terminé.';
-                el.action = 'Voir les sélections';
-                el.href = `draftFini.html?${lienPool(el.pool)}`;
-                if (el.id.startsWith('turn:')) el.titre = 'Votre tour de repêchage est terminé';
-            } else if (el.id.startsWith('turn:')
-                && el.id !== `turn:${pool.name}:${etat.choixFait}`) {
-                el.urgent = false;
-                el.titre = 'Votre tour de repêchage est terminé';
-                el.detail = 'Le repêchage a avancé.';
-                el.action = 'Voir les choix';
-            } else if (el.id.startsWith('ready:') && etat.etat === 'encours') {
-                el.detail = 'Le repêchage a commencé.';
-                el.action = 'Rejoindre le repêchage';
-                el.href = `draftActif.html?${lienPool(el.pool)}`;
-            }
+            if (etat.etat === 'termine') return true;
+            if (el.id.startsWith('turn:')) return el.id !== `turn:${pool.name}:${etat.choixFait}`;
+            if (el.id.startsWith('draft:')) return etat.etat !== 'encours';
+            if (el.id.startsWith('ready:')) return etat.etat !== 'pret';
+            return false;
         });
+        retirer(depassees.map(el => el.id));
     }
 
     function integrer(nouveaux, annoncer) {
@@ -790,6 +828,11 @@
                     read: el.read === true
                 }));
 
+                // Ce que le serveur ne renvoie plus est dépassé : il ne garde
+                // que l'actuel. Les invitations ont leur propre source.
+                const presents = new Set(nouveaux.map(el => el.id));
+                retirer(elements.filter(el => el.type !== 'invitation' && !presents.has(el.id)).map(el => el.id));
+
                 const annoncer = serveurInitialise;
                 serveurInitialise = true;
                 initialise = true;
@@ -829,14 +872,9 @@
                 if (!compteActuel()) return;
                 const nouveaux = echanges.filter(el => el?.id != null && typeof el.draftName === 'string')
                     .map(notificationEchange);
+                // Une offre qui n'attend plus de réponse disparaît.
                 const actifs = new Set(nouveaux.map(el => el.id));
-                elements.filter(el => el.type === 'echange' && !actifs.has(el.id)).forEach(el => {
-                    el.titre = 'Échange clôturé';
-                    el.detail = 'Rien à faire de votre côté.';
-                    el.action = 'Voir le suivi';
-                    el.equipes = null;
-                    el.resolue = true;
-                });
+                retirer(elements.filter(el => el.type === 'echange' && !actifs.has(el.id)).map(el => el.id));
                 erreurReseau = false;
                 const annoncer = echangesInitialises;
                 echangesInitialises = true;

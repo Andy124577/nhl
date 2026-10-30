@@ -227,6 +227,17 @@ describe('héros du repêchage — modèle', () => {
         assert.equal(m.panneau.etapes[2].action.href, 'repechage.html?pool=Les%20Boys', 'la personne qui a créé le pool organise le départ');
     });
 
+    test('avant le départ, repêchage automatique : pas de liste de favoris à préparer', () => {
+        const m = H.fzhHeroModele({ poolData: avant({ draftAuto: true }), poolName: 'P', teamName: 'Aigles', username: 'alice', maintenant: MAINTENANT, favoris: [] });
+        egal(m.panneau.etapes.map(e => e.titre), ['Participants', 'Départ']);
+        assert.equal(m.panneau.meta, '1 sur 2');
+        assert.equal(m.liste, null, 'pas de carte « Pour ta liste »');
+        assert.equal(m.cta.libelle, 'Organiser le pool', 'la personne qui a créé le pool organise');
+        assert.equal(m.cta.href, 'repechage.html?pool=P');
+        const autre = H.fzhHeroModele({ poolData: avant({ draftAuto: true }), poolName: 'P', teamName: 'Zèbres', username: 'bob', maintenant: MAINTENANT });
+        assert.equal(autre.cta.libelle, 'Voir les joueurs');
+    });
+
     test('avant le départ, sans date, vu par un autre membre', () => {
         const m = H.fzhHeroModele({ poolData: avant({ teams: { Aigles: equipeVide(['alice']) } }), poolName: 'P', teamName: 'Aigles', username: 'alice', maintenant: MAINTENANT });
         assert.equal(m.titre, 'Repêchage en préparation');
@@ -234,10 +245,16 @@ describe('héros du repêchage — modèle', () => {
         assert.equal(m.temps.valeur, 'Quand tu veux');
         assert.equal(m.panneau.etapes[1].detail, '1 équipe inscrite · il en faut au moins 2');
         assert.equal(m.panneau.etapes[0].detail, 'Ajoute au moins 3 joueurs que tu vises (0/3)');
-        assert.equal(m.inviter, true);
+        egal(m.reglages, { libelle: 'Réglages du pool', href: 'pool.html?onglet=apercu' });
+        assert.equal(m.admin, true, 'alice a créé ce pool');
+        assert.equal(m.cases[0].sous, 'Admin');
 
         const autre = H.fzhHeroModele({ poolData: avant(), poolName: 'P', teamName: 'Zèbres', username: 'bob', maintenant: MAINTENANT });
         assert.equal(autre.temps.valeur, 'À confirmer');
+        egal(autre.cta, { libelle: 'Préparer ma liste', href: 'stats.html' }, 'les autres membres préparent leur liste');
+        assert.equal(autre.admin, false);
+        assert.equal(autre.cases.find(c => c.mien).sous, 'Inscrit');
+        assert.ok(autre.reglages, 'tout le monde voit les réglages du pool');
         assert.equal(autre.panneau.etapes[2].detail, 'alice lancera le repêchage');
         assert.equal(autre.panneau.etapes[2].action, null, 'seule la personne qui a créé le pool le lance');
         assert.equal(autre.panneau.etapes[1].action, null);
@@ -363,7 +380,7 @@ describe('héros du repêchage — rendu', () => {
         assert.equal(H.fzhHeroMetaPanneau(m, [candidats[1]]), 'Meilleurs disponibles');
     });
 
-    test('avant le départ : le compte à rebours dans le titre, les participants et « Inviter »', () => {
+    test('avant le départ : le compte à rebours dans le titre, les participants, « Admin » et les réglages', () => {
         const prevu = new Date(MAINTENANT + minutes(90)).toISOString();
         const m = H.fzhHeroModele({
             poolData: { creator: 'alice', draftOrder: [], draftScheduledAt: prevu, teams: { A: equipeVide(['alice']) } },
@@ -372,8 +389,10 @@ describe('héros du repêchage — rendu', () => {
         const html = H.fzhHeroHTML(m);
         assert.match(html, /Le repêchage commence <span data-fzh-avant="[^"]+">dans 1 h 30<\/span>/);
         assert.ok(html.includes('Pool &lt;test&gt;'), 'le nom du pool est échappé');
-        assert.match(html, /data-fzh-inviter="Pool &lt;test&gt;"/);
-        assert.match(html, /style="--reste:3;--reste-large:7"/, 'Inviter remplit la rangée');
+        assert.match(html, /class="fzh-puce is-admin"/, 'la personne qui a créé le pool se sait admin');
+        assert.equal(m.cases[0].sous, 'Admin');
+        assert.match(html, /<a href="pool\.html\?onglet=apercu">/);
+        assert.match(html, /style="--reste:3;--reste-large:7"/, 'les réglages remplissent la rangée');
         const avant = H.fzhHeroPanneauHTML(m, null);
         assert.match(avant, /class="fzs-list fzh-etapes"/);
         assert.match(avant, /aria-valuenow="1"/);

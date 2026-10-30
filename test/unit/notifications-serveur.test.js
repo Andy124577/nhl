@@ -142,4 +142,35 @@ describe('la cloche au-dessus des notifications du serveur', () => {
         await navigateur.emit('poolUpdated');
         assert.deepEqual(items(navigateur), ['trade:42'], 'un échec ne vide pas la cloche');
     });
+
+    test('ce que le serveur ne renvoie plus quitte la cloche, et ne revient pas avec l historique local', async () => {
+        const depart = servie({ id: 'draft:Ligue', serverId: '9', type: 'repechage', kind: 'draft_started',
+            titre: 'Repêchage commencé', urgent: false, href: 'draftActif.html?pool=Ligue', date: Date.now() - 60000 });
+        const navigateur = await createNotificationBrowser({ serverNotifications: [servie(), depart] });
+        assert.deepEqual(items(navigateur).sort(), ['draft:Ligue', 'trade:42']);
+
+        // Le repêchage est fini : le serveur ne la renvoie plus.
+        navigateur.setServerNotifications([servie()]);
+        await navigateur.emit('poolUpdated');
+        assert.deepEqual(items(navigateur), ['trade:42']);
+        assert.equal(navigateur.element('fzNotifBadge').textContent, '1');
+
+        // Un autre onglet qui la gardait encore ne la ramène pas.
+        const autre = await createNotificationBrowser({ storage: navigateur.storage, serverNotifications: [servie()] });
+        assert.deepEqual(items(autre), ['trade:42']);
+    });
+
+    test('un fait plus récent sous le même identifiant revient malgré le retrait', async () => {
+        const vieux = servie({ id: 'draft:Ligue', serverId: '9', type: 'repechage', kind: 'draft_started',
+            urgent: false, href: 'draftActif.html?pool=Ligue', date: Date.now() - 86400000 });
+        const navigateur = await createNotificationBrowser({ serverNotifications: [vieux] });
+        navigateur.setServerNotifications([]);
+        await navigateur.emit('poolUpdated');
+        assert.deepEqual(items(navigateur), []);
+
+        await navigateur.advance(5000);
+        navigateur.setServerNotifications([{ ...vieux, serverId: '20', date: Date.now() }]);
+        await navigateur.emit('poolUpdated');
+        assert.deepEqual(items(navigateur), ['draft:Ligue']);
+    });
 });

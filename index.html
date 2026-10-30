@@ -82,7 +82,7 @@
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20261026a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
-    <link rel="stylesheet" href="poolNav.css?v=20261003a">
+    <link rel="stylesheet" href="poolNav.css?v=20261029m">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20260926b">
     <link rel="stylesheet" href="accueil.css?v=20261015a">
@@ -94,7 +94,7 @@
          « aréna » (hero.css). Voir LANDING.md. -->
     <link rel="stylesheet" href="landing.css?v=20261022a">
     <link rel="stylesheet" href="accueil-season.css?v=20261022c">
-    <link rel="stylesheet" href="accueil-draft.css?v=20261022b">
+    <link rel="stylesheet" href="accueil-draft.css?v=20261029a">
     <link rel="stylesheet" href="accueil-watch.css?v=20260926b">
     <!-- « Meilleurs joueurs » : le composant de la page Stats, puis son
          habit de panneau d'accueil (#fzTopPlayers). -->
@@ -109,7 +109,7 @@
     <!-- Thème clair des accueils repêchage et saison : APRÈS la palette. -->
     <link rel="stylesheet" href="accueil-light.css?v=20261022b">
     <!-- Accueil sans pool (maquette « Accueil · nouveau ») : APRÈS la palette. -->
-    <link rel="stylesheet" href="accueil-nouveau.css?v=20261022b">
+    <link rel="stylesheet" href="accueil-nouveau.css?v=20261029b">
     <!-- Squelettes : les os partagés, puis celui de l'accueil d'un membre. -->
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="accueil-squelette.css?v=20261022b">
@@ -378,53 +378,81 @@
                     <h2 class="fzn-titre">Ton premier pool commence ici</h2>
                     <p class="fzn-sub">Une partie en une minute, avec tes amis ou avec d’autres passionnés.</p>
                 </header>
-                <!-- Repêchage instantané : les sièges, la ligne d'état et le
-                     bouton suivent la file en direct (instantDraft.js,
-                     rendreCarte). Les quatre sièges vides sont posés ici pour
-                     que la carte ait sa taille finale avant le premier rendu. -->
-                <section class="fzn-instant" data-instant-card aria-labelledby="fzoInstantTitle">
-                    <div class="fzn-instant-copie">
-                        <span class="fzn-puce"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-13h-8Z"/></svg>Pool rapide</span>
-                        <h3 id="fzoInstantTitle">Repêchage instantané</h3>
-                        <p>Dès que les 4 places sont prises, le repêchage commence.</p>
-                    </div>
-                    <ul class="fzo-seats" data-instant-seats aria-label="Places du pool rapide">
-                            <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
-                            <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
-                            <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
-                            <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
-                    </ul>
-                    <p class="fzo-start-status" data-instant-status role="status">0 / 4 joueurs · encore 4 places</p>
-                    <button type="button" class="fzo-start-button" data-instant-action="rejoindre">Repêcher maintenant</button>
-                </section>
+                <!-- Les deux chemins principaux, à égalité : deux grandes cartes
+                     sombres dans les deux thèmes, rouge pour rejoindre, bleu
+                     pour créer (maquette « Accueil Nouveau v2 »). -->
                 <div class="fzn-chemins">
-                    <a class="fzn-chemin" href="rejoindre-pool.html">
-                        <span class="fzn-chemin-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5a6 6 0 0 1 12 0V20M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4.5V20"/></svg></span>
-                        <span><strong>Rejoindre mes amis</strong><small>J’ai un code ou une invitation</small></span>
-                    </a>
-                    <a class="fzn-chemin" href="creer-pool.html">
-                        <span class="fzn-chemin-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>
-                        <span><strong>Créer mon pool</strong><small>Je choisis les règles et j’invite</small></span>
-                    </a>
+                    <section class="fzn-chemin is-rejoindre" aria-labelledby="fznRejoindreTitre">
+                        <div class="fzn-chemin-copie">
+                            <span class="fzn-puce"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.9 3.1-6 6.5-6s6 2.1 6.5 6zM16 4.6a3.5 3.5 0 0 1 0 6.8M17.5 14.2c2.3.6 3.7 2.6 4 5.8h-4"/></svg>Entre amis</span>
+                            <h3 id="fznRejoindreTitre">Rejoindre un pool</h3>
+                            <p>J’ai un code ou une invitation d’un ami.</p>
+                        </div>
+                        <a class="fzn-chemin-cta" href="rejoindre-pool.html">Rejoindre un pool<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+                    </section>
+                    <section class="fzn-chemin is-creer" aria-labelledby="fznCreerTitre">
+                        <div class="fzn-chemin-copie">
+                            <span class="fzn-puce"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Pool privé</span>
+                            <h3 id="fznCreerTitre">Créer mon pool</h3>
+                            <p>Je choisis les règles, le format et j’invite qui je veux.</p>
+                        </div>
+                        <a class="fzn-chemin-cta" href="creer-pool.html">Créer mon pool<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+                    </section>
                 </div>
+
+                <p class="fzn-ou"><span>Ou joue tout de suite</span></p>
+
+                <!-- Repêchage instantané, replié : la ligne d'en-tête montre
+                     l'état de la file, le reste s'ouvre au toucher. Les sièges,
+                     la ligne d'état et le bouton suivent la file en direct
+                     (instantDraft.js, rendreCarte). -->
+                <details class="fzn-instant" data-instant-card>
+                    <summary>
+                        <span class="fzn-instant-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="m13 2-9 12h7l-1 8 10-13h-8Z"/></svg></span>
+                        <span class="fzn-instant-tete"><strong id="fzoInstantTitle">Repêchage instantané</strong><span class="fzo-start-status" data-instant-status role="status">0 / 4 joueurs</span></span>
+                        <svg class="fzn-instant-chevron" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </summary>
+                    <div class="fzn-instant-corps">
+                        <p>Un pool de 4 joueurs avec d’autres passionnés. Dès que les places sont prises, le repêchage commence.</p>
+                        <ul class="fzo-seats" data-instant-seats aria-label="Places du pool rapide">
+                                <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                                <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                                <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                                <li class="fzo-seat is-free" data-siege=""><span class="fzo-seat-ring" aria-hidden="true"></span><span class="fzo-sr">Place libre</span></li>
+                        </ul>
+                        <button type="button" class="fzo-start-button" data-instant-action="rejoindre">Repêcher maintenant</button>
+                    </div>
+                </details>
+
                 <section class="fzn-comment" aria-labelledby="fzoHowTitle">
-                    <h3 class="fzn-tete" id="fzoHowTitle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/></svg>Comment ça marche</h3>
+                    <header class="fzn-tete">
+                        <span><small>Nouveau au pool ?</small><h3 id="fzoHowTitle">Comment ça marche</h3></span>
+                        <span class="fzn-points" aria-hidden="true"><i class="is-on"></i><i></i><i></i></span>
+                    </header>
                     <ol class="fzn-etapes">
                         <li class="fzn-etape">
                             <div class="fzn-art fzn-art-cartes" aria-hidden="true">
-                                <span style="--club:#6F263D;--rot:-8deg;--y:6px"><img src="https://assets.nhle.com/mugs/nhl/20252026/COL/8477492.png" alt="" width="70" height="78" decoding="async" loading="lazy"><b>MacKINNON</b></span>
-                                <span class="is-vedette" style="--club:#0B3A75;--rot:0deg;--y:0px"><img src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="" width="70" height="78" decoding="async" loading="lazy"><b>McDAVID</b></span>
-                                <span style="--club:#00205B;--rot:8deg;--y:6px"><img src="https://assets.nhle.com/mugs/nhl/20252026/VAN/8480800.png" alt="" width="70" height="78" decoding="async" loading="lazy"><b>HUGHES</b></span>
+                                <em>01</em>
+                                <span style="--club:#6F263D;--rot:-8deg;--y:6px"><img src="https://assets.nhle.com/mugs/nhl/20252026/COL/8477492.png" alt="" width="79" height="88" decoding="async" loading="lazy"><b>MacKINNON</b></span>
+                                <span class="is-vedette" style="--club:#0B3A75;--rot:0deg;--y:0px"><img src="https://assets.nhle.com/mugs/nhl/20252026/EDM/8478402.png" alt="" width="79" height="88" decoding="async" loading="lazy"><b>McDAVID</b></span>
+                                <span style="--club:#00205B;--rot:8deg;--y:6px"><img src="https://assets.nhle.com/mugs/nhl/20252026/VAN/8480800.png" alt="" width="79" height="88" decoding="async" loading="lazy"><b>HUGHES</b></span>
                             </div>
-                            <p><strong><span>1</span> · Repêche ton équipe</strong><small>Un repêchage guidé, un joueur à la fois.</small></p>
+                            <p><strong>Repêche ton équipe</strong><small>Un repêchage guidé, un joueur à la fois.</small></p>
                         </li>
                         <li class="fzn-etape">
-                            <div class="fzn-art fzn-art-groupe" aria-hidden="true"><span class="is-moi">TOI</span><span><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.6-4 3.7-6.5 7.5-6.5s6.9 2.5 7.5 6.5z"/></svg></span><span><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.6-4 3.7-6.5 7.5-6.5s6.9 2.5 7.5 6.5z"/></svg></span><span><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.6-4 3.7-6.5 7.5-6.5s6.9 2.5 7.5 6.5z"/></svg></span></div>
-                            <p><strong><span>2</span> · Joue en groupe</strong><small>Tes amis, ton bureau ou des inconnus.</small></p>
+                            <div class="fzn-art fzn-art-groupe" aria-hidden="true">
+                                <em>02</em>
+                                <span class="fzn-groupe"><span style="--av:#2E6B4A">JF</span><span style="--av:#5B4BB0">MA</span><span class="is-moi">TOI</span><span style="--av:#C27A1E">KV</span></span>
+                                <span class="fzn-pret"><i></i>4 / 4 · prêt</span>
+                            </div>
+                            <p><strong>Joue en groupe</strong><small>Tes amis, ton bureau ou des inconnus.</small></p>
                         </li>
                         <li class="fzn-etape">
-                            <div class="fzn-art fzn-art-rang" aria-hidden="true"><span class="is-un"><i>1</i>Les Canadiens<b>680</b></span><span><i>2</i>Les Glorieux<b>675</b></span><span><i>3</i>Pool des boys<b>662</b></span></div>
-                            <p><strong><span>3</span> · Suis le classement</strong><small>Des points chaque soir, toute la saison.</small></p>
+                            <div class="fzn-art fzn-art-rang" aria-hidden="true">
+                                <em>03</em>
+                                <span class="fzn-rangs"><span class="is-un"><i>1</i>Ton équipe<b>680</b></span><span><i>2</i>Les Glorieux<b>675</b></span><span><i>3</i>Pool des boys<b>662</b></span></span>
+                            </div>
+                            <p><strong>Suis le classement</strong><small>Des points chaque soir, toute la saison.</small></p>
                         </li>
                     </ol>
                 </section>
@@ -802,7 +830,7 @@
     <script defer src="lib/pointsEnDirect.js?v=20261002b"></script>
     <script defer src="pointsDirect.js?v=20261002a"></script>
     <script defer src="lib/duelAccueil.js?v=20260922"></script>
-    <script defer src="accueil.js?v=20261022b"></script>
+    <script defer src="accueil.js?v=20261029m"></script>
     <!-- « A faire maintenant » : une seule reponse serveur, la meme bande
          au bureau et au telephone. Doit preceder accueil-dash.js, qui
          l'appelle au chargement. -->
@@ -817,12 +845,12 @@
     <!-- Meilleurs joueurs : lit BASE_URL et escapeHTML (accueil.js) et ouvre
          la fiche par fzhOpenPlayerCareer (accueil-watch.js, juste avant). -->
     <script defer src="statsTopPlayers.js?v=20261015a"></script>
-    <script defer src="accueil-dash.js?v=20261022c"></script>
-    <script defer src="instantDraft.js?v=20261003a"></script>
+    <script defer src="accueil-dash.js?v=20261029a"></script>
+    <script defer src="instantDraft.js?v=20261029a"></script>
     <script defer src="accueil-mobile.js?v=20261015a"></script>
     <script defer src="accueil-season.js?v=20261022a"></script>
-    <script defer src="accueil-draft-hero.js?v=20261022b"></script>
-    <script defer src="accueil-draft.js?v=20261022b"></script>
+    <script defer src="accueil-draft-hero.js?v=20261029c"></script>
+    <script defer src="accueil-draft.js?v=20261029a"></script>
     <script defer src="demos.js"></script>
     <script defer src="landing.js?v=20261022a"></script>
     <script defer src="navbar.js?v=20261026a"></script>
@@ -832,8 +860,8 @@
     <script defer src="avatars.js?v=20261026a"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20261022a"></script>
-    <script defer src="poolNav.js?v=20261022a"></script>
+    <script defer src="poolNav.js?v=20261029m"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
-    <script defer src="notifications.js?v=20261023a"></script>
+    <script defer src="notifications.js?v=20261028a"></script>
 </body>
 </html>

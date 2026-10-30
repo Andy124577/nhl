@@ -12,8 +12,10 @@
  *   - **lue** et **résolue** sont deux choses. Lire la notification d'une offre
  *     ne retire pas l'offre de la liste des choses à faire. La lecture est un
  *     geste de la personne ; la résolution est un fait du monde.
- *   - une alerte **expirée** cesse de compter dans la pastille, même jamais
- *     lue. Sinon la cloche réclame indéfiniment une action qui n'existe plus.
+ *   - une alerte **dépassée** (expirée, réglée, ou rattrapée par l'état du
+ *     pool : repêchage fini, semaine remplacée) disparaît de la liste et de
+ *     la pastille, même jamais lue (lib/notificationsPerimees.js). Sinon la
+ *     cloche réclame indéfiniment une action qui n'existe plus.
  *
  * La pastille cachée à zéro, la lecture volontaire et les destinations
  * précises que la cloche avait déjà sont conservées ; ce qui change, c'est
@@ -24,6 +26,7 @@
 
 const authz = require('../lib/authz.js');
 const evenements = require('../lib/events.js');
+const perimees = require('../lib/notificationsPerimees.js');
 
 /** Nombre d'entrées d'activité servies par page. */
 const PAGE_ACTIVITE = 20;
@@ -59,6 +62,26 @@ function monter(app, ctx) {
         return usePostgres ? db.getUserId(req.auth.username) : req.auth.username;
     }
 
+    /**
+     * Les notifications encore d'actualité (lib/notificationsPerimees.js).
+     *
+     * Une alerte que l'état du pool a rattrapée — repêchage fini, tour joué,
+     * offre réglée, semaine remplacée — ne s'affiche plus et ne compte plus
+     * dans la pastille. Les pools se lisent dans la copie du magasin : pas de
+     * requête de plus pour un pool qui n'a pas bougé.
+     */
+    async function actuelles(req, userId, limite) {
+        const lignes = await db.getNotificationsForUser(userId, { limite });
+        return perimees.filtrerActuelles(lignes, {
+            lirePool: nom => store.lire(nom),
+            username: req.auth.username
+        });
+    }
+
+    async function nonLues(req, userId) {
+        return (await actuelles(req, userId, 200)).filter(evenements.compteDansPastille).length;
+    }
+
     // ───────────────────────────── Notifications ─────────────────────────────
 
     /**
@@ -77,7 +100,7 @@ function monter(app, ctx) {
             if (!userId) return indisponible(res);
 
             const limite = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
-            const lignes = await db.getNotificationsForUser(userId, { limite });
+            const lignes = await actuelles(req, userId, limite);
 
             const notifications = lignes.map(evenements.vueNotification);
             const nonLues = lignes.filter(evenements.compteDansPastille).length;
@@ -99,7 +122,7 @@ function monter(app, ctx) {
             if (!usePostgres) return res.json({ disponible: false, nonLues: 0 });
             const userId = await identifiant(req);
             if (!userId) return res.json({ disponible: false, nonLues: 0 });
-            res.json({ disponible: true, nonLues: await db.countUnreadNotifications(userId) });
+            res.json({ disponible: true, nonLues: await nonLues(req, userId) });
         } catch (erreur) {
             repondreErreur(res, erreur, '/api/notifications/count');
         }
@@ -133,7 +156,7 @@ function monter(app, ctx) {
             if (ids.length === 0) return res.json({ disponible: true, marquees: 0 });
 
             const marquees = await db.markNotificationsRead(userId, ids);
-            res.json({ disponible: true, marquees, nonLues: await db.countUnreadNotifications(userId) });
+            res.json({ disponible: true, marquees, nonLues: await nonLues(req, userId) });
         } catch (erreur) {
             repondreErreur(res, erreur, '/api/notifications/read');
         }

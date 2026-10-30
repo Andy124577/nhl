@@ -393,6 +393,7 @@
   /* Le contenu d'origine du rail — pool actif, gestion — a laissé la
      place ; poolNav.js ne le reconstruit plus sur cette page, mais un
      rail déjà monté au moment du basculement peut encore le porter. */
+  body.fz-draft #fzSidebar > .fzm-rail,
   body.fz-draft #fzSidebar > .fz-pool-block,
   body.fz-draft #fzSidebar > .fz-rail-nav { display: none; }
 

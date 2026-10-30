@@ -390,7 +390,7 @@
             ? 'Ton repêchage est en cours.'
             : complet
                 ? 'Complet — le repêchage commence !'
-                : `${occupes} / ${etat.places} joueurs · encore ${pluriel(manque, 'place')}`;
+                : `${occupes} / ${etat.places} joueurs`;
         if (statut && statut.textContent !== texte) statut.textContent = texte;
 
         // Pendant un appel, c'est occuper() qui tient le bouton.
