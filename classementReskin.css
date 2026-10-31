@@ -16,14 +16,14 @@
    ============================================================ */
 
 body.fz-classement {
-    --s-bg: #1B1E21;
-    --s-card: #25292C;
-    --s-line: #33373A;
-    --s-chip: #2E3235;
-    --s-chip2: #383C40;
-    --s-btn-line: #42464A;
-    --s-me: #282B2F;
-    --s-hover: #2B2F32;
+    --s-bg: #0F1316;
+    --s-card: #1C201F;
+    --s-line: #2A2E2D;
+    --s-chip: #252928;
+    --s-chip2: #2F3333;
+    --s-btn-line: #393D3D;
+    --s-me: #1F2222;
+    --s-hover: #222625;
     --s-ink: #F3F1EE;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;

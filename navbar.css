@@ -658,8 +658,8 @@ html[data-theme="light"] .theme-switch-thumb {
    et des blocs plus haut ; venues après, elles l'emportent.
    ============================================================ */
 body {
-    --bn-bg: #16191B;
-    --bn-line: #33373A;
+    --bn-bg: #000000;
+    --bn-line: #2A2E2D;
     --bn-ink: #85827F;
     --bn-ink-active: #F3F1EE;
     --bn-wave: rgba(255, 255, 255, .14);

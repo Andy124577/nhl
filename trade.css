@@ -15,13 +15,13 @@
    ============================================================ */
 
 html body.fz-trade {
-    --s-bg: #1B1E21;
-    --s-card: #25292C;
-    --s-raise: #2B2F32;
-    --s-line: #33373A;
-    --s-line2: #42464A;
-    --s-box: #53575B;
-    --s-face: #33373A;
+    --s-bg: #0F1316;
+    --s-card: #1C201F;
+    --s-raise: #222625;
+    --s-line: #2A2E2D;
+    --s-line2: #393D3D;
+    --s-box: #4A4E4E;
+    --s-face: #2A2E2D;
     --s-ink: #F3F1EE;
     --s-on-ink: #0B0B0C;
     --s-ink2: #C9C7C4;

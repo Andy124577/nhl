@@ -18,21 +18,21 @@
    ============================================================ */
 
 html body.fz-draft {
-    --s-bg: #1B1E21;
-    --s-card: #25292C;
-    --s-raise: #2D3134;
-    --s-sel: #292D30;
-    --s-line: #383C40;
-    --s-line2: #33373A;
-    --s-chip-line: #45494D;
-    --s-head: #1F2225;
-    --s-face: #1B1E21;
+    --s-bg: #0F1316;
+    --s-card: #1C201F;
+    --s-raise: #242827;
+    --s-sel: #202423;
+    --s-line: #2F3333;
+    --s-line2: #2A2E2D;
+    --s-chip-line: #3C4040;
+    --s-head: #141819;
+    --s-face: #0F1316;
     --s-ink: #F3F1EE;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;
     --s-faint: #928F8C;
     --s-dim: #85827F;
-    --s-ghost: #4E5256;
+    --s-ghost: #454949;
     --s-red: #E5372B;
     --s-red-soft: rgba(229, 55, 43, .16);
     --s-red-ink: #FF8A80;

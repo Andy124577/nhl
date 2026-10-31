@@ -12,18 +12,18 @@
    ============================================================ */
 body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page),
 html.fz-anon body {
-    --s-bg: #1B1E21;
-    --s-card: #25292C;
-    --s-raise: #2D3134;
-    --s-line: #383C40;
-    --s-line2: #33373A;
-    --s-chip: #33373A;
-    --s-head: #1F2225;
-    --s-me: #2B2F32;
-    --s-face: #1B1E21;
-    --s-btn: #292D30;
-    --s-btn-line: #42464A;
-    --s-switch: #4E5256;
+    --s-bg: #0F1316;
+    --s-card: #1C201F;
+    --s-raise: #242827;
+    --s-line: #2F3333;
+    --s-line2: #2A2E2D;
+    --s-chip: #2A2E2D;
+    --s-head: #141819;
+    --s-me: #222625;
+    --s-face: #0F1316;
+    --s-btn: #202423;
+    --s-btn-line: #393D3D;
+    --s-switch: #454949;
     --s-ink: #F3F1EE;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;

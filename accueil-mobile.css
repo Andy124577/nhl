@@ -53,8 +53,8 @@ html[data-theme="dark"] .fz-mobile-home {
     --fzm-red-soft: rgba(var(--primary-rgb), .16);
     --fzm-solid: #F5F5F7;
     --fzm-on-solid: #000000;
-    --fzm-avatar-a: #4A4E52;
-    --fzm-avatar-b: #2F3336;
+    --fzm-avatar-a: #414545;
+    --fzm-avatar-b: #262A29;
 }
 
 .fz-mobile-home * { box-sizing: border-box; }

@@ -15,14 +15,14 @@
    ============================================================ */
 
 body.fz-stats {
-    --sj-bg: #1B1E21;
-    --sj-card: #25292C;
-    --sj-line: #33373A;
-    --sj-row: #292D30;
-    --sj-chip: #2E3235;
-    --sj-chip-on: #3B3F43;
-    --sj-btn-line: #42464A;
-    --sj-switch-off: #53575B;
+    --sj-bg: #0F1316;
+    --sj-card: #1C201F;
+    --sj-line: #2A2E2D;
+    --sj-row: #202423;
+    --sj-chip: #252928;
+    --sj-chip-on: #323636;
+    --sj-btn-line: #393D3D;
+    --sj-switch-off: #4A4E4E;
     --sj-ink: #F3F1EE;
     --sj-ink2: #C9C7C4;
     --sj-mute: #A8A6A3;

@@ -101,9 +101,9 @@ body.fz-draft {
 /* mêmes noms, mêmes règles en aval, seules les VALEURS basculent.*/
 /* ============================================================ */
 html[data-theme="dark"] body.fz-draft {
-  --fzd-rail-foot: #16191B;   /* pied du rail (limites d'equipe) : le chrome */
+  --fzd-rail-foot: #000000;   /* pied du rail (limites d'equipe) : le chrome */
   --fzd-accent-wash: color-mix(in srgb, var(--primary) 10%, var(--card));
-  --fzd-tile-bg-strong: #4A4E52;
+  --fzd-tile-bg-strong: #414545;
 
   /* L'aplat plein s'inverse : clair sur sombre, libellé noir. */
   --fzd-solid: #F5F5F7;
@@ -115,7 +115,7 @@ html[data-theme="dark"] body.fz-draft {
   --fzd-on-solid-border: #86868B;
   --fzd-accent-on-solid: #D70015;
 
-  --fzd-tab-hover: #4A4E52;
+  --fzd-tab-hover: #414545;
 
   --fzd-logo-bg: #F5F5F7;
 
