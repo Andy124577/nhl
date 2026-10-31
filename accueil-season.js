@@ -97,7 +97,7 @@ function fzsHeroHTML(activeName, movement) {
     ].join('');
     const rang = rank + 1;
     return `<a class="fzs-hero" href="classement.html?pool=${encodeURIComponent(activeName)}" aria-label="${escapeHTML(rank >= 0 ? `${fzsOrdinal(rang)} sur ${ranking.length} · voir le classement` : 'Voir le classement')}">
-            <span class="fzs-hero-rank">${rank >= 0 ? `<b>${rang}<sup>${rang === 1 ? 're' : 'e'}</sup></b><small>sur ${ranking.length}</small>` : '<b>—</b>'}</span>
+            <span class="fzs-hero-rank${rank >= 0 && rang <= 3 ? ` is-${['or', 'argent', 'bronze'][rang - 1]}` : ''}">${rank >= 0 ? `<b>${rang}<sup>${rang === 1 ? 're' : 'e'}</sup></b><small>sur ${ranking.length}</small>` : '<b>—</b>'}</span>
             <span class="fzs-hero-main">
                 <span class="fzs-hero-pool">${escapeHTML(activeName)}</span>
                 <strong class="fzs-hero-pts">${mine ? `${Number(mine.score).toLocaleString('fr-CA')} <small>pts</small>` : 'Classement à venir'}</strong>
