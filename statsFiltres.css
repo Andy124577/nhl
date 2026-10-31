@@ -15,19 +15,19 @@
    ============================================================ */
 
 body.fz-stats {
-    --sj-bg: #0B0B0C;
-    --sj-card: #141416;
-    --sj-line: #1F1F23;
-    --sj-row: #18181B;
-    --sj-chip: #1C1C1F;
-    --sj-chip-on: #26262A;
-    --sj-btn-line: #2A2A2F;
-    --sj-switch-off: #3A3A40;
+    --sj-bg: #0F1316;
+    --sj-card: #1C201F;
+    --sj-line: #2A2E2D;
+    --sj-row: #202423;
+    --sj-chip: #252928;
+    --sj-chip-on: #323636;
+    --sj-btn-line: #393D3D;
+    --sj-switch-off: #4A4E4E;
     --sj-ink: #F3F1EE;
     --sj-ink2: #C9C7C4;
     --sj-mute: #A8A6A3;
-    --sj-soft: #8E8B88;
-    --sj-faint: #6E6C69;
+    --sj-soft: #9E9B98;
+    --sj-faint: #85827F;
     --sj-on-ink-cap: #55524E;
     --sj-red: #E5372B;
     --sj-on-red: #FFFFFF;
@@ -172,6 +172,11 @@ body.fz-stats #tableContainer #playerTable tbody tr:nth-child(even) {
     border-bottom: 1px solid var(--sj-row);
 }
 body.fz-stats #tableContainer #playerTable tbody tr.is-clickable:hover { background: var(--sj-card); }
+/* Thème sombre : une rangée sur deux un ton plus clair, comme les listes
+   d'ESPN Fantasy. Un voile blanc plutôt qu'une couleur : il marche sur la
+   page (téléphone) comme sur la carte (bureau). Le clair reste uni. */
+html:not([data-theme="light"]) body.fz-stats #tableContainer #playerTable tbody:not(.sj-section) tr:nth-child(even) { background: rgba(255, 255, 255, .035); }
+html:not([data-theme="light"]) body.fz-stats #tableContainer #playerTable tbody:not(.sj-section) tr.is-clickable:hover { background: rgba(255, 255, 255, .08); }
 body.fz-stats #tableContainer #playerTable tbody td {
     height: auto;
     padding: 8px 2px;

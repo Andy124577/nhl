@@ -658,9 +658,9 @@ html[data-theme="light"] .theme-switch-thumb {
    et des blocs plus haut ; venues après, elles l'emportent.
    ============================================================ */
 body {
-    --bn-bg: #0B0B0C;
-    --bn-line: #1F1F23;
-    --bn-ink: #6E6C69;
+    --bn-bg: #000000;
+    --bn-line: #2A2E2D;
+    --bn-ink: #85827F;
     --bn-ink-active: #F3F1EE;
     --bn-wave: rgba(255, 255, 255, .14);
     --bn-spring: cubic-bezier(.34, 1.6, .64, 1);

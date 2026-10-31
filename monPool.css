@@ -15,17 +15,17 @@
    ============================================================ */
 
 body.fz-pool-page {
-    --s-bg: #0B0B0C;
-    --s-card: #141416;
-    --s-raise: #1B1B1E;
-    --s-line: #1F1F23;
-    --s-chip: #1F1F23;
-    --s-av: #2A2A2F;
+    --s-bg: #0F1316;
+    --s-card: #1C201F;
+    --s-raise: #242827;
+    --s-line: #2A2E2D;
+    --s-chip: #2A2E2D;
+    --s-av: #393D3D;
     --s-ink: #F3F1EE;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;
-    --s-soft: #8E8B88;
-    --s-faint: #7E7C79;
+    --s-soft: #9E9B98;
+    --s-faint: #928F8C;
     --s-dim: #5A5A60;
     --s-red: #E5372B;
     --s-red-soft: rgba(229, 55, 43, .2);

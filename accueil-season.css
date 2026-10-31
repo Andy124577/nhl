@@ -12,22 +12,22 @@
    ============================================================ */
 body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page),
 html.fz-anon body {
-    --s-bg: #0B0B0C;
-    --s-card: #141416;
-    --s-raise: #1B1B1E;
-    --s-line: #232327;
-    --s-line2: #1F1F23;
-    --s-chip: #1F1F23;
-    --s-head: #0F0F11;
-    --s-me: #1A1A1D;
-    --s-face: #0B0B0C;
-    --s-btn: #18181B;
-    --s-btn-line: #2A2A2F;
-    --s-switch: #34343A;
+    --s-bg: #0F1316;
+    --s-card: #1C201F;
+    --s-raise: #242827;
+    --s-line: #2F3333;
+    --s-line2: #2A2E2D;
+    --s-chip: #2A2E2D;
+    --s-head: #141819;
+    --s-me: #222625;
+    --s-face: #0F1316;
+    --s-btn: #202423;
+    --s-btn-line: #393D3D;
+    --s-switch: #454949;
     --s-ink: #F3F1EE;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;
-    --s-faint: #7E7C79;
+    --s-faint: #928F8C;
     --s-dim: #5A5A60;
     --s-red: #E5372B;
     --s-red-soft: rgba(229, 55, 43, .16);
@@ -328,6 +328,17 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
     .fzs-read .fz-home-news .fzd-section-title { margin: 0 4px; }
     .fzs-read .fz-home-news-list { margin: 12px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .fzs-read .fz-home-news-row { height: 100%; box-sizing: border-box; background: var(--s-card); }
+}
+/* ---- Téléphone, thème sombre : des blocs sur fond anthracite ----
+   Comme ESPN Fantasy : chaque section est un bloc un ton plus clair que la
+   page, séparé du suivant par un peu de fond. Le thème clair garde ses
+   sections à plat. Les tuiles internes passent au palier --s-raise pour
+   rester visibles sur le bloc. */
+@media (max-width: 899px) {
+    html:not([data-theme="light"]) .fzs .fzs-sec:not(.fzs-games, .fzs-read) {
+        --s-tile: var(--s-raise);
+        margin: 10px 8px 0; border-top: 0; border-radius: 16px; background: var(--s-card);
+    }
 }
 @media (min-width: 900px) and (max-width: 1099px) {
     .fzs-lines-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
