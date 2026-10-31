@@ -167,9 +167,25 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
 .fzs-hero-rank.is-argent { box-shadow: inset 0 0 0 1.5px rgba(222, 228, 238, .85), 0 0 14px rgba(210, 220, 235, .12); }
 .fzs-hero-rank.is-argent b { background-image: linear-gradient(160deg, #FFFFFF 0%, #E4E8EE 26%, #8C939E 52%, #F1F3F6 70%, #6E7580 100%); }
 .fzs-hero-rank.is-argent small { color: #C9CFD8; }
-.fzs-hero-rank.is-or { box-shadow: inset 0 0 0 1.5px rgba(242, 196, 92, .95), 0 0 18px rgba(242, 184, 64, .28); animation: fzsOrHalo 3.2s ease-in-out infinite; }
-.fzs-hero-rank.is-or b { background-image: linear-gradient(160deg, #FFF4C8 0%, #F6CF63 26%, #B9831D 52%, #FFE08A 70%, #8F5F0E 100%); }
-.fzs-hero-rank.is-or small { color: #F0C664; }
+.fzs-hero-rank.is-or { box-shadow: inset 0 0 0 1.5px rgba(255, 204, 64, 1), 0 0 18px rgba(255, 190, 40, .32); animation: fzsOrHalo 3.2s ease-in-out infinite; }
+.fzs-hero-rank.is-or b { background-image: linear-gradient(160deg, #FFF8D6 0%, #FFD84A 24%, #E8A80E 48%, #FFE27A 66%, #C88A00 84%, #FFD23F 100%); filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45)) drop-shadow(0 0 10px rgba(255, 196, 40, .45)); }
+.fzs-hero-rank.is-or small { color: #FFD04A; }
+/* Le reflet passe aussi sur le chiffre : une bande blanche, posée par-dessus
+   le dégradé de la médaille et découpée à la forme du texte, qui le balaie
+   au même moment que la bande de la pastille. */
+.fzs-hero-rank[class*="is-"] b {
+    background-image: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, var(--fzs-reflet-texte, .6)) 50%, transparent 58%), var(--fzs-medaille);
+    background-size: 300% 100%, 100% 100%; background-repeat: no-repeat;
+    background-position: 100% 0, 0 0;
+    animation: fzsRefletTexte var(--fzs-cycle, 6s) ease-in-out infinite;
+}
+.fzs-hero-rank.is-bronze b { --fzs-medaille: linear-gradient(160deg, #F6D2A8 0%, #D99A5E 28%, #A8622E 52%, #E7B07A 70%, #8A4A1F 100%); --fzs-reflet-texte: .45; }
+.fzs-hero-rank.is-argent b { --fzs-medaille: linear-gradient(160deg, #FFFFFF 0%, #E4E8EE 26%, #8C939E 52%, #F1F3F6 70%, #6E7580 100%); --fzs-reflet-texte: .75; }
+.fzs-hero-rank.is-or b { --fzs-medaille: linear-gradient(160deg, #FFF8D6 0%, #FFD84A 24%, #E8A80E 48%, #FFE27A 66%, #C88A00 84%, #FFD23F 100%); --fzs-reflet-texte: 1; }
+@keyframes fzsRefletTexte {
+    0%, 55% { background-position: 100% 0, 0 0; }
+    85%, 100% { background-position: 0% 0, 0 0; }
+}
 /* Le reflet : une bande claire en biais qui traverse la pastille. */
 .fzs-hero-rank[class*="is-"]::after {
     content: ''; position: absolute; inset: -20% auto -20% 0; width: 46%; z-index: 1; pointer-events: none;
