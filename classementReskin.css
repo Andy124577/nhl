@@ -16,19 +16,19 @@
    ============================================================ */
 
 body.fz-classement {
-    --s-bg: #0B0B0C;
-    --s-card: #141416;
-    --s-line: #1F1F23;
-    --s-chip: #1C1C1F;
-    --s-chip2: #232327;
-    --s-btn-line: #2A2A2F;
-    --s-me: #17171A;
-    --s-hover: #1A1A1D;
+    --s-bg: #1B1E21;
+    --s-card: #25292C;
+    --s-line: #33373A;
+    --s-chip: #2E3235;
+    --s-chip2: #383C40;
+    --s-btn-line: #42464A;
+    --s-me: #282B2F;
+    --s-hover: #2B2F32;
     --s-ink: #F3F1EE;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;
-    --s-soft: #8E8B88;
-    --s-faint: #7E7C79;
+    --s-soft: #9E9B98;
+    --s-faint: #928F8C;
     --s-ghost: #4A4A50;
     --s-red: #E5372B;
     --s-red-soft: rgba(229, 55, 43, .16);

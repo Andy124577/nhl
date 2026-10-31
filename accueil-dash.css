@@ -843,15 +843,15 @@ a.fzd-cal-full { text-decoration: none; }
 }
 
 html[data-theme="dark"] .fz-dash-offseason {
-    --fzd-surface: #1C1C1E;
-    --fzd-bg-alt: #2C2C2E;
+    --fzd-surface: #25292C;
+    --fzd-bg-alt: #2F3336;
     --fzd-ink: #F5F5F7;
     --fzd-text: #F5F5F7;
     --fzd-text-muted: #A1A1A6;
     --fzd-text-faint: #A1A1A6;
     --fzd-text-fainter: #A1A1A6;
-    --fzd-border: #38383A;
-    --fzd-border-soft: #38383A;
+    --fzd-border: #3E4246;
+    --fzd-border-soft: #3E4246;
     --fzd-border-strong: #38383A;
     --fzd-accent: var(--primary-text);
     --fzd-accent-dark: var(--primary-text);

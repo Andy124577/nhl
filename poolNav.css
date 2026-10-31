@@ -220,7 +220,7 @@ body.fz-drawer-open { overflow: hidden; }
     --fzn-row: var(--card);
     --fzn-unread: color-mix(in srgb, var(--primary) 6%, var(--card));
     --fzn-hover: color-mix(in srgb, var(--text-main) 6%, var(--card));
-    --fzn-seg-on: #3A3A3C;
+    --fzn-seg-on: #4A4E52;
     --fzn-pool-0-bg: rgba(125, 138, 255, .16); --fzn-pool-0-fg: #AEB6FF;
     --fzn-pool-1-bg: rgba(72, 199, 180, .15);  --fzn-pool-1-fg: #7FDCCB;
     --fzn-pool-2-bg: rgba(191, 90, 242, .16);  --fzn-pool-2-fg: #D7A6F7;
@@ -818,20 +818,20 @@ html[data-theme="light"] .fz-notif-toast {
    cartes de l'accueil sans pool (accueil-nouveau.css). */
 
 .fzm {
-    --m-panneau: #121214;
-    --m-fond: #0B0B0C;
-    --m-carte: #1A1A1D;
-    --m-carte-trait: #2E2E33;
-    --m-champ: #141416;
-    --m-trait: #1F1F23;
-    --m-trait2: #26262A;
-    --m-anneau: #3A3A40;
-    --m-puce: #26262A;
+    --m-panneau: #202326;
+    --m-fond: #1B1E21;
+    --m-carte: #2B2F32;
+    --m-carte-trait: #45494D;
+    --m-champ: #25292C;
+    --m-trait: #33373A;
+    --m-trait2: #3B3F43;
+    --m-anneau: #53575B;
+    --m-puce: #3B3F43;
     --m-ink: #F3F1EE;
     --m-ink2: #C9C7C4;
     --m-mute: #A8A6A3;
-    --m-faint: #8E8B88;
-    --m-dim: #6E6C69;
+    --m-faint: #9E9B98;
+    --m-dim: #85827F;
     --m-off: #4A4A50;
     --m-survol: rgba(255, 255, 255, .04);
     --m-rouge: #E5372B;

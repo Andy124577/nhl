@@ -17,21 +17,21 @@
    ============================================================ */
 
 body.fz-salon-page {
-    --s-bg: #0B0B0C;
-    --s-card: #141416;
-    --s-raise: #1B1B1E;
-    --s-line: #232327;
-    --s-line2: #1F1F23;
-    --s-chip: #1F1F23;
-    --s-me: #1A1A1D;
-    --s-face: #0B0B0C;
-    --s-btn: #18181B;
-    --s-btn-line: #2A2A2F;
-    --s-switch: #3A3A40;
+    --s-bg: #1B1E21;
+    --s-card: #25292C;
+    --s-raise: #2D3134;
+    --s-line: #383C40;
+    --s-line2: #33373A;
+    --s-chip: #33373A;
+    --s-me: #2B2F32;
+    --s-face: #1B1E21;
+    --s-btn: #292D30;
+    --s-btn-line: #42464A;
+    --s-switch: #53575B;
     --s-ink: #F3F1EE;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;
-    --s-faint: #7E7C79;
+    --s-faint: #928F8C;
     --s-dim: #5A5A60;
     --s-red: #E5372B;
     --s-red-soft: rgba(229, 55, 43, .16);

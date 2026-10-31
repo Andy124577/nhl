@@ -13,19 +13,19 @@
    Téléphone : une colonne bord à bord. Bureau : la même colonne, centrée.
    ============================================================ */
 body.fz-pool-form {
-    --s-bg: #0B0B0C;
-    --s-card: #141416;
-    --s-raise: #1B1B1E;
-    --s-line: #2A2A2F;
-    --s-line2: #1F1F23;
-    --s-chip: #1F1F23;
-    --s-field: #0B0B0C;
+    --s-bg: #1B1E21;
+    --s-card: #25292C;
+    --s-raise: #2D3134;
+    --s-line: #42464A;
+    --s-line2: #33373A;
+    --s-chip: #33373A;
+    --s-field: #1B1E21;
     --s-ink: #F3F1EE;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;
-    --s-faint: #8E8B88;
-    --s-dim: #6E6C69;
-    --s-ghost: #3A3A40;
+    --s-faint: #9E9B98;
+    --s-dim: #85827F;
+    --s-ghost: #53575B;
     --s-red: #E5372B;
     --s-red-soft: rgba(229, 55, 43, .1);
     --s-red-line: rgba(229, 55, 43, .6);

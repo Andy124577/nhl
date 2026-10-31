@@ -15,19 +15,19 @@
    ============================================================ */
 
 html body.fz-trade {
-    --s-bg: #0B0B0C;
-    --s-card: #141416;
-    --s-raise: #1A1A1D;
-    --s-line: #1F1F23;
-    --s-line2: #2A2A2F;
-    --s-box: #3A3A40;
-    --s-face: #1F1F23;
+    --s-bg: #1B1E21;
+    --s-card: #25292C;
+    --s-raise: #2B2F32;
+    --s-line: #33373A;
+    --s-line2: #42464A;
+    --s-box: #53575B;
+    --s-face: #33373A;
     --s-ink: #F3F1EE;
     --s-on-ink: #0B0B0C;
     --s-ink2: #C9C7C4;
     --s-mute: #A8A6A3;
-    --s-faint: #8E8B88;
-    --s-dim: #7E7C79;
+    --s-faint: #9E9B98;
+    --s-dim: #928F8C;
     --s-ghost: #5A5A60;
     --s-red: #E5372B;
     --s-red-soft: rgba(229, 55, 43, .08);

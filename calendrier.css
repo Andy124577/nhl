@@ -18,13 +18,13 @@
    ============================================================ */
 
 .fz-cal-page {
-    --cal-bg: #0f0f11;
-    --cal-card: #161618;
-    --cal-surface: #26262a;   /* pastille de l'heure, filtre */
-    --cal-hover: #1e1e21;
+    --cal-bg: #1F2225;
+    --cal-card: #272A2E;
+    --cal-surface: #3B3F43;   /* pastille de l'heure, filtre */
+    --cal-hover: #303437;
     --cal-ink: #f2f2f0;
     --cal-muted: #8c8c91;
-    --cal-line: #2a2a2e;
+    --cal-line: #42464A;
     --cal-accent: #e94646;   /* oklch(0.63 0.2 25) */
     --cal-accent-soft: rgba(233, 70, 70, .14);
 }
