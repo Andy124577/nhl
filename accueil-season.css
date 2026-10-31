@@ -155,6 +155,71 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
 }
 .fzs-hero-rank sup { font-size: 21px; vertical-align: top; position: relative; top: 4px; }
 .fzs-hero-rank small { font: 600 11px/1 'Saira', sans-serif; color: #D9A072; text-transform: uppercase; }
+/* Le rang : neutre (blanc mat, sans métal) hors podium, puis bronze, argent
+   et or. Le chiffre des médailles imite le métal poli : un dégradé à
+   ligne d'horizon (clair en haut, cassure sombre au milieu, reprise claire)
+   et une ombre portée pour le relief, sans contour. Chaque
+   médaille porte un reflet qui balaie la pastille ; plus le rang est haut,
+   plus il est fréquent et lumineux, et l'or ajoute un halo et une étincelle. */
+.fzs-hero-rank { position: relative; overflow: hidden; isolation: isolate; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.fzs-hero-rank:not([class*="is-"]) b { background: none; color: #F3F1EE; -webkit-text-fill-color: #F3F1EE; filter: none; }
+.fzs-hero-rank:not([class*="is-"]) small { color: #8E8B88; }
+.fzs-hero-rank.is-bronze { box-shadow: inset 0 0 0 1.5px rgba(217, 154, 94, .8); }
+.fzs-hero-rank.is-bronze small { color: #D9A072; }
+.fzs-hero-rank.is-argent { box-shadow: inset 0 0 0 1.5px rgba(222, 228, 238, .85), 0 0 14px rgba(210, 220, 235, .12); }
+.fzs-hero-rank.is-argent small { color: #C9CFD8; }
+.fzs-hero-rank.is-or { box-shadow: inset 0 0 0 1.5px rgba(255, 204, 64, 1), 0 0 18px rgba(255, 190, 40, .32); animation: fzsOrHalo 3.2s ease-in-out infinite; }
+.fzs-hero-rank.is-or small { color: #FFD04A; }
+/* Le reflet passe aussi sur le chiffre : une bande blanche, posée par-dessus
+   le dégradé de la médaille et découpée à la forme du texte, qui le balaie
+   au même moment que la bande de la pastille. */
+.fzs-hero-rank[class*="is-"] b {
+    background-image:
+        linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, var(--fzs-reflet-texte, .6)) 50%, transparent 58%),
+        var(--fzs-medaille);
+    background-size: 300% 100%, 100% 100%; background-repeat: no-repeat;
+    background-position: 100% 0, 0 0;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .5)) var(--fzs-lueur, drop-shadow(0 0 0 transparent));
+    animation: fzsRefletTexte var(--fzs-cycle, 6s) ease-in-out infinite;
+}
+.fzs-hero-rank.is-bronze b { --fzs-medaille: linear-gradient(180deg, #FFE3C4 0%, #F2B57C 20%, #D08A4C 42%, #7A4318 50%, #B87038 56%, #F2B983 76%, #8E5326 100%); --fzs-reflet-texte: .5; }
+.fzs-hero-rank.is-argent b { --fzs-medaille: linear-gradient(180deg, #FFFFFF 0%, #EEF1F5 20%, #C3C9D2 42%, #6B737E 50%, #A9B0BA 56%, #F4F6F9 76%, #8A919B 100%); --fzs-reflet-texte: .8; }
+.fzs-hero-rank.is-or b { --fzs-medaille: linear-gradient(180deg, #FFF7CC 0%, #FFE27A 18%, #F6C12E 40%, #A86F04 50%, #E6A915 56%, #FFE580 76%, #C38A0C 100%); --fzs-lueur: drop-shadow(0 0 10px rgba(255, 196, 40, .45)); --fzs-reflet-texte: 1; }
+@keyframes fzsRefletTexte {
+    0%, 55% { background-position: 100% 0, 0 0; }
+    85%, 100% { background-position: 0% 0, 0 0; }
+}
+/* Le reflet : une bande claire en biais qui traverse la pastille. */
+.fzs-hero-rank[class*="is-"]::after {
+    content: ''; position: absolute; inset: -20% auto -20% 0; width: 46%; z-index: 1; pointer-events: none;
+    background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, var(--fzs-reflet, .22)) 50%, transparent 100%);
+    transform: translateX(-160%) skewX(-18deg);
+    animation: fzsReflet var(--fzs-cycle, 6s) ease-in-out infinite;
+}
+.fzs-hero-rank.is-bronze { --fzs-reflet: .16; --fzs-cycle: 6.5s; }
+.fzs-hero-rank.is-argent { --fzs-reflet: .3; --fzs-cycle: 4.8s; }
+.fzs-hero-rank.is-or { --fzs-reflet: .5; --fzs-cycle: 3.6s; }
+/* L'étincelle de l'or, en haut à droite, au passage du reflet. */
+.fzs-hero-rank.is-or::before {
+    content: ''; position: absolute; top: 12px; right: 13px; width: 12px; height: 12px; z-index: 2; pointer-events: none;
+    background: #FFF6D6;
+    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+    filter: drop-shadow(0 0 4px rgba(255, 220, 120, .9));
+    opacity: 0; animation: fzsEtincelle 3.6s ease-in-out infinite;
+}
+@keyframes fzsReflet {
+    0%, 55% { transform: translateX(-160%) skewX(-18deg); }
+    85%, 100% { transform: translateX(300%) skewX(-18deg); }
+}
+@keyframes fzsEtincelle {
+    0%, 68% { opacity: 0; transform: scale(.3) rotate(0deg); }
+    78% { opacity: 1; transform: scale(1) rotate(45deg); }
+    92%, 100% { opacity: 0; transform: scale(.4) rotate(90deg); }
+}
+@keyframes fzsOrHalo {
+    0%, 100% { box-shadow: inset 0 0 0 1.5px rgba(255, 204, 64, .95), 0 0 14px rgba(255, 190, 40, .22); }
+    50% { box-shadow: inset 0 0 0 1.5px rgba(255, 220, 110, 1), 0 0 28px rgba(255, 190, 40, .45); }
+}
 .fzs-hero-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .fzs-hero-pool { font: 600 11px/1.2 'Saira', sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: #A8A6A3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fzs-hero-pts { font: 700 36px/1 'Saira', sans-serif; white-space: nowrap; text-shadow: 0 2px 14px rgba(229, 55, 43, .35); font-variant-numeric: tabular-nums; }
@@ -352,6 +417,7 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
     .fzs-hero-pts { font-size: 30px; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .fzs *, .fzs *::before { animation: none !important; transition: none !important; }
+    .fzs *, .fzs *::before, .fzs *::after { animation: none !important; transition: none !important; }
+    .fzs-hero-rank[class*="is-"]::after, .fzs-hero-rank.is-or::before { display: none; }
     .fzs-rail { scroll-behavior: auto; }
 }

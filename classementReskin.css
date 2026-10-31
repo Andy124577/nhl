@@ -204,6 +204,28 @@ body.fz-classement .st-rang {
 body.fz-classement .st-rang.is-or { background: #E8B95A; color: #0B0B0C; }
 body.fz-classement .st-rang.is-argent { background: #C9C7C4; color: #0B0B0C; }
 body.fz-classement .st-rang.is-bronze { background: #B07A4E; color: #0B0B0C; }
+/* Les médailles brillent : un reflet balaie la pastille, plus vif et plus
+   fréquent à mesure qu'on monte (bronze discret, or éclatant). */
+body.fz-classement .st-rang.is-or,
+body.fz-classement .st-rang.is-argent,
+body.fz-classement .st-rang.is-bronze { position: relative; overflow: hidden; isolation: isolate; }
+body.fz-classement .st-rang.is-or { background: linear-gradient(145deg, #FFE7A3 0%, #E8B95A 45%, #C8902C 100%); box-shadow: 0 0 10px rgba(232, 185, 90, .45); }
+body.fz-classement .st-rang.is-argent { background: linear-gradient(145deg, #F4F5F7 0%, #C9C7C4 50%, #A4A3A1 100%); }
+body.fz-classement .st-rang.is-or::after,
+body.fz-classement .st-rang.is-argent::after,
+body.fz-classement .st-rang.is-bronze::after {
+    content: ''; position: absolute; inset: -30% auto -30% 0; width: 55%; z-index: -1; pointer-events: none;
+    background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, var(--st-reflet, .3)) 50%, transparent 100%);
+    transform: translateX(-180%) skewX(-18deg);
+    animation: stReflet var(--st-cycle, 6s) ease-in-out infinite;
+}
+body.fz-classement .st-rang.is-bronze { --st-reflet: .28; --st-cycle: 6.5s; }
+body.fz-classement .st-rang.is-argent { --st-reflet: .55; --st-cycle: 4.8s; }
+body.fz-classement .st-rang.is-or { --st-reflet: .8; --st-cycle: 3.6s; }
+@keyframes stReflet {
+    0%, 55% { transform: translateX(-180%) skewX(-18deg); }
+    85%, 100% { transform: translateX(280%) skewX(-18deg); }
+}
 
 body.fz-classement .st-logo {
     flex: none;
@@ -677,6 +699,7 @@ body.fz-classement .hof-sk-e.is-court { width: 90px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    body.fz-classement .st-rang::after { animation: none; display: none; }
     body.fz-classement .st-sk-list .st-rangee { opacity: 1; animation: none; }
     body.fz-classement :is(.st-maj-direct i, .hof-direct i, .hof-point) { animation: none; }
     body.fz-classement .st-aide summary .st-ico:last-child { transition: none; }
