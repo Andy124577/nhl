@@ -157,8 +157,8 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
 .fzs-hero-rank small { font: 600 11px/1 'Saira', sans-serif; color: #D9A072; text-transform: uppercase; }
 /* Le rang : neutre (blanc mat, sans métal) hors podium, puis bronze, argent
    et or. Le chiffre des médailles imite le métal poli : un dégradé à
-   ligne d'horizon (clair en haut, cassure sombre au milieu, reprise claire),
-   une arête foncée et une ombre portée pour le relief. Chaque
+   ligne d'horizon (clair en haut, cassure sombre au milieu, reprise claire)
+   et une ombre portée pour le relief, sans contour. Chaque
    médaille porte un reflet qui balaie la pastille ; plus le rang est haut,
    plus il est fréquent et lumineux, et l'or ajoute un halo et une étincelle. */
 .fzs-hero-rank { position: relative; overflow: hidden; isolation: isolate; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
@@ -179,13 +179,12 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
         var(--fzs-medaille);
     background-size: 300% 100%, 100% 100%; background-repeat: no-repeat;
     background-position: 100% 0, 0 0;
-    -webkit-text-stroke: .75px var(--fzs-arete);
-    filter: drop-shadow(0 1px 0 var(--fzs-arete)) drop-shadow(0 3px 4px rgba(0, 0, 0, .5)) var(--fzs-lueur, drop-shadow(0 0 0 transparent));
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .5)) var(--fzs-lueur, drop-shadow(0 0 0 transparent));
     animation: fzsRefletTexte var(--fzs-cycle, 6s) ease-in-out infinite;
 }
-.fzs-hero-rank.is-bronze b { --fzs-medaille: linear-gradient(180deg, #FFE3C4 0%, #F2B57C 20%, #D08A4C 42%, #7A4318 50%, #B87038 56%, #F2B983 76%, #8E5326 100%); --fzs-arete: rgba(92, 46, 14, .7); --fzs-reflet-texte: .5; }
-.fzs-hero-rank.is-argent b { --fzs-medaille: linear-gradient(180deg, #FFFFFF 0%, #EEF1F5 20%, #C3C9D2 42%, #6B737E 50%, #A9B0BA 56%, #F4F6F9 76%, #8A919B 100%); --fzs-arete: rgba(60, 66, 76, .7); --fzs-reflet-texte: .8; }
-.fzs-hero-rank.is-or b { --fzs-medaille: linear-gradient(180deg, #FFF7CC 0%, #FFE27A 18%, #F6C12E 40%, #A86F04 50%, #E6A915 56%, #FFE580 76%, #C38A0C 100%); --fzs-arete: rgba(110, 70, 0, .75); --fzs-lueur: drop-shadow(0 0 10px rgba(255, 196, 40, .45)); --fzs-reflet-texte: 1; }
+.fzs-hero-rank.is-bronze b { --fzs-medaille: linear-gradient(180deg, #FFE3C4 0%, #F2B57C 20%, #D08A4C 42%, #7A4318 50%, #B87038 56%, #F2B983 76%, #8E5326 100%); --fzs-reflet-texte: .5; }
+.fzs-hero-rank.is-argent b { --fzs-medaille: linear-gradient(180deg, #FFFFFF 0%, #EEF1F5 20%, #C3C9D2 42%, #6B737E 50%, #A9B0BA 56%, #F4F6F9 76%, #8A919B 100%); --fzs-reflet-texte: .8; }
+.fzs-hero-rank.is-or b { --fzs-medaille: linear-gradient(180deg, #FFF7CC 0%, #FFE27A 18%, #F6C12E 40%, #A86F04 50%, #E6A915 56%, #FFE580 76%, #C38A0C 100%); --fzs-lueur: drop-shadow(0 0 10px rgba(255, 196, 40, .45)); --fzs-reflet-texte: 1; }
 @keyframes fzsRefletTexte {
     0%, 55% { background-position: 100% 0, 0 0; }
     85%, 100% { background-position: 0% 0, 0 0; }
