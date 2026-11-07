@@ -78,8 +78,8 @@ html[data-theme="light"].fz-anon body {
     -webkit-font-smoothing: antialiased;
 }
 .fzs-col { display: contents; }
-.fzs .fzs-games { order: 1; }
-.fzs .fzs-hero { order: 2; }
+.fzs .fzs-hero { order: 1; }
+.fzs .fzs-games { order: 2; }
 .fzs .fzs-mine { order: 3; }
 .fzs .fzs-duel { order: 4; }
 .fzs .fzs-top { order: 5; }
@@ -233,64 +233,40 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
 .fzs-hero > .fzs-ico { color: #6E6C69; transition: transform .15s; }
 .fzs-hero:hover > .fzs-ico { transform: translateX(3px); color: #F3F1EE; }
 
-/* ---- Matchs ce soir : la rangée du haut de page ----
-   Maquette « Matchs ce soir carousel optimized » : de petites cases de
-   104 px (statut, puis les deux clubs et leur pointage) sur le fond de la
-   page — ni bande rayée, ni fond ou contour rouge, ni repère « MAINTENANT »
-   (andy). Le direct se lit à son point rouge ; le perdant d'un match fini
-   pâlit.
-   Bureau : la bande passe en tête des deux colonnes, des cases de 124 px. */
-.fzs-games {
-    --g-tile: #1C201F; --g-tile-line: #2A2E2D;
-    --g-w: 104px;
-    position: relative;
-    padding: 0 0 8px;
-}
-html[data-theme="light"] .fzs-games {
-    --g-tile: #FFFFFF; --g-tile-line: #DCD9D4;
-}
-.fzs-strip {
-    display: flex; align-items: stretch; gap: 0;
-    overflow-x: auto; padding: 0;
-    scroll-snap-type: x mandatory; scroll-padding: 0;
-    scrollbar-width: none; overscroll-behavior-x: contain;
-}
-.fzs-strip::-webkit-scrollbar { display: none; }
+/* ---- Matchs ce soir ----
+   Sous « Ma position », comme avant (andy, 2026-11-07), en cartes plus
+   compactes : le statut, puis les deux clubs et leur pointage, une ligne
+   chacun. Toucher une carte ouvre la Zone de match. Le direct se lit à son
+   point rouge et à son statut rouge, sans fond rouge ; le perdant d'un match
+   fini pâlit. */
+.fzs .fzs-games { margin: 20px 0 0; border: 0; overflow: visible; }
+.fzs-games .fzs-sh.is-plain { margin: 0 16px; }
 .fzs-game {
-    flex: none; width: var(--g-w); box-sizing: border-box; margin: 0;
-    scroll-snap-align: start;
-    display: flex; flex-direction: column; gap: 5px;
-    padding: 7px 9px 8px; border-radius: 0;
-    background: var(--g-tile); border: 1px solid var(--g-tile-line);
+    width: 152px; box-sizing: border-box; height: 100%;
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 10px 12px 12px; border-radius: 14px;
+    background: var(--s-tile); border: 1px solid var(--s-line);
     color: var(--s-ink); text-align: left; font: inherit;
     transition: transform .12s, border-color .12s;
 }
 .fzs .fzs-game { cursor: pointer; }
 .fzs-game:hover { border-color: var(--s-btn-line); }
 .fzs-game:active { transform: scale(.97); }
-/* Les cases se touchent : leurs filets se superposent au lieu de doubler. */
-.fzs-game + .fzs-game { margin-left: -1px; }
-.fzs-game.is-final { opacity: .88; }
 .fzs-game-st {
-    display: flex; align-items: center; gap: 5px; min-width: 0;
-    font: 700 10.5px/14px 'Saira', sans-serif; letter-spacing: .04em; white-space: nowrap;
+    display: flex; align-items: center; gap: 6px; min-width: 0;
+    font: 700 11.5px/16px 'Saira', sans-serif; white-space: nowrap;
     color: var(--s-ink2);
 }
 .fzs-game-st span { overflow: hidden; text-overflow: ellipsis; }
-.fzs-game-st i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--s-red); box-shadow: 0 0 0 3px var(--s-red-soft); animation: fzsPulse 1.2s infinite; }
+.fzs-game-st i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--s-red); animation: fzsPulse 1.2s infinite; }
 .fzs-game.is-live .fzs-game-st { color: var(--s-red-ink); }
 .fzs-game.is-final .fzs-game-st { color: var(--s-faint); }
-.fzs-game-row { display: flex; align-items: center; gap: 7px; min-width: 0; font-weight: 700; }
-.fzs-game-row img { flex: none; width: 18px; height: 18px; object-fit: contain; }
-.fzs-game-row b { flex: 1; min-width: 0; font: inherit; font-size: 13px; line-height: 18px; letter-spacing: .02em; }
-.fzs-game-row em { font: inherit; font-style: normal; font-size: 15px; line-height: 18px; font-variant-numeric: tabular-nums; }
-.fzs-game-row.is-win { font-weight: 800; }
+.fzs-game-row { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 700; }
+.fzs-game-row img { flex: none; width: 24px; height: 24px; object-fit: contain; }
+.fzs-game-row b { flex: 1; min-width: 0; font: inherit; font-size: 14px; line-height: 24px; }
+.fzs-game-row em { font: inherit; font-style: normal; font-size: 17px; line-height: 24px; font-variant-numeric: tabular-nums; }
 .fzs-game-row.is-lose { font-weight: 500; color: var(--s-faint); }
-.fzs-strip-all { flex: none; display: flex; align-items: center; gap: 4px; margin: 2px 0; padding: 0 10px 0 6px; font: 600 12px/1 'Saira', sans-serif; color: var(--s-mute); scroll-snap-align: end; }
-.fzs .fzs-strip-all:hover { color: var(--s-ink); }
-.fzs-strip-all span { font-size: 16px; }
-.fzs-strip-empty { padding: 10px 4px; font-size: 13px; color: var(--s-faint); }
-.fzs-strip-empty a { color: var(--s-mute); font-weight: 600; }
+.fzs-games .fzs-empty { padding: 12px 16px 0; }
 .fzs-btn { height: 42px; box-sizing: border-box; border-radius: 12px; border: 1px solid var(--s-btn-line); background: var(--s-btn); display: flex; align-items: center; justify-content: center; font: 600 14px/1 'Saira', sans-serif; color: var(--s-ink); text-decoration: none; }
 .fzs-btn:hover { border-color: var(--s-ink2); }
 
@@ -466,18 +442,17 @@ html.fzs-zone-ouverte { overflow: hidden; }
 /* ---- Bureau : deux colonnes de cartes ---- */
 @media (min-width: 900px) {
     #fzDashSection:is(.is-season, .is-drafting) { padding: 24px 24px 56px; }
-    /* La rangée des matchs colle à l'en-tête, sans coins arrondis (andy). */
-    #fzDashSection.is-season { padding-top: 0; }
     .fzs {
         --s-tile: var(--s-raise);
         display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: 20px; align-items: start;
     }
     .fzs-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-    .fzs .fzs-sec { margin: 0; border: 1px solid var(--s-line2); border-radius: 18px; background: var(--s-card); overflow: hidden; }
+    .fzs .fzs-sec, .fzs .fzs-games { margin: 0; border: 1px solid var(--s-line2); border-radius: 18px; background: var(--s-card); overflow: hidden; }
     .fzs .fzs-hero { margin: 0; min-height: 132px; padding: 22px; }
-    .fzs .fzs-games { order: -1; grid-column: 1 / -1; --g-w: 124px; padding: 0; }
-    .fzs-strip { scrollbar-width: thin; }
+    .fzs-games .fzs-sh.is-plain { margin: 0 18px; padding: 18px 0 0; }
+    .fzs-games .fzs-rail { padding-bottom: 18px; }
+    .fzs-games .fzs-empty { padding: 12px 18px 18px; }
     .fzs-sh { margin: 0 18px; }
     .fzs-rail { padding-left: 18px; padding-right: 18px; scroll-padding: 0 18px; scrollbar-width: thin; }
     .fzs-row, .fzs-rank-head, .fzs-rank-row { padding-left: 18px; padding-right: 18px; }
@@ -495,7 +470,7 @@ html.fzs-zone-ouverte { overflow: hidden; }
    sections à plat. Les tuiles internes passent au palier --s-raise pour
    rester visibles sur le bloc. */
 @media (max-width: 899px) {
-    html:not([data-theme="light"]) .fzs .fzs-sec:not(.fzs-read) {
+    html:not([data-theme="light"]) .fzs .fzs-sec:not(.fzs-games, .fzs-read) {
         --s-tile: var(--s-raise);
         margin: 10px 8px 0; border-top: 0; border-radius: 16px; background: var(--s-card);
     }
@@ -514,6 +489,6 @@ html.fzs-zone-ouverte { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
     .fzs *, .fzs *::before, .fzs *::after { animation: none !important; transition: none !important; }
     .fzs-hero-rank[class*="is-"]::after, .fzs-hero-rank.is-or::before { display: none; }
-    .fzs-rail, .fzs-strip { scroll-behavior: auto; }
+    .fzs-rail { scroll-behavior: auto; }
     .fzs-zone-feuille, .fzs-zone-fond { transition: none !important; }
 }

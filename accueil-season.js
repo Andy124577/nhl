@@ -1,8 +1,7 @@
 ﻿/* ============================================================
    ACCUEIL DE SAISON — maquette « 6b Éditorial » (Fantazy Accueil Final)
    ------------------------------------------------------------
-   De haut en bas : les matchs ce soir (une rangée tout en haut), ma
-   position, mes joueurs ce soir,
+   De haut en bas : ma position, les matchs ce soir, mes joueurs ce soir,
    mon duel (tête-à-tête seulement), les meilleurs de la semaine,
    l'activité de la ligue, les classements de la semaine par position, les
    alignements des 32 clubs et, tout en bas, À lire.
@@ -115,11 +114,9 @@ function fzsActualiserRang() {
     bloc.outerHTML = fzsHeroHTML(fzsRangContexte.activeName, fzsRangContexte.movement);
 }
 
-/* ---- Matchs ce soir : la pellicule du haut de page ----
-   Maquette d'andy « Matchs ce soir carousel optimized » : une bande de
-   petites cases tout en haut de l'accueil, au-dessus de « Ma position ».
-   Les matchs suivent la soirée de gauche à droite (finis, en direct, à
-   venir), et la bande s'ouvre sur le premier match en direct. Toucher une case ouvre
+/* ---- Matchs ce soir ----
+   Sous « Ma position » : une carte par match (en direct, à venir, puis
+   finis), le statut puis les deux clubs et leur pointage. Toucher une carte ouvre
    la « Zone de match » (fzsOuvrirZone) : pointage, tirs, avantage numérique
    et buts, lus sur /game/:id/boxscore, et le lien vers match.html.
 
@@ -141,8 +138,8 @@ function fzsMatchsDuJour(tonight) {
         // en direct apporte l'horloge et le pointage du dernier envoi.
         if (s && s.game && (s.type === 'live' || !parId.has(String(s.game.id)))) fondre(s.game);
     });
-    // L'ordre de la soirée : finis, en direct, à venir — l'heure départage.
-    const rang = g => (FZS_FINI(g) ? 0 : FZS_EN_DIRECT(g) ? 1 : 2);
+    // En direct, à venir, puis finis — l'heure départage.
+    const rang = g => (FZS_EN_DIRECT(g) ? 0 : FZS_FINI(g) ? 2 : 1);
     return [...parId.values()]
         .filter(g => g.away?.abbrev && g.home?.abbrev)
         .sort((a, b) => rang(a) - rang(b) || (Date.parse(a.startTimeUTC) || 0) - (Date.parse(b.startTimeUTC) || 0));
@@ -166,81 +163,44 @@ function fzsStatutMatch(g) {
     return g.startTimeUTC ? `Ce soir · ${gameTimeLabel(g.startTimeUTC)}` : 'Ce soir';
 }
 
-/** Le statut court d'une case : « 2e · 14:22 », « Entracte », « Final · Prol. », « 22 h 00 ». */
-function fzsStatutCourt(g) {
-    if (FZS_EN_DIRECT(g)) return fzsPeriode(g) || 'En direct';
-    if (FZS_FINI(g)) return fzsStatutMatch(g);
-    return g.startTimeUTC ? gameTimeLabel(g.startTimeUTC) : 'Ce soir';
-}
-
-/** La case où la bande s'ouvre : le premier match en direct, sinon le premier à venir après des matchs finis. */
-function fzsIndexOuverture(matchs) {
-    const live = matchs.findIndex(FZS_EN_DIRECT);
-    if (live >= 0) return live;
-    const avenir = matchs.findIndex(g => !FZS_FINI(g));
-    return avenir > 0 ? avenir : -1;
-}
-
-function fzsMatchHTML(g, ouverture = false) {
+function fzsMatchHTML(g) {
     const esc = escapeHTML;
     const live = FZS_EN_DIRECT(g);
     const fini = FZS_FINI(g);
     const joue = live || fini;
     const a = Number(g.away.score ?? 0);
     const h = Number(g.home.score ?? 0);
-    const ligne = (club, score, gagne) => `<span class="fzs-game-row${fini ? (gagne ? ' is-win' : ' is-lose') : ''}">
-                <img src="teams/${esc(club)}.png" alt="" width="18" height="18" loading="lazy" onerror="this.style.visibility='hidden'">
+    const ligne = (club, score, perd) => `<span class="fzs-game-row${perd ? ' is-lose' : ''}">
+                <img src="teams/${esc(club)}.png" alt="" width="24" height="24" loading="lazy" onerror="this.style.visibility='hidden'">
                 <b>${esc(club)}</b>
                 <em>${joue ? esc(score) : ''}</em>
             </span>`;
     const etiquette = `${g.away.abbrev}${joue ? ` ${a}` : ''} contre ${g.home.abbrev}${joue ? ` ${h}` : ''}, ${fzsStatutMatch(g)}`;
-    return `<button type="button" class="fzs-game${live ? ' is-live' : fini ? ' is-final' : ' is-up'}${ouverture ? ' is-start' : ''}" data-id="${esc(g.id ?? '')}" aria-label="${esc(etiquette)}" aria-haspopup="dialog">
-            <span class="fzs-game-st">${live ? '<i></i>' : ''}<span>${esc(fzsStatutCourt(g))}</span></span>
-            ${ligne(g.away.abbrev, a, a > h)}
-            ${ligne(g.home.abbrev, h, h > a)}
-        </button>`;
+    return `<li><button type="button" class="fzs-game${live ? ' is-live' : fini ? ' is-final' : ' is-up'}" data-id="${esc(g.id ?? '')}" aria-label="${esc(etiquette)}" aria-haspopup="dialog">
+            <span class="fzs-game-st">${live ? '<i></i>' : ''}<span>${esc(fzsStatutMatch(g))}</span></span>
+            ${ligne(g.away.abbrev, a, fini && a < h)}
+            ${ligne(g.home.abbrev, h, fini && h < a)}
+        </button></li>`;
 }
 
 function fzsMatchsHTML(tonight) {
     const matchs = fzsMatchsDuJour(tonight);
-    const ici = fzsIndexOuverture(matchs);
-    const cases = matchs.map((g, i) => fzsMatchHTML(g, i === ici)).join('');
-    return `<section class="fzs-games" aria-label="Matchs ce soir">
-            <div class="fzs-strip">
-                ${matchs.length
-                    ? `${cases}<a class="fzs-strip-all" href="calendrier.html">Scores<span aria-hidden="true">›</span></a>`
-                    : '<p class="fzs-strip-empty">Aucun match de la LNH ce soir. <a href="calendrier.html">Scores ›</a></p>'}
-            </div>
+    return `<section class="fzs-sec fzs-games" aria-labelledby="fzsGamesTitre">
+            <header class="fzs-sh is-plain"><h2 id="fzsGamesTitre">Matchs ce soir</h2><a class="fzs-sh-link" href="calendrier.html">Scores</a></header>
+            ${matchs.length
+                ? `<ul class="fzs-rail fzs-games-list">${matchs.map(fzsMatchHTML).join('')}</ul>`
+                : '<p class="fzs-empty">Aucun match de la LNH ce soir.</p>'}
         </section>`;
-}
-
-/** Ouvre la bande sur le premier match en direct, sinon sur le prochain à venir. */
-function fzsCadrerMatchs() {
-    const bande = document.querySelector('#fzSeasonHome .fzs-strip');
-    if (!bande) return;
-    const cadrer = () => {
-        const cible = bande.querySelector('.fzs-game.is-start');
-        if (cible) bande.scrollLeft = Math.max(0, cible.offsetLeft - bande.offsetLeft);
-    };
-    // L'accueil se dessine encore caché (html.fz-home-pending) : la bande n'a
-    // pas de largeur, donc rien à défiler. On attend qu'elle en ait une.
-    if (bande.clientWidth || typeof ResizeObserver === 'undefined') { cadrer(); return; }
-    const obs = new ResizeObserver(() => {
-        if (!bande.clientWidth) return;
-        obs.disconnect();
-        cadrer();
-    });
-    obs.observe(bande);
 }
 
 /** Redessine les cases sur place, sans perdre la position du défilement. */
 function fzsActualiserMatchs() {
     const bloc = document.querySelector('#fzSeasonHome .fzs-games');
     if (!bloc) return;
-    const defile = bloc.querySelector('.fzs-strip')?.scrollLeft || 0;
+    const defile = bloc.querySelector('.fzs-rail')?.scrollLeft || 0;
     bloc.outerHTML = fzsMatchsHTML(calTonight);
-    const bande = document.querySelector('#fzSeasonHome .fzs-games .fzs-strip');
-    if (bande && defile) bande.scrollLeft = defile;
+    const rail = document.querySelector('#fzSeasonHome .fzs-games .fzs-rail');
+    if (rail && defile) rail.scrollLeft = defile;
     fzsActualiserZone();
     // Un match qui commence pendant que l'accueil est ouvert : la soirée se
     // met à se relire seule.
@@ -264,7 +224,7 @@ function fzsTic() {
     cartes.forEach(carte => {
         const g = parId.get(carte.dataset.id);
         const statut = carte.querySelector('.fzs-game-st span');
-        const texte = g && fzsStatutCourt(g);
+        const texte = g && fzsStatutMatch(g);
         if (statut && texte && statut.textContent !== texte) statut.textContent = texte;
     });
     const zone = document.getElementById('fzsZone');
@@ -890,7 +850,6 @@ function renderSeasonHome({ tonight, movement, activeName }) {
     // que son direct, pour les cartes de match. Le calendrier, lui, n'a pas
     // d'emplacement : son horaire du jour nourrit les matchs et mes joueurs.
     root.innerHTML = `
-        ${fzsMatchsHTML(tonight)}
         <div class="fzs-col fzs-col-a">
             ${fzsHeroHTML(activeName, movement)}
             ${fzsJoueursHTML(tonight, activeName)}
@@ -898,6 +857,7 @@ function renderSeasonHome({ tonight, movement, activeName }) {
             ${fzsActiviteHTML()}
         </div>
         <div class="fzs-col fzs-col-b">
+            ${fzsMatchsHTML(tonight)}
             ${fzsMeilleursHTML()}
             ${fzsClassementHTML()}
         </div>
@@ -910,7 +870,6 @@ function renderSeasonHome({ tonight, movement, activeName }) {
     fzsRendreActivite(activeName);
     fzsReglerSuiviSoiree(tonight);
     fzsReglerTic();
-    fzsCadrerMatchs();
     return true;
 }
 
