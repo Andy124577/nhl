@@ -244,7 +244,7 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
     --g-live-line: #6A2A24;
     --g-w: 104px;
     position: relative;
-    padding: 8px 0;
+    padding: 0 0 8px;
 }
 html[data-theme="light"] .fzs-games {
     --g-tile: #FFFFFF; --g-tile-line: #DCD9D4;
@@ -258,10 +258,10 @@ html[data-theme="light"] .fzs-games {
 }
 .fzs-strip::-webkit-scrollbar { display: none; }
 .fzs-game {
-    flex: none; width: var(--g-w); box-sizing: border-box; margin: 2px 0;
+    flex: none; width: var(--g-w); box-sizing: border-box; margin: 0;
     scroll-snap-align: start;
     display: flex; flex-direction: column; gap: 5px;
-    padding: 7px 9px 8px; border-radius: 8px;
+    padding: 7px 9px 8px; border-radius: 0;
     background: var(--g-tile); border: 1px solid var(--g-tile-line);
     color: var(--s-ink); text-align: left; font: inherit;
     transition: transform .12s, border-color .12s;
@@ -471,6 +471,8 @@ html.fzs-zone-ouverte { overflow: hidden; }
 /* ---- Bureau : deux colonnes de cartes ---- */
 @media (min-width: 900px) {
     #fzDashSection:is(.is-season, .is-drafting) { padding: 24px 24px 56px; }
+    /* La rangée des matchs colle à l'en-tête, sans coins arrondis (andy). */
+    #fzDashSection.is-season { padding-top: 0; }
     .fzs {
         --s-tile: var(--s-raise);
         display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
