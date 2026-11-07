@@ -668,6 +668,12 @@
         const actif = FZPool.get();
         const courant = FZPool.mine().find(p => p.name === actif);
 
+        // Pools illisibles pour l'instant (base en réveil, session expirée) :
+        // rien ne dit que la personne n'en a pas. Pas de « Rejoindre un
+        // pool » ; la puce revient quand les pools arrivent.
+        puce.hidden = !courant && typeof FZPool.failed === 'function' && !!FZPool.failed();
+        if (puce.hidden) return;
+
         if (!courant) {
             puce.href = 'rejoindre-pool.html';
             puce.className = 'fz-navbar-pool fz-navbar-pool-empty';

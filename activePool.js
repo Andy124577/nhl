@@ -29,6 +29,12 @@
     let mesPools = [];       // [{ name, data, teamName, teamData }]
     let actif = null;        // nom du pool actif, ou null
     let chargement = null;   // promesse de premier chargement
+    // Pourquoi les pools n'ont pas pu être lus : null (tout va bien),
+    // 'reseau' (serveur ou base injoignable) ou 'session' (le cookie de
+    // connexion n'est plus valide alors que la page se croit connectée).
+    // Dans les deux cas, la liste vide ne dit RIEN de l'appartenance réelle :
+    // aucune page ne doit en conclure « aucun pool ».
+    let echec = null;
     const abonnesChangement = [];   // appelés quand le pool actif change
     const abonnesDonnees = [];      // appelés quand /draft est rafraîchi
 
@@ -253,6 +259,15 @@
     /** Renvoie true si les données ont changé depuis le dernier appel. */
     async function chargerDraft() {
         const reponse = await fetch(`${BASE_URL}/draft?timestamp=${Date.now()}`, { cache: 'no-store' });
+        // Une erreur (base en réveil, serveur qui redémarre) n'est pas une
+        // liste vide : avant, une réponse d'erreur lisible en JSON passait
+        // pour « aucun pool ».
+        if (!reponse.ok) throw Object.assign(new Error(`HTTP ${reponse.status}`), { raison: 'reseau' });
+        // Connecté selon la page, visiteur selon le serveur : le cookie a
+        // expiré. La réponse ne contient alors que des vues publiques.
+        if (utilisateur() && reponse.headers.get('X-Fz-Connecte') === '0') {
+            throw Object.assign(new Error('Session expirée'), { raison: 'session' });
+        }
         // Le texte brut sert d'empreinte : comparer avant d'analyser évite
         // aussi de reconstruire des objets identiques à ceux déjà en main.
         const texte = await reponse.text();
@@ -443,11 +458,29 @@
         chargement = (async () => {
             if (!utilisateur()) { tousLesPools = {}; mesPools = []; actif = null; return API; }
             let charge = false;
-            try {
-                await chargerDraft();
-                charge = true;
-            } catch (erreur) {
-                console.error('Chargement des pools impossible :', erreur);
+            // Quelques essais rapprochés : la base gratuite met une à
+            // quelques secondes à se réveiller, et la première lecture qui
+            // la réveille peut échouer. Une session expirée, elle, ne
+            // s'arrangera pas en réessayant.
+            for (let essai = 0; !charge; essai++) {
+                try {
+                    await chargerDraft();
+                    charge = true;
+                    echec = null;
+                } catch (erreur) {
+                    echec = erreur.raison === 'session' ? 'session' : 'reseau';
+                    console.error('Chargement des pools impossible :', erreur);
+                    if (echec === 'session' || essai >= DELAIS_ESSAIS.length) break;
+                    await new Promise(r => setTimeout(r, DELAIS_ESSAIS[essai]));
+                }
+            }
+            if (!charge) {
+                // Le pool mémorisé reste en place : l'effacer ici faisait
+                // oublier le pool actif à la moindre panne. On réessaie en
+                // arrière-plan ; signalerDonnees() le rétablira.
+                actif = null;
+                if (echec === 'reseau') reessayerPlusTard();
+                return API;
             }
             actif = resoudreActif();
             memoriser(actif);
@@ -516,15 +549,41 @@
         window.location.replace(urlSansContexte());
     }
 
+    /** Délais entre les essais du premier chargement (ms). */
+    const DELAIS_ESSAIS = [700, 1500, 3000];
+
+    /**
+     * Après un premier chargement raté : relire en arrière-plan, de plus en
+     * plus espacé, jusqu'à ce que ça passe. L'accueil montre un message
+     * d'attente entre-temps, puis se redessine tout seul (onData).
+     */
+    function reessayerPlusTard(delai = 5000) {
+        setTimeout(async () => {
+            if (!echec) return;
+            await rafraichir();
+            if (echec === 'reseau') reessayerPlusTard(Math.min(delai * 2, 60000));
+        }, delai);
+    }
+
     async function rafraichir() {
         if (!utilisateur()) return;
         let change;
+        const etaitEnEchec = !!echec;
         try {
             change = await chargerDraft();
+            echec = null;
         } catch (erreur) {
             console.error('Rafraîchissement des pools impossible :', erreur);
+            // Une page déjà chargée garde ses données : seul un échec du
+            // premier chargement se signale.
+            if (etaitEnEchec) {
+                const avant = echec;
+                echec = erreur.raison === 'session' ? 'session' : 'reseau';
+                if (avant !== echec) signalerDonnees();
+            }
             return;
         }
+        if (etaitEnEchec) change = true;
         // Rien de neuf : ne pas réveiller les abonnés. La plupart redessinent
         // tout leur écran, ce qui perd le défilement en cours, referme ce qui
         // était ouvert et relance des appels réseau — pour le même contenu.
@@ -551,6 +610,11 @@
         // Le pool actif a pu disparaître entre-temps (départ, suppression).
         if (actif && !estMembre(actif)) {
             actif = poolParDefaut();
+            memoriser(actif);
+            notifier();
+        } else if (!actif && !echec && mesPools.length > 0) {
+            // Les pools arrivent après un premier chargement raté.
+            actif = resoudreActif();
             memoriser(actif);
             notifier();
         }
@@ -641,6 +705,13 @@
 
         /** Nom du pool actif, ou null si l'utilisateur n'est dans aucun pool. */
         get: () => actif,
+
+        /**
+         * null si les pools ont bien été lus ; sinon 'reseau' ou 'session'.
+         * Quand ce n'est pas null, `get()` vaut null sans que la personne
+         * soit sans pool : ne pas lui proposer d'en créer un.
+         */
+        failed: () => echec,
 
         /** Données du pool actif. */
         data: () => (actif ? tousLesPools[actif] : null) || null,

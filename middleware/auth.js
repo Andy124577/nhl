@@ -117,6 +117,8 @@ function magasinPostgres(db) {
  * tout ce qui change une session passe alors par ce magasin et l'efface.
  */
 const DUREE_MEMOIRE_SESSION_MS = 60 * 1000;
+/** Attente avant de relire une session dont la lecture a échoué (base en réveil). */
+const NOUVEL_ESSAI_SESSION_MS = 400;
 /** Au-delà, la plus ancienne entrée part : la mémoire reste bornée. */
 const MEMOIRE_SESSIONS_MAX = 5000;
 /** Même seuil que db.touchSession : `last_seen_at` s'écrit une fois toutes les six heures au plus. */
@@ -257,12 +259,32 @@ function creerAuth({ db, usePostgres, secure = true, originesAutorisees = [], me
      */
     async function sessionMiddleware(req, res, next) {
         req.auth = null;
+        req.authIndisponible = false;
         try {
             const cookies = session.lireCookies(req.headers && req.headers.cookie);
             const jeton = cookies[session.NOM_COOKIE];
             if (!jeton) return next();
 
-            const ligne = await magasin.lire(session.empreinteJeton(jeton));
+            // La base qui se réveille (Neon s'endort après cinq minutes) peut
+            // faire échouer la toute première requête : une connexion coupée,
+            // un délai dépassé. Un second essai passe presque toujours. S'il
+            // échoue aussi, on le DIT (`authIndisponible`) au lieu de servir la
+            // requête comme à un visiteur : /draft répondait alors avec les
+            // vues publiques, et l'accueil d'un membre affichait « Ton premier
+            // pool commence ici ».
+            const empreinte = session.empreinteJeton(jeton);
+            let ligne;
+            try {
+                ligne = await magasin.lire(empreinte);
+            } catch (premiere) {
+                await new Promise(r => setTimeout(r, NOUVEL_ESSAI_SESSION_MS));
+                try {
+                    ligne = await magasin.lire(empreinte);
+                } catch (seconde) {
+                    req.authIndisponible = true;
+                    throw seconde;
+                }
+            }
             if (!session.sessionValide(ligne)) return next();
 
             req.auth = {

@@ -82,7 +82,7 @@
     <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
     <script src="fzDialog.js?v=20261026a"></script>
     <link rel="stylesheet" href="teamLogos.css?v=20260926">
-    <link rel="stylesheet" href="poolNav.css?v=20261031a">
+    <link rel="stylesheet" href="poolNav.css?v=20261107a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20261031a">
     <link rel="stylesheet" href="accueil.css?v=20261015a">
@@ -109,14 +109,14 @@
     <!-- Thème clair des accueils repêchage et saison : APRÈS la palette. -->
     <link rel="stylesheet" href="accueil-light.css?v=20261022b">
     <!-- Accueil sans pool (maquette « Accueil · nouveau ») : APRÈS la palette. -->
-    <link rel="stylesheet" href="accueil-nouveau.css?v=20261031a">
+    <link rel="stylesheet" href="accueil-nouveau.css?v=20261107a">
     <!-- Squelettes : les os partagés, puis celui de l'accueil d'un membre. -->
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="accueil-squelette.css?v=20261022b">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
-    <script defer src="activePool.js?v=20260929n"></script>
+    <script defer src="activePool.js?v=20261107a"></script>
     <link rel="stylesheet" href="bilanSoiree.css?v=20261107a">
 </head>
 <body>
@@ -372,6 +372,14 @@
             <!-- Accueil première session : actions réelles et aperçu du jeu. -->
             <!-- Accueil sans pool — maquette « Accueil · nouveau » (langage 6b
                  Éditorial, accueil-nouveau.css). -->
+            <!-- Pools illisibles (base en réveil, session expirée) : on ne
+                 sait pas si la personne a un pool, donc jamais l'accueil
+                 « Ton premier pool » (accueil-dash.js, fzdAfficherErreurPools). -->
+            <div class="fz-dash-erreur" id="fzDashErreur" role="status" hidden>
+                <h2 data-erreur-titre>Tes pools arrivent</h2>
+                <p data-erreur-texte></p>
+                <button type="button" data-erreur-action>Réessayer</button>
+            </div>
             <div class="fz-dash-onboard" id="fzDashOnboard">
                 <header class="fzn-intro">
                     <p class="fzn-welcome" id="fzoWelcome">Bienvenue</p>
@@ -845,7 +853,7 @@
     <!-- Meilleurs joueurs : lit BASE_URL et escapeHTML (accueil.js) et ouvre
          la fiche par fzhOpenPlayerCareer (accueil-watch.js, juste avant). -->
     <script defer src="statsTopPlayers.js?v=20261015a"></script>
-    <script defer src="accueil-dash.js?v=20261029a"></script>
+    <script defer src="accueil-dash.js?v=20261107a"></script>
     <script defer src="instantDraft.js?v=20261029a"></script>
     <script defer src="accueil-mobile.js?v=20261015a"></script>
     <script defer src="accueil-season.js?v=20261107f"></script>
@@ -860,7 +868,7 @@
     <script defer src="avatars.js?v=20261026a"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20261022a"></script>
-    <script defer src="poolNav.js?v=20261029m"></script>
+    <script defer src="poolNav.js?v=20261107a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20261028a"></script>
 </body>

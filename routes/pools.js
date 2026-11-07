@@ -139,6 +139,17 @@ function monter(app, ctx) {
      * découverte pour les autres.
      */
     app.get('/draft', async (req, res) => {
+        // Le cookie de session n'a pas pu être vérifié (base indisponible) :
+        // répondre avec les vues publiques ferait croire à un membre qu'il
+        // n'a aucun pool. Mieux vaut un refus franc, que la page réessaie.
+        if (req.authIndisponible) {
+            res.setHeader('Retry-After', '2');
+            return res.status(503).json({ message: 'Session momentanément invérifiable, réessayez.' });
+        }
+        // Dit à la page si la requête était bien connectée : un nom en
+        // mémoire locale sans session valide (cookie expiré) n'est pas un
+        // compte sans pool.
+        res.setHeader('X-Fz-Connecte', req.auth ? '1' : '0');
         try {
             // Un seul pool : `?pool=NOM`. La salle de repêchage et le filet
             // de l'accueil n'en suivent qu'un, mais relisaient l'état de TOUS

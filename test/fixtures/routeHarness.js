@@ -656,13 +656,13 @@ function monterRoutes(modules, { pools = {}, users = null, ctxExtra = {}, apresC
     for (const module of [].concat(modules)) module.monter(app, ctx);
 
     /** Appelle une route comme le ferait Express : chaîne de gestionnaires. */
-    async function appeler(methode, chemin, { body = {}, query = {}, auth: identite = null, headers = {} } = {}) {
+    async function appeler(methode, chemin, { body = {}, query = {}, auth: identite = null, headers = {}, authIndisponible = false } = {}) {
         for (const route of app.routes) {
             if (route.methode !== methode) continue;
             const params = apparier(route.chemin, chemin);
             if (!params) continue;
 
-            const req = { method: methode, body, query, params, auth: identite, headers, protocol: 'http', path: chemin };
+            const req = { method: methode, body, query, params, auth: identite, authIndisponible, headers, protocol: 'http', path: chemin };
             const res = creerReponse();
 
             for (const gestionnaire of route.gestionnaires) {

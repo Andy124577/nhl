@@ -1113,3 +1113,6 @@ html[data-theme="light"] .fzm-groupe { background: var(--m-panneau); }
 @media (prefers-reduced-motion: reduce) {
     .fzm-tous { transition: none; }
 }
+
+/* Pools illisibles pour l'instant : la puce se retire (poolNav.js, montrerPucePool). */
+.fz-navbar-pool[hidden] { display: none !important; }

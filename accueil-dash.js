@@ -2817,10 +2817,11 @@ function fzdApplyPreseasonLayout(hasPool) {
 function fzdRevelerAccueil(noter = true) {
     const section = document.getElementById('fzDashSection');
     if (noter && section && userData.username && window.FZPool) {
-        const disposition = !FZPool.get() ? 'vide'
+        const disposition = (typeof FZPool.failed === 'function' && FZPool.failed()) ? null
+            : !FZPool.get() ? 'vide'
             : section.classList.contains('is-drafting') ? 'repechage'
             : section.classList.contains('is-season') ? 'saison' : 'tableau';
-        try { localStorage.setItem('fzAccueilDisposition', disposition); } catch (e) { /* navigation privée */ }
+        if (disposition) try { localStorage.setItem('fzAccueilDisposition', disposition); } catch (e) { /* navigation privée */ }
     }
     document.getElementById('fzHomeSkeleton')?.remove();
     document.documentElement.classList.remove('fz-home-pending');
@@ -2859,6 +2860,31 @@ function fzdPolicesPretes(plafondMs = 1200) {
     return Promise.race([fzdChargerPolices(), new Promise(r => setTimeout(r, plafondMs))]);
 }
 
+/**
+ * Le panneau « pools introuvables pour l'instant » : jamais l'accueil sans
+ * pool quand la lecture des pools a échoué. `echec` : null, 'reseau' ou
+ * 'session' (FZPool.failed()).
+ */
+function fzdAfficherErreurPools(echec) {
+    const section = document.getElementById('fzDashSection');
+    const bloc = document.getElementById('fzDashErreur');
+    section?.classList.toggle('is-pool-erreur', !!echec);
+    if (!bloc) return;
+    bloc.hidden = !echec;
+    if (!echec) return;
+    const session = echec === 'session';
+    bloc.querySelector('[data-erreur-titre]').textContent = session
+        ? 'Ta session a expiré' : 'Tes pools arrivent';
+    bloc.querySelector('[data-erreur-texte]').textContent = session
+        ? 'Reconnecte-toi pour retrouver tes pools.'
+        : 'Le serveur se réveille. On réessaie tout seuls, ça prend quelques secondes.';
+    const action = bloc.querySelector('[data-erreur-action]');
+    action.textContent = session ? 'Se reconnecter' : 'Réessayer';
+    action.onclick = session
+        ? () => { window.location.href = 'login.html'; }
+        : () => { action.disabled = true; FZPool.refresh().finally(() => { action.disabled = false; }); };
+}
+
 async function renderDash() {
     const section = document.getElementById('fzDashSection');
     const hero = document.getElementById('fzDashHero');
@@ -2870,6 +2896,21 @@ async function renderDash() {
 
     const hasPool = !!FZPool.get();
     section.style.display = 'block';
+    // Pools illisibles (base en réveil, serveur injoignable, session
+    // expirée) : on ne sait PAS si la personne a un pool. L'accueil « Ton
+    // premier pool commence ici » serait un mensonge ; on le dit, et la
+    // page se redessine d'elle-même quand les pools arrivent (onData).
+    const echec = !hasPool && typeof FZPool.failed === 'function' ? FZPool.failed() : null;
+    fzdAfficherErreurPools(echec);
+    if (echec) {
+        document.body.classList.add('fz-onboard-page');
+        section.classList.remove('is-poolless');
+        if (hero) { fzdStopHeroTimer('fzDashHero'); hero.style.display = 'none'; hero.innerHTML = ''; }
+        if (mobileHome) mobileHome.style.display = 'none';
+        if (onboard) onboard.style.display = 'none';
+        fzdRevelerAccueil(false);
+        return;
+    }
     // Lu par accueil-mobile.css : sur téléphone, la home mobile remplace le
     // calendrier — mais elle n'existe qu'avec un pool. Sans pool, la carte
     // « Calendrier LNH » de l'état vide doit pouvoir l'ouvrir.
