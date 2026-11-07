@@ -208,7 +208,7 @@ function monter(app, ctx) {
             };
 
             if (!enH2H) {
-                corps.rang = await rangDeLaSoiree({ poolData, equipes, monEquipe, pointerJour, jour, aujourdhui, saison, etatAujourdhui });
+                corps.rang = await rangDeLaSoiree({ poolData, equipes, monEquipe, pointerJour, jour, aujourdhui, saison, etatAujourdhui, joue: cartes.length > 0 });
             } else {
                 corps.duel = await duelDeLaSoiree({ poolData, equipes, monEquipe, pointerJour, jour, saison });
             }
@@ -224,7 +224,7 @@ function monter(app, ctx) {
      * d'hier pendant que les matchs du jour jouent, leurs points sont retirés
      * du Total : le rang « après » est celui du soir raconté, pas de maintenant.
      */
-    async function rangDeLaSoiree({ poolData, equipes, monEquipe, pointerJour, jour, aujourdhui, saison, etatAujourdhui }) {
+    async function rangDeLaSoiree({ poolData, equipes, monEquipe, pointerJour, jour, aujourdhui, saison, etatAujourdhui, joue = true }) {
         const totaux = await scoresSaison(poolData);
         const suite = jour < aujourdhui && (etatAujourdhui.finis + etatAujourdhui.enJeu) > 0;
         const contexteSuite = suite ? {
@@ -242,7 +242,10 @@ function monter(app, ctx) {
             return { teamName: t.teamName, total: t.score, soiree: soiree.points || 0, apres: apres ? (apres.points || 0) : 0 };
         }));
         const rangs = bilan.rangsDeLaSoiree(lignes);
-        return { avant: rangs.avant.get(monEquipe) || null, apres: rangs.apres.get(monEquipe) || null, equipes: lignes.length };
+        // La phrase sous le rang : ce que la soirée a changé dans la course.
+        const noms = new Map(lignes.map(l => [l.teamName, bilan.nomAffiche(l.teamName, (poolData.teams[l.teamName] || {}).members)]));
+        const phrase = bilan.phraseDeLaSoiree({ lignes, monEquipe, noms, joue });
+        return { avant: rangs.avant.get(monEquipe) || null, apres: rangs.apres.get(monEquipe) || null, equipes: lignes.length, phrase };
     }
 
     /**

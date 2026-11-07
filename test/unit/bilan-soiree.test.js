@@ -100,6 +100,47 @@ describe('lib/bilanSoiree — clubs, rangs, duels', () => {
         assert.deepEqual([...suite.apres], [['A', 1], ['B', 2]]);
     });
 
+    test('phraseDeLaSoiree : une seule histoire, la même équipe avant et après', () => {
+        const L = (teamName, total, soiree) => ({ teamName, total, soiree, apres: 0 });
+        const noms = new Map([['M', 'Maxime'], ['A', 'Alex'], ['Moi', 'Andih'], ['Long', 'Les Grands Glorieux de Laval']]);
+        const phrase = (lignes, extra = {}) => bilan.phraseDeLaSoiree({ lignes, monEquipe: 'Moi', noms, ...extra });
+        const remplissage = [L('B', 10, 1), L('C', 9, 1), L('D', 8, 1), L('E', 7, 1)];
+
+        // 3e sur 7, 9 points ce soir : l'écart avec Maxime passe de 13 à 5.
+        assert.deepEqual(phrase([L('X', 160, 12), L('M', 150, 1), L('Moi', 145, 9), L('A', 120, 0), ...remplissage]),
+            { type: 'rapproche', sens: 'progres', court: '+8 pts sur Maxime', long: 'Écart avec Maxime : 13 → 5 pts' });
+        // Même place, l'avance sur le suivant grandit.
+        assert.equal(phrase([L('M', 150, 9), L('Moi', 145, 9), L('A', 120, 0)]).court, '+9 pts sur Alex');
+        // En tête.
+        assert.equal(phrase([L('Moi', 150, 5), L('M', 146, 2)]).court, 'Avance : 1 → 4 pts');
+        assert.equal(phrase([L('Moi', 150, 1), L('M', 146, 2)]).court, 'En tête de 4 pts');
+        // Rejoint au même total.
+        assert.equal(phrase([L('M', 150, 1), L('Moi', 150, 9)]).court, 'Égalité avec Maxime');
+        // Un rang perdu : qui est passé devant.
+        assert.equal(phrase([L('M', 150, 10), L('Moi', 148, 1), L('A', 100, 0)]).court, 'Maxime te dépasse');
+        // Un nom trop long pour le téléphone : le rang le remplace, la version longue le garde.
+        const long = phrase([L('Long', 150, 1), L('Moi', 145, 9), L('A', 1, 0)]);
+        assert.equal(long.court, '+8 pts sur le 1er');
+        assert.equal(long.long, 'Écart avec Les Grands Glorieux de Laval : 13 → 5 pts');
+        // Sans rien de neuf : la distance qui reste ; sans joueur : le repos.
+        assert.equal(phrase([L('M', 150, 10), L('Moi', 140, 3), L('A', 100, 5)]).court, 'À 10 pts de Maxime');
+        assert.equal(phrase([L('M', 150, 0), L('Moi', 140, 0), L('A', 100, 0)], { joue: false }).court, 'Soirée de repos');
+    });
+
+    test('phraseDeLaSoiree : « du pool ce soir » seulement dans un pool assez grand', () => {
+        const L = (teamName, total, soiree) => ({ teamName, total, soiree, apres: 0 });
+        const phrase = lignes => bilan.phraseDeLaSoiree({ lignes, monEquipe: 'Moi' });
+        // Meilleure soirée à 4 équipes : elle passe devant l'écart.
+        assert.equal(phrase([L('X', 200, 0), L('M', 150, 12), L('Moi', 140, 13), L('A', 100, 0)]).court, '1er du pool ce soir');
+        // À 2 ou 3 équipes, « meilleure soirée » ne veut rien dire.
+        assert.equal(phrase([L('M', 150, 0), L('Moi', 140, 13)]).type, 'rapproche');
+        assert.equal(phrase([L('M', 150, 13), L('Moi', 140, 13), L('A', 1, 13)]).type, 'distance');
+        // 2e du soir : à partir de 6 équipes ; 3e : à partir de 9.
+        const six = [L('M', 150, 20), L('Moi', 140, 15), L('A', 130, 15), L('B', 50, 1), L('C', 40, 1), L('D', 30, 1)];
+        assert.equal(phrase(six).court, '2e du pool ce soir');
+        assert.equal(phrase(six.slice(0, 5)).type, 'distance');
+    });
+
     test('rangsH2H : victoires, puis différentiel, puis ordre du pool', () => {
         const rangs = bilan.rangsH2H(['A', 'B', 'C', 'D'], {
             A: { wins: 1, pointsFor: 10, pointsAgainst: 20 },
@@ -249,7 +290,9 @@ describe('/api/pools/:poolName/bilan-soiree — cumulatif', () => {
         assert.equal(corps.total, 7);
 
         // Avant : Feuilles 48, Glorieux 44, Huiles 41. Après : 50, 48, 47.
-        assert.deepEqual(corps.rang, { avant: 3, apres: 2, equipes: 3 });
+        const { phrase, ...rang } = corps.rang;
+        assert.deepEqual(rang, { avant: 3, apres: 2, equipes: 3 });
+        assert.deepEqual(phrase, { type: 'depasse', sens: 'monte', court: 'Dépasse Les Glorieux', long: 'Tu dépasses Les Glorieux · était 3e' });
     });
 
     test('une défaite en prolongation : 1 point au gardien et au club', async () => {
@@ -260,7 +303,10 @@ describe('/api/pools/:poolName/bilan-soiree — cumulatif', () => {
         assert.equal(parNom['Montréal Canadiens'].issue, 'DP');
         assert.equal(parNom['Montréal Canadiens'].points, 1);
         assert.equal(corps.total, 3);
-        assert.deepEqual(corps.rang, { avant: 2, apres: 3, equipes: 3 });
+        const { phrase, ...rang } = corps.rang;
+        assert.deepEqual(rang, { avant: 2, apres: 3, equipes: 3 });
+        assert.equal(phrase.court, 'Les Huiles te dépasse'.length <= 20 ? 'Les Huiles te dépasse' : 'Le 2e te dépasse');
+        assert.equal(phrase.sens, 'baisse');
     });
 
     test('déjà vue : la réponse s’arrête là', async () => {
@@ -292,7 +338,8 @@ describe('/api/pools/:poolName/bilan-soiree — cumulatif', () => {
         assert.equal(corps.jour, HIER);
         assert.equal(corps.reessaiMs, bilan.REESSAI_EN_JEU_MS);
         // Hier soir : Huiles 51 − 0 = 51 contre Feuilles 52 − 2 = 50.
-        assert.deepEqual(corps.rang, { avant: 2, apres: 1, equipes: 3 });
+        assert.deepEqual({ ...corps.rang, phrase: undefined }, { avant: 2, apres: 1, equipes: 3, phrase: undefined });
+        assert.equal(corps.rang.phrase.type, 'depasse');
     });
 
     test('pas d’équipe, repêchage inachevé', async () => {

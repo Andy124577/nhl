@@ -363,11 +363,14 @@
     const TRIANGLE_HAUT = '<svg viewBox="0 0 24 24" width="9" height="9" aria-hidden="true"><path d="M12 4l9 14H3z" fill="currentColor"/></svg>';
     const TRIANGLE_BAS = '<svg viewBox="0 0 24 24" width="9" height="9" aria-hidden="true"><path d="M12 20L3 6h18z" fill="currentColor"/></svg>';
     const EGAL = '<span aria-hidden="true">=</span>';
+    const TENDANCE = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>';
 
     /** Une ligne de mouvement : l'icône ▲ ▼ = dans son rond, puis le texte. */
     function mouvementHTML(sens, texte) {
-        const icone = sens > 0 ? TRIANGLE_HAUT : sens < 0 ? TRIANGLE_BAS : EGAL;
-        const classe = sens > 0 ? 'is-up' : sens < 0 ? 'is-down' : 'is-flat';
+        // « progres » : même rang, mais du terrain gagné — vert, flèche en pente.
+        const progres = sens === 'progres';
+        const icone = progres ? TENDANCE : sens > 0 ? TRIANGLE_HAUT : sens < 0 ? TRIANGLE_BAS : EGAL;
+        const classe = progres || sens > 0 ? 'is-up' : sens < 0 ? 'is-down' : 'is-flat';
         return `<p class="fzb-move ${classe}"><span class="fzb-move-ico">${icone}</span><span class="fzb-move-txt">${texte}</span></p>`;
     }
 
@@ -400,14 +403,19 @@
         const gain = rang.avant - rang.apres;
         const places = n => `${n} place${n > 1 ? 's' : ''}`;
         const etait = ` · était ${ordinal(rang.avant)}`;
-        const texte = gain > 0 ? `Gagne ${places(gain)}<span class="fzb-long">${etait}</span>`
+        // La phrase du serveur raconte ce que la soirée a changé dans la course
+        // (écart sur un rival, rang de la soirée…) ; sans elle, le mouvement seul.
+        const phrase = rang.phrase;
+        const texte = phrase ? deuxTailles(echapper(phrase.long), echapper(phrase.court))
+            : gain > 0 ? `Gagne ${places(gain)}<span class="fzb-long">${etait}</span>`
             : gain < 0 ? `Perd ${places(-gain)}<span class="fzb-long">${etait}</span>`
             : deuxTailles('Même place qu’avant la soirée', 'Même place');
+        const sens = phrase ? ({ monte: 1, baisse: -1, progres: 'progres' }[phrase.sens] || 0) : gain;
         return `
             <section class="fzb-panel fzb-rank is-attente" aria-label="Au classement">
                 <div class="fzb-panel-head"><p class="fzb-label">${deuxTailles('Au classement', 'Classement')}</p></div>
                 <p class="fzb-big"><span class="fzb-big-n fzb-rank-n">${ordinal(rang.avant)}</span>${rang.equipes ? `<span class="fzb-big-unit">sur ${rang.equipes}</span>` : ''}</p>
-                ${mouvementHTML(gain, texte)}
+                ${mouvementHTML(sens, texte)}
             </section>`;
     }
 
@@ -777,6 +785,7 @@
                     : gain < 0 ? `${-gain} place${gain < -1 ? 's' : ''} de perdue${gain < -1 ? 's' : ''}`
                     : 'même place';
                 resume.push(`Au classement : ${chiffre.textContent}${r.equipes ? ` sur ${r.equipes}` : ''}, ${mouvement}.`);
+                if (r.phrase) resume.push(`${r.phrase.long}.`);
             }
             const duel = $('.fzb-duel');
             if (duel) {
