@@ -37,16 +37,16 @@ describe('accueil de saison', () => {
         assert.doesNotMatch(SAISON, /fzsLoadNews|fzmNewsWrap/);
     });
 
-    test('de haut en bas, comme la maquette « 6b Éditorial » : position, mes joueurs, activité ; matchs, meilleurs, classements ; alignements, À lire', () => {
+    test('de haut en bas : la bande des matchs ce soir, puis la maquette « 6b Éditorial » : position, mes joueurs, activité ; meilleurs, classements ; alignements, À lire', () => {
         const rendu = corpsRendu();
-        const ordre = ['fzsHeroHTML', 'fzsJoueursHTML', 'fzsActiviteHTML', 'fzsMatchsHTML', 'fzsMeilleursHTML', 'fzsClassementHTML', 'fzsAlignementsHTML', 'data-fz-bloc="actualites"']
+        const ordre = ['fzsMatchsHTML', 'fzsHeroHTML', 'fzsJoueursHTML', 'fzsActiviteHTML', 'fzsMeilleursHTML', 'fzsClassementHTML', 'fzsAlignementsHTML', 'data-fz-bloc="actualites"']
             .map(cle => rendu.indexOf(cle));
         ordre.forEach((pos, i) => assert.ok(pos >= 0, `bloc ${i} absent`));
         assert.deepEqual([...ordre].sort((x, y) => x - y), ordre, 'les blocs doivent suivre cet ordre');
         // Au téléphone, une seule colonne dans l'ordre de la maquette.
         const css = lire('accueil-season.css');
         const rang = cls => Number(css.match(new RegExp(`\\.fzs \\.${cls} \\{ order: (\\d+); \\}`))[1]);
-        const telephone = ['fzs-hero', 'fzs-games', 'fzs-mine', 'fzs-top', 'fzs-activity', 'fzs-ranks', 'fzs-lines', 'fzs-read'].map(rang);
+        const telephone = ['fzs-games', 'fzs-hero', 'fzs-mine', 'fzs-top', 'fzs-activity', 'fzs-ranks', 'fzs-lines', 'fzs-read'].map(rang);
         assert.deepEqual([...telephone].sort((x, y) => x - y), telephone);
         // Les alignements des 32 clubs juste avant À lire.
         assert.equal(rang('fzs-read') - rang('fzs-lines'), 1);
@@ -105,7 +105,7 @@ describe('les sections de la maquette', () => {
         assert.equal(fzsStatutMatch({ state: 'FUT', startTimeUTC: '2026-10-21T23:00:00Z' }), 'Ce soir · 19 h 00');
     });
 
-    test('les matchs du jour : le calendrier, mis à jour par les feuilles et le direct ; en direct, à venir, puis finis', () => {
+    test('les matchs du jour : le calendrier, mis à jour par les feuilles et le direct ; finis, en direct, puis à venir', () => {
         const g = (id, state, start, extra = {}) => ({ id, state, startTimeUTC: start, away: { abbrev: `A${id}`, score: 0 }, home: { abbrev: `H${id}`, score: 0 }, ...extra });
         const storySlides = [{ type: 'live', game: { id: 2, state: 'LIVE', away: { abbrev: 'A2', score: 3 }, home: { abbrev: 'H2', score: 1 } } }];
         const { fzsMatchsDuJour } = chargerFonctions('accueil-season.js', ['FZS_EN_DIRECT', 'FZS_FINI', 'fzsMatchsDuJour'], {
@@ -113,10 +113,24 @@ describe('les sections de la maquette', () => {
             calData: { days: [{ date: AUJ, games: [g(1, 'FINAL', '2026-10-21T17:00:00Z'), g(2, 'FUT', '2026-10-21T23:00:00Z'), g(3, 'FUT', '2026-10-22T01:00:00Z'), g(4, 'FUT', '2026-10-21T23:30:00Z')] }] }
         });
         const matchs = fzsMatchsDuJour({ games: [g(1, 'FINAL', undefined, { away: { abbrev: 'A1', score: 2 }, home: { abbrev: 'H1', score: 5 } })] });
-        assert.deepEqual(Array.from(matchs, m => m.id), [2, 4, 3, 1]);
-        assert.equal(matchs[0].away.score, 3, 'le direct l’emporte sur le calendrier');
-        assert.equal(matchs[0].startTimeUTC, '2026-10-21T23:00:00Z', 'l’heure du calendrier reste');
-        assert.equal(matchs[3].home.score, 5, 'les feuilles du soir donnent le pointage final');
+        assert.deepEqual(Array.from(matchs, m => m.id), [1, 2, 4, 3]);
+        assert.equal(matchs[1].away.score, 3, 'le direct l’emporte sur le calendrier');
+        assert.equal(matchs[1].startTimeUTC, '2026-10-21T23:00:00Z', 'l’heure du calendrier reste');
+        assert.equal(matchs[0].home.score, 5, 'les feuilles du soir donnent le pointage final');
+    });
+
+    test('la bande des matchs : statut court, et « MAINTENANT » avant le premier match en direct', () => {
+        const { fzsStatutCourt, fzsIndexMaintenant } = chargerFonctions('accueil-season.js',
+            ['fzsOrdinal', 'FZS_EN_DIRECT', 'FZS_FINI', 'fzsPeriode', 'fzsStatutMatch', 'fzsStatutCourt', 'fzsIndexMaintenant'], { gameTimeLabel: () => '22 h 00' });
+        assert.equal(fzsStatutCourt({ state: 'LIVE', period: 2, clock: { timeRemaining: '14:22' } }), '2e · 14:22');
+        assert.equal(fzsStatutCourt({ state: 'LIVE', clock: { inIntermission: true } }), 'Entracte');
+        assert.equal(fzsStatutCourt({ state: 'OFF', periodType: 'OT' }), 'Final · Prol.');
+        assert.equal(fzsStatutCourt({ state: 'FUT', startTimeUTC: 'x' }), '22 h 00');
+        const m = state => ({ state });
+        assert.equal(fzsIndexMaintenant([m('OFF'), m('LIVE'), m('LIVE'), m('FUT')]), 1);
+        assert.equal(fzsIndexMaintenant([m('OFF'), m('FUT')]), 1, 'sans direct : entre les finis et les matchs à venir');
+        assert.equal(fzsIndexMaintenant([m('FUT'), m('FUT')]), -1, 'rien de joué : pas de repère');
+        assert.equal(fzsIndexMaintenant([m('OFF'), m('FINAL')]), -1);
     });
 
     test('ce soir pour un club : en jeu, final, l’heure contre l’adversaire, ou repos', () => {
