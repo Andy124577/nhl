@@ -236,19 +236,18 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
 /* ---- Matchs ce soir : la rangée du haut de page ----
    Maquette « Matchs ce soir carousel optimized » : de petites cases de
    104 px (statut, puis les deux clubs et leur pointage) sur le fond de la
-   page — ni bande rayée ni fond rouge (andy). Le match en direct garde un
-   filet rouge ; le perdant d'un match fini pâlit.
+   page — ni bande rayée, ni fond ou contour rouge, ni repère « MAINTENANT »
+   (andy). Le direct se lit à son point rouge ; le perdant d'un match fini
+   pâlit.
    Bureau : la bande passe en tête des deux colonnes, des cases de 124 px. */
 .fzs-games {
     --g-tile: #1C201F; --g-tile-line: #2A2E2D;
-    --g-live-line: #6A2A24;
     --g-w: 104px;
     position: relative;
     padding: 0 0 8px;
 }
 html[data-theme="light"] .fzs-games {
     --g-tile: #FFFFFF; --g-tile-line: #DCD9D4;
-    --g-live-line: #E9A49C;
 }
 .fzs-strip {
     display: flex; align-items: stretch; gap: 0;
@@ -269,7 +268,6 @@ html[data-theme="light"] .fzs-games {
 .fzs .fzs-game { cursor: pointer; }
 .fzs-game:hover { border-color: var(--s-btn-line); }
 .fzs-game:active { transform: scale(.97); }
-.fzs-game.is-live { position: relative; z-index: 1; border-color: var(--g-live-line); }
 /* Les cases se touchent : leurs filets se superposent au lieu de doubler. */
 .fzs-game + .fzs-game { margin-left: -1px; }
 .fzs-game.is-final { opacity: .88; }
@@ -288,11 +286,6 @@ html[data-theme="light"] .fzs-games {
 .fzs-game-row em { font: inherit; font-style: normal; font-size: 15px; line-height: 18px; font-variant-numeric: tabular-nums; }
 .fzs-game-row.is-win { font-weight: 800; }
 .fzs-game-row.is-lose { font-weight: 500; color: var(--s-faint); }
-/* « MAINTENANT », debout entre deux cases. */
-.fzs-now { flex: none; scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 2px 4px; }
-.fzs-now i { flex: 1; width: 2px; background: linear-gradient(transparent, var(--s-red)); }
-.fzs-now i:last-child { background: linear-gradient(var(--s-red), transparent); }
-.fzs-now b { font: 700 9px/1 'Saira', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--s-red-ink); writing-mode: vertical-rl; transform: rotate(180deg); }
 .fzs-strip-all { flex: none; display: flex; align-items: center; gap: 4px; margin: 2px 0; padding: 0 10px 0 6px; font: 600 12px/1 'Saira', sans-serif; color: var(--s-mute); scroll-snap-align: end; }
 .fzs .fzs-strip-all:hover { color: var(--s-ink); }
 .fzs-strip-all span { font-size: 16px; }

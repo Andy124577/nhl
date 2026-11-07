@@ -119,18 +119,18 @@ describe('les sections de la maquette', () => {
         assert.equal(matchs[0].home.score, 5, 'les feuilles du soir donnent le pointage final');
     });
 
-    test('la bande des matchs : statut court, et « MAINTENANT » avant le premier match en direct', () => {
-        const { fzsStatutCourt, fzsIndexMaintenant } = chargerFonctions('accueil-season.js',
-            ['fzsOrdinal', 'FZS_EN_DIRECT', 'FZS_FINI', 'fzsPeriode', 'fzsStatutMatch', 'fzsStatutCourt', 'fzsIndexMaintenant'], { gameTimeLabel: () => '22 h 00' });
+    test('la bande des matchs : statut court, et la case où la bande s’ouvre', () => {
+        const { fzsStatutCourt, fzsIndexOuverture } = chargerFonctions('accueil-season.js',
+            ['fzsOrdinal', 'FZS_EN_DIRECT', 'FZS_FINI', 'fzsPeriode', 'fzsStatutMatch', 'fzsStatutCourt', 'fzsIndexOuverture'], { gameTimeLabel: () => '22 h 00' });
         assert.equal(fzsStatutCourt({ state: 'LIVE', period: 2, clock: { timeRemaining: '14:22' } }), '2e · 14:22');
         assert.equal(fzsStatutCourt({ state: 'LIVE', clock: { inIntermission: true } }), 'Entracte');
         assert.equal(fzsStatutCourt({ state: 'OFF', periodType: 'OT' }), 'Final · Prol.');
         assert.equal(fzsStatutCourt({ state: 'FUT', startTimeUTC: 'x' }), '22 h 00');
         const m = state => ({ state });
-        assert.equal(fzsIndexMaintenant([m('OFF'), m('LIVE'), m('LIVE'), m('FUT')]), 1);
-        assert.equal(fzsIndexMaintenant([m('OFF'), m('FUT')]), 1, 'sans direct : entre les finis et les matchs à venir');
-        assert.equal(fzsIndexMaintenant([m('FUT'), m('FUT')]), -1, 'rien de joué : pas de repère');
-        assert.equal(fzsIndexMaintenant([m('OFF'), m('FINAL')]), -1);
+        assert.equal(fzsIndexOuverture([m('OFF'), m('LIVE'), m('LIVE'), m('FUT')]), 1);
+        assert.equal(fzsIndexOuverture([m('OFF'), m('FUT')]), 1, 'sans direct : entre les finis et les matchs à venir');
+        assert.equal(fzsIndexOuverture([m('FUT'), m('FUT')]), -1, 'rien de joué : la bande part du début');
+        assert.equal(fzsIndexOuverture([m('OFF'), m('FINAL')]), -1);
     });
 
     test('ce soir pour un club : en jeu, final, l’heure contre l’adversaire, ou repos', () => {
