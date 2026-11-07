@@ -308,6 +308,8 @@ function fzsMesJoueursDuMatch(g) {
     return activeRosterNames().filter(n => clubs.has(getPlayerStats(n)?.teamAbbrev)).length;
 }
 
+const FZS_MON_JOUEUR = '<i class="fzs-mine-star" title="Dans ton équipe" aria-label="Dans ton équipe">★</i>';
+
 function fzsZoneCorpsHTML(g, feuille) {
     const esc = escapeHTML;
     if (!FZS_EN_DIRECT(g) && !FZS_FINI(g)) {
@@ -332,14 +334,20 @@ function fzsZoneCorpsHTML(g, feuille) {
         const buts = s => Number(String(s).split('/')[0]) || 0;
         lignes.push(barre('Avantage numérique', an.detail.away, an.detail.home, buts(an.detail.away), buts(an.detail.home)));
     }
+    // Mes joueurs du pool : une étoile rouge, comme au résumé de la feuille
+    // de match (match.js). Par numéro LNH, sinon par nom.
+    const mes = activeRosterNames();
+    const mesIds = new Set(mes.map(n => Number(getPlayerStats(n)?.playerId)).filter(Boolean));
+    const mesNoms = new Set(mes);
+    const nom = j => `${esc(j.name)}${mesIds.has(Number(j.playerId)) || mesNoms.has(j.name) ? FZS_MON_JOUEUR : ''}`;
     const buts = [];
     (feuille.scoring || []).forEach(p => {
         const per = p.type === 'OT' ? 'Prol.' : p.number ? fzsOrdinal(p.number) : '';
-        (p.goals || []).forEach(b => buts.push({ t: `${per} ${b.timeInPeriod}`.trim(), club: b.teamAbbrev, qui: b.name, aides: (b.assists || []).map(x => x.name).join(', ') }));
+        (p.goals || []).forEach(b => buts.push({ t: `${per} ${b.timeInPeriod}`.trim(), club: b.teamAbbrev, qui: nom(b), aides: (b.assists || []).map(nom).join(', ') }));
     });
     return `${lignes.length ? `<ul class="fzs-zone-stats">${lignes.join('')}</ul>` : ''}
         ${buts.length ? `<h3 class="fzs-zone-h">Buts</h3><ol class="fzs-zone-goals">${buts.map(b => `
-            <li><time>${esc(b.t)}</time><b>${esc(b.club)}</b><span>${esc(b.qui)}${b.aides ? `<small>${esc(b.aides)}</small>` : ''}</span></li>`).join('')}</ol>`
+            <li><time>${esc(b.t)}</time><b>${esc(b.club)}</b><span>${b.qui}${b.aides ? `<small>${b.aides}</small>` : ''}</span></li>`).join('')}</ol>`
             : '<p class="fzs-zone-note">Aucun but pour l’instant.</p>'}`;
 }
 

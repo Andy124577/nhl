@@ -345,6 +345,7 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-zone-goals b { flex: none; width: 36px; }
 .fzs-zone-goals span { flex: 1; min-width: 0; }
 .fzs-zone-goals small { display: block; font-size: 11px; color: var(--s-faint); }
+.fzs-mine-star { margin-left: 4px; font-style: normal; font-size: .85em; color: var(--s-red); }
 .fzs-zone-note { margin: 0; padding: 16px; border-radius: 14px; background: var(--s-raise); text-align: center; font-size: 13px; color: var(--s-mute); }
 @media (min-width: 900px) {
     .fzs-zone { align-items: center; }
