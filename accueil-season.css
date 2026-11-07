@@ -233,30 +233,22 @@ html[data-theme="light"] .fzs-hero { box-shadow: 0 10px 28px rgba(60, 20, 18, .1
 .fzs-hero > .fzs-ico { color: #6E6C69; transition: transform .15s; }
 .fzs-hero:hover > .fzs-ico { transform: translateX(3px); color: #F3F1EE; }
 
-/* ---- Matchs ce soir : la pellicule du haut de page ----
-   Maquette « Matchs ce soir carousel optimized » : une bande un ton plus
-   sombre que la page, perforée en haut et en bas comme une pellicule, de
-   petites cases de 104 px (statut, puis les deux clubs et leur pointage).
-   Le match en direct se teinte de rouge ; le perdant d'un match fini pâlit.
+/* ---- Matchs ce soir : la rangée du haut de page ----
+   Maquette « Matchs ce soir carousel optimized » : de petites cases de
+   104 px (statut, puis les deux clubs et leur pointage) sur le fond de la
+   page — ni bande rayée ni fond rouge (andy). Le match en direct garde un
+   filet rouge ; le perdant d'un match fini pâlit.
    Bureau : la bande passe en tête des deux colonnes, des cases de 124 px. */
 .fzs-games {
-    --g-band: #080A0B; --g-line: #1F2324; --g-perf: #22272A;
     --g-tile: #1C201F; --g-tile-line: #2A2E2D;
-    --g-live: #261716; --g-live-line: #5A2420;
+    --g-live-line: #6A2A24;
     --g-w: 104px;
     position: relative;
-    background: var(--g-band);
-    border-top: 1px solid var(--g-line); border-bottom: 1px solid var(--g-line);
+    padding: 8px 0;
 }
 html[data-theme="light"] .fzs-games {
-    --g-band: #E6E4E0; --g-line: #DAD7D2; --g-perf: #CFCBC5;
     --g-tile: #FFFFFF; --g-tile-line: #DCD9D4;
-    --g-live: #FDEEEC; --g-live-line: #F0B5AE;
-}
-/* Les perforations, au-dessus et au-dessous des cases. */
-.fzs-games::before, .fzs-games::after {
-    content: ''; display: block; height: 7px;
-    background: repeating-linear-gradient(90deg, transparent 0 6px, var(--g-perf) 6px 14px) 0 2px / 100% 3px repeat-x;
+    --g-live-line: #E9A49C;
 }
 .fzs-strip {
     display: flex; align-items: stretch; gap: 4px;
@@ -277,7 +269,7 @@ html[data-theme="light"] .fzs-games {
 .fzs .fzs-game { cursor: pointer; }
 .fzs-game:hover { border-color: var(--s-btn-line); }
 .fzs-game:active { transform: scale(.97); }
-.fzs-game.is-live { background: var(--g-live); border-color: var(--g-live-line); }
+.fzs-game.is-live { border-color: var(--g-live-line); }
 .fzs-game.is-final { opacity: .88; }
 .fzs-game-st {
     display: flex; align-items: center; gap: 5px; min-width: 0;
@@ -486,7 +478,8 @@ html.fzs-zone-ouverte { overflow: hidden; }
     .fzs-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
     .fzs .fzs-sec { margin: 0; border: 1px solid var(--s-line2); border-radius: 18px; background: var(--s-card); overflow: hidden; }
     .fzs .fzs-hero { margin: 0; min-height: 132px; padding: 22px; }
-    .fzs .fzs-games { order: -1; grid-column: 1 / -1; --g-w: 124px; border: 1px solid var(--g-line); border-radius: 14px; overflow: hidden; }
+    .fzs .fzs-games { order: -1; grid-column: 1 / -1; --g-w: 124px; padding: 0; }
+    .fzs-strip { padding: 0; scroll-padding: 0; }
     .fzs-strip { scrollbar-width: thin; }
     .fzs-sh { margin: 0 18px; }
     .fzs-rail { padding-left: 18px; padding-right: 18px; scroll-padding: 0 18px; scrollbar-width: thin; }

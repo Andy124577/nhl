@@ -1,7 +1,7 @@
 ﻿/* ============================================================
    ACCUEIL DE SAISON — maquette « 6b Éditorial » (Fantazy Accueil Final)
    ------------------------------------------------------------
-   De haut en bas : les matchs ce soir (une bande tout en haut), ma
+   De haut en bas : les matchs ce soir (une rangée tout en haut), ma
    position, mes joueurs ce soir,
    mon duel (tête-à-tête seulement), les meilleurs de la semaine,
    l'activité de la ligue, les classements de la semaine par position, les
