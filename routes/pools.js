@@ -658,12 +658,22 @@ function monter(app, ctx) {
             const { valeur } = await store.muterPool(nom, {
                 scope: 'pool:renommer-equipe',
                 userId: req.auth.userId,
-                appliquer: async ({ data }) => {
+                appliquer: async ({ tx, poolId, data }) => {
                     const resultat = poolOps.renommerEquipe(data, {
                         ancien, nouveau: propose,
                         username: req.auth.username, estAdmin: req.auth.isAdmin
                     });
                     if (!resultat.ok) throw refus(resultat);
+                    // Ce qui garde une copie du nom hors du pool (échanges,
+                    // annonces, relevés, notifications, bilans) suit dans la
+                    // même transaction : sinon une offre en attente devient
+                    // invisible pour l'équipe renommée, et l'ancien nom reste
+                    // affiché ailleurs.
+                    if (ctx.renommerEquipeDependances) {
+                        await ctx.renommerEquipeDependances(tx && tx.client, {
+                            poolName: nom, poolId, ancien, nouveau: resultat.teamName
+                        });
+                    }
                     return { valeur: { newTeamName: resultat.teamName } };
                 }
             });

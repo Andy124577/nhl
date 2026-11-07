@@ -40,6 +40,7 @@ const { currentSeasonId, currentSeasonString, getSeasonWindow, seasonHasStarted,
 // section 4 : une session serveur remplace le nom d'utilisateur envoyé par le
 // client, et toute écriture de pool passe par une transaction verrouillée.
 const authz = require("./lib/authz.js");
+const { noterAncienNom } = require("./lib/renommages.js");
 const poolOps = require("./lib/poolOps.js");
 const evenementsLib = require("./lib/events.js");
 const { creerAuth } = require("./middleware/auth.js");
@@ -538,6 +539,7 @@ async function renommerPoolPartout({ ancien, propose, auth: identite, reduire })
     await poolStore.transaction(async (tx) => {
         const verrouille = await tx.verrouillerPool(ancien);
         if (!verrouille) throw new poolStore.ErreurMetier(404, "Pool introuvable.");
+        verrouille.data.anciensNoms = noterAncienNom(verrouille.data.anciensNoms, ancien, propose);
         const cree = await tx.creerPool(propose, verrouille.data);
         if (!cree) throw new poolStore.ErreurMetier(409, "Un pool porte déjà ce nom.");
         await tx.supprimerPool(ancien);
@@ -643,6 +645,10 @@ const contexteRoutes = {
     sauvegarderUtilisateurs: (...args) => saveUsers(...args),
     renommerPool: (options) => renommerPoolPartout(options),
     nettoyerDependances: (nomPool) => (USE_POSTGRES ? db.deletePoolDependencies(nomPool) : Promise.resolve()),
+    // Renommer une équipe : les échanges, annonces, relevés, notifications et
+    // bilans qui gardent une copie de son nom suivent, dans la même
+    // transaction (db.renameTeamInTx). Sans base, il n'y a rien à suivre.
+    renommerEquipeDependances: (client, options) => (USE_POSTGRES && client ? db.renameTeamInTx(client, options) : Promise.resolve(null)),
     construireCalendrierH2H,
     saisonCourante: () => currentSeasonString(),
     // Copie chiffrée du mot de passe d'un pool, relisible par la personne qui

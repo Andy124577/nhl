@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { remplacerNomEquipe, motifRecherche, noterAncienNom } = require('./lib/renommages.js');
 const fs = require('fs');
 const path = require('path');
 const migrations = require('./lib/migrations.js');
@@ -606,9 +607,26 @@ async function renamePool(oldName, newName) {
             return { ok: false, raison: 'existe' };
         }
 
+        // L'ancien nom est gardé dans le pool (`anciensNoms`, les derniers
+        // seulement) : les navigateurs des membres l'ont en mémoire — pool
+        // actif, épingles, récents du menu Mes pools — et s'en servent pour
+        // le remplacer au prochain chargement (activePool.js).
+        const source = await client.query(
+            'SELECT pool_data FROM pools WHERE pool_name = $1 FOR UPDATE',
+            [oldName]
+        );
+        if (source.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return { ok: false, raison: 'introuvable' };
+        }
+        const donnees = { ...(source.rows[0].pool_data || {}) };
+        donnees.anciensNoms = noterAncienNom(donnees.anciensNoms, oldName, newName);
+
         const renomme = await client.query(
-            'UPDATE pools SET pool_name = $1, updated_at = CURRENT_TIMESTAMP WHERE pool_name = $2 RETURNING pool_name',
-            [newName, oldName]
+            `UPDATE pools
+                SET pool_name = $1, pool_data = $3, revision = revision + 1, updated_at = CURRENT_TIMESTAMP
+              WHERE pool_name = $2 RETURNING pool_name`,
+            [newName, oldName, JSON.stringify(donnees)]
         );
         if (renomme.rowCount === 0) {
             await client.query('ROLLBACK');
@@ -617,7 +635,7 @@ async function renamePool(oldName, newName) {
 
         await client.query(
             `UPDATE trades
-                SET pool_name = $1,
+                SET pool_name = $1::text,
                     trade_data = jsonb_set(trade_data, '{draftName}', to_jsonb($1::text), true),
                     updated_at = CURRENT_TIMESTAMP
               WHERE pool_name = $2`,
@@ -946,6 +964,78 @@ async function removeListingInTx(client, id, poolName, teamName) {
         [id, poolName, teamName]
     );
     return resultat.rowCount > 0;
+}
+
+/**
+ * Renommer une equipe : faire suivre les copies de son nom hors du pool.
+ *
+ * Appele dans la transaction de /rename-team, apres la verification et avant
+ * l'ecriture du pool : tout passe, ou rien. Un renommage est rare, et chaque
+ * requete ne lit que les lignes ou le nom apparait (LIKE sur le texte JSON),
+ * puis ne reecrit que celles qui changent — presque rien pour Neon.
+ *
+ * Voir lib/renommages.js pour la liste de ce qui garde une copie.
+ */
+async function renameTeamInTx(client, { poolName, poolId = null, ancien, nouveau }) {
+    const motif = motifRecherche(ancien);
+    const compte = {};
+
+    // Colonnes texte : un nom par ligne.
+    // Une annonce restee a ce nom (equipe disparue avant ce correctif) ne doit
+    // pas buter sur l'index unique des annonces actives.
+    await client.query(
+        `UPDATE trade_listings SET status = 'removed', removed_at = NOW()
+          WHERE pool_name = $1 AND team_name = $2 AND status = 'active'`,
+        [poolName, nouveau]
+    );
+    compte.annonces = (await client.query(
+        'UPDATE trade_listings SET team_name = $3 WHERE pool_name = $1 AND team_name = $2',
+        [poolName, ancien, nouveau]
+    )).rowCount;
+
+    // Un releve reste a ce nom n'appartient a aucune equipe actuelle : il
+    // ferait collision avec (pool, equipe, jour).
+    await client.query(
+        'DELETE FROM pool_rank_snapshots WHERE pool_name = $1 AND team_name = $2',
+        [poolName, nouveau]
+    );
+    compte.releves = (await client.query(
+        'UPDATE pool_rank_snapshots SET team_name = $3 WHERE pool_name = $1 AND team_name = $2',
+        [poolName, ancien, nouveau]
+    )).rowCount;
+
+    // Colonnes JSONB : le nom peut y etre n'importe ou.
+    const reecrire = async (table, colonnes, filtre, valeurFiltre) => {
+        const condition = colonnes.map(c => `${c}::text LIKE $2`).join(' OR ');
+        const lignes = await client.query(
+            `SELECT id, ${colonnes.join(', ')} FROM ${table} WHERE ${filtre} = $1 AND (${condition})`,
+            [valeurFiltre, motif]
+        );
+        let n = 0;
+        for (const ligne of lignes.rows) {
+            const valeurs = [];
+            let change = false;
+            for (const colonne of colonnes) {
+                const r = remplacerNomEquipe(ligne[colonne], ancien, nouveau);
+                change = change || r.change;
+                valeurs.push(JSON.stringify(r.valeur));
+            }
+            if (!change) continue;
+            const affectations = colonnes.map((c, i) => `${c} = $${i + 2}`).join(', ');
+            await client.query(`UPDATE ${table} SET ${affectations} WHERE id = $1`, [ligne.id, ...valeurs]);
+            n += 1;
+        }
+        return n;
+    };
+
+    compte.echanges = await reecrire('trades', ['trade_data'], 'pool_name', poolName);
+    if (poolId != null) {
+        compte.notifications = await reecrire('notifications', ['subject'], 'pool_id', poolId);
+        compte.activite = await reecrire('pool_activity', ['subject'], 'pool_id', poolId);
+        compte.semaines = await reecrire('h2h_finalized_results', ['results', 'standings_delta'], 'pool_id', poolId);
+        compte.bilans = await reecrire('weekly_recaps', ['payload'], 'pool_id', poolId);
+    }
+    return compte;
 }
 
 /** Toutes les propositions d'un pool, d'un coup. Evite la boucle par echange. */
@@ -1588,6 +1678,7 @@ module.exports = {
     removeListingsByPlayerInTx,
     createListingInTx,
     removeListingInTx,
+    renameTeamInTx,
     getTradesForPools,
     getActiveListingsForPools,
     deletePoolDependencies,

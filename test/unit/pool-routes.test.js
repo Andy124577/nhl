@@ -167,6 +167,28 @@ test('on ne renomme pas l équipe de quelqu un d autre', async () => {
     assert.ok(h.lirePool('Ligue').teams['Les Bleus']);
 });
 
+test('renommer son équipe fait suivre les copies du nom hors du pool', async () => {
+    const appels = [];
+    const h = monterRoutes([routesPools, routesRepechage], {
+        pools: { Ligue: poolNeuf({ membres: { 'Équipe 1': ['alice'], 'Équipe 2': ['bob'] } }) },
+        ctxExtra: { renommerEquipeDependances: async (client, options) => { appels.push(options); } }
+    });
+    const res = await h.appeler('POST', '/rename-team', {
+        auth: BOB, body: { clanName: 'Ligue', oldTeamName: 'Équipe 2', newTeamName: 'Les Bleus' }
+    });
+    assert.equal(res.statusCode, 200);
+    assert.equal(appels.length, 1);
+    assert.equal(appels[0].poolName, 'Ligue');
+    assert.equal(appels[0].ancien, 'Équipe 2');
+    assert.equal(appels[0].nouveau, 'Les Bleus');
+
+    // Un refus ne touche à rien.
+    await h.appeler('POST', '/rename-team', {
+        auth: BOB, body: { clanName: 'Ligue', oldTeamName: 'Équipe 1', newTeamName: 'Volée' }
+    });
+    assert.equal(appels.length, 1);
+});
+
 // ───────────────────────────── Départ du repêchage ─────────────────────────
 
 test('seul le créateur lance le repêchage, et une seule fois', async () => {
