@@ -223,7 +223,7 @@ function fzsCadrerMatchs() {
     if (!bande) return;
     const cadrer = () => {
         const cible = bande.querySelector('.fzs-now') || bande.querySelector('.fzs-game.is-live, .fzs-game.is-up');
-        if (cible) bande.scrollLeft = Math.max(0, cible.offsetLeft - bande.offsetLeft - 12);
+        if (cible) bande.scrollLeft = Math.max(0, cible.offsetLeft - bande.offsetLeft);
     };
     // L'accueil se dessine encore caché (html.fz-home-pending) : la bande n'a
     // pas de largeur, donc rien à défiler. On attend qu'elle en ait une.

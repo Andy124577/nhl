@@ -251,9 +251,9 @@ html[data-theme="light"] .fzs-games {
     --g-live-line: #E9A49C;
 }
 .fzs-strip {
-    display: flex; align-items: stretch; gap: 4px;
-    overflow-x: auto; padding: 0 12px;
-    scroll-snap-type: x proximity; scroll-padding: 0 12px;
+    display: flex; align-items: stretch; gap: 0;
+    overflow-x: auto; padding: 0;
+    scroll-snap-type: x mandatory; scroll-padding: 0;
     scrollbar-width: none; overscroll-behavior-x: contain;
 }
 .fzs-strip::-webkit-scrollbar { display: none; }
@@ -269,7 +269,9 @@ html[data-theme="light"] .fzs-games {
 .fzs .fzs-game { cursor: pointer; }
 .fzs-game:hover { border-color: var(--s-btn-line); }
 .fzs-game:active { transform: scale(.97); }
-.fzs-game.is-live { border-color: var(--g-live-line); }
+.fzs-game.is-live { position: relative; z-index: 1; border-color: var(--g-live-line); }
+/* Les cases se touchent : leurs filets se superposent au lieu de doubler. */
+.fzs-game + .fzs-game { margin-left: -1px; }
 .fzs-game.is-final { opacity: .88; }
 .fzs-game-st {
     display: flex; align-items: center; gap: 5px; min-width: 0;
@@ -482,7 +484,6 @@ html.fzs-zone-ouverte { overflow: hidden; }
     .fzs .fzs-sec { margin: 0; border: 1px solid var(--s-line2); border-radius: 18px; background: var(--s-card); overflow: hidden; }
     .fzs .fzs-hero { margin: 0; min-height: 132px; padding: 22px; }
     .fzs .fzs-games { order: -1; grid-column: 1 / -1; --g-w: 124px; padding: 0; }
-    .fzs-strip { padding: 0; scroll-padding: 0; }
     .fzs-strip { scrollbar-width: thin; }
     .fzs-sh { margin: 0 18px; }
     .fzs-rail { padding-left: 18px; padding-right: 18px; scroll-padding: 0 18px; scrollbar-width: thin; }
