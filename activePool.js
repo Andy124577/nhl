@@ -214,6 +214,83 @@
             })
             .filter(Boolean)
             .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+        suivreRenommages();
+    }
+
+    // ==================== POOLS RENOMMÉS ====================
+
+    /**
+     * Ancien nom → nom actuel, pour mes pools. Un pool renommé garde ses
+     * derniers noms (`anciensNoms`, lib/renommages.js).
+     */
+    function nomsActuels() {
+        const table = new Map();
+        for (const p of mesPools) {
+            for (const ancien of (Array.isArray(p.data.anciensNoms) ? p.data.anciensNoms : [])) {
+                if (typeof ancien === 'string' && ancien !== p.name && !estMembre(ancien)) table.set(ancien, p.name);
+            }
+        }
+        return table;
+    }
+
+    /** Le nom actuel d'un pool, même donné sous un ancien nom. */
+    function nomActuel(nom) {
+        if (!nom || estMembre(nom)) return nom;
+        return nomsActuels().get(nom) || nom;
+    }
+
+    /**
+     * Le navigateur garde des noms de pools : pool actif, épingles et récents
+     * du menu Mes pools, rangs affichés au rail, bilans déjà vus. Après un
+     * renommage — fait par quelqu'un d'autre, peut-être pendant qu'on était
+     * ailleurs — ils pointaient vers un pool qui n'existe plus : le pool actif
+     * retombait sur un autre et l'épingle disparaissait. On les remplace ici,
+     * une fois, dès que /draft révèle le nouveau nom.
+     */
+    function suivreRenommages() {
+        const table = nomsActuels();
+        if (table.size === 0) return;
+        const renommer = (nom) => table.get(nom) || nom;
+        const lire = (cle) => { try { return localStorage.getItem(cle); } catch { return null; } };
+        const ecrire = (cle, valeur) => { try { localStorage.setItem(cle, valeur); } catch { /* stockage bloqué */ } };
+
+        for (const cle of [CLE_ACTIF, CLE_DRAFT]) {
+            const nom = lire(cle);
+            if (nom && table.has(nom)) ecrire(cle, table.get(nom));
+        }
+        for (const cle of ['fzPoolsEpingles', 'fzPoolsRecents']) {
+            try {
+                const liste = JSON.parse(lire(cle) || 'null');
+                if (!Array.isArray(liste) || !liste.some(n => table.has(n))) continue;
+                ecrire(cle, JSON.stringify(liste.map(renommer).filter((n, i, l) => l.indexOf(n) === i)));
+            } catch { /* illisible : laissé tel quel */ }
+        }
+        for (const cle of ['fzPoolsRangs', 'fzBilanSoiree:v1']) {
+            try {
+                const objet = JSON.parse(lire(cle) || 'null');
+                if (!objet || typeof objet !== 'object' || Array.isArray(objet)) continue;
+                let change = false;
+                for (const [ancien, nouveau] of table) {
+                    if (!(ancien in objet)) continue;
+                    if (!(nouveau in objet)) objet[nouveau] = objet[ancien];
+                    delete objet[ancien];
+                    change = true;
+                }
+                if (change) ecrire(cle, JSON.stringify(objet));
+            } catch { /* illisible : laissé tel quel */ }
+        }
+        // Les favoris du repêchage sont rangés par pool et par personne
+        // (draftFavorites.js : fzFavoris_<pool>_<compte>).
+        try {
+            const compte = utilisateur();
+            for (const [ancien, nouveau] of table) {
+                const avant = `fzFavoris_${ancien}_${compte}`;
+                const valeur = lire(avant);
+                if (valeur == null) continue;
+                if (lire(`fzFavoris_${nouveau}_${compte}`) == null) ecrire(`fzFavoris_${nouveau}_${compte}`, valeur);
+                localStorage.removeItem(avant);
+            }
+        } catch { /* stockage bloqué */ }
     }
 
     /**
@@ -281,6 +358,15 @@
         let change = false;
         for (const [nom, vue] of Object.entries(charge)) {
             if (!vue || typeof vue !== 'object') continue;
+            // Un pool renommé arrive sous son nouveau nom : son ancien nom ne
+            // doit pas rester à côté, comme un deuxième pool.
+            for (const ancien of (Array.isArray(vue.anciensNoms) ? vue.anciensNoms : [])) {
+                if (ancien !== nom && tousLesPools[ancien]) {
+                    const { [ancien]: _retire, ...reste } = tousLesPools;
+                    tousLesPools = reste;
+                    change = true;
+                }
+            }
             const avant = tousLesPools[nom];
             if (avant && JSON.stringify(avant) === JSON.stringify(vue)) continue;
             tousLesPools = { ...tousLesPools, [nom]: vue };
@@ -311,7 +397,8 @@
     }
 
     function resoudreActif() {
-        const demande = poolDeLUrl();
+        // Un lien gardé d'avant un renommage (?pool=ancien nom) mène au pool.
+        const demande = nomActuel(poolDeLUrl());
         if (demande && estMembre(demande)) return demande;
 
         const memorise = localStorage.getItem(CLE_ACTIF);
@@ -550,7 +637,9 @@
     function signalerDonnees() {
         // Le pool actif a pu disparaître entre-temps (départ, suppression).
         if (actif && !estMembre(actif)) {
-            actif = poolParDefaut();
+            // Renommé : on reste dessus, sous son nouveau nom.
+            const renomme = nomActuel(actif);
+            actif = estMembre(renomme) ? renomme : poolParDefaut();
             memoriser(actif);
             notifier();
         }
