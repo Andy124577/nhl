@@ -813,6 +813,50 @@ describe('navbar — getCurrentPage', () => {
     test('une page sans onglet rend une chaîne vide', () => {
         assert.equal(page('/conditions.html'), '');
     });
+
+    // « Mon équipe » n'a pas de page à elle : c'est la fiche de son équipe,
+    // sur la page du classement.
+    const pageAvec = (chemin, search) => chargerFonctions('navbar.js', ['getCurrentPage'],
+        { window: { location: { pathname: chemin, search } } }).getCurrentPage();
+
+    test('classement.html?vue=equipe est l’onglet « Mon équipe »', () => {
+        assert.equal(pageAvec('/classement.html', '?vue=equipe'), 'equipe');
+        assert.equal(pageAvec('/classement.html', '?pool=Les%20boys&vue=equipe'), 'equipe');
+        assert.equal(pageAvec('/classement.html', '?vue=equipe&recap=1'), 'equipe');
+    });
+
+    test('la fiche d’une autre équipe et le classement restent « Classement »', () => {
+        assert.equal(pageAvec('/classement.html', ''), 'classement');
+        assert.equal(pageAvec('/classement.html', '?equipe=Les%20Lions'), 'classement');
+        assert.equal(pageAvec('/classement.html', '?revue=equipe'), 'classement');
+        assert.equal(pageAvec('/classement.html', '?vue=equipement'), 'classement');
+    });
+});
+
+describe('navbar — l’onglet qu’une page allume', () => {
+    const { ongletDePage } = chargerFonctions('navbar.js', ['ongletDePage']);
+
+    test('les échanges s’ouvrent depuis Mon équipe et en gardent l’onglet', () => {
+        assert.equal(ongletDePage('trade'), 'equipe');
+    });
+
+    test('les autres pages allument leur propre onglet', () => {
+        for (const p of ['accueil', 'equipe', 'classement', 'stats', 'repechage']) {
+            assert.equal(ongletDePage(p), p);
+        }
+    });
+
+    test('les scores n’ont plus d’onglet dans la barre du bas', () => {
+        const source = require('fs').readFileSync(require('path').join(__dirname, '../../navbar.js'), 'utf8');
+        const barre = source.slice(source.indexOf('function buildBottomNav'), source.indexOf('BARRE DU BAS : LE TOUCHER'));
+        const onglets = [...barre.matchAll(/\$\{onglet\('([a-z]+)'/g)].map(m => m[1]);
+        assert.deepEqual(onglets, ['accueil', 'repechage', 'equipe', 'classement', 'stats']);
+        // Mon équipe et Classement suivent la fin du repêchage ; Repêchage, l’inverse.
+        const { NAV_ONGLETS_CONDITIONNELS } = chargerFonctions('navbar.js', ['NAV_ONGLETS_CONDITIONNELS']);
+        assert.ok(NAV_ONGLETS_CONDITIONNELS.repechage.includes('bottomDraftLink'));
+        assert.ok(NAV_ONGLETS_CONDITIONNELS.classement.includes('bottomEquipeLink'));
+        assert.ok(NAV_ONGLETS_CONDITIONNELS.classement.includes('bottomClassementLink'));
+    });
 });
 
 // ── Tri de la page Stats : une seule saison ─────────────────────────────────

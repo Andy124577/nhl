@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="poolSettings.css?v=20260926b">
     <link rel="stylesheet" href="index.css?v=20261031a">
-    <link rel="stylesheet" href="trade.css?v=20261031a">
+    <link rel="stylesheet" href="trade.css?v=20261112a">
     <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="icons.js" defer></script>
@@ -33,8 +33,15 @@
     <nav class="navbar"></nav>
 
     <main class="trade-container">
+        <!-- Les échanges n'ont plus d'onglet : on y arrive par « Mon équipe »
+             (le bouton à côté de « Mettre en vente »), et ce lien y ramène. -->
         <header class="tr-head">
-            <span class="tr-kicker" id="tradePoolName"></span>
+            <div class="tr-fil">
+                <a class="tr-retour" href="classement.html?vue=equipe">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Mon équipe
+                </a>
+                <span class="tr-kicker" id="tradePoolName"></span>
+            </div>
             <h1 class="tr-title">Échanges</h1>
         </header>
 
@@ -282,19 +289,19 @@
         </div>
     </div>
 
-    <script src="navbar.js?v=20261026a"></script>
+    <script src="navbar.js?v=20261112a"></script>
     <script defer src="installerApp.js?v=20261010a"></script>
     <!-- Bilan de la soirée : surgit une fois le dernier match du soir fini. -->
     <script defer src="bilanSoiree.js?v=20261107a"></script>
     <script defer src="avatars.js?v=20261026a"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20260929a"></script>
-    <script defer src="poolNav.js?v=20261107a"></script>
+    <script defer src="poolNav.js?v=20261112a"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20261028a"></script>
     <script src="lib/season.js"></script>
     <script src="headshots.js"></script>
     <script src="teamColors.js"></script>
-    <script src="trade.js?v=20261022a"></script>
+    <script src="trade.js?v=20261112a"></script>
 </body>
 </html>

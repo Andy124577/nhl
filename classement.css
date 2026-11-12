@@ -470,15 +470,29 @@ body.fz-view-roster #pageTitle { display: none; }
    fiche suit directement le fil d'Ariane (ou le haut de page sur téléphone). */
 body.fz-view-roster #teamRosterView { margin-top: 6px; }
 
-/* Une grille : le nom et « Mettre en vente » sur la première rangée, la
-   ligne rang · bilan · actifs dessous. Le bouton de retour n'y prend une
-   colonne que sur téléphone (classement-premium.css). */
+/* -------------------- Arrivée par « Mon équipe » -------------------- */
+/* classement.html?vue=equipe : la page s'ouvre sur la fiche de mon équipe,
+   pas sur le classement. Le temps de lire le pool, on montre donc le
+   squelette de la fiche — un nom, une ligne, dix rangées — et pas celui du
+   classement, qui laisserait croire à la mauvaise page. La classe est posée
+   à la lecture du HTML (classement.html) et retirée à la première vue
+   rendue (suivreVue, classement.js). */
+body.fz-vue-equipe-attente #poolStandingsView { display: none; }
+body.fz-vue-equipe-attente #teamRosterView,
+body.fz-vue-equipe-attente #rosterSkeleton { display: block !important; }
+.rh-sk-nom { width: 180px; height: 26px; margin: 4px 0; }
+.rh-sk-sous { width: 150px; height: 12px; margin: 2px 0; }
+
+/* Une grille : le nom et, dessous, la ligne rang · bilan · actifs ; les
+   actions à droite, sur la hauteur des deux. Le bouton de retour n'y prend
+   une colonne que sur téléphone, où les actions passent sur leur propre
+   rangée (classement-premium.css). */
 .roster-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-        "title sale"
-        "sub   sub";
+        "title act"
+        "sub   act";
     align-items: center;
     column-gap: 12px;
     margin-bottom: 18px;
@@ -543,25 +557,55 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
 .rh-count:empty { display: none; }
 .rh-rank:not(:empty) + .rh-count::before { content: ' · '; white-space: pre; }
 
-.rh-sale {
-    grid-area: sale;
+/* Les actions de la fiche (actionsFicheHTML, classement.js) : sur la
+   mienne — l'onglet « Mon équipe » — « Mettre en vente » et « Échanges »
+   côte à côte ; sur celle d'un autre, « Proposer un échange ». Des boutons
+   à libellé, jamais une icône seule : c'est par eux qu'on trouve les
+   échanges, qui n'ont plus d'onglet. */
+.rh-actions {
+    grid-area: act;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.rh-act {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     min-height: 36px;
-    padding: 0 12px;
+    padding: 0 14px;
     border: 1px solid var(--rr-btn-line);
     border-radius: 999px;
     background: transparent;
     color: var(--rr-btn-ink);
     font: 600 13px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    text-decoration: none;
     white-space: nowrap;
     cursor: pointer;
     transition: border-color .15s ease, color .15s ease;
 }
-.rh-sale svg { flex: none; }
-.rh-sale:hover { border-color: var(--rr-btn-hover-line); color: var(--rr-btn-hover-ink); }
-.rh-sale:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.rh-act svg { flex: none; }
+.rh-act:hover { border-color: var(--rr-btn-hover-line); color: var(--rr-btn-hover-ink); }
+/* « Échanges » et « Proposer un échange » sont des liens : sans ceci, ils
+   prendraient le rouge des liens de la page (classement-premium.css). */
+body.fz-classement a.rh-act { color: var(--rr-btn-ink); }
+body.fz-classement a.rh-act:hover { color: var(--rr-btn-hover-ink); }
+.rh-act:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+/* Les offres reçues : la même pastille rouge que sur l'onglet Mon équipe
+   (navbar.js, setNavBadge — qui pose display: flex). */
+.rh-trade-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--danger-deep);
+    color: var(--on-primary);
+    font-size: 11px;
+    font-weight: 700;
+}
 .rh-sale-count {
     min-width: 18px;
     height: 18px;
@@ -575,6 +619,12 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
     text-align: center;
 }
 .rh-sale-count[hidden] { display: none; }
+/* À côté de la pastille rouge des offres reçues, le nombre de joueurs en
+   vente n'est qu'un compte : en gris, pour qu'un seul des deux appelle. */
+.rh-actions .rh-sale-count {
+    background: color-mix(in srgb, currentColor 16%, transparent);
+    color: inherit;
+}
 
 /* -------------------- La liste -------------------- */
 /* Le conteneur des requêtes plus bas : c'est la largeur de la bande, pas
