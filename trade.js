@@ -397,6 +397,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('historyTradesContent')?.prepend(message);
             }
         }
+    } else if (new URLSearchParams(window.location.search).get('onglet') === 'recus') {
+        // « Échanges » de la fiche de mon équipe (classement.js), quand des
+        // offres attendent : la page s'ouvre sur elles.
+        switchTradeTab('received', { load: false });
+        await loadReceivedTrades();
+        history.replaceState(null, '', 'trade.html');
     } else {
         await loadReceivedTrades();
     }
@@ -521,16 +527,26 @@ function availablePartnerTeams() {
  * Arriving from a for-sale link or old bookmark:
  * trade.html?withTeam=<team>&wantPlayer=<player>&category=<F|D|G|R|T>
  * switches to that partner and pre-selects their player as the target.
+ *
+ * trade.html?withTeam=<team> seul — « Proposer un échange » sur la fiche
+ * d'une équipe (classement.js) — ouvre le générateur sur cette équipe, sans
+ * joueur choisi.
  */
 function applyPrefillIfPresent() {
     const params = new URLSearchParams(window.location.search);
     const withTeam = params.get('withTeam');
     const wantPlayer = params.get('wantPlayer');
     const category = params.get('category');
-    if (!withTeam || !wantPlayer || !category || !selectedPoolData) return;
+    if (!withTeam || !selectedPoolData) return;
 
     const targetTeamData = selectedPoolData.teams[withTeam];
-    if (!targetTeamData) return;
+    if (!targetTeamData || withTeam === myTeamName) return;
+
+    if (!wantPlayer || !category) {
+        selectPartnerTeam(withTeam);
+        history.replaceState(null, '', 'trade.html');
+        return;
+    }
 
     const partnerPlayers = [
         ...(targetTeamData.offensive || []),
