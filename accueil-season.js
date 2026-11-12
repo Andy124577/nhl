@@ -324,6 +324,8 @@ function fzsOuvrirZone(id, declencheur) {
             <header class="fzs-zone-tete"><h2 id="fzsZoneTitre">Zone de match</h2><button type="button" class="fzs-zone-x" data-fzs-fermer aria-label="Fermer">×</button></header>
             <div class="fzs-zone-haut">${fzsZoneTeteHTML(g, null)}</div>
             <div class="fzs-zone-corps">${fzsZoneCorpsHTML(g, undefined)}</div>
+            <p class="fzs-zone-trios">Voir les trios${[g.away, g.home].filter(t => t && t.abbrev).map(t =>
+                ` <a href="stats.html?onglet=alignements&amp;equipe=${encodeURIComponent(t.abbrev)}">${escapeHTML(t.abbrev)}</a>`).join('')}</p>
             <a class="fzs-btn fzs-zone-lien" href="match.html?id=${encodeURIComponent(g.id)}">Ouvrir la feuille de match</a>
         </div>`;
     // Le thème suit les jetons de la page : la feuille vit dans le corps.
@@ -609,7 +611,7 @@ function fzsMeilleursHTML() {
     return `<section class="fzs-sec fzs-top" aria-label="Meilleurs de la semaine" data-fzs-semaine>
             ${fzsTete('trophee', 'Meilleurs de la semaine', fzsPastille('7 jours'))}
             <ul class="fzs-rail fzs-top-list" aria-busy="true">${'<li class="fzs-top-card is-bone"></li>'.repeat(3)}</ul>
-            ${fzsPied('stats.html', 'Voir tous les joueurs')}
+            ${fzsPied('stats.html?onglet=meneurs', 'Voir les meneurs')}
         </section>`;
 }
 
@@ -787,7 +789,7 @@ function fzsAlignementsHTML() {
     let dernier = null;
     try { dernier = localStorage.getItem('fzLineupTeam'); } catch (e) { /* navigation privée */ }
     return `<section class="fzs-sec fzs-lines" aria-labelledby="fzsLinesTitre">
-            <header class="fzs-sh">${fzsIcone('trios')}<h2 id="fzsLinesTitre">Alignements</h2>${fzsPastille('32 clubs')}</header>
+            <header class="fzs-sh">${fzsIcone('trios')}<h2 id="fzsLinesTitre">Trios LNH</h2>${fzsPastille('32 clubs')}</header>
             <ul class="fzs-lines-grid" aria-label="Choisir un club">${clubs.map(([code, nom]) => `
                 <li><a class="fzs-club${code === dernier ? ' is-sel' : ''}" href="${esc(url)}&amp;equipe=${esc(code)}" title="${esc(nom)}" aria-label="Alignement : ${esc(nom)}">
                     <img src="teams/${esc(code)}.png" alt="" width="30" height="30" loading="lazy" onerror="this.style.visibility='hidden'"><span>${esc(code)}</span>
