@@ -317,6 +317,9 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-zone-goals span { flex: 1; min-width: 0; }
 .fzs-zone-goals small { display: block; font-size: 11px; color: var(--s-faint); }
 .fzs-mine-star { margin-left: 4px; font-style: normal; font-size: .85em; color: var(--s-red); }
+/* « Voir les trios MTL TOR » : les trios des deux clubs, à l'onglet Trios LNH. */
+.fzs-zone-trios { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; font-size: 13px; color: var(--s-mute); }
+.fzs-zone-trios a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border: 1px solid var(--s-line); border-radius: 999px; font-weight: 700; color: var(--s-ink); text-decoration: none; }
 .fzs-zone-note { margin: 0; padding: 16px; border-radius: 14px; background: var(--s-raise); text-align: center; font-size: 13px; color: var(--s-mute); }
 @media (min-width: 900px) {
     .fzs-zone { align-items: center; }

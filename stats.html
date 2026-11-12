@@ -6,7 +6,7 @@
     <!-- Écran d’accueil : nom, icône, et sur iPhone la condition des alertes. -->
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="Icons/apple-touch-icon.png">
-    <title>Statistiques des joueurs – Fantazy</title>
+    <title>Joueurs – Fantazy</title>
     <script src="theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,7 +51,7 @@
     <header class="stats-hero">
         <div class="stats-hero-inner sj-head">
             <span class="sj-saison" id="sjSaison"></span>
-            <h1 class="stats-hero-title">Statistiques</h1>
+            <h1 class="stats-hero-title">Joueurs</h1>
         </div>
     </header>
 
@@ -62,7 +62,7 @@
         <div class="stats-subnav-inner">
             <button class="stats-subnav-btn active" data-stats-tab="tous" onclick="switchStatsTab('tous')">Tous les joueurs</button>
             <button class="stats-subnav-btn" data-stats-tab="meneurs" onclick="switchStatsTab('meneurs')">Meneurs</button>
-            <button class="stats-subnav-btn" data-stats-tab="alignements" onclick="switchStatsTab('alignements')">Alignements</button>
+            <button class="stats-subnav-btn" data-stats-tab="alignements" onclick="switchStatsTab('alignements')">Trios LNH</button>
         </div>
     </div>
 
@@ -127,7 +127,7 @@
     <!-- ============================================================ -->
     <div class="stats-tab-panel" data-stats-panel="alignements" id="lineupPanel" style="display:none;">
         <section class="lu" aria-labelledby="luHeading">
-            <h2 class="lu-sr" id="luHeading">Alignements</h2>
+            <h2 class="lu-sr" id="luHeading">Trios LNH</h2>
             <div class="lu-head">
                 <label class="lu-team">
                     <img class="lu-team-logo" id="luLogo" src="teams/MTL.png" alt="" width="44" height="44">
@@ -313,14 +313,14 @@
     <script defer src="careerTeamLogo.js"></script>
     <!-- Alignement de la rangée « Carrière », partagé avec draftActif.html. -->
     <script defer src="careerTotals.js"></script>
-    <script defer src="navbar.js?v=20261112a"></script>
+    <script defer src="navbar.js?v=20261112b"></script>
     <script defer src="installerApp.js?v=20261010a"></script>
     <!-- Bilan de la soirée : surgit une fois le dernier match du soir fini. -->
     <script defer src="bilanSoiree.js?v=20261107a"></script>
     <script defer src="avatars.js?v=20261026a"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20261022a"></script>
-    <script defer src="poolNav.js?v=20261112a"></script>
+    <script defer src="poolNav.js?v=20261112b"></script>
     <script defer src="poolInvites.js?v=20260925e"></script>
     <script defer src="notifications.js?v=20261028a"></script>
     <script>
@@ -336,6 +336,12 @@
         // statsLineup.js ne charge rien tant que son onglet reste fermé.
         document.dispatchEvent(new CustomEvent('fz:stats-tab', { detail: tab }));
     }
+
+    // stats.html?onglet=meneurs : « Voir les meneurs », à l'accueil, ouvre
+    // la page sur cet onglet (?onglet=alignements est lu par statsLineup.js).
+    document.addEventListener('DOMContentLoaded', function() {
+        if (new URLSearchParams(window.location.search).get('onglet') === 'meneurs') switchStatsTab('meneurs');
+    });
 
     // Auto-open player career modal when coming from accueil hot players
     window.addEventListener('load', function() {
