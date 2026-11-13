@@ -9,10 +9,10 @@
  * vers les navigateurs abonnés. Un réessai qui retombe sur une notification
  * existante n'est pas nouveau : il ne sonne pas une deuxième fois.
  *
- * Seul le tour de repêchage part pour l'instant. C'est la seule alerte dont
- * l'intérêt se compte en minutes — dans un repêchage chronométré, Fantazy
- * choisit à la place de l'équipe à la fin du temps. Le reste attend
- * tranquillement dans la cloche.
+ * Partent sur l'appareil : le tour de repêchage (son intérêt se compte en
+ * minutes : dans un repêchage chronométré, Fantazy choisit à la place de
+ * l'équipe à la fin du temps), une offre d'échange reçue et la réponse à une
+ * offre. Le reste attend tranquillement dans la cloche.
  *
  * Rien ici ne retient une réponse HTTP : l'envoi part après la réponse, et un
  * service de push lent ou en panne ne fait qu'un message de journal.
@@ -23,8 +23,15 @@
 const webPush = require('../lib/webPush.js');
 const evenements = require('../lib/events.js');
 
+const { VOTRE_TOUR, ECHANGE_RECU, ECHANGE_RESULTAT } = evenements.NOTIFICATION;
+
 /** Les types de notification qui partent aussi sur l'appareil. */
-const TYPES_POUSSES = new Set([evenements.NOTIFICATION.VOTRE_TOUR]);
+const TYPES_POUSSES = new Set([VOTRE_TOUR, ECHANGE_RECU, ECHANGE_RESULTAT]);
+
+/** Une offre sans réponse reste dans la cloche ; sur l'appareil, trois jours suffisent. */
+const TTL_OFFRE_S = 3 * 24 * 60 * 60;
+/** « Échange accepté / refusé » : une nouvelle du jour. */
+const TTL_RESULTAT_S = 24 * 60 * 60;
 
 /** Un service de push qui ne répond pas en dix secondes ne répondra pas. */
 const DELAI_ENVOI_MS = 10 * 1000;
@@ -45,22 +52,40 @@ const DELAI_ENVOI_MS = 10 * 1000;
 function messageDe(notification) {
     if (!notification || !TYPES_POUSSES.has(notification.type)) return null;
     const sujet = notification.subject || {};
+    // Celle ou celui qui vient d'accepter ou de refuser le sait déjà : la
+    // cloche le garde, l'appareil ne sonne pas pour son propre geste.
+    if (notification.type === ECHANGE_RESULTAT && sujet.par && notification.recipient === sujet.par) return null;
+    // Une offre déjà close (contre-offre aussitôt refusée, rejeu) n'a plus rien à demander.
+    if (notification.type === ECHANGE_RECU && notification.resolvedAt) return null;
+
     const pool = notification.poolName || sujet.poolName || null;
     const vue = { ...notification, poolName: pool };
     const texte = evenements.presenter(vue);
-    const limiteMs = Number(sujet.limiteMs) || 0;
+    const charge = {
+        titre: texte.titre,
+        corps: pool ? `${pool} · ${texte.detail}` : texte.detail,
+        url: evenements.urlDestination(vue)
+    };
 
+    if (notification.type === VOTRE_TOUR) {
+        const limiteMs = Number(sujet.limiteMs) || 0;
+        return {
+            charge: { ...charge, tag: `fz-tour:${pool || ''}`, urgent: !!texte.urgent },
+            ttl: Math.ceil((limiteMs > 0 ? limiteMs : evenements.EXPIRATION_TOUR_MS) / 1000),
+            urgence: 'high',
+            sujet: `tour:${notification.poolId || pool}`
+        };
+    }
+
+    // Un échange : une étiquette par offre, pour que la réponse remplace
+    // l'offre au lieu de s'y ajouter. Jamais « urgent » : sur un ordinateur,
+    // l'alerte s'efface d'elle-même au lieu d'attendre un clic.
+    const offre = sujet.tradeId != null ? String(sujet.tradeId) : (notification.dedupKey || '');
     return {
-        charge: {
-            titre: texte.titre,
-            corps: pool ? `${pool} · ${texte.detail}` : texte.detail,
-            url: evenements.urlDestination(vue),
-            tag: `fz-tour:${pool || ''}`,
-            urgent: !!texte.urgent
-        },
-        ttl: Math.ceil((limiteMs > 0 ? limiteMs : evenements.EXPIRATION_TOUR_MS) / 1000),
-        urgence: 'high',
-        sujet: `tour:${notification.poolId || pool}`
+        charge: { ...charge, tag: `fz-echange:${offre}`, urgent: false },
+        ttl: notification.type === ECHANGE_RECU ? TTL_OFFRE_S : TTL_RESULTAT_S,
+        urgence: 'normal',
+        sujet: `echange:${offre}`
     };
 }
 
@@ -68,7 +93,7 @@ function messageDe(notification) {
 const MESSAGE_ESSAI = {
     charge: {
         titre: 'Les alertes fonctionnent',
-        corps: 'Vous serez averti ici quand ce sera votre tour de repêcher.',
+        corps: 'Vous serez averti ici à votre tour de repêcher et quand une offre d’échange arrive.',
         url: 'index.html',
         tag: 'fz-essai',
         urgent: false
