@@ -519,7 +519,8 @@ function monter(app, ctx) {
                         poolId: verrouille.id,
                         type: evenements.NOTIFICATION.ECHANGE_RESULTAT,
                         subject: { tradeId, poolName: echange.poolName, resultat: 'accepte',
-                                   fromTeam: trade.fromTeam, toTeam: trade.toTeam },
+                                   fromTeam: trade.fromTeam, toTeam: trade.toTeam,
+                                   par: req.auth.username },
                         lieA: evenements.clesActivite.echangeConclu(verrouille.id, tradeId),
                         dedupKey: evenements.clesNotification.echangeResultat(tradeId, 'accepte')
                     });
@@ -593,7 +594,8 @@ function monter(app, ctx) {
                         poolId: verrouille.id,
                         type: evenements.NOTIFICATION.ECHANGE_RESULTAT,
                         subject: { tradeId, poolName: echange.poolName, resultat: 'refuse',
-                                   fromTeam: trade.fromTeam, toTeam: trade.toTeam },
+                                   fromTeam: trade.fromTeam, toTeam: trade.toTeam,
+                                   par: req.auth.username },
                         dedupKey: evenements.clesNotification.echangeResultat(tradeId, 'refuse')
                     });
                 }

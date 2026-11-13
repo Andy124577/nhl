@@ -1,4 +1,5 @@
-/* Alertes sur l'appareil — « C'est à votre tour » même quand Fantazy est fermé.
+/* Alertes sur l'appareil — « C'est à votre tour » et les échanges, même quand
+ * Fantazy est fermé.
  *
  * Chargé par notifications.js (la cloche), donc sur chaque page qui l'a. Il
  * s'occupe de trois choses :
@@ -103,6 +104,8 @@
         etat = nouveau;
         rendre();
         for (const fn of ecouteurs) { try { fn(etat); } catch { /* écouteur fautif */ } }
+        // Le panneau du bas (installerApp.js) attend de savoir s'il peut proposer les alertes.
+        try { document.dispatchEvent(new CustomEvent('fz:alertes', { detail: { etat } })); } catch { /* rien */ }
     }
 
     function dire(texte, ton = '') {
@@ -286,9 +289,9 @@
     function carte() {
         const vue = {
             inactif: { icone: 'cloche', titre: 'Alertes sur cet appareil',
-                texte: 'Sois averti quand c’est à toi de choisir, même Fantazy fermé.', action: 'activer' },
+                texte: 'Sois averti quand c’est à toi de choisir et quand une offre d’échange arrive, même Fantazy fermé.', action: 'activer' },
             actif: { icone: 'active', titre: 'Alertes sur cet appareil',
-                texte: 'Activées · cet appareil te préviendra quand ce sera ton tour de choisir.', action: 'desactiver' },
+                texte: 'Activées · cet appareil te préviendra à ton tour de choisir et pour tes échanges.', action: 'desactiver' },
             refuse: { icone: 'bloquee', titre: 'Alertes bloquées',
                 texte: 'Les notifications de Fantazy sont bloquées dans ce navigateur. Autorise-les dans les réglages du site, puis recharge la page.' },
             'ios-installer': { icone: 'telephone', titre: 'Alertes sur iPhone et iPad',
@@ -319,7 +322,7 @@
     /** Le pied de la cloche : une ligne, pour activer ou couper sur toutes les pages. */
     function reglage() {
         const vue = {
-            inactif: { texte: '<strong>Alertes sur cet appareil</strong> Être averti à votre tour de repêcher.',
+            inactif: { texte: '<strong>Alertes sur cet appareil</strong> Votre tour au repêchage et vos offres d’échange.',
                 outils: bouton('activer', 'Activer', true) },
             actif: { texte: '<strong>Alertes activées</strong> sur cet appareil.',
                 outils: bouton('essai', 'Essai') + bouton('desactiver', 'Désactiver') },

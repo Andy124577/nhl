@@ -1041,7 +1041,11 @@ async function proposeTrade() {
         }
         loadReceivedTrades();
         updateReceivedBadge();
+        const partenaire = selectedPartnerTeam;
         showTradeSuccess(pairs.length);
+        // « Tu seras avisé de sa réponse » : le bon moment pour proposer les
+        // alertes sur l'appareil, si elles sont coupées (installerApp.js).
+        if (window.FZInvites) window.FZInvites.occasion('echange', { equipe: partenaire });
     } catch (err) {
         console.error('Error proposing trade:', err);
         hideLoading(proposeBtn);
