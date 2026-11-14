@@ -84,6 +84,16 @@
     async function charger({ silencieux = false } = {}) {
         const moi = ++jeton;
         const corps = document.getElementById('luBody');
+        // Un club déjà vu dans l'onglet revient tout de suite (FZMemo) ; on
+        // le relit en arrière-plan s'il a plus de cinq minutes.
+        const memo = !silencieux && window.FZMemo ? FZMemo.lire(`lu:${club}`) : null;
+        if (memo && memo.data) {
+            donnees = memo.data;
+            luA = memo.at;
+            rendre();
+            if (Date.now() - memo.at < 5 * 60 * 1000) return;
+            silencieux = true;
+        }
         if (!silencieux) {
             donnees = null;
             corps.innerHTML = squelette();
@@ -96,6 +106,7 @@
             if (moi !== jeton) return;
             donnees = lu;
             luA = Date.now();
+            if (window.FZMemo) FZMemo.ecrire(`lu:${club}`, lu);
             rendre();
         } catch (erreur) {
             if (moi !== jeton || (silencieux && donnees)) return;

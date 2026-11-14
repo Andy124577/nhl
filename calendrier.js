@@ -166,7 +166,22 @@
         lundiVise = lundi;
         oublierRelance();
         rendreSemaine();
-        if (!silencieux) rendreSquelette(lundi, date);
+        // Une semaine déjà vue dans l'onglet revient tout de suite (FZMemo,
+        // fzReactif.js) ; elle se relit ensuite en arrière-plan, sans
+        // squelette, et seulement si elle a plus d'une minute.
+        const cleMemo = `cal:semaine:${lundi}`;
+        const memo = !silencieux && window.FZMemo ? FZMemo.lire(cleMemo) : null;
+        if (memo && memo.data && Array.isArray(memo.data.days) && memo.data.days.length) {
+            semaine = { ...memo.data, days: septJours(lundi, memo.data.days) };
+            const jours = semaine.days.map(d => d.date);
+            jourChoisi = jours.includes(date) ? date
+                : (jours.includes(jourChoisi) ? jourChoisi : (jours.find(d => d >= date) || jours[0] || date));
+            rendre();
+            if (Date.now() - memo.at < 60000) return;
+            silencieux = true;
+        } else if (!silencieux) {
+            rendreSquelette(lundi, date);
+        }
         let recue = null;
         try {
             const reponse = await fetch(`${BASE_URL}/schedule/${lundi}`, { cache: 'no-store' });
@@ -183,6 +198,7 @@
             if (silencieux && semaine && semaine.days.length && semaine.days[0].date === lundi) return;
         } else {
             refus = 0;
+            if (window.FZMemo) FZMemo.ecrire(cleMemo, recue);
         }
         semaine = recue || { days: [] };
         // Une semaine vide reste vide : sept jours sans match inventés

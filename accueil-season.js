@@ -126,40 +126,61 @@ function fzsActualiserRang() {
 const FZS_EN_DIRECT = g => g && ['LIVE', 'CRIT'].includes(g.state);
 const FZS_FINI = g => g && ['FINAL', 'OFF'].includes(g.state);
 
-/* Les matchs d'hier : la semaine du calendrier les a déjà, sauf le lundi
-   (dimanche est dans la semaine d'avant) ; on lit alors /schedule une seule
-   fois pour la veille. Aucune requête à la base : l'horaire vient de la LNH. */
-const fzsHier = { date: null, games: null, requete: null };
+/* Les matchs d'hier et de demain : la semaine du calendrier les a déjà,
+   sauf aux bords de la semaine (hier un lundi, demain un dimanche) ; on lit
+   alors /schedule une seule fois pour ce jour. Aucune requête à la base :
+   l'horaire vient de la LNH. Un jour lu reste en mémoire dans l'onglet
+   (FZMemo) : revenir à l'accueil le retrouve tout de suite. */
+const fzsJoursLus = new Map(); // date → { games, requete }
+const FZS_JOUR_FRAIS_MS = 10 * 60 * 1000;
 
 function fzsHierISO() { return shiftISO(todayISO(), -1); }
+function fzsDemainISO() { return shiftISO(todayISO(), 1); }
 
-function fzsChargerHier() {
-    const date = fzsHierISO();
+function fzsChargerJour(date) {
     if (calData?.days?.some(d => d.date === date)) return;
-    if (fzsHier.date === date && (fzsHier.games || fzsHier.requete)) return;
-    fzsHier.date = date;
-    fzsHier.games = null;
-    fzsHier.requete = fetchSchedule(date).then(h => {
-        if (fzsHier.date !== date) return;
+    const connu = fzsJoursLus.get(date);
+    if (connu && (connu.games || connu.requete)) return;
+    const memo = window.FZMemo ? FZMemo.donnee(`fzs:jour:${date}`, FZS_JOUR_FRAIS_MS) : null;
+    if (memo) { fzsJoursLus.set(date, { games: memo, requete: null }); return; }
+    const entree = { games: null, requete: null };
+    fzsJoursLus.set(date, entree);
+    entree.requete = fetchSchedule(date).then(h => {
         const jour = (h.days || []).find(d => d.date === date);
-        fzsHier.games = (jour && jour.games) || [];
-        fzsHier.requete = null;
+        entree.games = (jour && jour.games) || [];
+        entree.requete = null;
+        if (window.FZMemo && (h.days || []).length) FZMemo.ecrire(`fzs:jour:${date}`, entree.games);
         fzsActualiserMatchs();
     });
 }
 
+/** Les matchs bruts d'une date ; null tant qu'ils se chargent. */
+function fzsJourBrut(date) {
+    const jour = calData?.days?.find(d => d.date === date);
+    if (jour) return jour.games || [];
+    const connu = fzsJoursLus.get(date);
+    return connu ? connu.games : null;
+}
+
+function fzsTrierParHeure(games) {
+    return games.filter(g => g && g.away?.abbrev && g.home?.abbrev)
+        .sort((a, b) => (Date.parse(a.startTimeUTC) || 0) - (Date.parse(b.startTimeUTC) || 0));
+}
+
 /** null tant que la veille se charge. */
 function fzsMatchsHier() {
-    const date = fzsHierISO();
-    const jour = calData?.days?.find(d => d.date === date);
-    const games = jour ? jour.games : (fzsHier.date === date ? fzsHier.games : null);
+    const games = fzsJourBrut(fzsHierISO());
     if (!games) return null;
     // Un match d'hier qui joue encore passé minuit suit le direct du bandeau.
     const direct = new Map((typeof storySlides !== 'undefined' ? storySlides : [])
         .filter(s => s && s.game && s.type === 'live').map(s => [String(s.game.id), s.game]));
-    return games.filter(g => g && g.away?.abbrev && g.home?.abbrev)
-        .map(g => (direct.has(String(g.id)) ? { ...g, ...direct.get(String(g.id)) } : g))
-        .sort((a, b) => (Date.parse(a.startTimeUTC) || 0) - (Date.parse(b.startTimeUTC) || 0));
+    return fzsTrierParHeure(games.map(g => (g && direct.has(String(g.id)) ? { ...g, ...direct.get(String(g.id)) } : g)));
+}
+
+/** null tant que le lendemain se charge. */
+function fzsMatchsDemain() {
+    const games = fzsJourBrut(fzsDemainISO());
+    return games ? fzsTrierParHeure(games) : null;
 }
 
 function fzsMatchsDuJour(tonight) {
@@ -186,7 +207,8 @@ function fzsMatchsDuJour(tonight) {
 function fzsTrouverMatch(id) {
     const cle = String(id);
     return fzsMatchsDuJour(calTonight).find(m => String(m.id) === cle)
-        || (fzsMatchsHier() || []).find(m => String(m.id) === cle);
+        || (fzsMatchsHier() || []).find(m => String(m.id) === cle)
+        || (fzsMatchsDemain() || []).find(m => String(m.id) === cle);
 }
 
 /* ---- Filtre Tout / Hier / Aujourd'hui ----
@@ -195,7 +217,7 @@ function fzsTrouverMatch(id) {
    sans match cède la place à l'autre. Le choix de la personne tient tant que
    la page reste ouverte ; sans choix, le défaut suit l'heure. */
 const FZS_HEURE_EST = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', hour: 'numeric', hourCycle: 'h23' });
-const FZS_FILTRES = [['tout', 'Tout'], ['hier', 'Hier'], ['auj', 'Aujourd’hui']];
+const FZS_FILTRES = [['tout', 'Tout'], ['hier', 'Hier'], ['auj', 'Aujourd’hui'], ['demain', 'Demain']];
 let fzsFiltreChoisi = null;
 
 function fzsAvantMidi() { return Number(FZS_HEURE_EST.format(new Date())) < 12; }
@@ -207,27 +229,43 @@ function fzsFiltreDefaut(auj, hier) {
     return prefere;
 }
 
+/* Le squelette des cartes : la même case que celle d'un match, des os à la
+   place du statut, des logos et des pointages. Rien ne bouge à l'arrivée. */
+function fzsMatchsSqueletteHTML() {
+    const ligne = '<span class="fzs-game-row"><span class="fz-bone is-round fzs-os-logo"></span><span class="fz-bone fzs-os-club"></span></span>';
+    const carte = i => `<li class="fz-sk-rise" style="--i:${i}"><span class="fzs-game fzs-game-os" aria-hidden="true">
+            <span class="fz-bone-flat fzs-os-st"></span>${ligne}${ligne}</span></li>`;
+    return `<ul class="fzs-rail fzs-games-list" aria-busy="true" inert>${[0, 1, 2, 3, 4].map(carte).join('')}</ul>
+            <span class="fz-sk-sr" role="status">Chargement des matchs…</span>`;
+}
+
 function fzsMatchsHTML(tonight) {
-    fzsChargerHier();
+    fzsChargerJour(fzsHierISO());
     const auj = fzsMatchsDuJour(tonight);
     const hier = fzsMatchsHier();
     const filtre = fzsFiltreChoisi || fzsFiltreDefaut(auj, hier);
-    const titre = filtre === 'hier' ? 'Matchs d’hier' : filtre === 'auj' ? 'Matchs ce soir' : 'Matchs';
+    // Le lendemain se lit d'avance, une fois l'accueil dessiné : toucher
+    // « Demain » l'affiche alors sans attente.
+    if (filtre === 'demain') fzsChargerJour(fzsDemainISO());
+    else setTimeout(() => fzsChargerJour(fzsDemainISO()), 1500);
+    const demain = filtre === 'demain' ? fzsMatchsDemain() : [];
+    const titre = { hier: 'Matchs d’hier', auj: 'Matchs ce soir', demain: 'Matchs de demain' }[filtre] || 'Matchs';
     const marque = g => ({ ...g, _hier: true });
     let matchs;
     if (filtre === 'auj') matchs = auj;
     else if (filtre === 'hier') matchs = hier;
+    else if (filtre === 'demain') matchs = demain && demain.map(g => ({ ...g, _demain: true }));
     else matchs = hier === null ? auj
         : fzsAvantMidi() ? [...hier.map(marque), ...auj] : [...auj, ...hier.map(marque)];
-    const vide = filtre === 'hier' ? 'Aucun match de la LNH hier.'
-        : filtre === 'auj' ? 'Aucun match de la LNH ce soir.' : 'Aucun match hier ni aujourd’hui.';
+    const vide = { hier: 'Aucun match de la LNH hier.', auj: 'Aucun match de la LNH ce soir.', demain: 'Aucun match de la LNH demain.' }[filtre]
+        || 'Aucun match hier ni aujourd’hui.';
     const onglets = FZS_FILTRES.map(([k, libelle]) =>
         `<button type="button" data-fzs-jour="${k}" aria-pressed="${k === filtre}">${libelle}</button>`).join('');
     return `<section class="fzs-sec fzs-games" aria-labelledby="fzsGamesTitre">
             <header class="fzs-sh is-plain"><h2 id="fzsGamesTitre">${titre}</h2><a class="fzs-sh-link" href="calendrier.html">Scores</a></header>
             <div class="fzs-jours" role="group" aria-label="Quels matchs">${onglets}</div>
             ${matchs === null
-                ? '<p class="fzs-empty">Chargement des matchs d’hier…</p>'
+                ? fzsMatchsSqueletteHTML()
                 : matchs.length
                 ? `<ul class="fzs-rail fzs-games-list">${matchs.map(fzsMatchHTML).join('')}</ul>`
                 : `<p class="fzs-empty">${vide}</p>`}
@@ -249,7 +287,8 @@ function fzsPeriode(g) {
 function fzsStatutMatch(g) {
     if (FZS_EN_DIRECT(g)) return `En direct${fzsPeriode(g) ? ` · ${fzsPeriode(g)}` : ''}`;
     if (FZS_FINI(g)) return `${g._hier ? 'Hier · ' : ''}Final${g.periodType === 'OT' ? ' · Prol.' : g.periodType === 'SO' ? ' · TB' : ''}`;
-    return g.startTimeUTC ? `Ce soir · ${gameTimeLabel(g.startTimeUTC)}` : 'Ce soir';
+    const quand = g._demain ? 'Demain' : 'Ce soir';
+    return g.startTimeUTC ? `${quand} · ${gameTimeLabel(g.startTimeUTC)}` : quand;
 }
 
 function fzsMatchHTML(g) {

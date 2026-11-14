@@ -1265,16 +1265,49 @@ async function loadHistory(idCible) {
         return false;
     }
 
+    // L'historique déjà vu dans l'onglet s'affiche tout de suite (FZMemo) ;
+    // sinon un squelette des cartes. La relecture suit dans les deux cas.
+    const cleMemo = `tr:historique:${poolActif}`;
+    const memo = window.FZMemo ? FZMemo.donnee(cleMemo) : null;
+    let affiche = null;
+    if (memo) {
+        rendreHistorique(container, memo, idCible);
+        affiche = JSON.stringify(memo);
+    } else if (!String(container.innerHTML || '').includes('history-card')) {
+        container.innerHTML = squeletteHistorique();
+    }
+
     try {
         const res = await fetch(`${BASE_URL}/trades/history/${encodeURIComponent(poolActif)}`, { cache: 'no-store' });
 
         if (!res.ok) {
             console.error('Failed to fetch history:', res.status);
-            container.innerHTML = '<p class="history-empty">Erreur lors du chargement</p>';
+            if (!affiche) container.innerHTML = '<p class="history-empty">Erreur lors du chargement</p>';
             return;
         }
 
         const tous = await res.json();
+        if (window.FZMemo) FZMemo.ecrire(cleMemo, tous);
+        if (affiche === JSON.stringify(tous)) return focusTradeTarget(container, idCible);
+        return rendreHistorique(container, tous, idCible);
+    } catch (err) {
+        console.error('Error loading history:', err);
+        if (!affiche) container.innerHTML = '<p class="history-empty">Erreur lors du chargement</p>';
+    }
+}
+
+/** Trois cartes d'historique en os, aux mesures des vraies. */
+function squeletteHistorique() {
+    const cote = '<div class="history-side"><span class="fz-bone-flat" style="width:70px;height:10px"></span><span class="fz-bone" style="width:120px;height:14px;margin-top:8px"></span></div>';
+    const carte = i => `<div class="history-card fz-sk-rise" style="--i:${i}" aria-hidden="true">
+                <div class="history-card-head"><span class="fz-bone-flat" style="width:80px;height:10px"></span><span class="fz-bone-flat" style="width:56px;height:16px;border-radius:999px"></span></div>
+                <div class="history-card-sides">${cote}<span class="history-divider" aria-hidden="true"></span>${cote}</div>
+            </div>`;
+    return `<div inert>${[0, 1, 2].map(carte).join('')}</div><span class="fz-sk-sr" role="status">Chargement de l’historique…</span>`;
+}
+
+function rendreHistorique(container, tous, idCible) {
+    {
         const trades = Array.isArray(tous) ? tous : [];
 
         if (trades.length === 0) {
@@ -1314,10 +1347,6 @@ async function loadHistory(idCible) {
         }).join('');
 
         return focusTradeTarget(container, idCible);
-
-    } catch (err) {
-        console.error('Error loading history:', err);
-        container.innerHTML = '<p class="history-empty">Erreur lors du chargement</p>';
     }
 }
 

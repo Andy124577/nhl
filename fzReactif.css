@@ -1,0 +1,32 @@
+/* ============================================================
+   RÉACTIVITÉ — styles partagés (voir fzReactif.js)
+   ------------------------------------------------------------
+   - Aucun délai au toucher : `touch-action: manipulation` retire l'attente
+     du double-toucher, et le gris par défaut du navigateur cède la place à
+     l'appui propre au site.
+   - L'appui se voit au doigt : un bouton s'enfonce un peu (la propriété
+     `scale`, qui s'ajoute aux `transform` déjà posés sans les écraser) ;
+     un lien stylé pâlit. Instantané, sans attendre le relâchement.
+   ============================================================ */
+
+a, button, summary, label, select,
+[role="button"], [role="tab"], [role="option"], [role="menuitem"],
+input[type="checkbox"], input[type="radio"], input[type="button"], input[type="submit"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Spécificité nulle (:where) : un style d'appui déjà propre à un bouton
+   l'emporte toujours. Les boutons qui s'enfoncent déjà par leur propre
+   `transform` à l'appui sont exclus, pour ne pas s'enfoncer deux fois. */
+@media (prefers-reduced-motion: no-preference) {
+    :where(button:not(:disabled), [role="button"], [role="tab"], summary):not(:where(
+        [aria-disabled="true"], .fzs-game, .fzh-cand-choisir, .fzh-cand-fav, .fzm-pre-cta,
+        .fzn-chemin-cta, .fzo-start-button, .pick-card-select-btn, .select-button, .favorite-btn,
+        .fzl-btn, .bottom-nav-item)):active {
+        scale: .97;
+    }
+    :where(a[class]):not(:where([aria-disabled="true"], .bottom-nav-item, .fzs-game, .fzn-chemin-cta, .fzl-btn)):active {
+        opacity: .72;
+    }
+}

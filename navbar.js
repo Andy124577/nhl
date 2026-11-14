@@ -262,9 +262,16 @@ function _buildAvatarInner(username) {
 async function refreshNavbarAvatar(username) {
     try {
         const base = window.location.hostname.includes('localhost') ? 'http://localhost:3000' : window.location.origin;
-        const r = await fetch(`${base}/user-profile/${encodeURIComponent(username)}`);
-        if (!r.ok) return;
-        const d = await r.json();
+        // Gardé dix minutes dans l'onglet (FZMemo) : chaque page relisait le
+        // profil pour une photo qui ne change presque jamais.
+        const lire = async () => {
+            const r = await fetch(`${base}/user-profile/${encodeURIComponent(username)}`);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        };
+        const d = window.FZMemo
+            ? await FZMemo.charger(`nav:profil:${username}`, lire, { fraisMs: 10 * 60 * 1000 })
+            : await lire();
         const url = d.avatarUrl || '';
         localStorage.setItem('avatarUrl', url);
         const btn = document.getElementById('userAvatarBtn');
@@ -931,9 +938,20 @@ async function checkPendingTrades() {
         const username = localStorage.getItem('username');
         if (!username) return;
 
-        const response = await fetch(`${baseUrl}/trades/pending/${username}`);
-        if (!response.ok) return;
-        const data = await response.json();
+        // Trente secondes dans l'onglet (FZMemo) : passer d'une page à l'autre
+        // n'a pas à relire la base pour la même pastille. Accepter ou refuser
+        // un échange vide cette mémoire (fzReactif.js).
+        const lire = async () => {
+            const response = await fetch(`${baseUrl}/trades/pending/${username}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        };
+        let data;
+        try {
+            data = window.FZMemo
+                ? await FZMemo.charger(`nav:echanges:${username}`, lire, { fraisMs: 30000 })
+                : await lire();
+        } catch { return; }
         if (!Array.isArray(data)) return;
 
         let echanges = data;

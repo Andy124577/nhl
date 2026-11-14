@@ -590,11 +590,26 @@ const EVO_ARROW_DOWN = '<svg viewBox="0 0 24 24" width="8" height="8"><path d="M
  * Le classement ne les attend plus : il se dessine avec les totaux, et se
  * redessine quand elles arrivent (`valeur`).
  */
+let periodesMemoVu = false;
 function fetchStandingsPeriodPoints(poolName) {
     if (periodPointsCache && periodPointsCache.poolName === poolName) return periodPointsCache;
     // Une relecture (un but, la bascule) garde l'affichage précédent du même
     // pool jusqu'à sa réponse : pas de cases qui clignotent à chaque point.
-    const precedente = dernieresPeriodes.poolName === poolName ? dernieresPeriodes.valeur : null;
+    // Revenir au classement dans les trois minutes reprend les colonnes déjà
+    // lues dans l'onglet (FZMemo) : rien à attendre, et quatre lectures de
+    // moins pour la base. Au premier dessin seulement : une relecture en
+    // direct (un but) ou la bascule de la soirée veulent la base.
+    const premiere = !periodesMemoVu;
+    periodesMemoVu = true;
+    const memo = premiere && window.FZMemo ? FZMemo.lire(`cl:periodes:${poolName}`) : null;
+    const memorisees = memo ? periodesDepuisMemo(memo.data) : null;
+    if (memorisees && Date.now() - memo.at < 3 * 60 * 1000) {
+        dernieresPeriodes = { poolName, valeur: memorisees };
+        planifierBasculeTendance(memo.data.bascule);
+        periodPointsCache = { poolName, valeur: memorisees, precedente: null, promesse: Promise.resolve(memorisees) };
+        return periodPointsCache;
+    }
+    const precedente = dernieresPeriodes.poolName === poolName ? dernieresPeriodes.valeur : memorisees;
     const entree = { poolName, valeur: null, precedente, promesse: null };
     entree.promesse = lirePointsParPeriode(poolName).then(byDays => {
         entree.valeur = byDays;
@@ -630,6 +645,27 @@ async function lirePointsParPeriode(poolName) {
 
     periodesDerniere = Date.now();
     planifierBasculeTendance(bascule);
+    if (window.FZMemo && STANDINGS_PERIODS.every(d => byDays[d] && byDays[d].size)) {
+        FZMemo.ecrire(`cl:periodes:${poolName}`, periodesVersMemo(byDays, bascule));
+    }
+    return byDays;
+}
+
+/** Les Map de lirePointsParPeriode, en JSON pour FZMemo, et retour. */
+function periodesVersMemo(byDays, bascule) {
+    const jours = {};
+    STANDINGS_PERIODS.forEach(d => { jours[d] = [...byDays[d].entries()]; });
+    return { jours, jourSoiree: byDays.jourSoiree || null, bascule: bascule || null };
+}
+
+function periodesDepuisMemo(m) {
+    if (!m || !m.jours) return null;
+    const byDays = {};
+    for (const d of STANDINGS_PERIODS) {
+        if (!Array.isArray(m.jours[d])) return null;
+        byDays[d] = new Map(m.jours[d]);
+    }
+    byDays.jourSoiree = m.jourSoiree || null;
     return byDays;
 }
 

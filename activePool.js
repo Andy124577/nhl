@@ -356,7 +356,72 @@
         empreinteDraft = empreinte;
         tousLesPools = JSON.parse(texte);
         construireMesPools();
+        garderInstantane(texte);
         return true;
+    }
+
+    // ==================== INSTANTANÉ DE L'ONGLET ====================
+
+    /**
+     * Le dernier /draft lu, gardé dans l'onglet (sessionStorage).
+     *
+     * Chaque page attendait /draft avant de dessiner quoi que ce soit : un
+     * aller-retour jusqu'à Render, puis jusqu'à la base — plusieurs secondes
+     * quand Neon se réveille. Passer de l'Accueil à Mon équipe puis revenir
+     * refaisait cette attente à chaque fois. La page suivante part
+     * maintenant de ce que la précédente venait de lire, et le relit en
+     * arrière-plan ; si quelque chose a bougé, les abonnés (onData) se
+     * redessinent comme pour une mise à jour du socket.
+     *
+     * Jamais pendant un repêchage en cours (chaque choix compte), ni sur les
+     * pages du repêchage. Cinq minutes au plus ; toute écriture vers le
+     * serveur l'efface (fzReactif.js), de même qu'un changement venu du
+     * socket.
+     */
+    const CLE_INSTANTANE = 'fzDraftInstantane';
+    const INSTANTANE_MAX_MS = 5 * 60 * 1000;
+
+    function garderInstantane(texte) {
+        try {
+            if (texte.length > 1500000) { sessionStorage.removeItem(CLE_INSTANTANE); return; }
+            sessionStorage.setItem(CLE_INSTANTANE, JSON.stringify({ u: utilisateur(), at: Date.now(), t: texte }));
+        } catch { /* stockage plein ou indisponible : on s'en passe */ }
+    }
+
+    function oublierInstantane() {
+        try { sessionStorage.removeItem(CLE_INSTANTANE); } catch { /* rien */ }
+    }
+
+    function lireInstantane() {
+        try {
+            const brut = sessionStorage.getItem(CLE_INSTANTANE);
+            if (!brut) return null;
+            const s = JSON.parse(brut);
+            if (!s || s.u !== utilisateur() || typeof s.t !== 'string') return null;
+            if (!(Date.now() - s.at < INSTANTANE_MAX_MS)) return null;
+            return s.t;
+        } catch { return null; }
+    }
+
+    /** Démarre sur l'instantané ; true s'il a servi. */
+    function demarrerSurInstantane() {
+        if (pageLieeAuDraft || pageDuRepechage) return false;
+        const texte = lireInstantane();
+        if (!texte) return false;
+        try {
+            tousLesPools = JSON.parse(texte);
+            construireMesPools();
+            const nom = resoudreActif();
+            const donnees = nom && tousLesPools[nom];
+            if (!nom || !donnees || etatRepechage(donnees).etat === 'encours') throw new Error('instantané inutilisable');
+            empreinteDraft = `${utilisateur()}\n${texte}`;
+            return true;
+        } catch {
+            tousLesPools = {};
+            mesPools = [];
+            empreinteDraft = '';
+            return false;
+        }
     }
 
     /**
@@ -389,6 +454,7 @@
         }
         if (change) {
             construireMesPools();
+            oublierInstantane();
             // L'empreinte du dernier /draft complet ne décrit plus ce qu'on a
             // en main : la prochaine lecture complète sera prise pour neuve.
             empreinteDraft = '';
@@ -544,7 +610,10 @@
         if (chargement) return chargement;
         chargement = (async () => {
             if (!utilisateur()) { tousLesPools = {}; mesPools = []; actif = null; return API; }
-            let charge = false;
+            // Repartir de ce que la page précédente venait de lire ; la
+            // relecture suit aussitôt, en arrière-plan.
+            let charge = demarrerSurInstantane();
+            if (charge) setTimeout(rafraichir, 0);
             // Quelques essais rapprochés : la base gratuite met une à
             // quelques secondes à se réveiller, et la première lecture qui
             // la réveille peut échouer. Une session expirée, elle, ne
