@@ -108,8 +108,8 @@ describe('les sections de la maquette', () => {
     test('les matchs du jour : le calendrier, mis à jour par les feuilles et le direct ; en direct, à venir, puis finis', () => {
         const g = (id, state, start, extra = {}) => ({ id, state, startTimeUTC: start, away: { abbrev: `A${id}`, score: 0 }, home: { abbrev: `H${id}`, score: 0 }, ...extra });
         const storySlides = [{ type: 'live', game: { id: 2, state: 'LIVE', away: { abbrev: 'A2', score: 3 }, home: { abbrev: 'H2', score: 1 } } }];
-        const { fzsMatchsDuJour } = chargerFonctions('accueil-season.js', ['FZS_EN_DIRECT', 'FZS_FINI', 'fzsMatchsDuJour'], {
-            todayISO: () => AUJ, storySlides,
+        const { fzsMatchsDuJour } = chargerFonctions('accueil-season.js', ['FZS_EN_DIRECT', 'FZS_FINI', 'fzsHierISO', 'fzsMatchsDuJour'], {
+            todayISO: () => AUJ, shiftISO: () => '2026-10-20', storySlides,
             calData: { days: [{ date: AUJ, games: [g(1, 'FINAL', '2026-10-21T17:00:00Z'), g(2, 'FUT', '2026-10-21T23:00:00Z'), g(3, 'FUT', '2026-10-22T01:00:00Z'), g(4, 'FUT', '2026-10-21T23:30:00Z')] }] }
         });
         const matchs = fzsMatchsDuJour({ games: [g(1, 'FINAL', undefined, { away: { abbrev: 'A1', score: 2 }, home: { abbrev: 'H1', score: 5 } })] });
@@ -117,6 +117,20 @@ describe('les sections de la maquette', () => {
         assert.equal(matchs[0].away.score, 3, 'le direct l’emporte sur le calendrier');
         assert.equal(matchs[0].startTimeUTC, '2026-10-21T23:00:00Z', 'l’heure du calendrier reste');
         assert.equal(matchs[3].home.score, 5, 'les feuilles du soir donnent le pointage final');
+    });
+
+    test('Tout / Hier / Aujourd’hui : avant midi les matchs d’hier, après midi ceux du soir ; un jour vide cède sa place', () => {
+        const avec = heure => chargerFonctions('accueil-season.js', ['FZS_HEURE_EST', 'fzsAvantMidi', 'fzsFiltreDefaut'], {
+            Intl: { DateTimeFormat: function () { return { format: () => String(heure) }; } }
+        }).fzsFiltreDefaut;
+        const un = [{}];
+        assert.equal(avec(9)(un, un), 'hier');
+        assert.equal(avec(11)(un, un), 'hier');
+        assert.equal(avec(12)(un, un), 'auj');
+        assert.equal(avec(20)(un, un), 'auj');
+        assert.equal(avec(9)(un, []), 'auj', 'pas de match hier : ceux du jour');
+        assert.equal(avec(9)(un, null), 'hier', 'hier se charge encore');
+        assert.equal(avec(20)([], un), 'hier', 'pas de match ce soir : les résultats d’hier');
     });
 
     test('ce soir pour un club : en jeu, final, l’heure contre l’adversaire, ou repos', () => {

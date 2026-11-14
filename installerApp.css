@@ -1,6 +1,7 @@
-/* Installer Fantazy (installerApp.js).
-   Le rappel flotte au-dessus de la barre du bas des téléphones ; le guide vit
-   dans une fenêtre fzDialog. Les teintes viennent des jetons du site
+/* Le panneau du bas (installerApp.js) : « Activer les alertes ? » ou
+   « Fantazy sur votre écran d'accueil », jamais les deux.
+   Il flotte au-dessus de la barre du bas des téléphones ; sur ordinateur, une
+   carte en bas à droite. Le guide d'installation vit dans une fenêtre fzDialog. Les teintes viennent des jetons du site
    (index.css) : elles suivent le thème. */
 
 /* ---------- Le rappel ---------- */
@@ -30,8 +31,41 @@
 }
 
 @keyframes fz-installer-entree {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(100%); }
     to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fz-invite-sortie {
+    to { opacity: 0; transform: translateY(110%); }
+}
+
+/* D'une page à l'autre pendant la même visite : déjà vu, il se pose sans glisser. */
+.fz-installer-rappel.is-suite { animation-duration: .01s; }
+.fz-installer-rappel.is-sortie { animation: fz-invite-sortie .25s ease-in forwards; pointer-events: none; }
+.fz-installer-rappel { touch-action: pan-x; transition: transform .2s ease; }
+.fz-installer-rappel.is-glisse { transition: none; }
+
+/* L'icône des alertes : une cloche dans une tuile de la couleur du site. */
+.fz-invite-ico {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--primary-rgb), .14);
+    color: var(--primary-text);
+}
+.fz-invite--alertes.is-fait .fz-invite-ico { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); }
+
+/* Ordinateur : une carte en bas à droite, hors du chemin du contenu. */
+@media (min-width: 769px) {
+    .fz-installer-rappel {
+        left: auto;
+        right: 24px;
+        bottom: 24px;
+        width: 380px;
+        margin: 0;
+    }
 }
 
 .fz-installer-icone {
@@ -74,7 +108,8 @@
 .fz-installer-btn.is-main:hover { background: var(--primary-deep); border-color: var(--primary-deep); color: var(--on-primary, #fff); }
 
 @media (prefers-reduced-motion: reduce) {
-    .fz-installer-rappel { animation: none; }
+    .fz-installer-rappel { animation: none; transition: none; }
+    .fz-installer-rappel.is-sortie { animation: none; opacity: 0; }
 }
 
 /* ---------- Le guide (dans une fenêtre fzDialog) ---------- */

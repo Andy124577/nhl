@@ -108,6 +108,25 @@ body.fz-trade .trade-container {
     padding: 28px 32px 64px;
 }
 body.fz-trade .tr-head { display: flex; flex-direction: column; gap: 8px; }
+/* Le retour vers « Mon équipe », d'où l'on vient, puis le nom du pool. */
+body.fz-trade .tr-fil { display: flex; align-items: center; gap: 6px; min-height: 11px; }
+body.fz-trade .tr-retour {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    /* 11px de texte, 32px sous le doigt. */
+    margin: -11px 0 -11px -4px;
+    padding: 11px 4px;
+    font: 600 11px/1 'Saira', sans-serif;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--s-ink);
+    border-radius: 6px;
+}
+body.fz-trade .tr-retour:hover { text-decoration: underline; text-underline-offset: 3px; }
+body.fz-trade .tr-retour:focus-visible { outline: 2px solid var(--s-ink); outline-offset: 0; }
+body.fz-trade .tr-kicker:not(:empty)::before { content: '· '; }
 body.fz-trade .tr-kicker {
     font: 600 11px/1 'Saira', sans-serif;
     letter-spacing: 1.6px;

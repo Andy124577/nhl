@@ -118,11 +118,54 @@ test('une alerte de tour ne survit pas à son tour', () => {
     assert.match(messageDe(tour({ subject: { limiteMs: 180000 } })).charge.corps, /3 minutes/);
 });
 
-test('seul le tour de repêchage part sur l’appareil', () => {
+test('partent sur l’appareil : le tour, l’offre d’échange reçue et sa réponse ; le reste attend dans la cloche', () => {
+    const { VOTRE_TOUR, ECHANGE_RECU, ECHANGE_RESULTAT } = evenements.NOTIFICATION;
     for (const type of Object.values(evenements.NOTIFICATION)) {
-        if (type === evenements.NOTIFICATION.VOTRE_TOUR) continue;
+        if ([VOTRE_TOUR, ECHANGE_RECU, ECHANGE_RESULTAT].includes(type)) continue;
         assert.equal(messageDe({ ...tour(), type }), null, type);
     }
+});
+
+const offre = (options = {}) => ({
+    type: evenements.NOTIFICATION.ECHANGE_RECU,
+    poolId: 7,
+    recipient: 'bob',
+    recipientUserId: 'bob',
+    subject: { tradeId: 42, poolName: 'Ligue des Rois', fromTeam: 'Équipe 1', toTeam: 'Équipe 2',
+               offering: ['Caufield'], receiving: ['Suzuki'], ...(options.subject || {}) },
+    dedupKey: evenements.clesNotification.echangeRecu(42),
+    ...(options.notification || {})
+});
+
+const reponse = (options = {}) => ({
+    type: evenements.NOTIFICATION.ECHANGE_RESULTAT,
+    poolId: 7,
+    recipient: options.pour || 'alice',
+    recipientUserId: options.pour || 'alice',
+    subject: { tradeId: 42, poolName: 'Ligue des Rois', resultat: 'accepte',
+               fromTeam: 'Équipe 1', toTeam: 'Équipe 2', par: 'bob', ...(options.subject || {}) },
+    dedupKey: evenements.clesNotification.echangeResultat(42, 'accepte')
+});
+
+test('une offre d’échange reçue mène à l’offre, sans exiger de clic sur un ordinateur', () => {
+    const message = messageDe(offre());
+    const cloche = evenements.presenter(offre());
+    assert.equal(message.charge.titre, cloche.titre);
+    assert.equal(message.charge.corps, `Ligue des Rois · ${cloche.detail}`);
+    assert.equal(message.charge.url, 'trade.html?pool=Ligue+des+Rois&tradeId=42&vue=recues', 'l’offre, dans le bon pool');
+    assert.equal(message.charge.tag, 'fz-echange:42');
+    assert.equal(message.charge.urgent, false, 'une offre peut attendre : l’alerte s’efface d’elle-même');
+    assert.equal(message.urgence, 'normal');
+    assert.equal(message.ttl, 3 * 24 * 60 * 60);
+    assert.equal(messageDe(offre({ notification: { resolvedAt: new Date() } })), null, 'offre déjà close');
+});
+
+test('la réponse à une offre remplace l’offre, et ne sonne pas chez qui vient de répondre', () => {
+    const message = messageDe(reponse());
+    assert.equal(message.charge.titre, 'Échange accepté');
+    assert.equal(message.charge.tag, messageDe(offre()).charge.tag, 'même étiquette que l’offre');
+    assert.equal(messageDe(reponse({ pour: 'bob' })), null, 'bob a accepté lui-même');
+    assert.equal(messageDe(reponse({ subject: { resultat: 'refuse' } })).charge.titre, 'Échange refusé');
 });
 
 // ───────────────────────────── L'envoi ─────────────────────────────

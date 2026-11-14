@@ -305,15 +305,23 @@ async function loadAllUserPools() {
             return;
         }
 
-        showPoolStandings(pool.name);
-
+        // Lus avant showPoolStandings, qui remet l'adresse à « classement ».
+        //
+        // ?vue=equipe : l'onglet « Mon équipe » (navbar.js). Il ouvre la
+        // fiche de mon équipe dans le pool actif, quel que soit ce pool —
+        // changer de pool depuis le rail y reste.
+        //
         // ?equipe=… ouvre directement la fiche d'une équipe. C'est par là
         // qu'arrive « Voir mes joueurs repêchés » (bannière de l'accueil,
         // accueil-dash.js) : une fois le repêchage terminé, c'est ici que
         // vivent les choix qu'on y a faits. Le classement reste dessous, le
         // fil d'Ariane y ramène.
-        const equipeDemandee = new URLSearchParams(window.location.search).get('equipe');
-        if (equipeDemandee && pool.data.teams && pool.data.teams[equipeDemandee]) {
+        const demande = new URLSearchParams(window.location.search);
+        const equipes = pool.data.teams || {};
+        const equipeDemandee = demande.get('vue') === 'equipe' ? pool.teamName : demande.get('equipe');
+
+        showPoolStandings(pool.name);
+        if (equipeDemandee && equipes[equipeDemandee]) {
             showTeamRoster(pool.name, equipeDemandee);
         }
 
@@ -366,6 +374,44 @@ function ouvrirRecapitulatifDemande(pool) {
 
 // ==================== VIEW RENDERING ====================
 
+/** Cette équipe du pool est-elle la mienne ? */
+function estMonEquipe(poolName, teamName) {
+    const equipe = ((allPoolsData[poolName] || {}).teams || {})[teamName];
+    return !!equipe && (equipe.members || []).includes(localStorage.getItem('username'));
+}
+
+/**
+ * L'adresse et les barres de navigation suivent la vue affichée.
+ *
+ * La fiche de mon équipe est l'onglet « Mon équipe » (navbar.js) : qu'on y
+ * arrive par l'onglet ou en touchant sa rangée au classement, c'est le même
+ * écran, la même adresse (?vue=equipe) et le même onglet allumé. Le
+ * classement et la fiche d'une autre équipe allument « Classement ».
+ *
+ * replaceState et non pushState : passer d'une vue à l'autre n'ajoutait
+ * aucune entrée d'historique, le retour arrière du navigateur ne change pas.
+ *
+ * @param {'equipe'|'fiche'|'classement'} vue
+ */
+function suivreVue(vue) {
+    document.body.classList.remove('fz-vue-equipe-attente');
+    try {
+        const url = new URL(window.location.href);
+        const avant = url.search;
+        if (vue === 'equipe') {
+            url.searchParams.set('vue', 'equipe');
+            url.searchParams.delete('equipe');
+        } else {
+            url.searchParams.delete('vue');
+            // De retour au classement, ?equipe=… ne dit plus rien : laissé là,
+            // un changement de pool rouvrirait l'équipe du même nom.
+            if (vue === 'classement') url.searchParams.delete('equipe');
+        }
+        if (url.search !== avant) history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    } catch { /* adresse illisible : les barres suivent quand même */ }
+    if (typeof fzNavActiver === 'function') fzNavActiver(vue === 'equipe' ? 'equipe' : 'classement');
+}
+
 // Level 2: Pool Standings View
 function showPoolStandings(poolName) {
     if (poolName !== currentPoolName) standingsPeriode = 'saison';
@@ -381,6 +427,7 @@ function showPoolStandings(poolName) {
 
     const poolData = allPoolsData[poolName];
     if (!poolData) return;
+    suivreVue('classement');
 
     // Le titre de la maquette : « Classement » en surtitre, le nom du pool
     // dessous. L'image du pool est déjà dans la pastille du haut (téléphone)
@@ -1730,6 +1777,8 @@ function showTeamRoster(poolName, teamName) {
     const poolData = allPoolsData[poolName];
     const teamData = poolData.teams[teamName];
     if (!teamData) return;
+    const mienne = estMonEquipe(poolName, teamName);
+    suivreVue(mienne ? 'equipe' : 'fiche');
 
     // Update UI — la fiche a son propre en-tête (renderRosterHeader) : le
     // titre commun de la page s'efface le temps qu'elle est affichée.
@@ -1749,14 +1798,16 @@ function showTeamRoster(poolName, teamName) {
     document.getElementById('poolStandingsView').style.display = 'none';
     document.getElementById('teamRosterView').style.display = 'block';
 
-    // Un pool sans échanges n'a rien à mettre en vente : on saute l'appel
-    // aux annonces et le bouton disparaît de la fiche. Seule l'équipe
-    // elle-même peut mettre ses joueurs en vente.
+    // Un pool sans échanges n'a rien à mettre en vente ni à proposer : on
+    // saute l'appel aux annonces et les boutons disparaissent de la fiche.
+    // Seule l'équipe elle-même peut mettre ses joueurs en vente.
     const tradesAllowed = poolData.allowTrades !== false;
     rosterSale = {
         poolName,
         teamName,
-        canSell: tradesAllowed && (teamData.members || []).includes(localStorage.getItem('username')),
+        mienne,
+        echanges: tradesAllowed,
+        canSell: tradesAllowed && mienne,
         listings: {},
         players: []
     };
@@ -1847,6 +1898,7 @@ function setRosterViewMode(on) {
 }
 
 const RH_ICON = {
+    swap: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>',
     back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
     caret: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
     close: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>'
@@ -1858,9 +1910,43 @@ const tagIcon = size => (typeof getIcon === 'function' ? getIcon('tag', size) : 
  * liens de 12px) laisse la place à un vrai bouton de retour. Le nom de
  * l'équipe ouvre la liste des équipes du pool — un <select> posé dessus,
  * donc la roulette native du téléphone — et la ligne dessous dit où
- * l'équipe se situe. Le bouton « Mettre en vente » n'existe que sur sa
- * propre équipe : un seul point d'entrée au lieu d'un bouton par rangée.
+ * l'équipe se situe.
+ *
+ * Les actions suivent l'équipe affichée (actionsFicheHTML) :
+ *   — la mienne, c'est l'onglet « Mon équipe » : « Mettre en vente » (un
+ *     seul point d'entrée au lieu d'un bouton par rangée) et, à côté,
+ *     « Échanges », la porte de la page des échanges, avec le nombre
+ *     d'offres reçues. Pas de retour : les onglets du bas font le chemin ;
+ *   — celle d'un autre : « Proposer un échange », qui ouvre le générateur
+ *     sur cette équipe.
+ * Un pool sans échanges n'a aucun de ces boutons.
  */
+function actionsFicheHTML(teamName) {
+    if (!rosterSale.echanges) return '';
+    if (rosterSale.mienne) {
+        const enAttente = Number(window.fzEchangesEnAttente) || 0;
+        return `
+        <div class="rh-actions">
+            <button type="button" class="rh-act rh-sale" data-rh-sale aria-haspopup="dialog" aria-label="Mettre en vente">
+                ${tagIcon(16)}<span class="rh-sale-long">Mettre en vente</span><span class="rh-sale-count" hidden></span>
+            </button>
+            <a class="rh-act rh-trade" href="trade.html" data-rh-trade>
+                ${RH_ICON.swap}<span>Échanges</span><span class="rh-trade-count" id="ficheTradeBadge"${enAttente ? '' : ' style="display:none"'}>${enAttente || ''}</span>
+            </a>
+        </div>`;
+    }
+    // Sans équipe à soi dans ce pool, rien à offrir en retour.
+    const moi = localStorage.getItem('username');
+    const equipes = (allPoolsData[rosterSale.poolName] || {}).teams || {};
+    if (!Object.values(equipes).some(e => (e.members || []).includes(moi))) return '';
+    return `
+        <div class="rh-actions">
+            <a class="rh-act rh-offer" href="trade.html?withTeam=${encodeURIComponent(teamName)}">
+                ${RH_ICON.swap}<span>Proposer un échange</span>
+            </a>
+        </div>`;
+}
+
 /** « 3<sup>e</sup> sur 10 · 245 pts » : où l'équipe se situe, ou '' hors classement. */
 function sousTitreFiche(poolData, standings, teamName) {
     const moi = standings.find(s => s.teamName === teamName);
@@ -1884,28 +1970,33 @@ function renderRosterHeader(poolName, teamName) {
             ${standings.map(s => `<option value="${escapeAttr(s.teamName)}"${s.teamName === teamName ? ' selected' : ''}>${s.rank}. ${escapeHtmlText(getDisplayName(s.teamName, s.members))}</option>`).join('')}
         </select>` : '';
 
-    // Une seule rangée — retour, nom, mise en vente — et une ligne dessous
-    // qui dit tout le reste : rang, bilan, nombre d'actifs (renderTeamRoster).
-    // La grille de .roster-header place chaque morceau (classement.css,
+    // Le nom, une ligne dessous qui dit tout le reste — rang, bilan, nombre
+    // d'actifs (renderTeamRoster) — puis les actions. La grille de
+    // .roster-header place chaque morceau (classement.css,
     // classement-premium.css sur téléphone).
     const header = document.getElementById('rosterHeader');
+    header.classList.toggle('is-mine', rosterSale.mienne);
     header.innerHTML = `
-        <button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>
+        ${rosterSale.mienne ? '' : `<button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>`}
         <div class="rh-title${picker ? ' has-picker' : ''}">
             <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
             ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
         </div>
-        ${rosterSale.canSell ? `
-        <button type="button" class="rh-sale" data-rh-sale aria-haspopup="dialog" aria-label="Mettre en vente">
-            ${tagIcon(14)}<span class="rh-sale-long">Mettre en vente</span><span class="rh-sale-count" hidden></span>
-        </button>` : ''}
-        <p class="rh-sub"><span class="rh-rank">${sous}</span><span class="rh-count"></span></p>`;
+        <p class="rh-sub"><span class="rh-rank">${sous}</span><span class="rh-count"></span></p>
+        ${actionsFicheHTML(teamName)}`;
 
-    header.querySelector('[data-rh-back]').addEventListener('click', () => showPoolStandings(poolName));
+    const retour = header.querySelector('[data-rh-back]');
+    if (retour) retour.addEventListener('click', () => showPoolStandings(poolName));
     const select = header.querySelector('.rh-picker');
     if (select) select.addEventListener('change', () => showTeamRoster(poolName, select.value));
     const vendre = header.querySelector('[data-rh-sale]');
     if (vendre) vendre.addEventListener('click', openSaleSheet);
+    // Des offres attendent : la page s'ouvre sur « Reçus ». Le compte arrive
+    // après le rendu (navbar.js, checkPendingTrades), d'où la lecture au clic.
+    const echanges = header.querySelector('[data-rh-trade]');
+    if (echanges) echanges.addEventListener('click', () => {
+        echanges.href = Number(window.fzEchangesEnAttente) > 0 ? 'trade.html?onglet=recus' : 'trade.html';
+    });
 }
 
 // ==================== MISE EN VENTE ====================
@@ -3684,6 +3775,7 @@ function showError(title, message) {
     document.getElementById('poolStandingsView').style.display = 'none';
     document.getElementById('teamRosterView').style.display = 'none';
     setRosterViewMode(false);
+    document.body.classList.remove('fz-vue-equipe-attente');
     document.getElementById('breadcrumb').style.display = 'none';
     document.getElementById('pageTitle').textContent = 'Classement';
     majFraicheur('');
