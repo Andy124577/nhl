@@ -630,6 +630,9 @@ body.fz-view-roster #teamRosterView { margin-top: 6px; }
     object-position: top;
 }
 .rr-avatar.is-club img { object-fit: contain; }
+/* Joueur : la photo déborde de 20 % et le cercle la recadre au centre, pour un
+   visage plus gros (andy). Les logos d'équipe gardent 100 %. */
+.rr-avatar:not(.is-club) img { flex: none; width: 120%; height: 120%; }
 
 /* Joueur : photo détourée sur la couleur de son club (.fz-shot, teamLogos.css),
    comme à l'onglet Alignements. Les initiales ne servent que sans photo. */
