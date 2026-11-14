@@ -73,6 +73,7 @@ const { creerScoresEnDirect } = require("./services/scoresEnDirect.js");
 const { creerPointsEnDirect } = require("./services/pointsEnDirect.js");
 const { lignesDuSoir, appliquerAuxJoueurs, appliquerAuxClubs } = require("./lib/pointsEnDirect.js");
 const releveSaison = require("./lib/releveSaison.js");
+const { estRecrueCalder } = require("./lib/recrueCalder.js");
 const horaireLNH = require("./lib/horaire.js");
 const { apercuDeScore } = require("./lib/apercuMatchs.js");
 const { creerServicePointage } = require("./services/scoring.js");
@@ -1238,6 +1239,7 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
                     otLosses: 0,
                     savePct: 0,
                     points: 0,
+                    isRookie: estRecrueCalder(data, SAISON_STATS),
                     // Aucun match compté : tout match de la fenêtre revient
                     // au direct, même celui que la fiche montre déjà.
                     ...(fenetre ? { inclusion: { depuis: fenetre.depuis, matchs: [] } } : {}),
@@ -1286,6 +1288,8 @@ async function fetchCurrentStatsForPlayer(playerId, playerName, isGoalie = false
             otLosses: otLosses,
             savePct: savePct,
             points: calculatedPoints,
+            // Recrue au sens du Calder (lib/recrueCalder.js), depuis la même fiche.
+            isRookie: estRecrueCalder(data, SAISON_STATS),
             lastUpdated: new Date().toISOString()
         };
         if (!fenetre) return ligne;

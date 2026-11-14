@@ -347,7 +347,7 @@ function updateTable() {
     else if ("defensive" === t) n = patineurs.filter(j => "D" === j.positionCode);
     // Centres et ailiers : la position que la rangée affiche, pas celle de la trousse.
     else if (["C", "L", "R"].includes(t)) n = patineurs.filter(j => positionJoueur(j) === t);
-    else if ("rookies" === t) n = projete ? patineurs.filter(j => j.isRookie) : rookiePlayerData.slice();
+    else if ("rookies" === t) n = patineurs.filter(estRecrue);
     else n = patineurs.slice();
     if (a) n = n.filter(j => correspondRecherche(a, j.skaterFullName, () => clubJoueur(j)));
     if (statsLibres) n = n.filter(j => estLibre(j.skaterFullName));
@@ -562,9 +562,27 @@ function annoncerRendu(total, sorte) {
     document.dispatchEvent(new CustomEvent("fz:stats-rendu", { detail: { total, sorte } }));
 }
 
-/** Les joueurs de la liste des recrues, pour la pastille « R ». */
-let recruesIds = null;
+/**
+ * Recrue, pour le filtre « Recrues » et la pastille « R ».
+ *
+ * Le relevé /current-stats porte le drapeau du serveur, calculé selon les
+ * règles du Calder depuis la carrière LNH du joueur (lib/recrueCalder.js).
+ * Pour un joueur sans ce drapeau (relevé d'avant la règle, espoir de la
+ * trousse que le relevé ne suit pas), l'ancienne liste sert de repli :
+ * celle de la trousse en projections, Top_Rookies sinon.
+ */
+let recruesCalder = null, recruesCalderDe = null, recruesIds = null;
+function drapeauxCalder() {
+    if (recruesCalderDe !== currentStats) {
+        recruesCalderDe = currentStats;
+        const lignes = statsCourantesPretes() ? currentStats.players.filter(p => "boolean" == typeof p.isRookie) : [];
+        recruesCalder = lignes.length ? new Map(lignes.map(p => [Number(p.playerId), p.isRookie])) : null;
+    }
+    return recruesCalder;
+}
 function estRecrue(joueur) {
+    const calder = drapeauxCalder(), id = Number(joueur.playerId);
+    if (calder && calder.has(id)) return calder.get(id);
     if (modeProjection()) return !!joueur.isRookie;
     if (!recruesIds) recruesIds = new Set(rookiePlayerData.map(r => r.playerId));
     return recruesIds.has(joueur.playerId);
