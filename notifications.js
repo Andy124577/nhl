@@ -789,17 +789,27 @@
      * dérivées reprennent — la cloche continue de fonctionner, simplement sans
      * historique durable.
      */
-    async function rafraichirServeur() {
+    async function rafraichirServeur(force = false) {
         if (!compteActuel()) return;
         if (serveurEcarte) return;
         if (requeteServeur) return requeteServeur;
 
         requeteServeur = (async () => {
             try {
-                const reponse = await fetch(`${FZPool.BASE_URL}/api/notifications`,
-                    { cache: 'no-store', signal: AbortSignal.timeout(15000) });
-                if (!reponse.ok) throw new Error('Notifications indisponibles');
-                const charge = await reponse.json();
+                // D'une page à l'autre, la liste lue il y a moins de trente
+                // secondes resservit (FZMemo) ; un évènement du serveur, lui,
+                // force la relecture.
+                const lire = async () => {
+                    const reponse = await fetch(`${FZPool.BASE_URL}/api/notifications`,
+                        { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+                    if (!reponse.ok) throw new Error('Notifications indisponibles');
+                    return reponse.json();
+                };
+                const cleMemo = `notifs:${compte}`;
+                if (force && window.FZMemo) FZMemo.oublier(cleMemo);
+                const charge = window.FZMemo
+                    ? await FZMemo.charger(cleMemo, lire, { fraisMs: 30000 })
+                    : await lire();
                 if (!compteActuel()) return;
 
                 if (!charge || charge.disponible !== true || !Array.isArray(charge.notifications)) {
@@ -911,12 +921,20 @@
         }
         try {
             const socket = (window.fzSocketPartage && window.fzSocketPartage()) || window.__fzSocketPool || io(FZPool.BASE_URL);
-            const tout = () => { rafraichirServeur(); rafraichirEchanges(); };
+            const tout = () => { rafraichirServeur(true); rafraichirEchanges(); };
             socket.on('tradePending', tout);
             socket.on('tradeUpdated', tout);
-            socket.on('poolUpdated', rafraichirServeur);
-            socket.on('h2hWeekFinalized', rafraichirServeur);
-            socket.on('connect', tout);
+            socket.on('poolUpdated', () => rafraichirServeur(true));
+            socket.on('h2hWeekFinalized', () => rafraichirServeur(true));
+            // La première connexion de la page suit de près son premier
+            // chargement : la mémoire suffit. Une reconnexion (veille, réseau)
+            // a pu manquer des évènements : on relit pour de bon.
+            let connexions = socket.connected ? 1 : 0;
+            socket.on('connect', () => {
+                connexions += 1;
+                if (connexions > 1) tout();
+                else { rafraichirServeur(); rafraichirEchanges(); }
+            });
         } catch { /* Le sondage et le retour sur l'onglet prennent le relais. */ }
     }
 

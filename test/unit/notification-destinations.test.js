@@ -270,7 +270,7 @@ test('archived notification destinations focus the correct card and respect redu
         };
         const urls = [];
         const { loadHistory } = chargerFonctions('trade.js', [
-            'loadHistory', 'focusTradeTarget', 'getCategory', 'getCategoryLabel',
+            'loadHistory', 'squeletteHistorique', 'rendreHistorique', 'focusTradeTarget', 'getCategory', 'getCategoryLabel',
             'historyPlayersHTML', 'tradeShotHTML', 'clubDuJoueur', 'getPlayerCurrentStats',
             'getMatchingImage', 'initialesJoueur', 'escapeTradeHTML', 'posTagHTML', 'ICONE_ECHANGE',
             'monEquipeDansLePool'

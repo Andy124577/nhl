@@ -223,10 +223,17 @@ function teamRecord(abbrev) {
 }
 
 async function fetchSchedule(date) {
+    // Revenir à l'accueil dans la minute reprend la semaine déjà lue dans
+    // l'onglet (FZMemo, fzReactif.js) : l'accueil se dessine sans attendre.
+    // Le direct (bandeau, soirée) garde ses propres relectures.
+    const memo = window.FZMemo ? FZMemo.donnee(`horaire:${date}`, 60000) : null;
+    if (memo) return memo;
     try {
         const res = await fetch(`${BASE_URL}/schedule/${date}`, { cache: 'no-store' });
         if (!res.ok) return { days: [], nextStartDate: null, previousStartDate: null };
-        return await res.json();
+        const horaire = await res.json();
+        if (window.FZMemo && horaire && Array.isArray(horaire.days) && horaire.days.length) FZMemo.ecrire(`horaire:${date}`, horaire);
+        return horaire;
     } catch (err) {
         console.warn('Could not load schedule:', err);
         return { days: [], nextStartDate: null, previousStartDate: null };

@@ -64,14 +64,25 @@
 
     // ==================== CHARGEMENT ====================
 
-    async function charger() {
+    async function charger(memoire = false) {
         if (!connecte()) return;
         if (requete) return requete;
         requete = (async () => {
             try {
-                const reponse = await fetch(`${BASE_URL}/api/invitations`, { cache: 'no-store' });
-                if (!reponse.ok) return;
-                const corps = await reponse.json();
+                // Au chargement d'une page, la liste lue il y a moins de
+                // trente secondes resservit (FZMemo) ; un signal du serveur
+                // relit toujours.
+                const lire = async () => {
+                    const reponse = await fetch(`${BASE_URL}/api/invitations`, { cache: 'no-store' });
+                    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+                    return reponse.json();
+                };
+                const cleMemo = `invitations:${localStorage.getItem('username') || ''}`;
+                let corps;
+                try {
+                    if (!memoire && window.FZMemo) FZMemo.oublier(cleMemo);
+                    corps = window.FZMemo ? await FZMemo.charger(cleMemo, lire, { fraisMs: 30000 }) : await lire();
+                } catch { return; }
                 invitations = Array.isArray(corps.invitations) ? corps.invitations : [];
                 chargee = true;
                 abonnes.forEach(fn => { try { fn(invitations.slice()); } catch (e) { console.error(e); } });
@@ -316,7 +327,7 @@
     async function demarrer() {
         if (!connecte()) return;
         if (window.FZPool) await FZPool.ready();
-        await charger();
+        await charger(true);
         brancherSocket();
     }
 
