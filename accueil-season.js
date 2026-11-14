@@ -126,10 +126,47 @@ function fzsActualiserRang() {
 const FZS_EN_DIRECT = g => g && ['LIVE', 'CRIT'].includes(g.state);
 const FZS_FINI = g => g && ['FINAL', 'OFF'].includes(g.state);
 
+/* Les matchs d'hier : la semaine du calendrier les a déjà, sauf le lundi
+   (dimanche est dans la semaine d'avant) ; on lit alors /schedule une seule
+   fois pour la veille. Aucune requête à la base : l'horaire vient de la LNH. */
+const fzsHier = { date: null, games: null, requete: null };
+
+function fzsHierISO() { return shiftISO(todayISO(), -1); }
+
+function fzsChargerHier() {
+    const date = fzsHierISO();
+    if (calData?.days?.some(d => d.date === date)) return;
+    if (fzsHier.date === date && (fzsHier.games || fzsHier.requete)) return;
+    fzsHier.date = date;
+    fzsHier.games = null;
+    fzsHier.requete = fetchSchedule(date).then(h => {
+        if (fzsHier.date !== date) return;
+        const jour = (h.days || []).find(d => d.date === date);
+        fzsHier.games = (jour && jour.games) || [];
+        fzsHier.requete = null;
+        fzsActualiserMatchs();
+    });
+}
+
+/** null tant que la veille se charge. */
+function fzsMatchsHier() {
+    const date = fzsHierISO();
+    const jour = calData?.days?.find(d => d.date === date);
+    const games = jour ? jour.games : (fzsHier.date === date ? fzsHier.games : null);
+    if (!games) return null;
+    // Un match d'hier qui joue encore passé minuit suit le direct du bandeau.
+    const direct = new Map((typeof storySlides !== 'undefined' ? storySlides : [])
+        .filter(s => s && s.game && s.type === 'live').map(s => [String(s.game.id), s.game]));
+    return games.filter(g => g && g.away?.abbrev && g.home?.abbrev)
+        .map(g => (direct.has(String(g.id)) ? { ...g, ...direct.get(String(g.id)) } : g))
+        .sort((a, b) => (Date.parse(a.startTimeUTC) || 0) - (Date.parse(b.startTimeUTC) || 0));
+}
+
 function fzsMatchsDuJour(tonight) {
     const jour = calData?.days?.find(d => d.date === todayISO());
+    const veille = new Set((calData?.days?.find(d => d.date === fzsHierISO())?.games || []).map(g => String(g.id)));
     const parId = new Map();
-    const fondre = g => { if (g && g.id != null) parId.set(String(g.id), { ...parId.get(String(g.id)), ...g }); };
+    const fondre = g => { if (g && g.id != null && !veille.has(String(g.id))) parId.set(String(g.id), { ...parId.get(String(g.id)), ...g }); };
     ((jour && jour.games) || []).forEach(fondre);
     ((tonight && tonight.games) || []).forEach(fondre);
     const direct = typeof storySlides !== 'undefined' ? storySlides : [];
@@ -143,6 +180,58 @@ function fzsMatchsDuJour(tonight) {
     return [...parId.values()]
         .filter(g => g.away?.abbrev && g.home?.abbrev)
         .sort((a, b) => rang(a) - rang(b) || (Date.parse(a.startTimeUTC) || 0) - (Date.parse(b.startTimeUTC) || 0));
+}
+
+/** Un match d'aujourd'hui ou d'hier, pour la Zone de match. */
+function fzsTrouverMatch(id) {
+    const cle = String(id);
+    return fzsMatchsDuJour(calTonight).find(m => String(m.id) === cle)
+        || (fzsMatchsHier() || []).find(m => String(m.id) === cle);
+}
+
+/* ---- Filtre Tout / Hier / Aujourd'hui ----
+   Avant midi (heure de l'Est, celle de la journée du pool), on montre d'abord
+   les matchs finis d'hier ; à partir de midi, ceux d'aujourd'hui. Un jour
+   sans match cède la place à l'autre. Le choix de la personne tient tant que
+   la page reste ouverte ; sans choix, le défaut suit l'heure. */
+const FZS_HEURE_EST = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', hour: 'numeric', hourCycle: 'h23' });
+const FZS_FILTRES = [['tout', 'Tout'], ['hier', 'Hier'], ['auj', 'Aujourd’hui']];
+let fzsFiltreChoisi = null;
+
+function fzsAvantMidi() { return Number(FZS_HEURE_EST.format(new Date())) < 12; }
+
+function fzsFiltreDefaut(auj, hier) {
+    const prefere = fzsAvantMidi() ? 'hier' : 'auj';
+    if (prefere === 'hier' && hier && !hier.length && auj.length) return 'auj';
+    if (prefere === 'auj' && !auj.length && hier && hier.length) return 'hier';
+    return prefere;
+}
+
+function fzsMatchsHTML(tonight) {
+    fzsChargerHier();
+    const auj = fzsMatchsDuJour(tonight);
+    const hier = fzsMatchsHier();
+    const filtre = fzsFiltreChoisi || fzsFiltreDefaut(auj, hier);
+    const titre = filtre === 'hier' ? 'Matchs d’hier' : filtre === 'auj' ? 'Matchs ce soir' : 'Matchs';
+    const marque = g => ({ ...g, _hier: true });
+    let matchs;
+    if (filtre === 'auj') matchs = auj;
+    else if (filtre === 'hier') matchs = hier;
+    else matchs = hier === null ? auj
+        : fzsAvantMidi() ? [...hier.map(marque), ...auj] : [...auj, ...hier.map(marque)];
+    const vide = filtre === 'hier' ? 'Aucun match de la LNH hier.'
+        : filtre === 'auj' ? 'Aucun match de la LNH ce soir.' : 'Aucun match hier ni aujourd’hui.';
+    const onglets = FZS_FILTRES.map(([k, libelle]) =>
+        `<button type="button" data-fzs-jour="${k}" aria-pressed="${k === filtre}">${libelle}</button>`).join('');
+    return `<section class="fzs-sec fzs-games" aria-labelledby="fzsGamesTitre">
+            <header class="fzs-sh is-plain"><h2 id="fzsGamesTitre">${titre}</h2><a class="fzs-sh-link" href="calendrier.html">Scores</a></header>
+            <div class="fzs-jours" role="group" aria-label="Quels matchs">${onglets}</div>
+            ${matchs === null
+                ? '<p class="fzs-empty">Chargement des matchs d’hier…</p>'
+                : matchs.length
+                ? `<ul class="fzs-rail fzs-games-list">${matchs.map(fzsMatchHTML).join('')}</ul>`
+                : `<p class="fzs-empty">${vide}</p>`}
+        </section>`;
 }
 
 /** « 2e · 12:41 », « Entracte », « Prol. · 3:10 ». */
@@ -159,7 +248,7 @@ function fzsPeriode(g) {
 /** Le statut en toutes lettres, pour la Zone de match. */
 function fzsStatutMatch(g) {
     if (FZS_EN_DIRECT(g)) return `En direct${fzsPeriode(g) ? ` · ${fzsPeriode(g)}` : ''}`;
-    if (FZS_FINI(g)) return `Final${g.periodType === 'OT' ? ' · Prol.' : g.periodType === 'SO' ? ' · TB' : ''}`;
+    if (FZS_FINI(g)) return `${g._hier ? 'Hier · ' : ''}Final${g.periodType === 'OT' ? ' · Prol.' : g.periodType === 'SO' ? ' · TB' : ''}`;
     return g.startTimeUTC ? `Ce soir · ${gameTimeLabel(g.startTimeUTC)}` : 'Ce soir';
 }
 
@@ -181,16 +270,6 @@ function fzsMatchHTML(g) {
             ${ligne(g.away.abbrev, a, fini && a < h)}
             ${ligne(g.home.abbrev, h, fini && h < a)}
         </button></li>`;
-}
-
-function fzsMatchsHTML(tonight) {
-    const matchs = fzsMatchsDuJour(tonight);
-    return `<section class="fzs-sec fzs-games" aria-labelledby="fzsGamesTitre">
-            <header class="fzs-sh is-plain"><h2 id="fzsGamesTitre">Matchs ce soir</h2><a class="fzs-sh-link" href="calendrier.html">Scores</a></header>
-            ${matchs.length
-                ? `<ul class="fzs-rail fzs-games-list">${matchs.map(fzsMatchHTML).join('')}</ul>`
-                : '<p class="fzs-empty">Aucun match de la LNH ce soir.</p>'}
-        </section>`;
 }
 
 /** Redessine les cases sur place, sans perdre la position du défilement. */
@@ -220,7 +299,7 @@ function fzsTic() {
     if (document.hidden) return;
     const cartes = document.querySelectorAll('#fzSeasonHome .fzs-game.is-live[data-id]');
     if (!cartes.length) { fzsReglerTic(); return; }
-    const parId = new Map(fzsMatchsDuJour(calTonight).map(g => [String(g.id), g]));
+    const parId = new Map([...(fzsMatchsHier() || []), ...fzsMatchsDuJour(calTonight)].map(g => [String(g.id), g]));
     cartes.forEach(carte => {
         const g = parId.get(carte.dataset.id);
         const statut = carte.querySelector('.fzs-game-st span');
@@ -309,7 +388,7 @@ function fzsZoneCorpsHTML(g, feuille) {
 }
 
 function fzsOuvrirZone(id, declencheur) {
-    const g = fzsMatchsDuJour(calTonight).find(m => String(m.id) === String(id));
+    const g = fzsTrouverMatch(id);
     if (!g) return;
     fzsFermerZone(false);
     fzsZoneRetour = declencheur || null;
@@ -340,7 +419,7 @@ function fzsOuvrirZone(id, declencheur) {
         .then(feuille => {
             if (jeton !== fzsZoneLecture || !zone.isConnected) return;
             zone._feuille = feuille;
-            const frais = fzsMatchsDuJour(calTonight).find(m => String(m.id) === String(g.id)) || g;
+            const frais = fzsTrouverMatch(g.id) || g;
             zone.querySelector('.fzs-zone-haut').innerHTML = fzsZoneTeteHTML(frais, feuille);
             zone.querySelector('.fzs-zone-corps').innerHTML = fzsZoneCorpsHTML(frais, feuille);
         });
@@ -350,7 +429,7 @@ function fzsOuvrirZone(id, declencheur) {
 function fzsActualiserZone() {
     const zone = document.getElementById('fzsZone');
     if (!zone) return;
-    const g = fzsMatchsDuJour(calTonight).find(m => String(m.id) === zone.dataset.id);
+    const g = fzsTrouverMatch(zone.dataset.id);
     if (g) zone.querySelector('.fzs-zone-haut').innerHTML = fzsZoneTeteHTML(g, zone._feuille);
 }
 
@@ -367,6 +446,13 @@ function fzsFermerZone(rendreFocus = true) {
 document.addEventListener('click', e => {
     const fermer = e.target.closest?.('#fzsZone [data-fzs-fermer]');
     if (fermer) { fzsFermerZone(); return; }
+    const jour = e.target.closest?.('#fzSeasonHome [data-fzs-jour]');
+    if (jour) {
+        fzsFiltreChoisi = jour.dataset.fzsJour;
+        fzsActualiserMatchs();
+        document.querySelector('#fzSeasonHome .fzs-games .fzs-rail')?.scrollTo({ left: 0 });
+        return;
+    }
     const carte = e.target.closest?.('#fzSeasonHome .fzs-game[data-id]');
     if (carte && carte.dataset.id) fzsOuvrirZone(carte.dataset.id, carte);
 });
