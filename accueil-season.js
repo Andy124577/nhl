@@ -837,12 +837,12 @@ async function fzsRendreSemaine() {
 /* ---- Activité de la ligue ----
    Les offres reçues d'abord (userData.pendingTrades, déjà lues), puis le
    marché et le fil du pool (fzhChargerLigue, accueil-watch.js) : trois
-   lignes, le reste au marché des échanges. */
+   lignes, le reste dans Récents (recents.html). */
 function fzsActiviteHTML() {
     return `<section class="fzs-sec fzs-activity" aria-label="Activité de la ligue">
             ${fzsTete('fil', 'Activité de la ligue')}
             <ul class="fzs-list" aria-busy="true">${'<li class="fzs-row is-bone"><span class="fzd-off-face"></span><span class="fzs-row-txt"><span></span><span></span></span></li>'.repeat(3)}</ul>
-            ${fzsPied('trade.html', 'Marché et échanges')}
+            ${fzsPied('recents.html', 'Tout voir dans Récents')}
         </section>`;
 }
 

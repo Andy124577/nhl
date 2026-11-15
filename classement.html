@@ -40,10 +40,10 @@
     <!-- Langage 6b Éditorial (maquette « Classement ») : Saira, intertitres
          Saira Condensed. La feuille passe après toutes les autres. -->
     <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Saira+Condensed:wght@800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="classementReskin.css?v=20261031b">
+    <link rel="stylesheet" href="classementReskin.css?v=20261115a">
 </head>
 <body class="fz-classement">
-    <!-- L'onglet « Mon équipe » (navbar.js) ouvre cette page sur la fiche de
+    <!-- Le bouton « Mon équipe » et les liens de l’accueil ouvrent la fiche de
          mon équipe : classement.html?vue=equipe. Dès la lecture du HTML, la
          page montre alors le squelette de la fiche au lieu de celui du
          classement (classement.css, « Arrivée par Mon équipe ») ;
@@ -73,7 +73,12 @@
              (majFraicheur), posée par le rendu cumulatif. -->
         <header class="st-tete">
             <h1 id="pageTitle" class="page-title"><span class="st-titre-sur">Classement</span><span class="fz-bone st-sk-titre" aria-hidden="true"></span></h1>
-            <p class="st-maj" id="stMaj" hidden></p>
+            <!-- « Mon équipe » : la fiche de son équipe, à une touche. L'onglet
+                 du même nom a cédé sa place à Récents (navbar.js). -->
+            <div class="st-tete-droite">
+                <p class="st-maj" id="stMaj" hidden></p>
+                <button type="button" class="st-mon-equipe" id="stMonEquipe" hidden>Mon équipe</button>
+            </div>
         </header>
 
         <!-- Sous-titre d'un pool H2H : mode de ligue, nombre de participants
@@ -309,14 +314,14 @@
     <script defer src="draftkitData.js?v=20261030a"></script>
     <!-- Récapitulatif « Ton équipe est complète », ouvert par classement.js (?recap=1). -->
     <script defer src="draftFinPopup.js?v=20261022b"></script>
-    <script defer src="classement.js?v=20261114a"></script>
-    <script defer src="navbar.js?v=20261114a"></script>
+    <script defer src="classement.js?v=20261115a"></script>
+    <script defer src="navbar.js?v=20261115a"></script>
     <script defer src="installerApp.js?v=20261113a"></script>
     <!-- Bilan de la soirée : surgit une fois le dernier match du soir fini. -->
     <script defer src="bilanSoiree.js?v=20261107a"></script>
     <script defer src="profanity.js"></script>
     <script defer src="poolSettings.js?v=20261022a"></script>
-    <script defer src="poolNav.js?v=20261112b"></script>
+    <script defer src="poolNav.js?v=20261115a"></script>
     <script defer src="poolInvites.js?v=20261114a"></script>
     <script defer src="notifications.js?v=20261114a"></script>
 </body>

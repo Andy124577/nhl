@@ -60,6 +60,7 @@ const routesEchanges = require("./routes/trades.js");
 const routesH2H = require("./routes/h2h.js");
 const routesRecords = require("./routes/records.js");
 const routesSoiree = require("./routes/soiree.js");
+const routesRecents = require("./routes/recents.js");
 const routesNotifications = require("./routes/notifications.js");
 const routesAujourdhui = require("./routes/today.js");
 const routesInvitations = require("./routes/invitations.js");
@@ -755,6 +756,12 @@ contexteRoutes.ficheReleve = (nom) => {
     return ligne ? { playerId: ligne.playerId, teamAbbrev: ligne.teamAbbrev } : null;
 };
 
+// Récents (routes/recents.js) : ce que ce processus garde déjà en mémoire.
+contexteRoutes.blessesLNH = async () => ((await lireRapportBlesses()) || {}).injuries || [];
+contexteRoutes.journalLNH = () => loadNhlTransactions();
+contexteRoutes.soireesEnDirect = () => pointsEnDirect.lireSoirees();
+contexteRoutes.butDe = (id) => suiviButs.butDe(id);
+
 const comptes = routesIdentite.monter(app, contexteRoutes);
 // Connexion avec Google : inactive (bouton masqué) tant que les deux clés ne
 // sont pas posées. Voir DEPLOY_RENDER.md pour la console Google Cloud.
@@ -775,7 +782,8 @@ routesEchanges.monter(app, contexteRoutes);
 routesH2H.monter(app, contexteRoutes);
 routesRecords.monter(app, contexteRoutes);
 routesSoiree.monter(app, contexteRoutes);
-routesNotifications.monter(app, contexteRoutes);
+contexteRoutes.decrireActivite = routesNotifications.monter(app, contexteRoutes).decrire;
+routesRecents.monter(app, contexteRoutes);
 routesInvitations.monter(app, contexteRoutes);
 routesAujourdhui.monter(app, contexteRoutes);
 routesPhotos.monter(app, contexteRoutes);
@@ -2581,6 +2589,7 @@ async function releverMatchsEnDirect() {
     // que la carte d'accueil n'affiche pas (type de match, heure de début,
     // matchs terminés).
     liveGamesCache = { data: payload, brut: allGames, fetchedAt: now };
+    suiviButs.observer(allGames);
     return { ...payload, lu: now };
 }
 
@@ -2603,6 +2612,12 @@ async function lireMatchsBruts() {
  * la mise au jeu est revérifié sur sa feuille, la source de match.html. Son
  * état n'est jamais déduit de l'heure.
  */
+/**
+ * L'heure de chaque but, vue d'ici (lib/recents.js, creerSuiviButs) : Récents
+ * fait remonter le match d'un but en tête du fil, « il y a 10 secondes ».
+ * Nourri par les deux lectures de pointage ci-dessous, sans appel de plus.
+ */
+const suiviButs = require('./lib/recents.js').creerSuiviButs();
 const scoreDuJourCache = new Map(); // jour → { games, lu }
 const scoreDuJourEnVol = new Map(); // jour → Promise
 const SCORE_JOUR_CHAUD_MS = 30 * 1000;
@@ -2625,6 +2640,7 @@ async function lireScoreDuJourBrut(jour) {
             if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
             const brut = await reponse.json();
             const games = await verifierMatchsFiges(brut.games || []);
+            suiviButs.observer(games);
             scoreDuJourCache.delete(jour);
             scoreDuJourCache.set(jour, { games, lu: Date.now() });
             while (scoreDuJourCache.size > 12) scoreDuJourCache.delete(scoreDuJourCache.keys().next().value);
@@ -4049,54 +4065,62 @@ function mergeInjurySources(espn, rotowire) {
 let nhlInjuriesCache = { data: null, fetchedAt: 0 };
 const NHL_INJURIES_TTL_MS = 30 * 60 * 1000;
 
+/**
+ * Le rapport des blessés, rafraîchi au plus toutes les 30 min ; null tant
+ * qu'aucune source n'a jamais répondu. Lu par /nhl-injuries et par Récents
+ * (routes/recents.js).
+ */
+async function lireRapportBlesses() {
+    const now = Date.now();
+    if (!nhlInjuriesCache.data || (now - nhlInjuriesCache.fetchedAt) >= NHL_INJURIES_TTL_MS) {
+        const [espn, rotowire] = await Promise.all([
+            fetchEspnInjuries().catch(error => {
+                console.error('❌ ESPN injuries request failed:', error.message);
+                return null;
+            }),
+            fetchRotowireInjuries().catch(error => {
+                console.error('❌ Rotowire injuries request failed:', error.message);
+                return null;
+            })
+        ]);
+
+        // Les deux sources muettes, ce n'est pas « personne n'est
+        // blessé » : on garde le dernier rapport connu, même périmé,
+        // plutôt que de vider la liste sur une panne réseau.
+        if (!espn && !rotowire) {
+            if (!nhlInjuriesCache.data) return null;
+            console.warn('⚠️ Rapport de blessures indisponible — service du dernier connu');
+        } else {
+            const injuries = mergeInjurySources(espn || [], rotowire || []);
+
+            // Les plus récemment déclarés d'abord. Trier par statut puis par
+            // nom paraissait plus logique, mais le client n'affiche qu'une
+            // poignée de lignes : par ordre alphabétique, cette poignée
+            // n'aurait aucun sens (les Anderson, toujours), alors que par
+            // date elle répond à « quoi de neuf ». Statut en départage —
+            // et c'est lui qui classe tout l'apport de Rotowire, sans date.
+            const ORDER = ['Injured Reserve', 'Out', 'Suspension', 'Day-To-Day'];
+            injuries.sort((a, b) => {
+                const dateDiff = new Date(b.since || 0) - new Date(a.since || 0);
+                if (dateDiff) return dateDiff;
+                const rank = ORDER.indexOf(a.status) - ORDER.indexOf(b.status);
+                return rank !== 0 ? rank : a.playerName.localeCompare(b.playerName);
+            });
+
+            nhlInjuriesCache = {
+                data: { lastUpdated: new Date().toISOString(), injuries },
+                fetchedAt: now
+            };
+        }
+    }
+
+    return nhlInjuriesCache.data;
+}
+
 app.get('/nhl-injuries', async (req, res) => {
     try {
-        const now = Date.now();
-        if (!nhlInjuriesCache.data || (now - nhlInjuriesCache.fetchedAt) >= NHL_INJURIES_TTL_MS) {
-            const [espn, rotowire] = await Promise.all([
-                fetchEspnInjuries().catch(error => {
-                    console.error('❌ ESPN injuries request failed:', error.message);
-                    return null;
-                }),
-                fetchRotowireInjuries().catch(error => {
-                    console.error('❌ Rotowire injuries request failed:', error.message);
-                    return null;
-                })
-            ]);
-
-            // Les deux sources muettes, ce n'est pas « personne n'est
-            // blessé » : on garde le dernier rapport connu, même périmé,
-            // plutôt que de vider la liste sur une panne réseau.
-            if (!espn && !rotowire) {
-                if (!nhlInjuriesCache.data) {
-                    return res.json({ lastUpdated: null, total: 0, counts: {}, injuries: [] });
-                }
-                console.warn('⚠️ Rapport de blessures indisponible — service du dernier connu');
-            } else {
-                const injuries = mergeInjurySources(espn || [], rotowire || []);
-
-                // Les plus récemment déclarés d'abord. Trier par statut puis par
-                // nom paraissait plus logique, mais le client n'affiche qu'une
-                // poignée de lignes : par ordre alphabétique, cette poignée
-                // n'aurait aucun sens (les Anderson, toujours), alors que par
-                // date elle répond à « quoi de neuf ». Statut en départage —
-                // et c'est lui qui classe tout l'apport de Rotowire, sans date.
-                const ORDER = ['Injured Reserve', 'Out', 'Suspension', 'Day-To-Day'];
-                injuries.sort((a, b) => {
-                    const dateDiff = new Date(b.since || 0) - new Date(a.since || 0);
-                    if (dateDiff) return dateDiff;
-                    const rank = ORDER.indexOf(a.status) - ORDER.indexOf(b.status);
-                    return rank !== 0 ? rank : a.playerName.localeCompare(b.playerName);
-                });
-
-                nhlInjuriesCache = {
-                    data: { lastUpdated: new Date().toISOString(), injuries },
-                    fetchedAt: now
-                };
-            }
-        }
-
-        const payload = nhlInjuriesCache.data;
+        const payload = await lireRapportBlesses();
+        if (!payload) return res.json({ lastUpdated: null, total: 0, counts: {}, injuries: [] });
         let injuries = payload.injuries;
 
         if (req.query.team) {

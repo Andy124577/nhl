@@ -383,10 +383,10 @@ function estMonEquipe(poolName, teamName) {
 /**
  * L'adresse et les barres de navigation suivent la vue affichée.
  *
- * La fiche de mon équipe est l'onglet « Mon équipe » (navbar.js) : qu'on y
- * arrive par l'onglet ou en touchant sa rangée au classement, c'est le même
- * écran, la même adresse (?vue=equipe) et le même onglet allumé. Le
- * classement et la fiche d'une autre équipe allument « Classement ».
+ * La fiche de mon équipe a sa propre adresse (?vue=equipe) : qu'on y arrive
+ * par le bouton « Mon équipe » du classement, en touchant sa rangée ou par
+ * un lien de l'accueil, c'est le même écran. Toutes les vues allument
+ * « Classement » (ongletDePage, navbar.js).
  *
  * replaceState et non pushState : passer d'une vue à l'autre n'ajoutait
  * aucune entrée d'historique, le retour arrière du navigateur ne change pas.
@@ -412,6 +412,20 @@ function suivreVue(vue) {
     if (typeof fzNavActiver === 'function') fzNavActiver(vue === 'equipe' ? 'equipe' : 'classement');
 }
 
+/**
+ * « Mon équipe », en haut du classement : la fiche de son équipe à une
+ * touche, sans recharger. L'onglet du même nom a laissé sa place à Récents
+ * dans les barres (navbar.js) ; ?vue=equipe ouvre toujours la même fiche.
+ */
+function afficherBoutonMonEquipe(poolName) {
+    const bouton = document.getElementById('stMonEquipe');
+    if (!bouton) return;
+    const equipes = (allPoolsData[poolName] || {}).teams || {};
+    const mienne = Object.keys(equipes).find(nom => estMonEquipe(poolName, nom)) || null;
+    bouton.hidden = !mienne;
+    bouton.onclick = mienne ? () => { showTeamRoster(poolName, mienne); window.scrollTo(0, 0); } : null;
+}
+
 // Level 2: Pool Standings View
 function showPoolStandings(poolName) {
     if (poolName !== currentPoolName) standingsPeriode = 'saison';
@@ -428,6 +442,7 @@ function showPoolStandings(poolName) {
     const poolData = allPoolsData[poolName];
     if (!poolData) return;
     suivreVue('classement');
+    afficherBoutonMonEquipe(poolName);
 
     // Le titre de la maquette : « Classement » en surtitre, le nom du pool
     // dessous. L'image du pool est déjà dans la pastille du haut (téléphone)
@@ -2013,7 +2028,7 @@ function renderRosterHeader(poolName, teamName) {
     const header = document.getElementById('rosterHeader');
     header.classList.toggle('is-mine', rosterSale.mienne);
     header.innerHTML = `
-        ${rosterSale.mienne ? '' : `<button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>`}
+        <button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>
         <div class="rh-title${picker ? ' has-picker' : ''}">
             <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
             ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
