@@ -9,6 +9,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const R = require('../../lib/recents.js');
+const dates = require('../../lib/dates.js');
 
 const POOL = {
     teams: {
@@ -154,6 +155,17 @@ describe('recents — rapports de match', () => {
         assert.equal(R.etatDuMatch(null), 'FUT');
     });
 
+    test('passé minuit : les matchs d’hier restent, celui en cours compte pour aujourd’hui', () => {
+        const liste = R.rapportsDeMatch([
+            match(1, 'TOR', 'MTL', 'LIVE', { gameDate: '2026-11-14' }),
+            match(2, 'EDM', 'CGY', 'OFF', { gameDate: '2026-11-14' }),
+            match(3, 'VAN', 'SEA', 'OFF', { gameDate: '2026-11-13' })
+        ], { aujourdhui: '2026-11-15', jours: ['2026-11-15', '2026-11-14'] });
+        assert.deepEqual(liste.map(m => [m.id, m.jour]).sort(), [[1, '2026-11-15'], [2, '2026-11-14']]);
+        // Sans liste de jours, seul aujourd’hui compte.
+        assert.deepEqual(R.rapportsDeMatch([match(1, 'TOR', 'MTL', 'LIVE', { gameDate: '2026-11-14' })], { aujourdhui: '2026-11-15' }), []);
+    });
+
     test('ville et surnom', () => {
         assert.deepEqual(R.villeEtSurnom('Vegas Golden Knights'), { ville: 'Vegas', surnom: 'Golden Knights' });
         assert.deepEqual(R.villeEtSurnom('Utah Mammoth', 'Mammoth'), { ville: 'Utah', surnom: 'Mammoth' });
@@ -256,7 +268,7 @@ describe('recents — la barre', () => {
 describe('recents — la route', () => {
     const routesRecents = require('../../routes/recents.js');
 
-    function monter({ activite = [{ id: 1 }], echec = null, usePostgres = true } = {}) {
+    function monter({ activite = [{ id: 1 }], echec = null, usePostgres = true, horloge, jours = [] } = {}) {
         const routes = new Map();
         const lectures = { activite: 0 };
         const app = { get: (chemin, ...g) => routes.set(chemin, g.at(-1)) };
@@ -273,9 +285,10 @@ describe('recents — la route', () => {
             blessesLNH: async () => { if (echec === 'blesses') throw new Error('ESPN'); return [{ playerName: 'Lane Hutson', team: 'MTL', status: 'Out', since: new Date().toISOString() }]; },
             journalLNH: async () => ({ transactions: [] }),
             soireesEnDirect: async () => ({ joueurs: { 1: { etat: 'LIVE', ppa: 2 } }, clubs: {} }),
-            matchsDuJour: async () => [{ id: 5, gameState: 'LIVE', awayTeam: { abbrev: 'TOR', score: 1 }, homeTeam: { abbrev: 'MTL', score: 2 } }],
+            matchsDuJour: async jour => (jours.push(jour), jour !== dates.journeeLocale(new Date(Date.now() - 90 * 60000)) ? [] : [{ id: 5, gameState: 'LIVE', awayTeam: { abbrev: 'TOR', score: 1 }, homeTeam: { abbrev: 'MTL', score: 2 } }]),
             butDe: id => (id === 5 ? '2026-11-15T01:00:00.000Z' : null),
             ficheReleve: nom => (nom === 'Cole Caufield' ? { playerId: 1, teamAbbrev: 'MTL' } : null),
+            ...(horloge ? { horloge } : {}),
             logger: { error() {}, warn() {} }
         });
         const appeler = async (pool = 'P', username = 'andy', isAdmin = false) => {
@@ -284,8 +297,23 @@ describe('recents — la route', () => {
             await routes.get('/api/pools/:poolName/recents')({ params: { poolName: pool }, auth: { username, isAdmin } }, res);
             return { statut, corps };
         };
-        return { appeler, lectures };
+        return { appeler, lectures, jours };
     }
+
+    test('la journée finit à 1 h 30 ; le matin, les matchs d’hier restent', async () => {
+        // 00 h 23 à Montréal : c’est encore samedi soir.
+        const nuit = monter({ horloge: () => new Date('2026-11-15T05:23:00Z') });
+        assert.equal((await nuit.appeler()).corps.aujourdhui, '2026-11-14');
+        assert.deepEqual(nuit.jours, ['2026-11-14']);
+        // 9 h : dimanche, et les matchs de samedi restent jusqu’à midi.
+        const matin = monter({ horloge: () => new Date('2026-11-15T14:00:00Z') });
+        assert.equal((await matin.appeler()).corps.aujourdhui, '2026-11-15');
+        assert.deepEqual(matin.jours.sort(), ['2026-11-14', '2026-11-15']);
+        // 14 h : seulement dimanche.
+        const apresMidi = monter({ horloge: () => new Date('2026-11-15T19:00:00Z') });
+        await apresMidi.appeler();
+        assert.deepEqual(apresMidi.jours, ['2026-11-15']);
+    });
 
     test('assemble ma soirée, les blessés du pool et l’activité', async () => {
         const { appeler } = monter();

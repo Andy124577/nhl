@@ -33,6 +33,9 @@ const { injNatureFr } = require('../injuries.js');
 /** Entrées du fil d'activité lues en base. */
 const ACTIVITE_MAX = 40;
 
+/** La journée de Récents finit à 1 h 30 (minutes après minuit). */
+const FIN_DE_JOURNEE_MIN = 90;
+
 function monter(app, ctx) {
     const {
         auth, store, db, usePostgres, confianceMs = 0, logger = console,
@@ -42,7 +45,8 @@ function monter(app, ctx) {
         soireesEnDirect = async () => ({ joueurs: {}, clubs: {} }),
         matchsDuJour = async () => [],
         ficheReleve = () => null,
-        butDe = () => null
+        butDe = () => null,
+        horloge = () => new Date()
     } = ctx;
 
     const lectures = creerMemoireLectures({
@@ -80,7 +84,15 @@ function monter(app, ctx) {
             }
 
             const monEquipe = authz.equipeDe(poolData, req.auth.username);
-            const aujourdhui = dates.journeeLocale();
+            // La journée de Récents finit à 1 h 30 : les matchs du soir qui
+            // débordent après minuit restent dans « Aujourd'hui ».
+            const maintenant = horloge();
+            const aujourdhui = dates.journeeLocale(new Date(maintenant.getTime() - FIN_DE_JOURNEE_MIN * 60000));
+            // De 1 h 30 à midi, les matchs de la veille restent affichés, finis
+            // (comme l'accueil, qui montre les matchs d'hier le matin).
+            const h = dates.composantes(maintenant);
+            const minutes = h.hour * 60 + h.minute;
+            const hier = minutes >= FIN_DE_JOURNEE_MIN && h.hour < 12 ? dates.ajouterJours(aujourdhui, -1) : null;
             const nomEquipe = cle => nomAffiche(cle, ((poolData.teams || {})[cle] || {}).members);
             const index = recents.indexerJoueursDuPool(poolData, monEquipe);
 
@@ -88,7 +100,10 @@ function monter(app, ctx) {
                 prudemment(blessesLNH(), [], 'blessés'),
                 prudemment(journalLNH(), { transactions: [] }, 'mouvements LNH'),
                 prudemment(soireesEnDirect(), { joueurs: {}, clubs: {} }, 'points en direct'),
-                prudemment(matchsDuJour(aujourdhui), [], 'matchs du jour'),
+                Promise.all([
+                    prudemment(matchsDuJour(aujourdhui), [], 'matchs du jour'),
+                    hier ? prudemment(matchsDuJour(hier), [], 'matchs d’hier') : []
+                ]).then(([a, h]) => [...h, ...a]),
                 prudemment(activiteDuPool(enveloppe.id), null, 'activité du pool')
             ]);
 
@@ -118,7 +133,7 @@ function monter(app, ctx) {
                 poolName: nomPool,
                 monEquipe: monEquipe ? nomEquipe(monEquipe) : null,
                 aujourdhui,
-                matchs: recents.rapportsDeMatch(matchs, { mesJoueurs, mesClubs, soirees, aujourdhui, butDe, nomsClubs: NOMS_CLUBS }),
+                matchs: recents.rapportsDeMatch(matchs, { mesJoueurs, mesClubs, soirees, aujourdhui, jours: [aujourdhui, hier].filter(Boolean), butDe, nomsClubs: NOMS_CLUBS }),
                 blessures: recents.blessuresDuPool(blesses, index, { aujourdhui, nomEquipe }).map(b => avecPhoto({
                     ...b,
                     natureFr: injNatureFr({ injuryType: b.nature, injuryDetail: b.detail, injurySide: b.cote, status: b.statut }) || null
