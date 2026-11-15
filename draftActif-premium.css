@@ -2,11 +2,11 @@
 
 
 body.fz-draft {
-  /* Les deux familles de la maquette (Repechage.dc.html) : Barlow pour
-     le texte courant, Barlow Condensed pour les intertitres en petites
+  /* Les deux familles de la maquette (Repechage.dc.html) : 'Saira' pour
+     le texte courant, 'Saira Condensed' pour les intertitres en petites
      capitales espacees. Nommees ici une fois, jamais en dur ailleurs. */
-  --fzd-font: 'Barlow', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --fzd-font-cond: 'Barlow Condensed', 'Oswald', 'Helvetica Neue', Helvetica, sans-serif;
+  --fzd-font: 'Saira', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --fzd-font-cond: 'Saira Condensed', 'Helvetica Neue', Helvetica, sans-serif;
 
   /* Palette Apple : chaque rôle pointe sur le jeton général d'index.css,
      qui bascule déjà d'un thème à l'autre. Ne restent en dur que les rôles

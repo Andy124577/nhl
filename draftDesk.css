@@ -868,7 +868,7 @@
     --col-stat: 58px;
     --col-points: 64px;
     /* 122px de contenu + 20px de marge de page, plus les 4px que la
-       maquette n'avait pas comptes : « REPECHER » a 12px Barlow
+       maquette n'avait pas comptes : « REPECHER » a 12px 'Saira'
        Condensed avec .12em d'interlettrage fait 87px de bouton, pas
        84 — a 142px l'etoile mordait sur la colonne PTS. */
     --col-action: 146px;

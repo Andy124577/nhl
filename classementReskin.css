@@ -76,7 +76,7 @@ body.fz-classement .container {
     body.fz-classement { --st-gouttiere: 10px; }
 }
 
-body.fz-classement .breadcrumb { font-family: 'Saira', 'Barlow', system-ui, sans-serif; color: var(--s-faint); }
+body.fz-classement .breadcrumb { font-family: 'Saira', system-ui, sans-serif; color: var(--s-faint); }
 
 @keyframes stPouls { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 
@@ -97,7 +97,7 @@ body.fz-classement .st-tete .page-title {
     min-width: 0;
     margin: 0;
     text-align: left;
-    font: 800 32px/30px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    font: 800 32px/30px 'Saira Condensed', sans-serif;
     text-transform: uppercase;
     color: var(--s-ink);
 }
@@ -207,7 +207,7 @@ body.fz-classement .st-rang {
     justify-content: center;
     background: var(--s-chip2);
     color: var(--s-ink2);
-    font: 800 15px/1 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    font: 800 15px/1 'Saira Condensed', sans-serif;
 }
 /* Le podium : or, argent, bronze, chiffre sombre sur les trois. */
 body.fz-classement .st-rang.is-or { background: #E8B95A; color: #0B0B0C; }
@@ -310,7 +310,7 @@ body.fz-classement .st-total-v {
     display: flex;
     align-items: center;
     gap: 6px;
-    font: 800 30px/26px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    font: 800 30px/26px 'Saira Condensed', sans-serif;
     color: var(--s-ink);
 }
 body.fz-classement .st-ecart { font: 500 11px/1 'Saira', sans-serif; color: var(--s-soft); white-space: nowrap; }
@@ -376,7 +376,7 @@ body.fz-classement .hall-of-fame {
     margin-top: 28px;
     padding-top: 0;
     border-top: 0;
-    font-family: 'Saira', 'Barlow', system-ui, sans-serif;
+    font-family: 'Saira', system-ui, sans-serif;
     color: var(--s-ink);
 }
 body.fz-classement .hof-tete { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 0 6px; }
@@ -385,7 +385,7 @@ body.fz-classement .hof-title {
     flex: 1;
     min-width: 0;
     margin: 0;
-    font: 800 20px/22px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    font: 800 20px/22px 'Saira Condensed', sans-serif;
     letter-spacing: .8px;
     text-transform: uppercase;
     color: var(--s-ink);
@@ -470,7 +470,7 @@ body.fz-classement .hof-gros {
     display: flex;
     align-items: baseline;
     gap: 6px;
-    font: 800 72px/60px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    font: 800 72px/60px 'Saira Condensed', sans-serif;
     background: linear-gradient(170deg, #FBE3A6 0%, #E8B95A 40%, #B9822E 75%, #F0CB7A 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -546,7 +546,7 @@ body.fz-classement .hof-pire {
     border: 1px solid rgba(255, 255, 255, .06);
 }
 body.fz-classement .hof-pire-l { font: 600 10px/1 'Saira', sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: #8E8B88; }
-body.fz-classement .hof-pire-pts { display: flex; align-items: baseline; gap: 3px; font: 800 20px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; color: #C9C7C4; }
+body.fz-classement .hof-pire-pts { display: flex; align-items: baseline; gap: 3px; font: 800 20px/1 'Saira Condensed', sans-serif; color: #C9C7C4; }
 body.fz-classement .hof-pire-pts small { font: 600 10px/1 'Saira', sans-serif; text-transform: uppercase; color: #8E8B88; }
 body.fz-classement .hof-pire-equipe { flex: 1; gap: 6px; font: 500 13px/1.2 'Saira', sans-serif; color: #C9C7C4; text-align: left; }
 body.fz-classement .hof-pire-equipe .hof-toi { height: 16px; padding: 0 5px; border-radius: 4px; background: #2A2A2F; color: #C9C7C4; line-height: 16px; }
@@ -606,7 +606,7 @@ body.fz-classement .hof-point { width: 6px; height: 6px; border-radius: 50%; bac
 body.fz-classement .hof-grille { display: grid; grid-template-columns: 34px auto minmax(0, 1fr); align-items: center; gap: 4px 8px; }
 body.fz-classement .hof-k { font: 600 9px/1 'Saira', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--s-or-ink); }
 body.fz-classement .hof-k.is-pire { color: var(--s-soft); }
-body.fz-classement .hof-v { font: 800 18px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; color: var(--s-ink); }
+body.fz-classement .hof-v { font: 800 18px/1 'Saira Condensed', sans-serif; color: var(--s-ink); }
 body.fz-classement .hof-rangee.is-on .hof-v:not(.is-pire) { color: var(--s-or); }
 body.fz-classement .hof-v.is-pire { color: var(--s-soft); }
 body.fz-classement .hof-e {

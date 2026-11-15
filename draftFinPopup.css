@@ -70,7 +70,7 @@
   clip-path: polygon(50% 0, 100% 16%, 100% 62%, 50% 100%, 0 62%, 0 16%);
   display: grid;
   place-items: center;
-  font: 700 13px/1 Oswald, sans-serif;
+  font: 700 13px/1 'Saira Condensed', sans-serif;
   color: #D70015;              /* rouge texte sur l'écusson blanc : 5,38:1 */
 }
 .fz-end-titles { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -82,7 +82,7 @@
 }
 .fz-end-title {
   margin: 0;
-  font: 700 34px/1 Oswald, sans-serif;
+  font: 700 34px/1 'Saira Condensed', sans-serif;
   letter-spacing: -.01em;
   text-transform: uppercase;
   color: #fff;
@@ -174,7 +174,7 @@
   right: 7px;
   min-width: 20px;
   text-align: center;
-  font: 700 9.5px/1 Oswald, sans-serif;
+  font: 700 9.5px/1 'Saira Condensed', sans-serif;
   letter-spacing: .06em;
   /* Neutre : le rouge est l'aplat de l'action principale, et la position
      n'a pas de crochet (data-pos) pour prendre le jeu sémantique. */
@@ -221,7 +221,7 @@
   border-radius: 10px;
   padding: 15px 18px;
   border: 1px solid transparent;
-  font: 600 13px/1 Oswald, sans-serif;
+  font: 600 13px/1 'Saira Condensed', sans-serif;
   letter-spacing: .08em;
   text-transform: uppercase;
   cursor: pointer;

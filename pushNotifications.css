@@ -67,7 +67,7 @@
     row-gap: 6px;
     padding: 14px;
     color: var(--s-ink, var(--text-main));
-    font-family: 'Saira', 'Barlow', system-ui, sans-serif;
+    font-family: 'Saira', system-ui, sans-serif;
     transition: background-color .15s ease;
 }
 .fz-alertes:is(.is-inactif, .is-actif):hover { background: var(--s-me, var(--bg-hover)); }
@@ -86,8 +86,8 @@
 .fz-alertes.is-refuse > .fz-alertes-ico { color: var(--s-gold, var(--warning)); }
 
 .fz-alertes-txt { grid-column: 2; grid-row: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.fz-alertes-titre { font: 600 14px/1.15 'Saira', 'Barlow', sans-serif; }
-.fz-alertes-sub { font: 400 12px/16px 'Saira', 'Barlow', sans-serif; color: var(--s-faint, var(--text-secondary)); text-wrap: pretty; }
+.fz-alertes-titre { font: 600 14px/1.15 'Saira', sans-serif; }
+.fz-alertes-sub { font: 400 12px/16px 'Saira', sans-serif; color: var(--s-faint, var(--text-secondary)); text-wrap: pretty; }
 
 .fz-alertes-switch {
     grid-column: 3;
@@ -126,7 +126,7 @@
     border: 0;
     background: none;
     color: var(--s-red-ink, var(--primary-text));
-    font: 600 13px/1 'Saira', 'Barlow', sans-serif;
+    font: 600 13px/1 'Saira', sans-serif;
 }
 .fz-alertes > .fz-alertes-btn:hover:not(:disabled) { color: var(--s-ink, var(--text-main)); }
 
@@ -140,14 +140,14 @@
     border: 0;
     background: none;
     color: var(--s-red-ink, var(--primary-text));
-    font: 600 12px/1 'Saira', 'Barlow', sans-serif;
+    font: 600 12px/1 'Saira', sans-serif;
     cursor: pointer;
 }
 .fz-alertes-lien:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
 .fz-alertes-lien:focus-visible { outline: 2px solid var(--s-red, var(--primary)); outline-offset: 2px; border-radius: 4px; }
 .fz-alertes-lien:disabled { opacity: .6; cursor: default; }
 
-.fz-alertes > .fz-alertes-msg { grid-column: 2 / -1; font: 500 12px/16px 'Saira', 'Barlow', sans-serif; color: var(--s-mute, var(--text-secondary)); }
+.fz-alertes > .fz-alertes-msg { grid-column: 2 / -1; font: 500 12px/16px 'Saira', sans-serif; color: var(--s-mute, var(--text-secondary)); }
 .fz-alertes > .fz-alertes-msg.is-ok { color: var(--s-green, var(--success)); }
 .fz-alertes > .fz-alertes-msg.is-erreur { color: var(--s-red-ink, var(--primary-text)); }
 

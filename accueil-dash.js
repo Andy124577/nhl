@@ -2840,23 +2840,22 @@ function fzdRevelerAccueil(noter = true) {
  * Le navigateur ne télécharge une police qu'au premier texte affiché qui
  * s'en sert. Masqué pendant l'attente, l'accueil ne les demandait qu'en se
  * montrant : il s'affichait dans la police de repli, puis changeait de
- * police — et de hauteur — sous les yeux. Barlow Condensed et Oswald
- * portent les homes repêchage et saison ; Archivo, la home téléphone.
+ * police — et de hauteur — sous les yeux. Le site n'a plus que Saira et
+ * Saira Condensed (fonts/polices.css) : Saira est une police variable, un
+ * seul fichier pour toutes ses graisses ; Saira Condensed, un fichier par
+ * graisse.
  */
 const FZD_POLICES = [
-    "400 16px 'Barlow Condensed'", "600 16px 'Barlow Condensed'", "700 16px 'Barlow Condensed'",
-    "500 16px 'Oswald'", "400 16px 'Barlow'", "700 16px 'Barlow'",
-    // Accueil de saison (accueil-season.css).
-    "400 16px 'Saira'", "600 16px 'Saira'", "700 16px 'Saira'", "800 16px 'Saira Condensed'"
+    "400 16px 'Saira'",
+    "500 16px 'Saira Condensed'", "600 16px 'Saira Condensed'",
+    "700 16px 'Saira Condensed'", "800 16px 'Saira Condensed'"
 ];
 let fzdPolices = null;
 
 function fzdChargerPolices() {
     if (fzdPolices) return fzdPolices;
-    const liste = window.matchMedia('(max-width: 768px)').matches
-        ? [...FZD_POLICES, "700 16px 'Archivo'"] : FZD_POLICES;
     fzdPolices = document.fonts
-        ? Promise.all(liste.map(police => document.fonts.load(police).catch(() => null)))
+        ? Promise.all(FZD_POLICES.map(police => document.fonts.load(police).catch(() => null)))
         : Promise.resolve();
     return fzdPolices;
 }

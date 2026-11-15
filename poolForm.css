@@ -75,7 +75,7 @@ html[data-theme="light"] body.fz-pool-form {
     max-width: 680px;
     margin: 0 auto;
     padding: 0 0 24px;
-    font: 400 14px/1.35 'Saira', 'Barlow', system-ui, sans-serif;
+    font: 400 14px/1.35 'Saira', system-ui, sans-serif;
     color: var(--s-ink);
     -webkit-font-smoothing: antialiased;
 }
@@ -93,14 +93,14 @@ html[data-theme="light"] body.fz-pool-form {
 /* ---- En-tête de page ---- */
 .fzp-intro { display: flex; flex-direction: column; gap: 8px; padding: 20px 16px 0; }
 .fzp-kicker { font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: var(--s-faint); }
-.fzp-titre { font: 800 32px/32px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; color: var(--s-ink); }
+.fzp-titre { font: 800 32px/32px 'Saira Condensed', sans-serif; text-transform: uppercase; color: var(--s-ink); }
 .fzp-sub { font: 400 13px/18px 'Saira', sans-serif; color: var(--s-mute); text-wrap: pretty; }
 
 /* ---- Sections numérotées ---- */
 .fzp-sec { margin-top: 24px; }
 .fzp-sh {
     display: flex; align-items: center; gap: 10px; margin: 0 16px 10px;
-    font: 800 18px/20px 'Saira Condensed', 'Barlow Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase;
+    font: 800 18px/20px 'Saira Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase;
     color: var(--s-ink);
 }
 .fzp-sh > svg { color: var(--s-red); }
@@ -408,7 +408,7 @@ html[data-theme="light"] .fzp-instant .fzo-start-button[data-instant-action="all
 }
 .fz-pool-form #clan-members-modal .modal-header { background: none; border-bottom: 1px solid var(--s-line2); }
 .fz-pool-form #clan-members-modal .modal-content h2 {
-    font: 800 20px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase;
+    font: 800 20px/1 'Saira Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase;
     color: var(--s-ink); background: none; -webkit-text-fill-color: currentColor;
 }
 .fz-pool-form #clan-members-modal .modal-close { background: var(--s-chip); color: var(--s-ink2); }

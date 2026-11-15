@@ -15,7 +15,7 @@
     padding: 7px 12px;
     background: var(--fzd-bg-alt); color: var(--fzd-ink);
     border: 1px solid var(--fzd-border); border-radius: 999px;
-    font: 500 12px/1.2 'Barlow Condensed', sans-serif;
+    font: 500 12px/1.2 'Saira Condensed', sans-serif;
     letter-spacing: .04em;
     cursor: pointer;
 }
@@ -23,7 +23,7 @@
 .fzh-watch-filter select:hover { border-color: var(--border-gray); }
 .fzh-watch-count {
     flex: 0 0 auto; white-space: nowrap;
-    font: 500 11px/1 'Barlow Condensed', sans-serif;
+    font: 500 11px/1 'Saira Condensed', sans-serif;
     letter-spacing: .06em; text-transform: uppercase;
     color: var(--fzd-text-faint);
 }
@@ -97,7 +97,7 @@ a.fzh-ligue-card:focus-visible { outline: 2px solid var(--fzd-accent); outline-o
 .fzh-ligue-card.is-sale .fzd-off-stat-val { color: var(--fzd-accent); }
 .fzh-ligue-text {
     margin: 4px 0 0;
-    font: 500 13px/1.45 'Barlow', system-ui, sans-serif;
+    font: 500 13px/1.45 'Saira', system-ui, sans-serif;
     color: var(--fzd-ink);
     display: -webkit-box;
     -webkit-line-clamp: 4;
@@ -106,7 +106,7 @@ a.fzh-ligue-card:focus-visible { outline: 2px solid var(--fzd-accent); outline-o
 }
 .fzh-ligue-link {
     flex: 1 1 auto;
-    font: 600 12px/1.2 'Barlow Condensed', sans-serif;
+    font: 600 12px/1.2 'Saira Condensed', sans-serif;
     letter-spacing: .04em;
     color: var(--fzd-accent);
     text-decoration: none;

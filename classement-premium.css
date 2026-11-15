@@ -181,12 +181,12 @@ body.fz-classement #standingsTable td {
   color: var(--fzc-text-muted);
 }
 body.fz-classement #standingsTable td.points-column {
-  font: 700 15px/1 'Oswald', sans-serif;
+  font: 700 15px/1 'Saira Condensed', sans-serif;
   color: var(--fzc-ink);
 }
 
 body.fz-classement .st-rank-badge {
-  font: 700 14px/1 'Oswald', sans-serif;
+  font: 700 14px/1 'Saira Condensed', sans-serif;
 }
 /* Le podium : une médaille d'or, d'argent ou de bronze, dans la table H2H
    comme dans la liste cumulative. Texte sombre sur les trois (contraste ≥ 4,5
@@ -229,7 +229,7 @@ body.fz-classement .st-avatar {
 }
 body.fz-classement .st-avatar img { width: 18px; height: 18px; object-fit: contain; }
 body.fz-classement .st-avatar-fallback {
-  font: 600 9.5px/1 'Oswald', sans-serif;
+  font: 600 9.5px/1 'Saira Condensed', sans-serif;
   color: var(--fzc-text-muted);
 }
 body.fz-classement .st-name {
@@ -579,7 +579,7 @@ body.fz-classement .h2h-strip-label {
   color: var(--fzc-text-faint);
 }
 body.fz-classement .h2h-strip-value {
-  font: 700 17px/1.15 'Oswald', sans-serif;
+  font: 700 17px/1.15 'Saira Condensed', sans-serif;
   color: var(--fzc-ink);
 }
 body.fz-classement .h2h-strip-sub {
@@ -796,7 +796,7 @@ body.fz-classement .h2h-res-side {
   min-width: 0;
 }
 body.fz-classement .h2h-res-pts {
-  font: 700 14px/1 'Oswald', sans-serif;
+  font: 700 14px/1 'Saira Condensed', sans-serif;
   color: var(--fzc-text-muted);
 }
 body.fz-classement .h2h-res-pts.is-top { color: var(--fzc-good); }
@@ -819,7 +819,7 @@ body.fz-classement .h2h-res-badge {
   display: grid;
   place-items: center;
   border-radius: 7px;
-  font: 700 12px/1 'Oswald', sans-serif;
+  font: 700 12px/1 'Saira Condensed', sans-serif;
 }
 body.fz-classement .h2h-res-badge.is-win { background: var(--fzc-good-bg); color: var(--fzc-good); }
 body.fz-classement .h2h-res-badge.is-loss { background: var(--fzc-bad-bg); color: var(--fzc-bad); }
@@ -894,10 +894,11 @@ body.fz-classement .st-summary {
 }
 body.fz-classement .st-summary-rank {
   flex: none;
-  font-family: 'Bebas Neue', system-ui, sans-serif;
+  font-family: 'Saira Condensed', system-ui, sans-serif;
   font-size: 2.4rem;
   line-height: 1;
   color: var(--fzc-ink);
+  font-weight: 700;
 }
 body.fz-classement .st-summary-rank small { font-size: 1.1rem; color: var(--fzc-text-faint); }
 body.fz-classement .st-summary-rank sup { font-size: .55em; }
@@ -948,7 +949,7 @@ body.fz-classement .bench-panel {
 }
 body.fz-classement .bench-title {
   margin: 0 0 4px;
-  font: 700 15px/1.2 'Oswald', 'Helvetica Neue', sans-serif;
+  font: 700 15px/1.2 'Saira Condensed', 'Helvetica Neue', sans-serif;
   text-transform: uppercase;
   letter-spacing: .04em;
   color: var(--fzc-ink);
@@ -1024,7 +1025,7 @@ body.fz-classement .st-live-pts {
   border-radius: 100px;
   background: var(--fzc-good-bg);
   color: var(--fzc-good);
-  font: 700 11px/1.2 'Oswald', sans-serif;
+  font: 700 11px/1.2 'Saira Condensed', sans-serif;
   letter-spacing: .02em;
   vertical-align: 2px;
   white-space: nowrap;

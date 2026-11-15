@@ -257,6 +257,11 @@ app.use((req, res, next) => {
     } else if (reqPath.match(/\.(woff|woff2|ttf|eot|otf)$/)) {
         // Cache fonts for 1 year
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    } else if (/^\/paquet-[0-9a-f]{12}\.(js|css)$/.test(reqPath)
+        || reqPath.startsWith('/fonts/') || reqPath.startsWith('/vendor/')) {
+        // Paquets nommés par leur contenu, polices et bibliothèques dont la
+        // version est dans le nom : un nouveau contenu porte un nouveau nom.
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     } else if (reqPath.match(/\.(js|css)$/)) {
         // Cache JS/CSS for 1 week but allow revalidation
         res.setHeader("Cache-Control", "public, max-age=604800, must-revalidate");
@@ -334,6 +339,20 @@ app.post(securite.CHEMIN_RAPPORT,
     });
 
 app.use(creerGardeStatique());
+
+// Paquets de déploiement (tools/construire.js, lancé après `npm install`) :
+// les pages de dist/ chargent quelques fichiers minifiés au lieu de dizaines
+// de sources. Servis en production seulement, pour qu'un dist/ oublié en
+// développement ne masque jamais une source modifiée. FZ_PAQUETS=1 les active
+// hors production (pour les essayer), FZ_PAQUETS=0 les coupe en production.
+const DOSSIER_PAQUETS = path.join(__dirname, 'dist');
+const PAQUETS = (process.env.FZ_PAQUETS ? process.env.FZ_PAQUETS === '1' : EN_PRODUCTION)
+    && fs.existsSync(path.join(DOSSIER_PAQUETS, 'index.html'));
+if (PAQUETS) {
+    console.log('📦 Pages servies depuis dist/ (paquets minifiés)');
+    app.use(express.static(DOSSIER_PAQUETS, { maxAge: 0, etag: true, lastModified: true, dotfiles: 'deny', index: false }));
+}
+
 app.use(express.static(__dirname, {
     maxAge: 0, // le middleware de cache plus haut décide
     etag: true,
@@ -380,7 +399,7 @@ const moderationImages = creerModerateur({ logger: console });
 
 // ✅ Optional: Force / to serve index.html
 app.get('/', async (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(PAQUETS ? DOSSIER_PAQUETS : __dirname, 'index.html'));
 });
 
 console.log(`🗄️  Database mode: ${USE_POSTGRES ? 'PostgreSQL' : 'JSON Files'}`);

@@ -226,13 +226,14 @@ body.fz-pool-page { background: var(--bg); }
 
 .pp-title {
     margin: 0;
-    font-family: 'Bebas Neue', system-ui, sans-serif;
-    font-weight: 400;
+    font-family: 'Saira Condensed', system-ui, sans-serif;
+    font-weight: 700;
     font-size: clamp(2rem, 5vw, 3rem);
     letter-spacing: .02em;
     line-height: 1;
     color: var(--text-main);
     overflow-wrap: anywhere;
+    text-transform: uppercase;
 }
 
 .pp-sub {

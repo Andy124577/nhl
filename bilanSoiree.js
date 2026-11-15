@@ -31,7 +31,7 @@
  *
  * Chargé en <script defer> après activePool.js. Aucune dépendance de page :
  * photos, écussons et couleurs de club arrivent prêts du serveur ; les
- * polices (Barlow), la fenêtre les charge elle-même. */
+ * polices (Saira), la fenêtre les charge elle-même. */
 (function () {
     'use strict';
     if (window.FZBilanSoiree) return;
@@ -54,8 +54,8 @@
     const CARTES_LONGUES = 6;
     /** Photos et polices : au-delà, la fenêtre s'ouvre quand même. */
     const DELAI_CHARGEMENT_MAX_MS = 6000;
-    const POLICES_URL = 'https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap';
-    const POLICES = ['400 13px Barlow', '500 13px Barlow', '600 15px Barlow', '600 16px "Barlow Condensed"', '700 30px "Barlow Condensed"'];
+    const POLICES_URL = 'fonts/polices.css?v=20261115a';
+    const POLICES = ['400 13px Saira', '600 15px Saira', '600 16px "Saira Condensed"', '700 30px "Saira Condensed"'];
 
     const reduit = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const telephone = () => window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
@@ -147,16 +147,17 @@
 
     let policesPretes = null;
 
-    /** Barlow, que toutes les pages ne chargent pas : la feuille, puis les fontes. */
+    /** Saira, servie par le site : la feuille si la page ne l'a pas déjà, puis les fontes. */
     function polices() {
         if (!policesPretes) {
-            policesPretes = new Promise(fini => {
+            const dejaLa = document.querySelector('link[href*="fonts/polices.css"]');
+            policesPretes = (dejaLa ? Promise.resolve() : new Promise(fini => {
                 const lien = document.createElement('link');
                 lien.rel = 'stylesheet';
                 lien.href = POLICES_URL;
                 lien.onload = lien.onerror = () => fini();
                 document.head.appendChild(lien);
-            }).then(() => (document.fonts && document.fonts.load
+            })).then(() => (document.fonts && document.fonts.load
                 ? Promise.all(POLICES.map(f => document.fonts.load(f).catch(() => null)))
                 : null));
         }

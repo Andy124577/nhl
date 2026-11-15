@@ -165,12 +165,13 @@
     margin-bottom: 36px;
 }
 .pool-section-title {
-    font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+    font-family: 'Saira Condensed', 'Segoe UI', sans-serif;
     font-size: 2rem;
-    font-weight: 400; /* Bebas Neue is naturally bold */
+    font-weight: 700;
     letter-spacing: 2px;
     color: var(--text-main);
     margin-bottom: 8px;
+    text-transform: uppercase;
 }
 .pool-section-desc {
     color: var(--text-secondary);
@@ -362,12 +363,13 @@
     margin-bottom: 24px;
 }
 .form-card-title {
-    font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+    font-family: 'Saira Condensed', 'Segoe UI', sans-serif;
     font-size: 1.55rem;
-    font-weight: 400;
+    font-weight: 700;
     letter-spacing: 1.5px;
     color: var(--text-main);
     margin-bottom: 6px;
+    text-transform: uppercase;
 }
 .form-card-desc {
     color: var(--text-secondary);
@@ -720,13 +722,14 @@ html[data-theme="light"] .draft-ready-badge { background: color-mix(in srgb, var
     position: relative;
 }
 .modal-content h2 {
-    font-family: 'Bebas Neue', 'Segoe UI', sans-serif;
+    font-family: 'Saira Condensed', 'Segoe UI', sans-serif;
     font-size: 1.6rem;
     color: var(--on-primary);
     margin: 0;
-    font-weight: 400;
+    font-weight: 700;
     letter-spacing: 1px;
     padding-right: 40px;
+    text-transform: uppercase;
 }
 
 .modal-close {

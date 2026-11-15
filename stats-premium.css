@@ -146,7 +146,7 @@ body.fz-stats .leader-featured-photo { border-color: var(--fzs-accent-fill); }
 body.fz-stats .leader-featured-name { color: var(--fzs-ink); }
 body.fz-stats .leader-featured-meta { color: var(--fzs-text-faint); }
 body.fz-stats .leader-featured-val {
-  font-family: 'Oswald', sans-serif;
+  font-family: 'Saira Condensed', sans-serif;
   color: var(--fzs-accent);
 }
 body.fz-stats .leader-featured-lbl { color: var(--fzs-text-faint); }
@@ -157,7 +157,7 @@ body.fz-stats .leader-row-rank { color: var(--fzs-text-faint); }
 body.fz-stats .leader-row-name { color: var(--fzs-ink); }
 body.fz-stats .leader-row-team { color: var(--fzs-text-faint); }
 body.fz-stats .leader-row-val {
-  font-family: 'Oswald', sans-serif;
+  font-family: 'Saira Condensed', sans-serif;
   color: var(--fzs-ink);
 }
 
@@ -212,7 +212,7 @@ body.fz-stats .player-card-name { color: var(--fzs-ink); }
 body.fz-stats .player-card-team { color: var(--fzs-accent); }
 body.fz-stats .pc-stat { background: var(--fzs-bg-alt); }
 body.fz-stats .pc-stat-val {
-  font-family: 'Oswald', sans-serif;
+  font-family: 'Saira Condensed', sans-serif;
   color: var(--fzs-ink);
 }
 body.fz-stats .pc-stat-val.pts { color: var(--fzs-accent); }
@@ -448,7 +448,7 @@ body.fz-stats #playerTable tbody tr.is-clickable:focus-visible { outline-color: 
 body.fz-stats td { color: var(--fzs-text-muted); }
 body.fz-stats td.rank-col {
   color: var(--fzs-text-faint);
-  font-family: 'Oswald', sans-serif;
+  font-family: 'Saira Condensed', sans-serif;
 }
 body.fz-stats tbody tr:nth-child(1) td.rank-col,
 body.fz-stats tbody tr:nth-child(2) td.rank-col,
@@ -456,7 +456,7 @@ body.fz-stats tbody tr:nth-child(3) td.rank-col { color: var(--fzs-accent); } /*
 
 body.fz-stats td.points-column {
   background: transparent;
-  font-family: 'Oswald', sans-serif;
+  font-family: 'Saira Condensed', sans-serif;
   color: var(--fzs-ink);
 }
 body.fz-stats td.player-col { color: var(--fzs-ink); }
@@ -469,9 +469,9 @@ body.fz-stats tbody tr:hover .player-photo img.face {
 body.fz-stats .player-photo img.logo { border-color: var(--fzs-border-input); }
 
 /* ==================== TOUS LES JOUEURS — chiffres et identité ==================== */
-/* Les chiffres passent en Barlow Condensed, déjà chargée pour la fiche du
+/* Les chiffres passent en 'Saira Condensed', déjà chargée pour la fiche du
    joueur — la même famille que le tableau de la salle de repêchage — et en
-   chiffres tabulaires pour s'aligner d'une rangée à l'autre. 'Oswald',
+   chiffres tabulaires pour s'aligner d'une rangée à l'autre. 'Saira Condensed',
    demandée plus haut, n'est pas chargée sur cette page : le rang et les
    points retombaient sur la police système. */
 /* Mêmes mesures que la liste du classement cumulatif (.roster-row,
@@ -559,7 +559,7 @@ body.fz-stats .pos-tag {
   border-radius: 4px;
   background: var(--pos-bg, var(--fzs-tile));
   color: var(--pos-fg, var(--fzs-text));
-  font: 700 10px/1.3 'Barlow Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font: 700 10px/1.3 'Saira Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: .08em;
   text-decoration: none;
   cursor: inherit;

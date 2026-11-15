@@ -47,8 +47,8 @@ html body.fz-draft {
     --s-pos-eq: 110, 220, 215;
     --s-pos-rec: 201, 199, 196;
 
-    --fzd-font: 'Saira', 'Barlow', system-ui, sans-serif;
-    --fzd-font-cond: 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    --fzd-font: 'Saira', system-ui, sans-serif;
+    --fzd-font-cond: 'Saira Condensed', sans-serif;
     --fzd-bg: var(--s-bg);
     --fzd-bg-alt: var(--s-card);
     --fzd-bg-page: var(--s-bg);

@@ -19,7 +19,7 @@ const entete = (liste, nom) => (liste.find(([n]) => n === nom) || [])[1];
 test('la politique ferme les scripts étrangers, les connexions sortantes et l encadrement', () => {
     const csp = securite.politiqueDeContenu();
     assert.match(csp, /default-src 'self'/);
-    assert.match(csp, /script-src 'self' 'unsafe-inline' https:\/\/code\.jquery\.com https:\/\/cdn\.socket\.io https:\/\/cdn\.jsdelivr\.net;/);
+    assert.match(csp, /script-src 'self' 'unsafe-inline';/);
     assert.match(csp, /connect-src 'self';/);
     assert.match(csp, /object-src 'none'/);
     assert.match(csp, /frame-ancestors 'self'/);

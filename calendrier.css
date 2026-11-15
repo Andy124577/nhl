@@ -47,7 +47,7 @@ body.fz-cal-page { background: var(--cal-bg); }
     margin: 0 auto;
     padding: 20px 16px 48px;
     color: var(--cal-ink);
-    font-family: Geist, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: 'Saira', system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
 }
