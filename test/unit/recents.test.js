@@ -9,6 +9,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const R = require('../../lib/recents.js');
+const dates = require('../../lib/dates.js');
 
 const POOL = {
     teams: {
@@ -154,6 +155,17 @@ describe('recents — rapports de match', () => {
         assert.equal(R.etatDuMatch(null), 'FUT');
     });
 
+    test('passé minuit : les matchs d’hier restent, celui en cours compte pour aujourd’hui', () => {
+        const liste = R.rapportsDeMatch([
+            match(1, 'TOR', 'MTL', 'LIVE', { gameDate: '2026-11-14' }),
+            match(2, 'EDM', 'CGY', 'OFF', { gameDate: '2026-11-14' }),
+            match(3, 'VAN', 'SEA', 'OFF', { gameDate: '2026-11-13' })
+        ], { aujourdhui: '2026-11-15', jours: ['2026-11-15', '2026-11-14'] });
+        assert.deepEqual(liste.map(m => [m.id, m.jour]).sort(), [[1, '2026-11-15'], [2, '2026-11-14']]);
+        // Sans liste de jours, seul aujourd’hui compte.
+        assert.deepEqual(R.rapportsDeMatch([match(1, 'TOR', 'MTL', 'LIVE', { gameDate: '2026-11-14' })], { aujourdhui: '2026-11-15' }), []);
+    });
+
     test('ville et surnom', () => {
         assert.deepEqual(R.villeEtSurnom('Vegas Golden Knights'), { ville: 'Vegas', surnom: 'Golden Knights' });
         assert.deepEqual(R.villeEtSurnom('Utah Mammoth', 'Mammoth'), { ville: 'Utah', surnom: 'Mammoth' });
@@ -273,7 +285,7 @@ describe('recents — la route', () => {
             blessesLNH: async () => { if (echec === 'blesses') throw new Error('ESPN'); return [{ playerName: 'Lane Hutson', team: 'MTL', status: 'Out', since: new Date().toISOString() }]; },
             journalLNH: async () => ({ transactions: [] }),
             soireesEnDirect: async () => ({ joueurs: { 1: { etat: 'LIVE', ppa: 2 } }, clubs: {} }),
-            matchsDuJour: async () => [{ id: 5, gameState: 'LIVE', awayTeam: { abbrev: 'TOR', score: 1 }, homeTeam: { abbrev: 'MTL', score: 2 } }],
+            matchsDuJour: async jour => (jour !== dates.journeeLocale() ? [] : [{ id: 5, gameState: 'LIVE', awayTeam: { abbrev: 'TOR', score: 1 }, homeTeam: { abbrev: 'MTL', score: 2 } }]),
             butDe: id => (id === 5 ? '2026-11-15T01:00:00.000Z' : null),
             ficheReleve: nom => (nom === 'Cole Caufield' ? { playerId: 1, teamAbbrev: 'MTL' } : null),
             logger: { error() {}, warn() {} }

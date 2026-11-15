@@ -81,6 +81,9 @@ function monter(app, ctx) {
 
             const monEquipe = authz.equipeDe(poolData, req.auth.username);
             const aujourdhui = dates.journeeLocale();
+            // Avant midi, les matchs d'hier comptent encore : ceux qui
+            // finissent après minuit et le bilan de la veille (comme l'accueil).
+            const hier = dates.composantes(new Date()).hour < 12 ? dates.ajouterJours(aujourdhui, -1) : null;
             const nomEquipe = cle => nomAffiche(cle, ((poolData.teams || {})[cle] || {}).members);
             const index = recents.indexerJoueursDuPool(poolData, monEquipe);
 
@@ -88,7 +91,10 @@ function monter(app, ctx) {
                 prudemment(blessesLNH(), [], 'blessés'),
                 prudemment(journalLNH(), { transactions: [] }, 'mouvements LNH'),
                 prudemment(soireesEnDirect(), { joueurs: {}, clubs: {} }, 'points en direct'),
-                prudemment(matchsDuJour(aujourdhui), [], 'matchs du jour'),
+                Promise.all([
+                    prudemment(matchsDuJour(aujourdhui), [], 'matchs du jour'),
+                    hier ? prudemment(matchsDuJour(hier), [], 'matchs d’hier') : []
+                ]).then(([a, h]) => [...h, ...a]),
                 prudemment(activiteDuPool(enveloppe.id), null, 'activité du pool')
             ]);
 
@@ -118,7 +124,7 @@ function monter(app, ctx) {
                 poolName: nomPool,
                 monEquipe: monEquipe ? nomEquipe(monEquipe) : null,
                 aujourdhui,
-                matchs: recents.rapportsDeMatch(matchs, { mesJoueurs, mesClubs, soirees, aujourdhui, butDe, nomsClubs: NOMS_CLUBS }),
+                matchs: recents.rapportsDeMatch(matchs, { mesJoueurs, mesClubs, soirees, aujourdhui, jours: [aujourdhui, hier].filter(Boolean), butDe, nomsClubs: NOMS_CLUBS }),
                 blessures: recents.blessuresDuPool(blesses, index, { aujourdhui, nomEquipe }).map(b => avecPhoto({
                     ...b,
                     natureFr: injNatureFr({ injuryType: b.nature, injuryDetail: b.detail, injurySide: b.cote, status: b.statut }) || null
