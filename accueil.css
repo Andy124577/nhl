@@ -503,7 +503,7 @@ html.fz-home-pending #fzDashSection { display: block; min-height: 100vh; padding
        la liste des buts dépasserait la carte entre 769 et 1263 px. */
     --su: min(1px, (100vw - 66px) / 1200);
     padding: calc(var(--su) * 17) 0 calc(var(--su) * 18);
-    font-family: 'Barlow', 'Segoe UI', Tahoma, sans-serif;
+    font-family: 'Saira', 'Segoe UI', Tahoma, sans-serif;
 }
 
 /* ---- Bandeau supérieur : la pastille « en direct » et la ligue ---- */
@@ -520,7 +520,7 @@ html.fz-home-pending #fzDashSection { display: block; min-height: 100vh; padding
     background: rgba(var(--primary-rgb),.16);
     box-shadow: 0 0 calc(var(--su) * 18) rgba(var(--primary-rgb),.22);
     color: #fff;
-    font-family: 'Barlow Condensed', 'Barlow', 'Segoe UI', sans-serif;
+    font-family: 'Saira Condensed', 'Saira', 'Segoe UI', sans-serif;
     font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
     letter-spacing: .07em; text-transform: uppercase;
 }
@@ -548,7 +548,7 @@ html.fz-home-pending #fzDashSection { display: block; min-height: 100vh; padding
     border: 1px solid rgba(255,255,255,.13);
     border-radius: 100px;
     color: #A1A1A6;
-    font-family: 'Barlow Condensed', 'Barlow', 'Segoe UI', sans-serif;
+    font-family: 'Saira Condensed', 'Saira', 'Segoe UI', sans-serif;
     font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
     letter-spacing: .09em;
 }
@@ -638,7 +638,7 @@ html.fz-home-pending #fzDashSection { display: block; min-height: 100vh; padding
 .sl-name {
     margin-top: calc(var(--su) * 5);
     color: #fff;
-    font-family: 'Barlow Condensed', 'Barlow', 'Segoe UI', sans-serif;
+    font-family: 'Saira Condensed', 'Saira', 'Segoe UI', sans-serif;
     font-size: calc(var(--su) * 29); font-weight: 700; line-height: 1;
     letter-spacing: .045em; text-transform: uppercase; white-space: nowrap;
 }
@@ -1146,7 +1146,7 @@ html[data-theme="light"] .btn-hero-secondary:hover {
     border: 1px solid rgba(255,255,255,.13);
     border-radius: 100px;
     color: #F5F5F7;
-    font-family: 'Barlow Condensed', 'Barlow', 'Segoe UI', sans-serif;
+    font-family: 'Saira Condensed', 'Saira', 'Segoe UI', sans-serif;
     font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
     letter-spacing: .07em; text-transform: uppercase; white-space: nowrap;
     transition: background .15s, border-color .15s;

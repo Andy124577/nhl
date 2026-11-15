@@ -9,18 +9,14 @@
   <title>Repêchage en cours – Fantazy</title>
   
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://code.jquery.com">
-  <link rel="preconnect" href="https://cdn.socket.io">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <script src="theme.js"></script>
   
 
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="fonts/saira-100-900-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts/polices.css?v=20261115a">
   
 
-  <link rel="stylesheet" href="index.css?v=20261031a" />
+  <link rel="stylesheet" href="index.css?v=20261115b" />
   <link rel="stylesheet" href="navbar.css?v=20261031a">
   <link rel="stylesheet" href="fzDialog.css?v=20260926b">
   <!-- Fenêtres de dialogue (fzAlert, fzConfirm) : avant tout script de page. -->
@@ -28,21 +24,21 @@
   <link rel="stylesheet" href="teamLogos.css?v=20260926">
   
 
-  <link rel="stylesheet" href="poolNav.css?v=20261107a">
+  <link rel="stylesheet" href="poolNav.css?v=20261115b">
   <link rel="stylesheet" href="poolSettings.css?v=20260926b">
   <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
   <link rel="stylesheet" href="draftActif.css?v=20260928b" />
-  <link rel="stylesheet" href="draftActif-premium.css?v=20261031a" />
+  <link rel="stylesheet" href="draftActif-premium.css?v=20261115b" />
   <!-- Après les deux précédents : la mise en page bureau (trois colonnes,
        portraits agrandis, filtres de joueurs) reprend leurs règles. -->
-  <link rel="stylesheet" href="draftDesk.css?v=20261029m" />
+  <link rel="stylesheet" href="draftDesk.css?v=20261115b" />
   <!-- Et son pendant pour l'autre côté du seuil : sous 1100px, la page
        prend le plan de la maquette téléphone. -->
   <link rel="stylesheet" href="draftPhone.css?v=20261002a" />
   <link rel="stylesheet" href="injuries.css?v=20260926b" />
-  <link rel="stylesheet" href="draftFinPopup.css?v=20260926b" />
+  <link rel="stylesheet" href="draftFinPopup.css?v=20261115b" />
   <link rel="stylesheet" href="draftRoom-extra.css?v=20260926b" />
-  <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script defer src="vendor/jquery-3.6.0.min.js"></script>
   <script src="icons.js" defer></script>
 
   
@@ -88,15 +84,13 @@
 
     <script defer src="activePool.js?v=20261114a"></script>
     <script defer src="fzReactif.js?v=20261114a"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="career-modal.css?v=20261030a">
+    <link rel="stylesheet" href="career-modal.css?v=20261115b">
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
     <link rel="stylesheet" href="fzReactif.css?v=20261114a">
     <link rel="stylesheet" href="draft-watch.css?v=20260926b">
     <!-- Habillage « 6b Éditorial » (maquette Repêchage) : en dernier, il
          reprend l'apparence de toutes les feuilles ci-dessus. -->
-    <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Saira+Condensed:wght@700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="draftReskin.css?v=20261031a">
+    <link rel="stylesheet" href="draftReskin.css?v=20261115b">
 </head>
 <body class="fz-draft">
   <nav class="navbar">
@@ -512,8 +506,8 @@
   <button id="finishButton" class="finish-btn" style="display: none;" onclick="window.location.href='classement.html'">Terminer le draft</button>
 
   
-  <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script defer src="/socket.io/socket.io.min.js"></script>
+  <script defer src="vendor/canvas-confetti-1.6.0.js"></script>
   <script defer src="avatars.js?v=20261026a"></script>
   <script src="lib/season.js"></script>
   <script src="headshots.js"></script>

@@ -27,7 +27,7 @@ html.fz-home-pending .fz-home-sk { display: block; }
 }
 
 /* ---- Lignes communes ---- */
-.ask h2 { margin: 0; font: 500 15px/1.25 'Oswald', sans-serif; letter-spacing: .45px; text-transform: uppercase; }
+.ask h2 { margin: 0; font: 500 15px/1.25 'Saira Condensed', sans-serif; letter-spacing: .45px; text-transform: uppercase; }
 .ask-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--fzh-border); }
 .ask-row:last-child { border-bottom: 0; }
 .ask-row-av { flex: none; width: 40px; height: 40px; }
@@ -49,7 +49,7 @@ html.fz-home-pending .fz-home-sk { display: block; }
 .ask-s-big { width: 60%; height: 34px; border-radius: 6px; }
 .ask-s-sec { padding: 0; border-radius: 18px; }
 .ask-s-head { display: flex; align-items: center; gap: 10px; padding: 18px 16px 8px; }
-.ask-s-head h2 { font: 800 18px/20px 'Saira Condensed', 'Barlow Condensed', sans-serif; letter-spacing: .8px; }
+.ask-s-head h2 { font: 800 18px/20px 'Saira Condensed', sans-serif; letter-spacing: .8px; }
 .ask-s-ico { flex: none; width: 22px; height: 22px; border-radius: 6px; }
 .ask-s .ask-row { padding: 10px 16px; border-color: var(--fzh-border); }
 .ask-s .ask-row-av { width: 38px; height: 38px; }

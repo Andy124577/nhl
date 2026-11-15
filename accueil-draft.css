@@ -68,7 +68,7 @@ html[data-theme="light"] .fzh-hero.is-pre { box-shadow: 0 10px 28px rgba(20, 20,
 .fzh-puce.is-admin { gap: 4px; background: rgba(214, 160, 92, .16); color: #E8B877; }
 .fzh-puce.is-admin .fzs-ico { color: inherit; }
 .fzh-point { width: 6px; height: 6px; border-radius: 50%; background: #C9C7C4; }
-.fzh .fzh-hero h1 { margin: 0; font: 800 30px/30px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; text-wrap: balance; overflow-wrap: anywhere; }
+.fzh .fzh-hero h1 { margin: 0; font: 800 30px/30px 'Saira Condensed', sans-serif; text-transform: uppercase; text-wrap: balance; overflow-wrap: anywhere; }
 .fzh-hero-copie p { margin: 0; font: 500 13px/1.35 'Saira', sans-serif; color: #C9C7C4; }
 .fzh-hero.is-pre .fzh-hero-copie p { color: #A8A6A3; }
 

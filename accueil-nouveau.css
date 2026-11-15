@@ -18,7 +18,7 @@
 
 #fzDashOnboard {
     gap: 0; max-width: none; margin: 0; padding: 0 0 8px;
-    color: var(--s-ink); font: 400 14px/1.35 'Saira', 'Barlow', system-ui, sans-serif;
+    color: var(--s-ink); font: 400 14px/1.35 'Saira', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
 }
 #fzDashOnboard :is(h2, h3, p) { margin: 0; }
@@ -28,7 +28,7 @@
 /* ---- Mot d'accueil ---- */
 #fzDashOnboard .fzn-intro { display: flex; flex-direction: column; gap: 10px; padding: 24px 20px 4px; }
 #fzDashOnboard .fzn-welcome { font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: var(--s-faint); }
-#fzDashOnboard .fzn-titre { font: 800 34px/34px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; text-wrap: balance; color: var(--s-ink); }
+#fzDashOnboard .fzn-titre { font: 800 34px/34px 'Saira Condensed', sans-serif; text-transform: uppercase; text-wrap: balance; color: var(--s-ink); }
 #fzDashOnboard .fzn-sub { font: 400 14px/20px 'Saira', sans-serif; color: var(--s-mute); text-wrap: pretty; }
 
 /* ---- Rejoindre, créer : deux grandes cartes, une couleur chacune ---- */
@@ -70,7 +70,7 @@ html[data-theme="light"] #fzDashOnboard .fzn-chemin { box-shadow: 0 10px 28px rg
     background: var(--c-puce); color: var(--c-puce-ink);
     font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1.2px; text-transform: uppercase;
 }
-#fzDashOnboard .fzn-chemin h3 { font: 800 28px/28px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; color: #F3F1EE; }
+#fzDashOnboard .fzn-chemin h3 { font: 800 28px/28px 'Saira Condensed', sans-serif; text-transform: uppercase; color: #F3F1EE; }
 #fzDashOnboard .fzn-chemin-copie p { font: 400 13px/18px 'Saira', sans-serif; color: #C9C7C4; text-wrap: pretty; }
 #fzDashOnboard a.fzn-chemin-cta {
     display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -125,7 +125,7 @@ html[data-theme="light"] #fzDashOnboard .fzn-instant .fzo-start-button[data-inst
 #fzDashOnboard .fzn-tete { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 0 16px; }
 #fzDashOnboard .fzn-tete > span:first-child { display: flex; flex-direction: column; gap: 6px; }
 #fzDashOnboard .fzn-tete small { font: 600 11px/1 'Saira', sans-serif; letter-spacing: 1.4px; text-transform: uppercase; color: var(--s-faint); }
-#fzDashOnboard .fzn-tete h3 { font: 800 24px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; color: var(--s-ink); }
+#fzDashOnboard .fzn-tete h3 { font: 800 24px/1 'Saira Condensed', sans-serif; text-transform: uppercase; color: var(--s-ink); }
 #fzDashOnboard .fzn-points { display: flex; gap: 5px; padding-bottom: 4px; }
 #fzDashOnboard .fzn-points i { width: 6px; height: 6px; border-radius: 3px; background: #3A3A40; transition: width .25s, background-color .25s; }
 html[data-theme="light"] #fzDashOnboard .fzn-points i { background: var(--s-line); }
@@ -137,7 +137,7 @@ html[data-theme="light"] #fzDashOnboard .fzn-points i { background: var(--s-line
 #fzDashOnboard .fzn-etapes::-webkit-scrollbar { display: none; }
 #fzDashOnboard .fzn-etape { flex: none; width: 286px; scroll-snap-align: start; border-radius: 20px; background: var(--s-card); border: 1px solid var(--s-line2); overflow: hidden; }
 #fzDashOnboard .fzn-etape > p { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; border-top: 1px solid var(--s-line2); }
-#fzDashOnboard .fzn-etape strong { font: 800 20px/1 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; color: var(--s-ink); }
+#fzDashOnboard .fzn-etape strong { font: 800 20px/1 'Saira Condensed', sans-serif; text-transform: uppercase; color: var(--s-ink); }
 #fzDashOnboard .fzn-etape small { font: 400 13px/18px 'Saira', sans-serif; color: var(--s-faint); text-wrap: pretty; }
 
 #fzDashOnboard .fzn-art {
@@ -229,10 +229,10 @@ body.fz-onboard-page:has(.is-pool-erreur) #storiesSection { display: none !impor
 #fzDashErreur {
     display: flex; flex-direction: column; align-items: center; gap: 10px;
     max-width: 420px; margin: 0 auto; padding: 72px 20px 96px; text-align: center;
-    color: var(--s-ink); font: 400 14px/20px 'Saira', 'Barlow', system-ui, sans-serif;
+    color: var(--s-ink); font: 400 14px/20px 'Saira', system-ui, sans-serif;
 }
 #fzDashErreur[hidden] { display: none; }
-#fzDashErreur h2 { margin: 0; font: 800 26px/28px 'Saira Condensed', 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+#fzDashErreur h2 { margin: 0; font: 800 26px/28px 'Saira Condensed', sans-serif; text-transform: uppercase; }
 #fzDashErreur p { margin: 0; color: var(--s-mute); text-wrap: pretty; }
 #fzDashErreur button {
     margin-top: 8px; min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px;

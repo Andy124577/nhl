@@ -82,7 +82,7 @@ a.mt-duel:focus-visible,
         linear-gradient(104deg, var(--away-surface) 0 calc(50% - 1px), #000000 calc(50% - 1px) calc(50% + 1px), var(--home-surface) calc(50% + 1px));
     box-shadow: 0 12px 30px #0003;
     color: #f5f5f7;
-    font-family: 'Barlow', 'Segoe UI', sans-serif;
+    font-family: 'Saira', 'Segoe UI', sans-serif;
 }
 /* Le filet du haut et le liseré du bas, chacun aux couleurs de sa moitié. */
 .mt-board::before,
@@ -129,7 +129,7 @@ a.mt-duel:focus-visible,
 .mt-team-id { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .mt-team-name {
     color: #f5f5f7;
-    font: 800 24px/1 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
+    font: 800 24px/1 'Saira Condensed', 'Arial Narrow', Impact, sans-serif;
     letter-spacing: .2px;
     text-transform: uppercase;
     text-shadow: 0 2px 3px #0004;
@@ -169,7 +169,7 @@ a.mt-duel:focus-visible,
 .mt-score {
     min-width: 1ch;
     color: #f5f5f7;
-    font: 800 44px/.9 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
+    font: 800 44px/.9 'Saira Condensed', 'Arial Narrow', Impact, sans-serif;
     font-variant-numeric: tabular-nums;
     text-align: center;
     text-shadow: 0 2px 3px #0005;
@@ -645,10 +645,11 @@ a.mt-duel:focus-visible,
     gap: 8px;
 }
 .mt-stat-val {
-    font-family: 'Bebas Neue', system-ui, sans-serif;
+    font-family: 'Saira Condensed', system-ui, sans-serif;
     font-size: 1.55rem;
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    font-weight: 700;
 }
 .mt-stat-lbl { color: var(--text-secondary); font-size: .8rem; text-align: center; }
 .mt-stat-bar { display: grid; gap: 4px; height: 6px; margin-top: 6px; }

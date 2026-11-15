@@ -130,8 +130,9 @@ body.fz-stats .lu-sec-title {
   margin: 0 0 4px;
   padding: 0 4px;
   color: var(--fzs-ink);
-  font: 400 1.55rem/1.1 'Bebas Neue', 'Segoe UI', sans-serif;
+  font: 700 1.55rem/1.1 'Saira Condensed', 'Segoe UI', sans-serif;
   letter-spacing: 1.5px;
+  text-transform: uppercase;
 }
 body.fz-stats .lu-sec-note {
   margin: 0 0 8px;
@@ -284,7 +285,7 @@ body.fz-stats .lu-j-edge { fill: none; stroke: rgba(0,0,0,.28); stroke-width: .8
 body.fz-stats .lu-j-name,
 body.fz-stats .lu-j-num {
   fill: var(--lu-ink);
-  font-family: 'Barlow Condensed', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Saira Condensed', 'Helvetica Neue', Arial, sans-serif;
   font-weight: 800;
   text-anchor: middle;
 }
@@ -322,7 +323,7 @@ body.fz-stats .lu-photo img {
 }
 body.fz-stats .lu-photo-init {
   color: var(--lu-ink);
-  font: 800 1.4rem/1 'Barlow Condensed', sans-serif;
+  font: 800 1.4rem/1 'Saira Condensed', sans-serif;
   letter-spacing: .04em;
 }
 /* La photo est détourée : les initiales se voyaient derrière le joueur.
@@ -340,7 +341,7 @@ body.fz-stats .lu-photo-num {
   border-radius: 999px;
   background: var(--lu-c2);
   color: #fff;
-  font: 800 .85rem/1 'Barlow Condensed', sans-serif;
+  font: 800 .85rem/1 'Saira Condensed', sans-serif;
   text-align: center;
 }
 

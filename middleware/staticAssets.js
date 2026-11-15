@@ -38,7 +38,7 @@ const EXT_PUBLIQUES = new Set([
  * `uploads` garde son propre montage dans server.js (photos de profil et
  * images de pool) ; il figure ici pour que la garde ne le bloque pas.
  */
-const DOSSIERS_PUBLICS = new Set(['icons', 'assets', 'teams', 'uploads', 'lib']);
+const DOSSIERS_PUBLICS = new Set(['icons', 'assets', 'teams', 'uploads', 'lib', 'vendor', 'fonts']);
 
 /**
  * Fichiers JSON servis tels quels au navigateur.

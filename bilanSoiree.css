@@ -11,8 +11,8 @@
  * couleur est un jeton d'index.css. La seule chroma libre est celle des
  * clubs : le filet d'une carte, sa part de la barre, et le fond de la photo,
  * à la teinte sombre du club dans les deux thèmes. Le rouge ne marque que
- * l'action. Les chiffres et les titres sont en Barlow Condensed, le texte en
- * Barlow — la fenêtre charge elle-même ses polices.
+ * l'action. Les chiffres et les titres sont en 'Saira Condensed', le texte en
+ * 'Saira' — la fenêtre charge elle-même ses polices.
  * ========================================================================= */
 
 .fzb-overlay {
@@ -57,7 +57,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     border-radius: 16px;
     box-shadow: var(--elevation-4, 0 20px 50px rgba(0, 0, 0, .55));
     overflow: hidden;
-    font: 400 15px/1.35 'Barlow', 'Segoe UI', system-ui, sans-serif;
+    font: 400 15px/1.35 'Saira', 'Segoe UI', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     /* Sans « forwards » : le panneau tiré du doigt (téléphone) se déplace
        par son style en ligne, qu'une animation figée écraserait. */
@@ -112,7 +112,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
 }
 .fzb-titles { flex: 1; min-width: 0; }
 .fzb-eyebrow {
-    font: 600 12px/1.3 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 12px/1.3 'Saira', 'Segoe UI', sans-serif;
     letter-spacing: .12em;
     text-transform: uppercase;
     color: var(--text-secondary, #A1A1A6);
@@ -121,7 +121,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     text-overflow: ellipsis;
 }
 .fzb-title {
-    font: 700 30px/1.05 'Barlow Condensed', 'Segoe UI', sans-serif;
+    font: 700 30px/1.05 'Saira Condensed', 'Segoe UI', sans-serif;
     letter-spacing: .01em;
     text-transform: uppercase;
     color: var(--text-main, #F5F5F7);
@@ -153,7 +153,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
 .fzb-duel-logo img ~ span { visibility: hidden; }
 .fzb-logo-initiales,
 .fzb-duel-logo-initiales {
-    font: 600 13px/1 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 13px/1 'Saira', 'Segoe UI', sans-serif;
     color: var(--text-secondary, #A1A1A6);
 }
 
@@ -207,13 +207,13 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     gap: 8px;
 }
 .fzb-label {
-    font: 600 12px/1.3 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 12px/1.3 'Saira', 'Segoe UI', sans-serif;
     letter-spacing: .12em;
     text-transform: uppercase;
     color: var(--text-secondary, #A1A1A6);
 }
 .fzb-panel-aside {
-    font: 500 13px/1.3 'Barlow', 'Segoe UI', sans-serif;
+    font: 500 13px/1.3 'Saira', 'Segoe UI', sans-serif;
     color: var(--text-secondary, #A1A1A6);
     white-space: nowrap;
 }
@@ -221,7 +221,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
 .fzb-big { display: flex; align-items: baseline; gap: 6px; }
 .fzb-big-n {
     display: inline-block;
-    font: 700 56px/.9 'Barlow Condensed', 'Segoe UI', sans-serif;
+    font: 700 56px/.9 'Saira Condensed', 'Segoe UI', sans-serif;
     font-variant-numeric: tabular-nums;
     color: var(--text-main, #F5F5F7);
     transform-origin: left bottom;
@@ -234,7 +234,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     vertical-align: top;
 }
 .fzb-big-unit {
-    font: 700 16px/1 'Barlow Condensed', 'Segoe UI', sans-serif;
+    font: 700 16px/1 'Saira Condensed', 'Segoe UI', sans-serif;
     letter-spacing: .06em;
     text-transform: uppercase;
     color: var(--text-secondary, #A1A1A6);
@@ -275,7 +275,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     display: flex;
     align-items: center;
     gap: 8px;
-    font: 500 13px/1.3 'Barlow', 'Segoe UI', sans-serif;
+    font: 500 13px/1.3 'Saira', 'Segoe UI', sans-serif;
     color: var(--text-secondary, #A1A1A6);
 }
 .fzb-move-ico {
@@ -287,7 +287,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     border-radius: 50%;
     background: var(--fzb-tint);
     color: var(--text-main, #F5F5F7);
-    font: 600 12px/1 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 12px/1 'Saira', 'Segoe UI', sans-serif;
 }
 .fzb-move.is-up .fzb-move-ico { background: color-mix(in srgb, var(--success, #30D158) 18%, transparent); color: var(--success, #30D158); }
 .fzb-move.is-down .fzb-move-ico { background: rgba(var(--primary-rgb, 230, 32, 48), .16); color: var(--primary-text, #FF5C66); }
@@ -312,13 +312,13 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
 .fzb-duel-logo { width: 24px; height: 24px; }
 .fzb-duel-logo-initiales { font-size: 9px; }
 .fzb-duel-name {
-    font: 600 14px/1.2 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 14px/1.2 'Saira', 'Segoe UI', sans-serif;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .fzb-duel-score {
-    font: 700 24px/1 'Barlow Condensed', 'Segoe UI', sans-serif;
+    font: 700 24px/1 'Saira Condensed', 'Segoe UI', sans-serif;
     font-variant-numeric: tabular-nums;
     color: var(--text-secondary, #A1A1A6);
     transition: color .4s ease;
@@ -335,7 +335,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     padding: 24px var(--fzb-pad) 10px;
 }
 .fzb-list-aside {
-    font: 500 13px/1.3 'Barlow', 'Segoe UI', sans-serif;
+    font: 500 13px/1.3 'Saira', 'Segoe UI', sans-serif;
     color: var(--text-light-gray, #6E6E73);
     white-space: nowrap;
 }
@@ -350,7 +350,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     border-radius: 10px;
     background: transparent;
     color: var(--primary-text, #FF5C66);
-    font: 600 13px/1 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 13px/1 'Saira', 'Segoe UI', sans-serif;
     cursor: pointer;
 }
 .fzb-skip:hover { background: rgba(var(--primary-rgb, 230, 32, 48), .08); }
@@ -499,7 +499,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
 .fzb-card-photo img ~ span { display: none; }
 .fzb-card-photo-initiales {
     align-self: center;
-    font: 700 40px/1 'Barlow Condensed', 'Segoe UI', sans-serif;
+    font: 700 40px/1 'Saira Condensed', 'Segoe UI', sans-serif;
     letter-spacing: .02em;
     color: rgba(255, 255, 255, .55);
 }
@@ -525,14 +525,14 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
 }
 .fzb-face.is-plus {
     background: var(--border-light, #38383A);
-    font: 600 13px/1 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 13px/1 'Saira', 'Segoe UI', sans-serif;
     color: var(--text-main, #F5F5F7);
 }
 .fzb-face-photo { position: absolute; inset: 0; display: grid; place-items: center; }
 .fzb-face-photo img { position: absolute; left: 0; bottom: -2px; width: 100%; height: auto; z-index: 1; }
 .fzb-face-photo.is-club img { inset: 18%; width: 64%; height: 64%; object-fit: contain; }
 .fzb-face-photo img ~ span { visibility: hidden; }
-.fzb-face-photo-initiales { font: 600 12px/1 'Barlow', 'Segoe UI', sans-serif; color: rgba(255, 255, 255, .85); }
+.fzb-face-photo-initiales { font: 600 12px/1 'Saira', 'Segoe UI', sans-serif; color: rgba(255, 255, 255, .85); }
 
 .fzb-card-body {
     flex: 1 1 auto;
@@ -544,14 +544,14 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
 }
 .fzb-card-id { min-width: 0; }
 .fzb-card-name {
-    font: 600 15px/1.2 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 15px/1.2 'Saira', 'Segoe UI', sans-serif;
     color: var(--text-main, #F5F5F7);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .fzb-card-meta {
-    font: 400 13px/1.3 'Barlow', 'Segoe UI', sans-serif;
+    font: 400 13px/1.3 'Saira', 'Segoe UI', sans-serif;
     color: var(--text-secondary, #A1A1A6);
     white-space: nowrap;
     overflow: hidden;
@@ -579,7 +579,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     padding: 4px 8px;
     border-radius: 6px;
     background: var(--fzb-tint);
-    font: 500 12px/1.3 'Barlow', 'Segoe UI', sans-serif;
+    font: 500 12px/1.3 'Saira', 'Segoe UI', sans-serif;
     color: var(--text-main, #F5F5F7);
     white-space: nowrap;
     overflow: hidden;
@@ -595,12 +595,12 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     transform-origin: left bottom;
 }
 .fzb-card-pts-v {
-    font: 700 34px/1 'Barlow Condensed', 'Segoe UI', sans-serif;
+    font: 700 34px/1 'Saira Condensed', 'Segoe UI', sans-serif;
     font-variant-numeric: tabular-nums;
     color: var(--text-main, #F5F5F7);
 }
 .fzb-card-pts-l {
-    font: 700 12px/1 'Barlow Condensed', 'Segoe UI', sans-serif;
+    font: 700 12px/1 'Saira Condensed', 'Segoe UI', sans-serif;
     letter-spacing: .06em;
     text-transform: uppercase;
     color: var(--text-secondary, #A1A1A6);
@@ -619,7 +619,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     z-index: 10060;
     padding: 4px 12px;
     border-radius: 999px;
-    font: 700 26px/1 'Barlow Condensed', 'Segoe UI', sans-serif;
+    font: 700 26px/1 'Saira Condensed', 'Segoe UI', sans-serif;
     pointer-events: none;
     transform: translate(-50%, -50%);
     box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
@@ -648,7 +648,7 @@ html.fzb-lock, html.fzb-lock body { overflow: hidden; }
     height: 48px;
     border: 0;
     border-radius: 10px;
-    font: 600 15px/1 'Barlow', 'Segoe UI', sans-serif;
+    font: 600 15px/1 'Saira', 'Segoe UI', sans-serif;
     text-decoration: none;
     cursor: pointer;
     transition: background .2s cubic-bezier(.4, 0, .2, 1), color .2s cubic-bezier(.4, 0, .2, 1);

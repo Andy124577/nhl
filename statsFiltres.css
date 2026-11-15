@@ -44,7 +44,7 @@ body.fz-stats {
     /* Hauteur de la barre du haut, collante : l'en-tête du tableau colle dessous. */
     --sj-nav-h: 70px;
     background: var(--sj-bg);
-    font-family: 'Saira', 'Barlow', system-ui, sans-serif;
+    font-family: 'Saira', system-ui, sans-serif;
 }
 html[data-theme="light"] body.fz-stats {
     --sj-bg: #F3F2EF;
@@ -93,7 +93,7 @@ body.fz-stats .sj-saison {
     min-height: 11px;
 }
 body.fz-stats .stats-hero-title {
-    font: 800 32px/30px 'Saira Condensed', 'Barlow Condensed', sans-serif;
+    font: 800 32px/30px 'Saira Condensed', sans-serif;
     letter-spacing: 0;
     text-transform: uppercase;
     color: var(--sj-ink);

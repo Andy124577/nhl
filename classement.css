@@ -1806,7 +1806,7 @@ html.ss-lock { overflow: hidden; }
 .h2h-header-score {
     font-size: 2rem;
     font-weight: 900;
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: 'Saira Condensed', sans-serif;
     letter-spacing: 1px;
     color: var(--text-main);
     line-height: 1.1;
@@ -1998,7 +1998,7 @@ html.ss-lock { overflow: hidden; }
 .h2h-player-pts {
     font-size: 0.82rem;
     font-weight: 700;
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: 'Saira Condensed', sans-serif;
     color: var(--text-secondary);
     min-width: 32px;
     text-align: center;

@@ -68,11 +68,11 @@ html[data-theme="light"].fz-anon body {
 .fzl {
     --fzl-gutter: 18px;
     --fzl-max: 1200px;
-    --fzl-cond: 'Saira Condensed', 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    --fzl-cond: 'Saira Condensed', 'Arial Narrow', sans-serif;
     --fzl-ease: cubic-bezier(.4, 0, .2, 1);
     display: block;
     color: var(--s-ink);
-    font: 400 14px/1.4 'Saira', 'Barlow', system-ui, sans-serif;
+    font: 400 14px/1.4 'Saira', system-ui, sans-serif;
     overflow-x: clip;
     -webkit-font-smoothing: antialiased;
 }
