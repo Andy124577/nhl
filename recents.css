@@ -1,0 +1,151 @@
+/* ============================================================
+   RÉCENTS — le fil du pool (recents.html, recents.js)
+   ------------------------------------------------------------
+   Même langage que l'accueil de saison (accueil-season.css) :
+   Saira, gris chauds, filets plutôt que cartes, une couleur par
+   genre de nouvelle (rouge : direct et blessures ; vert : échange
+   conclu et points ; or : en vente ; bleu : LNH). Mes lignes sont
+   sur un fond à peine plus clair.
+   ============================================================ */
+
+html body.fz-recents {
+    --s-bg: #0F1316;
+    --s-me: #1A1E1D;
+    --s-line: #2A2E2D;
+    --s-chip: #2A2E2D;
+    --s-face: #1C201F;
+    --s-ink: #F3F1EE;
+    --s-on-ink: #0B0B0C;
+    --s-ink2: #C9C7C4;
+    --s-mute: #A8A6A3;
+    --s-faint: #928F8C;
+    --s-red: #E5372B;
+    --s-red-ink: #FF8A80;
+    --s-green: #7FD49B;
+    --s-gold: #E8B26A;
+    --s-blue: #8FB8FF;
+
+    margin: 0;
+    min-height: 100vh;
+    background: var(--s-bg);
+    color: var(--s-ink);
+    font-family: 'Saira', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+html[data-theme="light"] body.fz-recents {
+    --s-bg: #F3F2EF;
+    --s-me: #EBE9E5;
+    --s-line: #E2E0DC;
+    --s-chip: #E6E4E0;
+    --s-face: #E6E4E0;
+    --s-ink: #141416;
+    --s-on-ink: #FFFFFF;
+    --s-ink2: #34343A;
+    --s-mute: #5E5C59;
+    --s-faint: #74716D;
+    --s-red: #D52B1E;
+    --s-red-ink: #B3241A;
+    --s-green: #1D8048;
+    --s-gold: #976111;
+    --s-blue: #2457B8;
+}
+
+body.fz-recents .rc { max-width: 720px; margin: 0 auto; padding: 18px 0 40px; }
+
+/* En-tête : le pool en surtitre, « Récents », la fraîcheur à droite. */
+body.fz-recents .rc-tete { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 0 16px 4px; }
+body.fz-recents .rc-sur { margin: 0 0 4px; min-height: 14px; font: 600 11px/1.2 'Saira', sans-serif; letter-spacing: 1.4px; text-transform: uppercase; color: var(--s-faint); }
+body.fz-recents .rc-tete h1 { margin: 0; font: 700 28px/1 'Saira', sans-serif; letter-spacing: -.2px; color: var(--s-ink); }
+body.fz-recents .rc-maj { flex: none; font: 400 12px/1 'Saira', sans-serif; color: var(--s-faint); padding-bottom: 4px; }
+
+/* Filtres */
+body.fz-recents .rc-filtres { display: flex; gap: 8px; padding: 14px 16px 4px; overflow-x: auto; scrollbar-width: none; }
+body.fz-recents .rc-filtres::-webkit-scrollbar { display: none; }
+body.fz-recents .rc-chip {
+    flex: none; display: inline-flex; align-items: center; gap: 5px;
+    min-height: 36px; padding: 0 14px; border-radius: 999px;
+    border: 1px solid var(--s-line); background: transparent; color: var(--s-ink2);
+    font: 600 13px/1 'Saira', sans-serif; cursor: pointer;
+}
+body.fz-recents .rc-chip[aria-pressed="true"] { background: var(--s-ink); border-color: var(--s-ink); color: var(--s-on-ink); }
+body.fz-recents .rc-chip b { font-weight: 700; color: var(--s-red-ink); }
+body.fz-recents .rc-chip[aria-pressed="true"] b { color: inherit; opacity: .7; }
+
+/* Groupes par jour */
+body.fz-recents .rc-groupe { margin-top: 18px; }
+body.fz-recents .rc-jour {
+    margin: 0; padding: 0 16px 8px; border-bottom: 1px solid var(--s-line);
+    font: 600 11px/1.2 'Saira', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--s-faint);
+}
+body.fz-recents .rc-liste { list-style: none; margin: 0; padding: 0; }
+body.fz-recents .rc-liste > li { border-bottom: 1px solid var(--s-line); }
+body.fz-recents .rc-liste > li.is-mien { background: var(--s-me); }
+
+/* Une ligne */
+body.fz-recents .rc-ligne { display: flex; align-items: center; gap: 12px; padding: 12px 16px; min-width: 0; color: inherit; text-decoration: none; }
+body.fz-recents a.rc-ligne:hover { background: color-mix(in srgb, var(--s-ink) 4%, transparent); }
+body.fz-recents .rc-face {
+    position: relative; flex: none; width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--s-face);
+    font: 600 13px/1 'Saira', sans-serif; color: var(--s-mute);
+}
+body.fz-recents .rc-face img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 15%; background: var(--s-face); }
+body.fz-recents .rc-face.is-club { border-radius: 10px; }
+body.fz-recents .rc-face.is-club img { inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); border-radius: 0; object-fit: contain; background: transparent; }
+body.fz-recents .rc-face.is-club b { font: 600 10px/1 'Saira', sans-serif; }
+body.fz-recents .rc-face.is-club img + b { display: none; }
+body.fz-recents .rc-face.is-icone { font-size: 15px; color: var(--s-ink2); }
+body.fz-recents .rc-pastille {
+    position: absolute; right: -2px; bottom: -2px; z-index: 1; width: 16px; height: 16px; border-radius: 50%;
+    display: grid; place-items: center; border: 2px solid var(--s-bg);
+    font: 700 10px/1 'Saira', sans-serif; font-style: normal; color: #fff;
+}
+body.fz-recents li.is-mien .rc-pastille { border-color: var(--s-me); }
+body.fz-recents .rc-pastille.is-rouge { background: var(--s-red); }
+
+body.fz-recents .rc-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+body.fz-recents .rc-tag { font: 600 11px/1.2 'Saira', sans-serif; letter-spacing: .6px; text-transform: uppercase; color: var(--s-mute); }
+body.fz-recents .rc-tag.is-rouge { color: var(--s-red-ink); }
+body.fz-recents .rc-tag.is-vert { color: var(--s-green); }
+body.fz-recents .rc-tag.is-or { color: var(--s-gold); }
+body.fz-recents .rc-tag.is-bleu { color: var(--s-blue); }
+body.fz-recents .rc-tag.is-encre { color: var(--s-ink); }
+body.fz-recents .rc-quand { font-weight: 500; letter-spacing: .2px; text-transform: none; color: var(--s-faint); }
+body.fz-recents .rc-direct { display: inline-flex; align-items: center; gap: 6px; }
+body.fz-recents .rc-direct::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--s-red); animation: rc-pouls 1.4s ease-in-out infinite; }
+@keyframes rc-pouls { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { body.fz-recents .rc-direct::before { animation: none; } }
+
+body.fz-recents .rc-texte { font: 400 14px/1.35 'Saira', sans-serif; color: var(--s-ink2); overflow-wrap: anywhere; }
+body.fz-recents .rc-texte strong { font-weight: 600; color: var(--s-ink); }
+body.fz-recents .rc-qui { display: block; margin-top: 2px; font-size: 12px; color: var(--s-faint); }
+body.fz-recents .rc-qui b { font-weight: 600; color: var(--s-green); }
+
+/* Le bout de ligne : points, bouton, flèche */
+body.fz-recents .rc-pts { flex: none; text-align: right; font: 700 17px/1 'Saira', sans-serif; font-variant-numeric: tabular-nums; color: var(--s-ink2); }
+body.fz-recents .rc-pts.is-plus { color: var(--s-green); }
+body.fz-recents .rc-pts.is-moins { color: var(--s-red-ink); }
+body.fz-recents .rc-pts small { display: block; margin-top: 4px; font: 500 11px/1 'Saira', sans-serif; color: var(--s-faint); }
+body.fz-recents .rc-cta {
+    flex: none; display: inline-flex; align-items: center; min-height: 34px; padding: 0 13px;
+    border: 1px solid var(--s-line); border-radius: 999px; font: 600 13px/1 'Saira', sans-serif; color: var(--s-ink); white-space: nowrap;
+}
+body.fz-recents .rc-fleche { flex: none; font-size: 20px; color: var(--s-faint); }
+
+/* Vide, erreur */
+body.fz-recents .rc-vide { margin: 40px 16px; text-align: center; font: 400 14px/1.5 'Saira', sans-serif; color: var(--s-faint); }
+body.fz-recents .rc-lien, body.fz-recents .rc-reessayer {
+    display: inline-block; margin-top: 10px; padding: 0; border: 0; background: none; cursor: pointer;
+    font: 600 14px/1.5 'Saira', sans-serif; color: var(--s-ink); text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* Squelette */
+body.fz-recents .rc-os-titre { display: inline-block; width: 64px; height: 10px; border-radius: 5px; background: var(--s-chip); }
+body.fz-recents .rc-ligne.is-os .rc-txt span { display: block; height: 10px; border-radius: 5px; background: var(--s-chip); width: 70%; }
+body.fz-recents .rc-ligne.is-os .rc-txt span + span { width: 45%; }
+
+@media (min-width: 901px) {
+    body.fz-recents .rc { padding-top: 32px; }
+    body.fz-recents .rc-tete h1 { font-size: 34px; }
+}

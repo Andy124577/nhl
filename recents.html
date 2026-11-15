@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="Icons/apple-touch-icon.png">
+    <title>Récents - Fantazy</title>
+    <script src="theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&family=Saira+Condensed:wght@800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css?v=20261031a">
+    <link rel="stylesheet" href="navbar.css?v=20261031a">
+    <link rel="stylesheet" href="fzDialog.css?v=20260926b">
+    <script src="fzDialog.js?v=20261026a"></script>
+    <link rel="stylesheet" href="poolNav.css?v=20261107a">
+    <link rel="stylesheet" href="fzReactif.css?v=20261114a">
+    <link rel="stylesheet" href="poolSettings.css?v=20260926b">
+    <link rel="stylesheet" href="bilanSoiree.css?v=20261107a">
+    <link rel="stylesheet" href="recents.css?v=20261115a">
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="icons.js" defer></script>
+    <!-- Contexte de pool actif : doit précéder tout script de page. -->
+    <script defer src="activePool.js?v=20261114a"></script>
+    <script defer src="fzReactif.js?v=20261114a"></script>
+</head>
+<body class="fz-recents">
+    <nav class="navbar"></nav>
+
+    <!-- Récents : ce qui vient d'arriver dans le pool actif (recents.js).
+         Remplace l'onglet « Mon équipe » de la barre ; la fiche de son
+         équipe s'ouvre depuis Classement. -->
+    <main class="rc">
+        <header class="rc-tete">
+            <div>
+                <p class="rc-sur" id="rcPool"></p>
+                <h1>Récents</h1>
+            </div>
+            <span class="rc-maj" id="rcMaj" role="status" hidden></span>
+        </header>
+        <div class="rc-filtres" id="rcFiltres" role="group" aria-label="Filtrer le fil"></div>
+        <div class="rc-fil" id="rcFil" aria-live="polite" aria-busy="true"></div>
+    </main>
+
+    <script src="navbar.js?v=20261115a"></script>
+    <script defer src="installerApp.js?v=20261113a"></script>
+    <script defer src="bilanSoiree.js?v=20261107a"></script>
+    <script defer src="avatars.js?v=20261026a"></script>
+    <script defer src="profanity.js"></script>
+    <script defer src="poolSettings.js?v=20260929a"></script>
+    <script defer src="poolNav.js?v=20261115a"></script>
+    <script defer src="poolInvites.js?v=20261114a"></script>
+    <script defer src="notifications.js?v=20261114a"></script>
+    <script defer src="recents.js?v=20261115a"></script>
+</body>
+</html>

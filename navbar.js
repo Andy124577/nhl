@@ -13,6 +13,7 @@ function getCurrentPage() {
         return /[?&]vue=equipe(?:&|$)/.test(window.location.search || '') ? 'equipe' : 'classement';
     }
     if (n.includes('trade.html')) return 'trade';
+    if (n.includes('recents.html')) return 'recents';
     // Les scores n'ont plus d'onglet : on y arrive par « Matchs ce soir »,
     // à l'accueil. Aucun onglet ne s'allume sur ces deux pages.
     if (n.includes('calendrier.html') || n.includes('match.html')) return 'calendrier';
@@ -24,11 +25,15 @@ function getCurrentPage() {
 }
 
 /**
- * L'onglet qu'une page allume. Les échanges s'ouvrent depuis « Mon équipe »
- * (le bouton à côté de « Mettre en vente ») : leur page en garde l'onglet.
+ * L'onglet qu'une page allume. « Mon équipe » n'a plus d'onglet (Récents a
+ * pris sa place) : la fiche de son équipe est une fiche du classement, elle
+ * allume Classement. Les échanges allument Récents, qui porte la pastille
+ * des offres reçues et les montre en tête du fil.
  */
 function ongletDePage(page) {
-    return page === 'trade' ? 'equipe' : page;
+    if (page === 'equipe') return 'classement';
+    if (page === 'trade') return 'recents';
+    return page;
 }
 
 // La page que les barres tiennent pour courante. Elle peut changer sans
@@ -38,8 +43,8 @@ let _navPage = '';
 
 /**
  * Allume l'onglet d'une page dans les trois menus — barre du bas, barre du
- * haut, tiroir — sans les reconstruire. classement.js s'en sert : la fiche
- * de mon équipe allume « Mon équipe », tout le reste « Classement ».
+ * haut, tiroir — sans les reconstruire. classement.js s'en sert : le classement
+ * et la fiche de mon équipe allument toutes deux « Classement ».
  */
 function fzNavActiver(page) {
     _navPage = page;
@@ -172,6 +177,7 @@ const PAGE_ICON = {
     accueil: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`,
     repechage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`,
     equipe: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>`,
+    recents: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h4v4H7zM14 8h3M14 12h3M7 16h10"/></svg>`,
     classement: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 21V9a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v12"/><path d="M8.5 13h-5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h17a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1h-5"/><path d="M12 .6l.76 1.95 2.09.12-1.61 1.33.52 2.03L12 4.9l-1.76 1.13.52-2.03-1.61-1.33 2.09-.12z" fill="currentColor" stroke="none"/></svg>`,
     // La page des joueurs (stats.html) : l'onglet « Joueurs ».
     stats: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
@@ -188,6 +194,8 @@ const BARRE_ICON = {
         'M80-200v-45q0-17 11.5-28.5T120-285h20v125h-20q-17 0-28.5-11.5T80-200Zm104 40v-125h175l43-94 49 97-46 101q-5 11-15 16t-21 5H184Zm696-40q0 17-11.5 28.5T840-160h-20v-125h20q17 0 28.5 11.5T880-245v45Zm-104 40H591q-11 0-21-5t-15-16L300-740q-10-21 3-40.5t36-19.5q13 0 23 7t15 18l103 225 103-225q5-11 15-18t23-7q23 0 36 19.5t3 40.5L527-447l74 162h175v125Z'],
     equipe: ['m250-569-63 35q-14 8-29.5 4.5T136-546L67-665q-8-14-4.5-24T79-707l228-133h64q11 0 17.5 6.5T395-816v15q0 38 24 62t62 24q38 0 61.5-24t23.5-62v-15q0-11 6.5-17.5T590-840h64l228 133q13 8 16 18t-4 24l-70 119q-6 13-25 17t-30-3l-62-39v412q0 16-12 27.5T667-120H289q-16 0-27.5-11.5T250-159v-410Zm60-102v491h337v-491l138 77 45-78-187-107h-18q-8 54-47.5 89T481-655q-57 0-97-35t-48-89h-18L131-672l45 78 134-77Zm171 191Z',
         'm250-569-63 35q-14 8-29.5 4.5T136-546L67-665q-8-14-4.5-24T79-707l228-133h64q11 0 17.5 6.5T395-816v15q0 38 24 62t62 24q38 0 61.5-24t23.5-62v-15q0-11 6.5-17.5T590-840h64l228 133q13 8 16 18t-4 24l-70 119q-6 13-25 17t-30-3l-62-39v412q0 16-12 27.5T667-120H289q-16 0-27.5-11.5T250-159v-410Z'],
+    recents: ['M140-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h680q24 0 42 18t18 42v600q0 24-18 42t-42 18H140Zm0-60h680v-600H140v600Zm139-106h402q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H279q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-166h95q12.75 0 21.38-8.63Q404-469.25 404-482v-162q0-12.75-8.62-21.38Q386.75-674 374-674h-95q-12.75 0-21.37 8.62Q249-656.75 249-644v162q0 12.75 8.63 21.37Q266.25-452 279-452Zm259 0h143q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H538q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-162h143q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H538q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5ZM140-180v-600 600Z',
+        'M140-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h680q24 0 42 18t18 42v600q0 24-18 42t-42 18H140Zm139-166h402q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H279q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-166h95q12.75 0 21.38-8.63Q404-469.25 404-482v-162q0-12.75-8.62-21.38Q386.75-674 374-674h-95q-12.75 0-21.37 8.62Q249-656.75 249-644v162q0 12.75 8.63 21.37Q266.25-452 279-452Zm259 0h143q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H538q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-162h143q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H538q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Z'],
     classement: ['M140-180h187v-360H140v360Zm247 0h186v-600H387v600Zm246 0h187v-280H633v280Zm-553 0v-360q0-24.75 17.63-42.38Q115.25-600 140-600h187v-180q0-24.75 17.63-42.38Q362.25-840 387-840h186q24.75 0 42.38 17.62Q633-804.75 633-780v260h187q24.75 0 42.38 17.62Q880-484.75 880-460v280q0 24.75-17.62 42.37Q844.75-120 820-120H140q-24.75 0-42.37-17.63Q80-155.25 80-180Z',
         'M110-120q-12.75 0-21.37-8.63Q80-137.25 80-150v-420q0-12.75 8.63-21.38Q97.25-600 110-600h150q12.75 0 21.38 8.62Q290-582.75 290-570v420q0 12.75-8.62 21.37Q272.75-120 260-120H110Zm295 0q-12.75 0-21.37-8.63Q375-137.25 375-150v-660q0-12.75 8.63-21.38Q392.25-840 405-840h150q12.75 0 21.38 8.62Q585-822.75 585-810v660q0 12.75-8.62 21.37Q567.75-120 555-120H405Zm295 0q-12.75 0-21.37-8.63Q670-137.25 670-150v-340q0-12.75 8.63-21.38Q687.25-520 700-520h150q12.75 0 21.38 8.62Q880-502.75 880-490v340q0 12.75-8.62 21.37Q862.75-120 850-120H700Z'],
     stats: ['M38-254q0-35 18-63.5t50-42.5q73-32 131.5-46T358-420q62 0 120 14t131 46q32 14 50.5 42.5T678-254v34q0 25-17.5 42.5T618-160H98q-25 0-42.5-17.5T38-220v-34Zm824 94H724q5-15 9.5-29.5T738-220v-34q0-63-29-101.5T622-420q69 8 130 22t99 34q33 19 52 47t19 63v34q0 25-17.5 42.5T862-160ZM250-523q-42-42-42-108t42-108q42-42 108-42t108 42q42 42 42 108t-42 108q-42 42-108 42t-108-42Zm426 0q-42 42-108 42-11 0-24.5-1.5T519-488q24-25 36.5-61.5T568-631q0-45-12.5-79.5T519-774q11-3 24.5-5t24.5-2q66 0 108 42t42 108q0 66-42 108ZM98-220h520v-34q0-16-9.5-31T585-306q-72-32-121-43t-106-11q-57 0-106.5 11T130-306q-14 6-23 21t-9 31v34Zm324.5-346.5Q448-592 448-631t-25.5-64.5Q397-721 358-721t-64.5 25.5Q268-670 268-631t25.5 64.5Q319-541 358-541t64.5-25.5ZM358-220Zm0-411Z',
@@ -312,13 +320,14 @@ function buildLoggedOutNavbar() {
 }
 
 // ==================== LOGGED IN NAVBAR ====================
-// Ordre : Accueil → Pools ▾ → Repêchage (🔴) → Mon équipe (🔴) → Classement
-//         → Stats
+// Ordre : Accueil → Pools ▾ → Repêchage (🔴) → Récents (🔴) → Classement
+//         → Joueurs
 //
-// Repêchage tant que le pool actif repêche ; Mon équipe et Classement une
+// Repêchage tant que le pool actif repêche ; Récents et Classement une
 // fois qu'il a fini (onglets conditionnels, plus bas). Les échanges n'ont
-// plus de lien ici : ils s'ouvrent depuis Mon équipe, dont la pastille
-// compte les offres reçues. Les scores s'ouvrent depuis l'accueil.
+// plus de lien ici : les offres reçues sont en tête de Récents, dont la
+// pastille les compte, et « Mon équipe » (bouton du classement) mène à
+// « Échanges ». Les scores s'ouvrent depuis l'accueil.
 //
 // « Pools » mène à l'accueil des pools (pool.html) : trois boutons, créer
 // un pool, en rejoindre un, ou ouvrir le pool actif sous son nom — ses
@@ -358,7 +367,7 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                     ${lien('repechage', 'repechage.html', 'Repêchage', ' id="desktopPoolLink"')}
                         <span class="notif-badge" id="desktopDraftBadge" style="display: none;"></span>
                     </a>
-                    ${lien('equipe', 'classement.html?vue=equipe', 'Mon équipe', ' id="desktopEquipeLink"')}
+                    ${lien('recents', 'recents.html', 'Récents', ' id="desktopRecentsLink"')}
                         <span class="notif-badge" id="desktopTradeBadge" style="display: none;">0</span>
                     </a>
                     ${lien('classement', 'classement.html', 'Classement', ' id="desktopClassementLink"')}
@@ -518,11 +527,12 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 // ==================== MOBILE BOTTOM NAV ====================
 // Cinq onglets (maquette « Fantazy Nav Options », 1b) :
 // La barre suit l'état du pool actif (onglets conditionnels, plus bas) :
-//   — saison, repêchage terminé : Accueil → Mon équipe → Classement → Stats ;
+//   — saison, repêchage terminé : Accueil → Récents → Classement → Joueurs ;
 //   — avant ou pendant le repêchage : Accueil → Repêchage → Stats ;
 //   — aucun pool : Accueil → Stats.
-// Les échanges s'ouvrent depuis Mon équipe, qui porte la pastille des
-// offres reçues ; les scores, depuis « Matchs ce soir » à l'accueil.
+// Récents porte la pastille des offres reçues ; la fiche de mon équipe
+// s'ouvre depuis Classement (« Mon équipe ») ; les scores, depuis
+// « Matchs ce soir » à l'accueil.
 function buildBottomNav(currentPage) {
     const existing = document.querySelector('.bottom-nav');
     if (existing) existing.remove();
@@ -544,7 +554,7 @@ function buildBottomNav(currentPage) {
             ${onglet('repechage', 'repechage.html', 'Repêchage', ' id="bottomDraftLink"')}
                 <span class="notif-badge" id="bottomDraftBadge" style="display: none;"></span>
             </a>
-            ${onglet('equipe', 'classement.html?vue=equipe', 'Mon équipe', ' id="bottomEquipeLink"')}
+            ${onglet('recents', 'recents.html', 'Récents', ' id="bottomRecentsLink"')}
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
             </a>
             ${onglet('classement', 'classement.html', 'Classement', ' id="bottomClassementLink"')}
@@ -976,7 +986,7 @@ async function checkPendingTrades() {
 // ==================== ONGLETS CONDITIONNELS ====================
 /*
  * Trois onglets dépendent de l'état du pool actif — Repêchage d'un côté,
- * Mon équipe et Classement de l'autre — et cet état n'arrive qu'avec /draft,
+ * Récents et Classement de l'autre — et cet état n'arrive qu'avec /draft,
  * un aller-retour réseau après la construction de la barre. Les afficher
  * puis les retirer laissait voir, le temps d'un battement, un « Classement »
  * qui n'ouvrira pas et un « Repêchage » déjà terminé.
@@ -989,9 +999,9 @@ async function checkPendingTrades() {
  */
 const NAV_ONGLETS_CONDITIONNELS = {
     repechage: ['desktopPoolLink', 'bottomDraftLink'],
-    // Mon équipe suit Classement : avant la fin du repêchage, la fiche d'une
-    // équipe n'est pas plus lisible que le classement.
-    classement: ['desktopClassementLink', 'bottomClassementLink', 'desktopEquipeLink', 'bottomEquipeLink']
+    // Récents suit Classement : le fil raconte la saison d'un pool dont le
+    // repêchage est fini (même place que l'ancien onglet « Mon équipe »).
+    classement: ['desktopClassementLink', 'bottomClassementLink', 'desktopRecentsLink', 'bottomRecentsLink']
 };
 
 /**
@@ -1066,7 +1076,7 @@ async function checkActiveDrafts() {
 /**
  * Le lien « Repêchage » n'est dans les barres que tant que le pool actif
  * repêche : c'est alors la seule chose à y faire, et il prend la place de
- * Mon équipe et de Classement. Une fois le repêchage terminé, la salle ne
+ * Récents et de Classement. Une fois le repêchage terminé, la salle ne
  * prend plus de choix et repechage.html n'est plus qu'un panneau indicateur.
  * Les écrans eux-mêmes referment la porte (fermerLeRepechageSiTermine dans
  * activePool.js) — ceci ne fait qu'enlever l'onglet qui y menait.
@@ -1091,7 +1101,7 @@ async function updateDraftLinkVisibility() {
 }
 
 /**
- * Les liens « Mon équipe » et « Classement » n'apparaissent qu'une fois le
+ * Les liens « Récents » et « Classement » n'apparaissent qu'une fois le
  * repêchage du pool actif terminé — l'inverse du lien « Repêchage ».
  *
  * Tant qu'on repêche, les effectifs sont à moitié bâtis : un classement des

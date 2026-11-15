@@ -116,6 +116,15 @@ body.fz-classement .st-maj {
     white-space: nowrap;
 }
 body.fz-classement .st-maj[hidden] { display: none; }
+/* La fraîcheur et « Mon équipe », empilées à droite du titre. */
+body.fz-classement .st-tete-droite { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+body.fz-classement .st-mon-equipe {
+    display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px;
+    border: 1px solid var(--s-btn-line); border-radius: 999px; background: transparent; cursor: pointer;
+    font: 600 13px/1 'Saira', sans-serif; color: var(--s-ink); white-space: nowrap;
+}
+body.fz-classement .st-mon-equipe:hover { background: var(--s-hover); }
+body.fz-classement .st-mon-equipe[hidden] { display: none; }
 body.fz-classement .st-maj-direct { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--s-green); }
 body.fz-classement .st-maj-direct i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: stPouls 1.6s infinite; }
 body.fz-classement .st-sk-titre { display: block; width: 150px; max-width: 60vw; height: 26px; border-radius: 6px; }
