@@ -33,6 +33,9 @@ const { injNatureFr } = require('../injuries.js');
 /** Entrées du fil d'activité lues en base. */
 const ACTIVITE_MAX = 40;
 
+/** La journée de Récents finit à 1 h 30 (minutes après minuit). */
+const FIN_DE_JOURNEE_MIN = 90;
+
 function monter(app, ctx) {
     const {
         auth, store, db, usePostgres, confianceMs = 0, logger = console,
@@ -42,7 +45,8 @@ function monter(app, ctx) {
         soireesEnDirect = async () => ({ joueurs: {}, clubs: {} }),
         matchsDuJour = async () => [],
         ficheReleve = () => null,
-        butDe = () => null
+        butDe = () => null,
+        horloge = () => new Date()
     } = ctx;
 
     const lectures = creerMemoireLectures({
@@ -80,10 +84,15 @@ function monter(app, ctx) {
             }
 
             const monEquipe = authz.equipeDe(poolData, req.auth.username);
-            const aujourdhui = dates.journeeLocale();
-            // Avant midi, les matchs d'hier comptent encore : ceux qui
-            // finissent après minuit et le bilan de la veille (comme l'accueil).
-            const hier = dates.composantes(new Date()).hour < 12 ? dates.ajouterJours(aujourdhui, -1) : null;
+            // La journée de Récents finit à 1 h 30 : les matchs du soir qui
+            // débordent après minuit restent dans « Aujourd'hui ».
+            const maintenant = horloge();
+            const aujourdhui = dates.journeeLocale(new Date(maintenant.getTime() - FIN_DE_JOURNEE_MIN * 60000));
+            // De 1 h 30 à midi, les matchs de la veille restent affichés, finis
+            // (comme l'accueil, qui montre les matchs d'hier le matin).
+            const h = dates.composantes(maintenant);
+            const minutes = h.hour * 60 + h.minute;
+            const hier = minutes >= FIN_DE_JOURNEE_MIN && h.hour < 12 ? dates.ajouterJours(aujourdhui, -1) : null;
             const nomEquipe = cle => nomAffiche(cle, ((poolData.teams || {})[cle] || {}).members);
             const index = recents.indexerJoueursDuPool(poolData, monEquipe);
 
