@@ -104,7 +104,7 @@ describe('recents — mouvements LNH du pool', () => {
     });
 });
 
-describe('recents — ma soirée', () => {
+describe('recents — rapports de match', () => {
     const match = (id, away, home, etat, extra = {}) => ({
         id, gameDate: '2026-11-14', gameState: etat, startTimeUTC: `2026-11-15T0${id}:00:00Z`,
         awayTeam: { abbrev: away, score: 2 }, homeTeam: { abbrev: home, score: 3 }, ...extra
@@ -116,37 +116,96 @@ describe('recents — ma soirée', () => {
         { nom: 'Sans Club', playerId: 4, club: '' }
     ];
     const soirees = { joueurs: { 1: { etat: 'LIVE', ppa: 2 }, 2: { etat: 'LIVE', ppa: 0 }, 3: { etat: 'LIVE', ppa: 1 } }, clubs: { MTL: { etat: 'LIVE', ppa: 0 }, NYR: { etat: 'FUT', ppa: 4 } } };
+    const nomsClubs = { TOR: 'Toronto Maple Leafs', MTL: 'Montréal Canadiens', EDM: 'Edmonton Oilers', CGY: 'Calgary Flames' };
 
-    test('seuls mes matchs, en direct d’abord, avec mes points', () => {
-        const liste = R.matchsDeMaSoiree([
+    test('tous les matchs commencés du jour, le dernier but en tête', () => {
+        const buts = { 2: '2026-11-15T03:30:00Z' };
+        const liste = R.rapportsDeMatch([
             match(3, 'BOS', 'NYR', 'FUT'),
-            match(1, 'TOR', 'MTL', 'LIVE', { periodDescriptor: { number: 2, periodType: 'REG' }, clock: { timeRemaining: '12:01', inIntermission: false } }),
+            match(1, 'TOR', 'MTL', 'LIVE', { periodDescriptor: { number: 2, periodType: 'REG' }, clock: { timeRemaining: '12:01', inIntermission: false },
+                goals: [{ name: { default: 'C. Caufield' }, teamAbbrev: 'MTL', period: 2, timeInPeriod: '07:59' }] }),
             match(2, 'EDM', 'CGY', 'LIVE'),
             match(4, 'VAN', 'SEA', 'OFF', { gameDate: '2026-11-13' })
-        ], { mesJoueurs, mesClubs: ['MTL', 'NYR'], soirees, aujourdhui: '2026-11-14' });
-        assert.deepEqual(liste.map(m => m.id), [1, 3]);
-        const [mtl, nyr] = liste;
-        assert.equal(mtl.etat, 'LIVE');
+        ], { mesJoueurs, mesClubs: ['MTL', 'NYR'], soirees, aujourdhui: '2026-11-14', nomsClubs, butDe: id => buts[id] || null });
+        // Le but de 03 h 30 passe devant la mise au jeu de 01 h ; le match à venir n'est pas une nouvelle.
+        assert.deepEqual(liste.map(m => m.id), [2, 1]);
+        const [edm, mtl] = liste;
+        assert.equal(edm.mien, false);
+        assert.equal(edm.moment, '2026-11-15T03:30:00Z');
+        assert.deepEqual(edm.visiteur, { abbrev: 'EDM', ville: 'Edmonton', surnom: 'Oilers', score: 2 });
+        assert.equal(mtl.mien, true);
+        assert.equal(mtl.moment, mtl.debut);
+        assert.equal(mtl.visiteur.surnom, 'Maple Leafs');
         assert.equal(mtl.periode, 2);
         assert.equal(mtl.horloge, '12:01');
+        assert.deepEqual(mtl.dernierBut, { nom: 'C. Caufield', club: 'MTL', periode: 2, temps: '07:59' });
         assert.equal(mtl.points, 3);
         assert.deepEqual(mtl.joueurs.map(j => j.nom), ['Cole Caufield', 'Ivan Demidov', 'Lane Hutson']);
         assert.deepEqual(mtl.clubs, [{ club: 'MTL', points: 0 }]);
-        // Match pas commencé : la soirée d'hier ne compte pas.
-        assert.equal(nyr.etat, 'FUT');
-        assert.equal(nyr.points, 0);
     });
 
-    test('match fini : « FINAL »', () => {
-        const [m] = R.matchsDeMaSoiree([match(1, 'TOR', 'MTL', 'OFF')], { mesJoueurs, soirees, aujourdhui: '2026-11-14' });
+    test('match fini : « FINAL », clubs inconnus de la table', () => {
+        const [m] = R.rapportsDeMatch([match(1, 'TOR', 'XXX', 'OFF', { awayTeam: { abbrev: 'TOR', score: 1, commonName: { default: 'Leafs' }, placeName: { default: 'Toronto' } } })], { mesJoueurs, soirees, aujourdhui: '2026-11-14' });
         assert.equal(m.etat, 'FINAL');
+        assert.equal(m.visiteur.surnom, 'Leafs');
+        assert.equal(m.local.ville, 'XXX');
+        assert.equal(m.dernierBut, null);
         assert.equal(R.etatDuMatch({ gameState: 'CRIT' }), 'LIVE');
         assert.equal(R.etatDuMatch(null), 'FUT');
     });
 
-    test('rien de mien, entrées incomplètes : liste vide', () => {
-        assert.deepEqual(R.matchsDeMaSoiree([null, { id: 9 }, match(1, 'TOR', 'MTL', 'LIVE')], {}), []);
-        assert.deepEqual(R.matchsDeMaSoiree(null), []);
+    test('ville et surnom', () => {
+        assert.deepEqual(R.villeEtSurnom('Vegas Golden Knights'), { ville: 'Vegas', surnom: 'Golden Knights' });
+        assert.deepEqual(R.villeEtSurnom('Utah Mammoth', 'Mammoth'), { ville: 'Utah', surnom: 'Mammoth' });
+        assert.deepEqual(R.villeEtSurnom('Kraken'), { ville: 'Kraken', surnom: '' });
+        assert.deepEqual(R.villeEtSurnom(''), { ville: '', surnom: '' });
+    });
+
+    test('entrées incomplètes : liste vide', () => {
+        assert.deepEqual(R.rapportsDeMatch([null, { id: 9 }], {}), []);
+        assert.deepEqual(R.rapportsDeMatch(null), []);
+    });
+});
+
+describe('recents — l’heure des buts', () => {
+    const partie = (a, h, id = 1) => ({ id, awayTeam: { score: a }, homeTeam: { score: h } });
+
+    test('un pointage qui change entre deux lectures rapprochées date le but', () => {
+        let t = 1_000_000;
+        const suivi = R.creerSuiviButs({ horloge: () => t });
+        suivi.observer([partie(0, 0)]);
+        assert.equal(suivi.butDe(1), null);
+        t += 10_000;
+        suivi.observer([partie(0, 0)]);
+        assert.equal(suivi.butDe(1), null);
+        t += 5_000;
+        suivi.observer([partie(1, 0)]);
+        assert.equal(suivi.butDe(1), new Date(t).toISOString());
+        // Le pointage ne bouge plus : le but garde son heure.
+        const heureDuBut = suivi.butDe(1);
+        t += 30_000;
+        suivi.observer([partie(1, 0)]);
+        assert.equal(suivi.butDe(1), heureDuBut);
+    });
+
+    test('après un long trou de lecture, on ne sait pas quand : pas d’heure inventée', () => {
+        let t = 0;
+        const suivi = R.creerSuiviButs({ horloge: () => t, ecartMaxMs: 60_000 });
+        suivi.observer([partie(1, 0)]);
+        t += 10 * 60_000;
+        suivi.observer([partie(2, 0)]);
+        assert.equal(suivi.butDe(1), null);
+    });
+
+    test('borné en taille, entrées incomplètes ignorées', () => {
+        const suivi = R.creerSuiviButs({ max: 2 });
+        suivi.observer([partie(0, 0, 1), partie(0, 0, 2), partie(0, 0, 3), null, { id: 4 }, { awayTeam: {}, homeTeam: {} }]);
+        suivi.observer(null);
+        assert.equal(suivi.butDe(1), null);
+        assert.equal(suivi.butDe('inconnu'), null);
+        const defaut = R.creerSuiviButs();
+        defaut.observer([{ id: 5, awayTeam: {}, homeTeam: {} }]);
+        assert.equal(defaut.butDe(5), null);
     });
 });
 
@@ -215,6 +274,7 @@ describe('recents — la route', () => {
             journalLNH: async () => ({ transactions: [] }),
             soireesEnDirect: async () => ({ joueurs: { 1: { etat: 'LIVE', ppa: 2 } }, clubs: {} }),
             matchsDuJour: async () => [{ id: 5, gameState: 'LIVE', awayTeam: { abbrev: 'TOR', score: 1 }, homeTeam: { abbrev: 'MTL', score: 2 } }],
+            butDe: id => (id === 5 ? '2026-11-15T01:00:00.000Z' : null),
             ficheReleve: nom => (nom === 'Cole Caufield' ? { playerId: 1, teamAbbrev: 'MTL' } : null),
             logger: { error() {}, warn() {} }
         });
@@ -232,8 +292,10 @@ describe('recents — la route', () => {
         const { statut, corps } = await appeler();
         assert.equal(statut, 200);
         assert.equal(corps.monEquipe, 'Les Loups');
-        assert.equal(corps.ceSoir.length, 1);
-        assert.equal(corps.ceSoir[0].points, 2);
+        assert.equal(corps.matchs.length, 1);
+        assert.equal(corps.matchs[0].points, 2);
+        assert.equal(corps.matchs[0].moment, '2026-11-15T01:00:00.000Z');
+        assert.equal(corps.matchs[0].local.ville, 'Montréal');
         assert.deepEqual(corps.blessures.map(b => b.joueur), ['Lane Hutson']);
         assert.equal(corps.pool.length, 1);
         assert.equal(corps.pool[0].joueur, 'Cole Caufield');
@@ -251,7 +313,7 @@ describe('recents — la route', () => {
     test('une source en panne ne vide pas les autres', async () => {
         const { corps } = (await monter({ echec: 'blesses' }).appeler());
         assert.deepEqual(corps.blessures, []);
-        assert.equal(corps.ceSoir.length, 1);
+        assert.equal(corps.matchs.length, 1);
     });
 
     test('sans PostgreSQL, pas de fil d’activité, le reste tient', async () => {
@@ -267,7 +329,7 @@ describe('recents — la route', () => {
         const admin = await appeler('P', 'intrus', true);
         assert.equal(admin.statut, 200);
         assert.equal(admin.corps.monEquipe, null);
-        assert.deepEqual(admin.corps.ceSoir, []);
+        assert.equal(admin.corps.matchs[0].mien, false);
     });
 });
 
@@ -301,16 +363,18 @@ describe('recents — entrées partielles', () => {
         assert.equal(lnh[0].genre, null);
         assert.equal(lnh[0].de, null);
 
-        const [m] = R.matchsDeMaSoiree([{
+        const [m] = R.rapportsDeMatch([{
             id: 1, gameState: 'LIVE', periodDescriptor: {}, clock: {},
-            awayTeam: { abbrev: 'tor' }, homeTeam: {}
-        }], { mesJoueurs: [{ nom: 'Un Gardien', playerId: 9, club: 'TOR' }, { nom: 'Sans', playerId: 8 }], mesClubs: [null, 'xx'] });
+            awayTeam: { abbrev: 'tor' }, homeTeam: {},
+            goals: [{ firstName: { default: 'Un' }, lastName: { default: 'Gardien' }, periodDescriptor: { number: 3 } }]
+        }, { gameState: 'LIVE', awayTeam: {}, homeTeam: {}, goals: [{}] }], { mesJoueurs: [{ nom: 'Un Gardien', playerId: 9, club: 'TOR' }, { nom: 'Sans', playerId: 8 }], mesClubs: [null, 'xx'] });
         assert.equal(m.visiteur.score, null);
         assert.equal(m.local.abbrev, '');
         assert.equal(m.periode, null);
         assert.equal(m.horloge, null);
         assert.equal(m.debut, null);
         assert.equal(m.points, 0);
+        assert.deepEqual(m.dernierBut, { nom: 'Un Gardien', club: null, periode: 3, temps: null });
 
         const pool2 = R.activiteUtile([{ type: 'listing_activated', occurredAt: 't' }, { type: 'trade_completed', sujet: {} }]);
         assert.equal(pool2.length, 2);

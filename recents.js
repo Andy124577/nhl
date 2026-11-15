@@ -3,13 +3,15 @@
  * plus ancien.
  *
  * Une seule lecture au serveur pour l'essentiel (/api/pools/:pool/recents :
- * matchs de ma soirée, blessés et mouvements LNH du pool, fil d'activité).
+ * rapports des matchs du jour, blessés et mouvements LNH du pool, fil
+ * d'activité).
  * Deux lectures que d'autres écrans font déjà sont reprises de leur mémoire
  * (FZMemo, fzReactif.js) : les offres reçues (la pastille de la barre, même
  * clé) et le bilan de la soirée.
  *
  * Pas de sondage permanent : la page se relit à l'ouverture, au retour sur
- * l'onglet, et chaque minute SEULEMENT tant qu'un de mes matchs est en jeu.
+ * l'onglet, et toutes les 15 s SEULEMENT tant qu'un match du jour est en jeu :
+ * un but fait alors remonter son match en tête, « il y a 10 secondes ».
  * Les relectures ne touchent pas la base tant que rien n'y a été écrit
  * (routes/recents.js) ; elles ne réveillent donc pas Neon pour rien.
  */
@@ -18,7 +20,10 @@
 
     const BASE = window.location.hostname.includes('localhost') ? 'http://localhost:3000' : '';
     const FRAIS_MS = 30000;
-    const DIRECT_MS = 60000;
+    // Un match en jeu : relecture toutes les 15 s, assez pour qu'un but monte
+    // en tête « il y a quelques secondes ». La route ne lit que la mémoire du
+    // serveur tant que rien n'est écrit en base.
+    const DIRECT_MS = 15000;
     const BILAN_MS = 10 * 60 * 1000;
     const CLE_FILTRE = 'fzRecentsFiltre';
 
@@ -29,7 +34,7 @@
         ['lnh', 'LNH']
     ];
 
-    const etat = { pool: null, user: null, donnees: null, offres: [], bilan: null, filtre: 'tout', minuteur: null, luA: 0 };
+    const etat = { pool: null, user: null, donnees: null, offres: [], bilan: null, filtre: 'tout', minuteur: null, luA: 0, butsVus: new Set() };
 
     // ---------- outils ----------
     const esc = v => String(v == null ? '' : v)
@@ -60,14 +65,28 @@
     const heure = iso => fmtHeure.format(new Date(iso)).replace(':', ' h ');
 
     /** « il y a 4 min », « 14 h 12 », ou rien pour une date seule. */
+    /** « il y a 10 secondes », « il y a 7 minutes », « il y a 2 h », sinon l'heure. */
+    function depuis(iso) {
+        const ms = Date.now() - Date.parse(iso);
+        if (!Number.isFinite(ms)) return '';
+        const s = Math.max(0, Math.round(ms / 1000));
+        if (s < 5) return 'à l’instant';
+        if (s < 60) return `il y a ${s} secondes`;
+        const min = Math.floor(s / 60);
+        if (min < 60) return `il y a ${min} minute${min > 1 ? 's' : ''}`;
+        const h = Math.floor(min / 60);
+        if (h < 12) return `il y a ${h} h`;
+        return heure(iso);
+    }
+
     function quand(entree) {
         if (!entree.moment || entree.dateSeule) return '';
-        const ms = Date.now() - Date.parse(entree.moment);
-        if (!Number.isFinite(ms)) return '';
-        if (ms < 60000) return 'à l’instant';
-        if (ms < 3600000) return `il y a ${Math.round(ms / 60000)} min`;
-        return heure(entree.moment);
+        return depuis(entree.moment);
     }
+    const quandHTML = (entree, classe = 'rc-quand') => {
+        const texte = quand(entree);
+        return texte ? `<span class="${classe}" data-moment="${esc(entree.moment)}">${esc(texte)}</span>` : '';
+    };
 
     /** Le groupe d'une entrée : Aujourd’hui, Hier, un jour de la semaine, Plus tôt. */
     function groupeDe(entree, aujourdhui) {
@@ -93,32 +112,55 @@
     const faceIcone = txt => `<span class="rc-face is-icone">${txt}</span>`;
     const bouton = texte => `<span class="rc-cta">${esc(texte)}</span>`;
 
+    /** « 2 - 14:32 », « Entracte 2 », « Prol. - 3:10 », « Final (Prol.) ». */
+    function etatMatch(m) {
+        const per = m.typePeriode === 'OT' ? 'Prol.' : m.typePeriode === 'SO' ? 'TB' : (m.periode || '');
+        if (m.etat === 'FINAL') return m.typePeriode === 'OT' ? 'Final (Prol.)' : m.typePeriode === 'SO' ? 'Final (TB)' : 'Final';
+        if (m.entracte) return `Entracte ${per}`.trim();
+        return m.horloge ? `${per} - ${m.horloge}` : `${per}`;
+    }
+
+    const ICONE_MATCH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+    const BUT_RECENT_MS = 2 * 60 * 1000;
+
+    function equipeHTML(t, mene, marque) {
+        return `<span class="rc-eq${mene ? ' is-mene' : ''}">
+            <img class="rc-eq-logo" src="teams/${esc(t.abbrev)}.png" alt="" width="34" height="34" loading="lazy" onerror="this.style.visibility='hidden'">
+            <span class="rc-eq-nom"><b>${esc(t.ville || t.abbrev)}</b>${t.surnom ? `<small>${esc(t.surnom)}</small>` : ''}</span>
+            <span class="rc-eq-score${marque ? ' is-but' : ''}">${t.score ?? 0}</span>
+        </span>`;
+    }
+
     function entreesMatchs(matchs) {
         return (matchs || []).map(m => {
-            const score = m.etat === 'FUT' ? `${esc(m.visiteur.abbrev)} – ${esc(m.local.abbrev)}`
-                : `${esc(m.visiteur.abbrev)} ${m.visiteur.score ?? 0} – ${m.local.score ?? 0} ${esc(m.local.abbrev)}`;
+            const recent = m.but && (Date.now() - Date.parse(m.but)) < BUT_RECENT_MS;
+            // L'éclair ne joue qu'une fois par but : la relecture de 15 s redessine la carte.
+            const cleBut = `${m.id}|${m.but}`;
+            const nouveau = recent && !etat.butsVus.has(cleBut);
+            if (nouveau) etat.butsVus.add(cleBut);
+            const v = Number(m.visiteur.score) || 0, l = Number(m.local.score) || 0;
+            const db = m.dernierBut;
+            const marqueur = recent && db && db.club;
+            const tag = recent ? '<span class="rc-tag is-rouge rc-but">But !</span>'
+                : `<span class="rc-tag${m.etat === 'LIVE' ? ' is-rouge' : ''}">${m.etat === 'LIVE' ? '<span class="rc-direct">En direct</span>' : `${ICONE_MATCH}Rapport de match`}</span>`;
             const qui = [
                 ...m.joueurs.map(j => `${esc(j.nom.split(' ').slice(1).join(' ') || j.nom)}${j.points ? ` <b>${pts(j.points)}</b>` : ''}`),
                 ...m.clubs.map(c => `${esc(c.club)} (club)${c.points ? ` <b>${pts(c.points)}</b>` : ''}`)
             ].join(' · ');
-            let tag, ton = '';
-            if (m.etat === 'LIVE') {
-                const per = m.typePeriode === 'OT' ? 'Prolongation' : m.typePeriode === 'SO' ? 'Tirs de barrage'
-                    : m.periode ? `${m.periode}${m.periode === 1 ? 're' : 'e'} période` : 'En cours';
-                tag = `<span class="rc-direct">En direct · ${m.entracte ? 'Entracte' : esc(per)}${m.horloge && !m.entracte ? ` · ${esc(m.horloge)}` : ''}</span>`;
-                ton = 'is-rouge';
-            } else if (m.etat === 'FINAL') {
-                tag = 'Final'; ton = '';
-            } else {
-                tag = m.debut ? `Ce soir · ${esc(heure(m.debut))}` : 'Ce soir';
-            }
-            return {
-                cat: 'mien', mien: true, soir: true, moment: m.debut, dateSeule: true, tagHTML: tag, ton,
-                face: faceClub(m.etat === 'FUT' ? m.visiteur.abbrev : (m.joueurs.length ? m.visiteur.abbrev : (m.clubs[0] || {}).club || m.visiteur.abbrev)),
-                texte: `<strong>${score}</strong>${qui ? `<span class="rc-qui">${qui}</span>` : ''}`,
-                fin: m.etat === 'FUT' ? '' : `<span class="rc-pts${m.points > 0 ? ' is-plus' : ''}">${pts(m.points)}<small>tes pts</small></span>`,
-                href: m.id ? url('match.html', { id: m.id }) : null
-            };
+            const entree = { cat: 'lnh', mien: m.mien, match: true, moment: m.moment, jour: m.jour };
+            entree.carte = `<a class="rc-match${nouveau ? ' is-nouveau' : ''}" href="${esc(url('match.html', { id: m.id }))}">
+                <span class="rc-match-tete">${tag}${quandHTML(entree)}</span>
+                <span class="rc-match-corps">
+                    <span class="rc-equipes">
+                        ${equipeHTML(m.visiteur, v > l, marqueur === m.visiteur.abbrev)}
+                        ${equipeHTML(m.local, l > v, marqueur === m.local.abbrev)}
+                    </span>
+                    <span class="rc-match-etat${m.etat === 'LIVE' ? ' is-direct' : ''}">${esc(etatMatch(m))}<span class="rc-fleche" aria-hidden="true">›</span></span>
+                </span>
+                ${db && db.nom && m.etat === 'LIVE' ? `<span class="rc-match-but">Dernier but : <b>${esc(db.nom)}</b>${db.club ? ` (${esc(db.club)})` : ''}${db.periode ? ` · ${db.periode}${db.periode === 1 ? 're' : 'e'}` : ''}${db.temps ? ` · ${esc(db.temps)}` : ''}</span>` : ''}
+                ${m.mien ? `<span class="rc-match-moi"><span>${qui || 'Tes joueurs'}</span><span class="rc-pts${m.points > 0 ? ' is-plus' : ''}">${pts(m.points)} <small>tes pts</small></span></span>` : ''}
+            </a>`;
+            return entree;
         });
     }
 
@@ -223,10 +265,10 @@
     }
 
     // ---------- rendu ----------
-    function toutesLesEntrees() {
+    function toutesLesEntrees({ sansMatchs = false } = {}) {
         const d = etat.donnees || {};
         return [
-            ...entreesMatchs(d.ceSoir),
+            ...(sansMatchs ? [] : entreesMatchs(d.matchs)),
             ...entreesOffres(etat.offres),
             ...entreeBilan(etat.bilan),
             ...entreesBlessures(d.blessures),
@@ -238,18 +280,19 @@
     function garder(e, filtre) {
         if (filtre === 'tout') return true;
         if (filtre === 'mien') return e.mien;
-        return e.cat === filtre;
+        return e.cat === filtre;  // les matchs sont « LNH », les miens aussi « Mes joueurs »
     }
 
     function ligneHTML(e) {
+        if (e.carte) return `<li class="rc-li-match${e.mien ? ' is-mien' : ''}">${e.carte}</li>`;
         const balise = e.href ? 'a' : 'div';
         const lien = e.href ? ` href="${esc(e.href)}"` : '';
-        const moment = quand(e);
+        const moment = quandHTML(e);
         const tag = e.tagHTML || esc(e.tag);
         return `<li class="${e.mien ? 'is-mien' : ''}"><${balise} class="rc-ligne"${lien}>
             ${e.face}
             <span class="rc-txt">
-                <span class="rc-tag ${e.ton || ''}">${tag}${moment ? ` <span class="rc-quand">· ${esc(moment)}</span>` : ''}</span>
+                <span class="rc-tag ${e.ton || ''}">${tag}${moment ? ` · ${moment}` : ''}</span>
                 <span class="rc-texte">${e.texte}</span>
             </span>
             ${e.fin || ''}
@@ -257,7 +300,7 @@
     }
 
     function rendreFiltres() {
-        const alertes = toutesLesEntrees().filter(e => e.mien && (e.ton === 'is-rouge' || e.tag === 'Offre reçue') && !e.soir).length;
+        const alertes = toutesLesEntrees({ sansMatchs: true }).filter(e => e.mien && !e.match && (e.ton === 'is-rouge' || e.tag === 'Offre reçue')).length;
         document.getElementById('rcFiltres').innerHTML = FILTRES.map(([cle, libelle]) =>
             `<button type="button" class="rc-chip" data-filtre="${cle}" aria-pressed="${cle === etat.filtre}">${libelle}${cle === 'mien' && alertes ? `<b>${alertes}</b>` : ''}</button>`
         ).join('');
@@ -270,15 +313,13 @@
         if (!d) return;
         const aujourdhui = d.aujourdhui || journee(new Date());
         const entrees = toutesLesEntrees().filter(e => garder(e, etat.filtre));
-        const soir = entrees.filter(e => e.soir);
-        const reste = entrees.filter(e => !e.soir)
+        const reste = entrees
             .sort((a, b) => {
                 if (!a.moment || !b.moment) return (a.moment ? -1 : b.moment ? 1 : 0) || (b.mien - a.mien);
                 return (Date.parse(b.moment) || 0) - (Date.parse(a.moment) || 0) || (b.mien - a.mien);
             });
 
         const groupes = [];
-        if (soir.length) groupes.push({ titre: 'Ce soir', entrees: soir });
         const parCle = new Map();
         for (const e of reste) {
             const g = groupeDe(e, aujourdhui);
@@ -322,24 +363,16 @@
         return r.json();
     }
 
-    async function charger({ force = false } = {}) {
+    async function charger({ force = false, direct = false } = {}) {
         const enc = encodeURIComponent(etat.pool);
         const memo = window.FZMemo;
         const cle = `recents:${etat.pool}`;
         if (force && memo) memo.oublier(cle);
         const principal = memo ? memo.charger(cle, () => lireJSON(`/api/pools/${enc}/recents`), { fraisMs: FRAIS_MS })
             : lireJSON(`/api/pools/${enc}/recents`);
-        // Même clé que la pastille de la barre (navbar.js) : déjà en mémoire.
-        const offres = (memo ? memo.charger(`nav:echanges:${etat.user}`, () => lireJSON(`/trades/pending/${encodeURIComponent(etat.user)}`), { fraisMs: FRAIS_MS })
-            : lireJSON(`/trades/pending/${encodeURIComponent(etat.user)}`)).catch(() => []);
-        const bilan = (memo ? memo.charger(`recents:bilan:${etat.pool}`, () => lireJSON(`/api/pools/${enc}/bilan-soiree`), { fraisMs: BILAN_MS })
-            : lireJSON(`/api/pools/${enc}/bilan-soiree`)).catch(() => null);
-
-        offres.then(liste => {
-            etat.offres = (Array.isArray(liste) ? liste : []).filter(t => t.draftName === etat.pool);
-            if (etat.donnees) rendre();
-        });
-        bilan.then(b => { etat.bilan = b; if (etat.donnees) rendre(); });
+        // Pendant le direct, seul le fil principal se relit : les offres et
+        // le bilan gardent leur lecture (pas de requête en base toutes les 15 s).
+        if (!direct) chargerAnnexes(enc, memo);
 
         try {
             etat.donnees = await principal;
@@ -354,12 +387,26 @@
         planifier();
     }
 
-    /** Une minute tant qu'un de mes matchs est en jeu ; sinon rien. */
+    function chargerAnnexes(enc, memo) {
+        // Même clé que la pastille de la barre (navbar.js) : déjà en mémoire.
+        const offres = (memo ? memo.charger(`nav:echanges:${etat.user}`, () => lireJSON(`/trades/pending/${encodeURIComponent(etat.user)}`), { fraisMs: FRAIS_MS })
+            : lireJSON(`/trades/pending/${encodeURIComponent(etat.user)}`)).catch(() => []);
+        const bilan = (memo ? memo.charger(`recents:bilan:${etat.pool}`, () => lireJSON(`/api/pools/${enc}/bilan-soiree`), { fraisMs: BILAN_MS })
+            : lireJSON(`/api/pools/${enc}/bilan-soiree`)).catch(() => null);
+
+        offres.then(liste => {
+            etat.offres = (Array.isArray(liste) ? liste : []).filter(t => t.draftName === etat.pool);
+            if (etat.donnees) rendre();
+        });
+        bilan.then(b => { etat.bilan = b; if (etat.donnees) rendre(); });
+    }
+
+    /** Toutes les 15 s tant qu'un match du jour est en jeu ; sinon rien. */
     function planifier() {
         clearTimeout(etat.minuteur);
-        const enJeu = ((etat.donnees && etat.donnees.ceSoir) || []).some(m => m.etat === 'LIVE');
+        const enJeu = ((etat.donnees && etat.donnees.matchs) || []).some(m => m.etat === 'LIVE');
         if (!enJeu || document.hidden) return;
-        etat.minuteur = setTimeout(() => charger({ force: true }), DIRECT_MS);
+        etat.minuteur = setTimeout(() => charger({ force: true, direct: true }), DIRECT_MS);
     }
 
     // ---------- démarrage ----------
@@ -405,6 +452,14 @@
         if (etat.pool) charger();
     });
     setInterval(majFraicheur, 30000);
+    // « il y a 10 secondes » avance sans relire le serveur.
+    setInterval(() => {
+        if (document.hidden) return;
+        document.querySelectorAll('#rcFil [data-moment]').forEach(el => {
+            const t = depuis(el.dataset.moment);
+            if (t && el.textContent !== t) el.textContent = t;
+        });
+    }, 5000);
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer);
     else demarrer();

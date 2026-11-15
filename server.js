@@ -760,6 +760,7 @@ contexteRoutes.ficheReleve = (nom) => {
 contexteRoutes.blessesLNH = async () => ((await lireRapportBlesses()) || {}).injuries || [];
 contexteRoutes.journalLNH = () => loadNhlTransactions();
 contexteRoutes.soireesEnDirect = () => pointsEnDirect.lireSoirees();
+contexteRoutes.butDe = (id) => suiviButs.butDe(id);
 
 const comptes = routesIdentite.monter(app, contexteRoutes);
 // Connexion avec Google : inactive (bouton masqué) tant que les deux clés ne
@@ -2588,6 +2589,7 @@ async function releverMatchsEnDirect() {
     // que la carte d'accueil n'affiche pas (type de match, heure de début,
     // matchs terminés).
     liveGamesCache = { data: payload, brut: allGames, fetchedAt: now };
+    suiviButs.observer(allGames);
     return { ...payload, lu: now };
 }
 
@@ -2610,6 +2612,12 @@ async function lireMatchsBruts() {
  * la mise au jeu est revérifié sur sa feuille, la source de match.html. Son
  * état n'est jamais déduit de l'heure.
  */
+/**
+ * L'heure de chaque but, vue d'ici (lib/recents.js, creerSuiviButs) : Récents
+ * fait remonter le match d'un but en tête du fil, « il y a 10 secondes ».
+ * Nourri par les deux lectures de pointage ci-dessous, sans appel de plus.
+ */
+const suiviButs = require('./lib/recents.js').creerSuiviButs();
 const scoreDuJourCache = new Map(); // jour → { games, lu }
 const scoreDuJourEnVol = new Map(); // jour → Promise
 const SCORE_JOUR_CHAUD_MS = 30 * 1000;
@@ -2632,6 +2640,7 @@ async function lireScoreDuJourBrut(jour) {
             if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
             const brut = await reponse.json();
             const games = await verifierMatchsFiges(brut.games || []);
+            suiviButs.observer(games);
             scoreDuJourCache.delete(jour);
             scoreDuJourCache.set(jour, { games, lu: Date.now() });
             while (scoreDuJourCache.size > 12) scoreDuJourCache.delete(scoreDuJourCache.keys().next().value);

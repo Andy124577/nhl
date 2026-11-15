@@ -20,7 +20,10 @@ const authz = require('../lib/authz.js');
 const dates = require('../lib/dates.js');
 const recents = require('../lib/recents.js');
 const { nomAffiche } = require('../lib/bilanSoiree.js');
-const { getTeamAbbreviationFromName } = require('../lib/roster.js');
+const { getTeamAbbreviationFromName, NHL_CLUB_FULLNAME } = require('../lib/roster.js');
+
+/** Ville et surnom des cartes de match ; Utah a changé de surnom. */
+const NOMS_CLUBS = { ...NHL_CLUB_FULLNAME, UTA: 'Utah Mammoth' };
 const { buildHeadshotUrl } = require('../headshots.js');
 const { creerMemoireLectures } = require('../lib/memoireLectures.js');
 // La nature d'une blessure en français : la même table que les pastilles
@@ -38,7 +41,8 @@ function monter(app, ctx) {
         journalLNH = async () => ({ transactions: [] }),
         soireesEnDirect = async () => ({ joueurs: {}, clubs: {} }),
         matchsDuJour = async () => [],
-        ficheReleve = () => null
+        ficheReleve = () => null,
+        butDe = () => null
     } = ctx;
 
     const lectures = creerMemoireLectures({
@@ -84,7 +88,7 @@ function monter(app, ctx) {
                 prudemment(blessesLNH(), [], 'blessés'),
                 prudemment(journalLNH(), { transactions: [] }, 'mouvements LNH'),
                 prudemment(soireesEnDirect(), { joueurs: {}, clubs: {} }, 'points en direct'),
-                monEquipe ? prudemment(matchsDuJour(aujourdhui), [], 'matchs du jour') : [],
+                prudemment(matchsDuJour(aujourdhui), [], 'matchs du jour'),
                 prudemment(activiteDuPool(enveloppe.id), null, 'activité du pool')
             ]);
 
@@ -114,7 +118,7 @@ function monter(app, ctx) {
                 poolName: nomPool,
                 monEquipe: monEquipe ? nomEquipe(monEquipe) : null,
                 aujourdhui,
-                ceSoir: recents.matchsDeMaSoiree(matchs, { mesJoueurs, mesClubs, soirees, aujourdhui }),
+                matchs: recents.rapportsDeMatch(matchs, { mesJoueurs, mesClubs, soirees, aujourdhui, butDe, nomsClubs: NOMS_CLUBS }),
                 blessures: recents.blessuresDuPool(blesses, index, { aujourdhui, nomEquipe }).map(b => avecPhoto({
                     ...b,
                     natureFr: injNatureFr({ injuryType: b.nature, injuryDetail: b.detail, injurySide: b.cote, status: b.statut }) || null
