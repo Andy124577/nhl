@@ -662,7 +662,7 @@ html.fz-home-pending #fzDashSection { display: block; min-height: 100vh; padding
 .sl-state { display: flex; flex-direction: column; align-items: center; }
 /* Rouge texte du thème sombre, fixe : la carte reste sombre en clair. */
 .sl-period {
-    color: #FF5C66;
+    color: #FF8A80;
     font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
     letter-spacing: .04em; white-space: nowrap;
 }
@@ -725,7 +725,7 @@ html.fz-home-pending #fzDashSection { display: block; min-height: 100vh; padding
 }
 .sl-goal-tag {
     margin-left: calc(var(--su) * 20);
-    color: #FF5C66;
+    color: #FF8A80;
     font-size: calc(var(--su) * 17); font-weight: 700;
     letter-spacing: .02em; text-transform: uppercase;
 }
@@ -1175,7 +1175,7 @@ html[data-theme="light"] .btn-hero-secondary:hover {
 }
 /* Rouge texte du thème sombre, comme la période : la carte reste sombre. */
 .sl-kick {
-    color: #FF5C66;
+    color: #FF8A80;
     font-size: calc(var(--su) * 19); font-weight: 700; line-height: 1;
     letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
 }

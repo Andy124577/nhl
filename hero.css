@@ -19,7 +19,7 @@
 .fz-arena-hero .hero-badge > span { width: 25px; height: 3px; background: var(--arena-red); }
 .fz-arena-hero .hero-headline { font: 700 clamp(64px, 6.3vw, 104px)/.97 'Saira Condensed', Impact, sans-serif; letter-spacing: .01em; color: #F5F5F7; margin: 0 0 24px; text-transform: uppercase; }
 /* Rouge en TEXTE : la valeur sombre, fixe (la scène reste sombre). */
-.fz-arena-hero .hero-headline > span { color: #FF5C66; }
+.fz-arena-hero .hero-headline > span { color: #FF8A80; }
 .fz-arena-hero .hero-sub { font-size: clamp(14px, 1.13vw, 17px); line-height: 1.75; color: #F5F5F7; margin-bottom: 28px; max-width: 420px; }
 .fz-arena-hero .hero-actions { gap: 12px; margin: 0 0 18px; flex-direction: row; }
 .fz-arena-hero .btn-hero-primary, .fz-arena-hero .btn-hero-secondary { min-height: 48px; border-radius: 5px; padding: 14px 18px; font-size: 13px; font-weight: 700; color: var(--on-primary); box-shadow: none; transition: background .18s, border-color .18s; }

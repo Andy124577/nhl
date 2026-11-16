@@ -91,13 +91,14 @@
     color: var(--text-secondary);
 }
 
-.fzid-slot.is-me { border-color: var(--primary); }
+.fzid-slot.is-me { border-color: var(--s-ink); }
 
 .fzid-toi {
     padding: 3px 7px;
     border-radius: 999px;
-    background: var(--primary);
-    color: var(--on-primary);
+    /* « Toi » est une pastille neutre : le rouge reste à l'action. */
+    background: var(--s-ink);
+    color: var(--s-on-ink);
     font: 700 9px/1 'Helvetica Neue', Helvetica, sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -219,8 +220,7 @@
     border-color: var(--fzd-border-strong);
     color: var(--fzd-text-fainter);
 }
-.fz-dash-poolchips .fzid-slot.is-me { border-color: var(--fzd-accent); }
-.fz-dash-poolchips .fzid-toi { background: var(--fzd-accent-fill); color: var(--fzd-on-accent); }
+.fz-dash-poolchips .fzid-slot.is-me { border-color: var(--s-ink); }
 .fz-dash-poolchips .fzid-btn.is-primary {
     background: var(--fzd-solid);
     color: var(--fzd-on-solid);

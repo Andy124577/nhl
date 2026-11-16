@@ -9,21 +9,9 @@
    ============================================================ */
 
 html body.fz-recents {
-    --s-bg: #0F1316;
-    --s-me: #1A1E1D;
-    --s-line: #2A2E2D;
-    --s-chip: #2A2E2D;
-    --s-face: #1C201F;
-    --s-ink: #F3F1EE;
-    --s-on-ink: #0B0B0C;
-    --s-ink2: #C9C7C4;
-    --s-mute: #A8A6A3;
-    --s-faint: #928F8C;
-    --s-red: #E5372B;
-    --s-red-ink: #FF8A80;
-    --s-green: #7FD49B;
-    --s-gold: #E8B26A;
-    --s-blue: #8FB8FF;
+    /* Palette : couleurs.css. La page est à plat : les avatars prennent le
+       gris des cartes pour se détacher du fond. */
+    --s-face: var(--s-card);
 
     margin: 0;
     min-height: 100vh;
@@ -34,21 +22,7 @@ html body.fz-recents {
     overflow-x: hidden;
 }
 html[data-theme="light"] body.fz-recents {
-    --s-bg: #F3F2EF;
-    --s-me: #EBE9E5;
-    --s-line: #E2E0DC;
-    --s-chip: #E6E4E0;
-    --s-face: #E6E4E0;
-    --s-ink: #141416;
-    --s-on-ink: #FFFFFF;
-    --s-ink2: #34343A;
-    --s-mute: #5E5C59;
-    --s-faint: #74716D;
-    --s-red: #D52B1E;
-    --s-red-ink: #B3241A;
-    --s-green: #1D8048;
-    --s-gold: #976111;
-    --s-blue: #2457B8;
+    --s-face: var(--s-line);
 }
 
 body.fz-recents .rc { max-width: 720px; margin: 0 auto; padding: 18px 0 40px; }
@@ -109,7 +83,7 @@ body.fz-recents .rc-tag { font: 600 11px/1.2 'Saira', sans-serif; letter-spacing
 body.fz-recents .rc-tag.is-rouge { color: var(--s-red-ink); }
 body.fz-recents .rc-tag.is-vert { color: var(--s-green); }
 body.fz-recents .rc-tag.is-or { color: var(--s-gold); }
-body.fz-recents .rc-tag.is-bleu { color: var(--s-blue); }
+body.fz-recents .rc-tag.is-bleu { color: var(--s-info); }
 body.fz-recents .rc-tag.is-encre { color: var(--s-ink); }
 body.fz-recents .rc-quand { font-weight: 500; letter-spacing: .2px; text-transform: none; color: var(--s-faint); }
 body.fz-recents .rc-direct { display: inline-flex; align-items: center; gap: 6px; }

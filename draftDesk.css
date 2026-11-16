@@ -1474,9 +1474,9 @@ html[data-theme="dark"] body.fz-draft .fzd-pos-tag { --fzd-tag-ground: var(--bg-
 
 body.fz-draft .fzd-pos-tag[data-pos="C"],
 body.fz-draft .fzd-pos-tag[data-pos="L"],
-body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-fg: var(--success); }
+body.fz-draft .fzd-pos-tag[data-pos="R"] { --fzd-tag-fg: var(--position-att); }
 body.fz-draft .fzd-pos-tag[data-pos="D"] { --fzd-tag-fg: var(--position-def); }
-body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-fg: var(--warning); }
+body.fz-draft .fzd-pos-tag[data-pos="G"] { --fzd-tag-fg: var(--position-gar); }
 body.fz-draft .fzd-pos-tag[data-pos="star"] { --fzd-tag-fg: var(--rookie); }
 body.fz-draft .fzd-pos-tag[data-pos="T"] { --fzd-tag-bg: var(--fzd-tile-bg); --fzd-tag-fg: var(--fzd-text-muted); }
 

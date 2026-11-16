@@ -1,0 +1,103 @@
+/* ============================================================
+   COULEURS — la palette de Fantazy, une seule source.
+
+   Chaque couleur a un rôle, et un rôle n'a qu'une couleur (DESIGN.md,
+   « Couleurs »). Les pages refaites lisent ces jetons --s-* ; les anciennes
+   pages lisent ceux d'index.css (--primary, --success…), réglés sur les
+   mêmes valeurs. Une page ne redéfinit ici que ce qui lui est propre.
+
+   Méthode (guide « Choosing colours for Fantazy », 2026-11-16) :
+   - Cinq gris de surface : page, carte, surélevé, séparateur, contour.
+   - Trois niveaux de texte lisibles, plus un pour le décoratif.
+   - Un seul rouge : la marque, l'action principale, le direct. Sa version
+     texte (--s-red-ink) sert aux liens, à l'onglet actif, à la flèche de
+     tri et à l'anneau de focus.
+   - Les couleurs d'état et de position partagent la même clarté et la même
+     intensité (OKLCH ≈ 79 / 0,11 au sombre, ≈ 52 / 0,12 au clair) : seule
+     la teinte change, aucune ne crie plus fort que les autres.
+   ============================================================ */
+:root {
+    /* Surfaces */
+    --s-bg: #0F1316;            /* la page */
+    --s-card: #1C201F;          /* cartes, feuilles, dialogues */
+    --s-raise: #242827;         /* surélevé : survol, bouton plein neutre */
+    --s-line: #2A2E2D;          /* séparateurs (décoratifs) */
+    --s-line2: var(--s-line);
+    --s-btn-line: #767B7A;      /* contour des champs, interrupteurs, boutons contour : 3:1 */
+    /* Rôles qui reprennent ces gris */
+    --s-chip: var(--s-line);
+    --s-head: var(--s-bg);
+    --s-face: var(--s-bg);
+    --s-btn: var(--s-raise);
+    --s-me: var(--s-raise);     /* ta ligne */
+    --s-switch: var(--s-btn-line);
+
+    /* Texte */
+    --s-ink: #F3F1EE;           /* texte et chiffres */
+    --s-ink2: #C9C7C4;          /* secondaire : club, position, heure */
+    --s-mute: #A8A6A3;          /* discret : en-têtes de colonne, indices */
+    --s-faint: var(--s-mute);   /* ancien quatrième niveau, fondu dans --s-mute */
+    --s-dim: #5A5A60;           /* décoratif ou désactivé, jamais à lire */
+    --s-on-ink: #0B0B0C;        /* texte sur une pastille --s-ink */
+
+    /* Accent */
+    --s-red: #E5372B;           /* marque et direct */
+    --s-red-fill: #D9372B;      /* bouton principal, texte blanc (4,6:1) */
+    --s-on-red: #FFFFFF;
+    --s-red-ink: #FF8A80;       /* liens, onglet actif, tri, focus, erreur */
+    --s-red-soft: rgba(229, 55, 43, .16);
+
+    /* États */
+    --s-green: #7FD49B;         /* bon : points gagnés, échange conclu */
+    --s-green-soft: rgba(127, 212, 155, .16);
+    --s-gold: #E8B26A;          /* en attente : en vente, échéance */
+    --s-gold-soft: rgba(232, 178, 106, .16);
+    --s-info: #8FBEFA;          /* nouvelle neutre : transaction LNH */
+    --s-info-soft: rgba(143, 190, 250, .16);
+
+    /* Positions : ATT, DÉF, GAR, recrue ; l'équipe reste neutre.
+       En triplets RGB, pour rgba(var(--s-pos-att), .16). */
+    --s-pos-att: 127, 212, 155;   /* #7FD49B */
+    --s-pos-def: 128, 199, 248;   /* #80C7F8 */
+    --s-pos-gar: 216, 197, 105;   /* #D8C569 */
+    --s-pos-rec: 200, 164, 243;   /* #C8A4F3 */
+    --s-pos-eq: 201, 199, 196;    /* #C9C7C4 */
+}
+
+html[data-theme="light"] {
+    --s-bg: #F3F2EF;
+    --s-card: #FFFFFF;
+    --s-raise: #F6F5F2;
+    --s-line: #E8E6E2;
+    --s-btn-line: #85827D;
+    /* Au clair, la page et le surélevé sont presque égaux : les pastilles,
+       les avatars et ta ligne prennent le gris des séparateurs pour rester
+       visibles sur la page comme sur une carte blanche. */
+    --s-head: var(--s-raise);
+    --s-face: var(--s-line);
+    --s-me: var(--s-line);
+
+    --s-ink: #141416;
+    --s-ink2: #34343A;
+    --s-mute: #5E5C59;
+    --s-dim: #A29F9A;
+    --s-on-ink: #FFFFFF;
+
+    --s-red: #D52B1E;
+    --s-red-fill: #D52B1E;
+    --s-red-ink: #B3241A;
+    --s-red-soft: rgba(213, 43, 30, .1);
+
+    --s-green: #1A7A43;
+    --s-green-soft: rgba(26, 122, 67, .1);
+    --s-gold: #976111;
+    --s-gold-soft: rgba(151, 97, 17, .1);
+    --s-info: #286CAB;
+    --s-info-soft: rgba(40, 108, 171, .1);
+
+    --s-pos-att: 26, 122, 67;     /* #1A7A43 */
+    --s-pos-def: 40, 108, 171;    /* #286CAB */
+    --s-pos-gar: 124, 103, 5;     /* #7C6705 */
+    --s-pos-rec: 122, 84, 162;    /* #7A54A2 */
+    --s-pos-eq: 52, 52, 58;       /* #34343A */
+}

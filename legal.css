@@ -1,56 +1,43 @@
 /* Feuille de style commune aux pages légales (confidentialité, conditions). */
 
 :root {
-  /* Reprise des jetons d'index.css (échelle d'Apple, rouge signal) — voir
-     son commentaire. Les pages légales ne chargent pas index.css : sans
-     cette copie, navbar.css et fzDialog.css tomberaient dans le vide ici. */
-  --bg: #0F1316;
-  --bg-page: #0F1316;
-  --card: #1C201F;
+  /* Les jetons d'index.css que navbar.css et fzDialog.css lisent, branchés
+     sur la palette commune (couleurs.css). Les pages légales ne chargent pas
+     index.css : sans cette copie, ces deux feuilles tomberaient dans le vide. */
+  --bg: var(--s-bg);
+  --bg-page: var(--s-bg);
+  --card: var(--s-card);
   --navbar-bg: #000000;
   --navbar-glass: rgba(22, 22, 23, 0.8);
-  --navbar-border: #353939;
-  --border-light: #353939;
-  --border-gray: #636366;
-  --bg-hover: #262A29;
-  --bg-gray-light: #262A29;
-  /* Le rouge : l'aplat (identique dans les deux thèmes), son survol, son
-     libellé, et le rouge EN TEXTE, qui change de valeur par thème. */
-  --primary: #E62030;
-  --primary-deep: #C41A28;
-  --primary-rgb: 230, 32, 48;
-  --primary-text: #FF5C66;
-  --on-primary: #FFFFFF;
+  --navbar-border: var(--s-line);
+  --border-light: var(--s-line);
+  --border-gray: var(--s-btn-line);
+  --bg-hover: var(--s-raise);
+  --bg-gray-light: var(--s-raise);
+  /* Le rouge : l'aplat, son survol, son libellé, et le rouge EN TEXTE. */
+  --primary: var(--s-red-fill);
+  --primary-deep: #BC2F25;
+  --primary-rgb: 229, 55, 43;
+  --primary-text: var(--s-red-ink);
+  --on-primary: var(--s-on-red);
   --danger: var(--primary-text);
   --danger-deep: var(--primary);
-  --success: #30D158;
+  --success: var(--s-green);
   --on-success: #000000;
-  --warning: #FFD60A;
-  --text-main: #F5F5F7;
-  --text-secondary: #A1A1A6;
-  --text-light-gray: #8E8E93;
+  --warning: var(--s-gold);
+  --text-main: var(--s-ink);
+  --text-secondary: var(--s-mute);
+  --text-light-gray: var(--s-mute);
   --overlay-dark: rgba(0, 0, 0, 0.6);
 }
 
 html[data-theme="light"] {
-  --bg: #F5F5F7;
-  --bg-page: #F5F5F7;
-  --card: #FFFFFF;
-  --navbar-bg: #FBFBFD;
-  --navbar-glass: rgba(251, 251, 253, 0.8);
-  --navbar-border: #D2D2D7;
-  --border-light: #D2D2D7;
-  --border-gray: #86868B;
-  --bg-hover: #E8E8ED;
-  --bg-gray-light: #F5F5F7;
-  /* #D70015 : 4,94:1 sur la page, 5,38:1 sur une carte. */
-  --primary-text: #D70015;
-  --success: #1F7A35;
+  --navbar-bg: #FBFAF8;
+  --navbar-glass: rgba(251, 250, 248, 0.8);
+  --primary-deep: #B3241A;
+  --primary-rgb: 213, 43, 30;
   --on-success: #FFFFFF;
-  --warning: #B25000;
-  --text-main: #1D1D1F;
-  --text-secondary: #6E6E73;
-  --text-light-gray: #86868B;
+  --bg-hover: var(--s-line);
   --overlay-dark: rgba(0, 0, 0, 0.4);
 }
 

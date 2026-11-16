@@ -207,7 +207,7 @@ html[data-theme="dark"] .fz-mobile-home {
     .fzm-news-hero-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #000000ee, #00000035), linear-gradient(0deg, #000000dd, transparent); z-index: -1; }
     .fzm-news-hero-copy { color: #fff; }
     /* Toujours sur photo sombre : le rouge texte du thème sombre, fixe. */
-    .fzm-news-hero-copy > span { color: #FF5C66; background: color-mix(in srgb, var(--primary) 16%, #1C1C1E); padding: 4px 6px; border-radius: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .fzm-news-hero-copy > span { color: #FF8A80; background: color-mix(in srgb, var(--primary) 16%, #1C1C1E); padding: 4px 6px; border-radius: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
     .fzm-news-hero-copy h2 { font-size: clamp(17px, 4.4vw, 26px); line-height: 1.08; margin: 7px 0 5px; max-width: 26ch; }
     .fzm-news-hero-copy small { color: #A1A1A6; font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
     .fzm-news-hero-card > b { position: absolute; right: 12px; bottom: 16px; color: white; font-size: 22px; }
@@ -275,7 +275,7 @@ html[data-theme="dark"] .fz-mobile-home {
     #fzmHeroSlot .fzm-draft-portrait { position: absolute; z-index: 0; right: -12%; bottom: 0; height: 100%; width: 85%; object-fit: cover; object-position: top; opacity: .8; }
     .fzm-draft-content { position: relative; z-index: 2; }
     /* Carte sombre dans les deux thèmes : rouge texte sombre, fixe. */
-    .fzm-draft-badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 9px; background: rgba(var(--primary-rgb), .16); color: #FF5C66; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .16em; border-radius: 8px; }
+    .fzm-draft-badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 9px; background: rgba(var(--primary-rgb), .16); color: #FF8A80; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .16em; border-radius: 8px; }
     .fzm-draft-badge > span { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
     .fzm-draft-title { margin: 8px 0 12px; font: 800 clamp(24px, 6vw, 38px)/1.1 'Saira', sans-serif; max-width: 16ch; letter-spacing: -.04em; }
     .fzm-draft-stats { display: flex; gap: 18px; margin-bottom: 12px; }
@@ -283,7 +283,7 @@ html[data-theme="dark"] .fz-mobile-home {
     .fzm-draft-stats span, .fzm-draft-clock > span { display: block; color: #A1A1A6; font-size: 9px; text-transform: uppercase; letter-spacing: .13em; margin-bottom: 5px; }
     .fzm-draft-stats strong { font: 700 26px/1 'Saira Condensed', sans-serif; }
     .fzm-draft-clock { margin-bottom: 12px; }
-    .fzm-draft-clock strong { font: 800 28px/1 'Saira', sans-serif; color: #FF5C66; font-variant-numeric: tabular-nums; }
+    .fzm-draft-clock strong { font: 800 28px/1 'Saira', sans-serif; color: #FF8A80; font-variant-numeric: tabular-nums; }
     .fz-mobile-home .fzm-draft-cta { display: inline-flex; align-items: center; justify-content: center; gap: 15px; min-height: 44px; padding: 10px 18px; border: 1px solid var(--primary); border-radius: 8px; background: var(--primary); color: var(--on-primary); font-weight: 700; font-size: 14px; }
     .fzm-draft-cta > span { font-size: 22px; }
 
