@@ -6,8 +6,8 @@
    mêmes champs que la page de création. Quelqu'un qui les regarde
    doit reconnaître ce qu'il verra ensuite.
 
-   Couleurs de position : ATT --success, DÉF --position-def, GAR
-   --warning, REC --rookie, ÉQU neutre. DÉF a quitté l'accent du site
+   Couleurs de position : ATT --position-att, DÉF --position-def, GAR
+   --position-gar, REC --rookie, ÉQU neutre (couleurs.css). DÉF a quitté l'accent du site
    (cyan, puis brique) pour sa propre couleur de l'ensemble sémantique ;
    ÉQU, hors de l'ensemble, retombe sur l'échelle neutre (Règle
    « L'ensemble sémantique est clos »). Voiles de 6 à 10 % seulement :
@@ -140,9 +140,9 @@ html.fz-auth #heroCardDraft { display: none; }
     letter-spacing: .04em;
 }
 
-.dm-tag.att { background: color-mix(in srgb, var(--success) 10%, transparent);      color: var(--success); }
+.dm-tag.att { background: color-mix(in srgb, var(--position-att) 10%, transparent);      color: var(--position-att); }
 .dm-tag.def { background: color-mix(in srgb, var(--position-def) 10%, transparent); color: var(--position-def); }
-.dm-tag.gar { background: color-mix(in srgb, var(--warning) 8%, transparent);       color: var(--warning); }
+.dm-tag.gar { background: color-mix(in srgb, var(--position-gar) 8%, transparent);       color: var(--position-gar); }
 /* 6 % : le violet sombre n'a que 4,83:1 sur la carte, un voile plus dense
    le ferait passer sous 4,5:1. */
 .dm-tag.rec { background: color-mix(in srgb, var(--rookie) 6%, transparent);        color: var(--rookie); }
@@ -460,9 +460,9 @@ html[data-theme="light"] .dm-bar    { background: rgba(0,0,0,.09); }
     font-weight: 900;
 }
 
-.hiw-tag.att { background: color-mix(in srgb, var(--success) 10%, transparent);      color: var(--success); }
+.hiw-tag.att { background: color-mix(in srgb, var(--position-att) 10%, transparent);      color: var(--position-att); }
 .hiw-tag.def { background: color-mix(in srgb, var(--position-def) 10%, transparent); color: var(--position-def); }
-.hiw-tag.gar { background: color-mix(in srgb, var(--warning) 8%, transparent);       color: var(--warning); }
+.hiw-tag.gar { background: color-mix(in srgb, var(--position-gar) 8%, transparent);       color: var(--position-gar); }
 
 .hiw-row-pts { font-weight: 900; color: var(--primary-text); font-size: .64rem; }
 

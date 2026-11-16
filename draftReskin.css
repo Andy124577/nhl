@@ -18,34 +18,14 @@
    ============================================================ */
 
 html body.fz-draft {
-    --s-bg: #0F1316;
-    --s-card: #1C201F;
-    --s-raise: #242827;
-    --s-sel: #202423;
-    --s-line: #2F3333;
-    --s-line2: #2A2E2D;
-    --s-chip-line: #3C4040;
-    --s-head: #141819;
-    --s-face: #0F1316;
-    --s-ink: #F3F1EE;
-    --s-ink2: #C9C7C4;
-    --s-mute: #A8A6A3;
-    --s-faint: #928F8C;
-    --s-dim: #85827F;
-    --s-ghost: #454949;
-    --s-red: #E5372B;
-    --s-red-soft: rgba(229, 55, 43, .16);
-    --s-red-ink: #FF8A80;
-    --s-green: #7FD49B;
-    --s-watch: #9CC9FF;
-    /* Pastilles de position, couleur de la maquette (texte, puis fond à 16 %) */
-    --s-pos-c: 156, 201, 255;
-    --s-pos-ag: 127, 212, 155;
-    --s-pos-ad: 232, 178, 106;
-    --s-pos-d: 201, 162, 255;
-    --s-pos-g: 255, 138, 128;
-    --s-pos-eq: 110, 220, 215;
-    --s-pos-rec: 201, 199, 196;
+    /* Palette : couleurs.css. Les pastilles de position du repêchage
+       reprennent les couleurs de position du site : les trois attaquants
+       (C, AG, AD) partagent celle de l'attaque, comme au pool. */
+    --s-pos-c: var(--s-pos-att);
+    --s-pos-ag: var(--s-pos-att);
+    --s-pos-ad: var(--s-pos-att);
+    --s-pos-d: var(--s-pos-def);
+    --s-pos-g: var(--s-pos-gar);
 
     --fzd-font: 'Saira', system-ui, sans-serif;
     --fzd-font-cond: 'Saira Condensed', sans-serif;
@@ -59,14 +39,14 @@ html body.fz-draft {
     --fzd-text-muted: var(--s-mute);
     --fzd-text-faint: var(--s-faint);
     --fzd-text-fainter: var(--s-faint);
-    --fzd-text-dim: var(--s-dim);
+    --fzd-text-dim: var(--s-mute);
     --fzd-text-ghost: var(--s-faint);
     --fzd-border: var(--s-line2);
     --fzd-border-strong: var(--s-line);
     --fzd-border-soft: var(--s-line2);
-    --fzd-border-input: var(--s-line);
+    --fzd-border-input: var(--s-btn-line);
     --fzd-tile-bg: var(--s-face);
-    --fzd-tile-bg-strong: var(--s-chip-line);
+    --fzd-tile-bg-strong: var(--s-chip);
     --fzd-solid: var(--s-ink);
     --fzd-on-solid: var(--s-bg);
     --fzd-tab-track: var(--s-card);
@@ -79,33 +59,6 @@ html body.fz-draft {
     font-family: var(--fzd-font);
 }
 html[data-theme="light"] body.fz-draft {
-    --s-bg: #F3F2EF;
-    --s-card: #FFFFFF;
-    --s-raise: #F6F5F2;
-    --s-sel: #F4F2EE;
-    --s-line: #E2E0DC;
-    --s-line2: #ECEAE6;
-    --s-chip-line: #DDDAD5;
-    --s-head: #F7F6F3;
-    --s-face: #ECEAE6;
-    --s-ink: #141416;
-    --s-ink2: #34343A;
-    --s-mute: #5E5C59;
-    --s-faint: #74716D;
-    --s-dim: #74716D;
-    --s-ghost: #CFCCC7;
-    --s-red: #D52B1E;
-    --s-red-soft: rgba(213, 43, 30, .1);
-    --s-red-ink: #B3241A;
-    --s-green: #1D8048;
-    --s-watch: #2F6DB5;
-    --s-pos-c: 38, 104, 186;
-    --s-pos-ag: 29, 128, 72;
-    --s-pos-ad: 160, 98, 18;
-    --s-pos-d: 120, 76, 196;
-    --s-pos-g: 186, 52, 40;
-    --s-pos-eq: 14, 128, 122;
-    --s-pos-rec: 94, 92, 89;
     --fzd-logo-bg: #FFFFFF;
 }
 
@@ -153,7 +106,7 @@ html body.fz-draft .fzd-pos-chip {
     height: 28px;
     min-height: 0;
     padding: 0 12px;
-    border: 1px solid var(--s-chip-line);
+    border: 1px solid var(--s-btn-line);
     border-radius: 999px;
     background: transparent;
     color: var(--s-mute);
@@ -201,7 +154,7 @@ html body.fz-draft .list-filters-sidebar .search-input:focus {
     font: 400 14px/1 var(--fzd-font);
 }
 html body.fz-draft .list-filters-sidebar .list-filters-search:focus-within { border-color: var(--s-mute); }
-html body.fz-draft .list-filters-sidebar .search-input::placeholder { color: var(--s-dim); }
+html body.fz-draft .list-filters-sidebar .search-input::placeholder { color: var(--s-mute); }
 
 /* ---- Liste des joueurs : la rangée ---- */
 html body.fz-draft #playerTable .fzd-name-main {
@@ -217,7 +170,7 @@ html body.fz-draft #playerTable .fzd-name-meta .fzd-name-line {
     font: 400 11px/1.2 var(--fzd-font);
     color: var(--s-faint);
 }
-html body.fz-draft .draft-watch-badge { color: var(--s-watch); }
+html body.fz-draft .draft-watch-badge { color: var(--s-info); }
 html body.fz-draft #playerTable .player-photo img.face { background-color: var(--s-face); }
 
 /* « Repêcher » : l'aplat d'encre de la maquette, plus de rouge. */
@@ -232,7 +185,7 @@ html body.fz-draft #playerTable td.action-column button.select-button:active { t
 html body.fz-draft #playerTable td.action-column button.favorite-btn {
     border: 0;
     background: none;
-    color: var(--s-dim);
+    color: var(--s-mute);
 }
 html body.fz-draft #playerTable td.action-column button.favorite-btn:hover { color: var(--s-ink2); }
 /* À son tour, la rangée n'offre que « Repêcher » : l'étoile (se mettre un
@@ -260,13 +213,13 @@ html body.fz-draft .fzd-slot.is-empty .fzd-slot-avatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1.5px dashed var(--s-ghost);
+    border: 1.5px dashed var(--s-dim);
     background: none;
 }
 html body.fz-draft .fzd-slot.is-empty .fzd-slot-avatar::before {
     content: '+';
     font: 400 18px/1 var(--fzd-font);
-    color: var(--s-dim);
+    color: var(--s-mute);
 }
 
 /* ---- Sélecteur d'équipe : sigle, nom, compte ---- */
@@ -329,7 +282,7 @@ html body.fz-draft .recent-feed-row {
     border-top: 1px solid var(--s-line2);
     cursor: pointer;
 }
-html body.fz-draft .recent-feed-row:hover { background: var(--s-sel); }
+html body.fz-draft .recent-feed-row:hover { background: var(--s-raise); }
 html body.fz-draft .recent-feed-slot {
     order: 0;
     flex: none;
@@ -340,7 +293,7 @@ html body.fz-draft .recent-feed-slot {
     background: none;
     font: 600 12px/1 var(--fzd-font);
     letter-spacing: 0;
-    color: var(--s-dim);
+    color: var(--s-mute);
     text-align: left;
 }
 html body.fz-draft .recent-feed-avatar {
@@ -562,12 +515,12 @@ html body.fz-draft .recent-feed-count {
     }
     html body.fz-draft .panel-tab .panel-tab-meta {
         font: 500 11px/1 var(--fzd-font);
-        color: var(--s-dim);
+        color: var(--s-mute);
     }
     html body.fz-draft .panel-tab.is-active,
     html body.fz-draft .panel-tab.is-active:hover { background: var(--s-ink); border: 0; }
     html body.fz-draft .panel-tab.is-active .panel-tab-label { color: var(--s-bg); }
-    html body.fz-draft .panel-tab.is-active .panel-tab-meta { color: var(--s-dim); }
+    html body.fz-draft .panel-tab.is-active .panel-tab-meta { color: var(--s-mute); }
     html body.fz-draft .panel-tabs-band .turn-skip-btn {
         height: 42px;
         padding: 0 12px;
@@ -615,7 +568,7 @@ html body.fz-draft .recent-feed-count {
     html body.fz-draft #fzFavTelList .fzd-side-empty {
         margin: 6px 12px 14px;
         font: 500 13px/1.45 var(--fzd-font);
-        color: var(--s-dim);
+        color: var(--s-mute);
     }
     html body.fz-draft #fzFavTelList .fzd-fav-row {
         display: flex;
@@ -659,7 +612,7 @@ html body.fz-draft .recent-feed-count {
     html body.fz-draft #fzFavTelList .fzd-fav-meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
     html body.fz-draft #fzFavTelList .fzd-fav-line {
         font: 500 12px/1.2 var(--fzd-font);
-        color: var(--s-dim);
+        color: var(--s-mute);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -700,7 +653,7 @@ html body.fz-draft .recent-feed-count {
         color: var(--s-ink);
         font: 600 13px/1 var(--fzd-font);
     }
-    html body.fz-draft .fz-alertes-bande--tel .fz-alertes-masquer { color: var(--s-dim); background: none; border: 0; }
+    html body.fz-draft .fz-alertes-bande--tel .fz-alertes-masquer { color: var(--s-mute); background: none; border: 0; }
 
     /* ---- Onglet Joueurs : recherche + tri, puis les positions ---- */
     html body.fz-draft .list-filters-sidebar {
@@ -776,10 +729,10 @@ html body.fz-draft .recent-feed-count {
         letter-spacing: 1.2px;
         text-transform: uppercase;
         text-align: left;
-        color: var(--s-dim);
+        color: var(--s-mute);
     }
     html body.fz-draft #playerTable#playerTable thead th { background: transparent !important; box-shadow: none !important; }
-    html body.fz-draft #playerTable#playerTable thead th::before { font-size: 10px; letter-spacing: 1.2px; color: var(--s-dim); }
+    html body.fz-draft #playerTable#playerTable thead th::before { font-size: 10px; letter-spacing: 1.2px; color: var(--s-mute); }
     html body.fz-draft #playerTable#playerTable thead th:first-child { display: block; flex: 0 0 26px; width: 26px; min-width: 0; max-width: 26px; }
     html body.fz-draft #playerTable#playerTable thead th:first-child::before { content: '#'; }
     html body.fz-draft #playerTable#playerTable thead th:nth-child(2) { display: block; flex: 1 1 auto; min-width: 0; }
@@ -796,10 +749,10 @@ html body.fz-draft .recent-feed-count {
         border-top: 1px solid var(--s-line2);
     }
     html body.fz-draft #playerTable#playerTable tbody tr:hover,
-    html body.fz-draft #playerTable#playerTable tbody tr:has(button.select-button:hover) { background: var(--s-sel); }
+    html body.fz-draft #playerTable#playerTable tbody tr:has(button.select-button:hover) { background: var(--s-raise); }
     html body.fz-draft #playerTable#playerTable tbody tr.fzd-selected-row,
     html body.fz-draft #playerTable#playerTable tbody tr.fzd-selected-row:hover {
-        background: var(--s-sel);
+        background: var(--s-raise);
         box-shadow: none;
     }
     html body.fz-draft #playerTable#playerTable tbody td:first-child {
@@ -810,7 +763,7 @@ html body.fz-draft .recent-feed-count {
     html body.fz-draft #playerTable#playerTable tbody td:first-child::before {
         font: 600 13px/1 var(--fzd-font);
         letter-spacing: 0;
-        color: var(--s-dim);
+        color: var(--s-mute);
     }
     html body.fz-draft #playerTable#playerTable tbody tr.fzd-selected-row td:first-child::before { color: var(--s-ink); }
     html body.fz-draft #playerTable .fzd-name-inner .player-photo,
@@ -844,7 +797,7 @@ html body.fz-draft .recent-feed-count {
     html body.fz-draft #playerTable#playerTable tbody td.points-column::after {
         font: 600 9px/1 var(--fzd-font);
         letter-spacing: 1px;
-        color: var(--s-dim);
+        color: var(--s-mute);
     }
     html body.fz-draft #playerTable#playerTable tbody td.action-column { padding-left: 8px; padding-right: 12px; }
     html body.fz-draft #playerTable td.action-column button.favorite-btn { width: 30px; height: 34px; }
@@ -898,11 +851,11 @@ html body.fz-draft .recent-feed-count {
         border-radius: 0;
         background: none;
     }
-    html body.fz-draft .fzd-slot:not(.is-empty):hover { background: var(--s-sel); }
+    html body.fz-draft .fzd-slot:not(.is-empty):hover { background: var(--s-raise); }
     html body.fz-draft .fzd-slot-avatar { width: 36px; height: 36px; flex: none; background: var(--s-face); border-radius: 50%; }
     html body.fz-draft .fzd-slot-txt { gap: 4px; }
     html body.fz-draft .fzd-slot-name { font: 600 14px/1.1 var(--fzd-font); color: var(--s-ink); }
-    html body.fz-draft .fzd-slot.is-empty .fzd-slot-name { font: 500 13px/1 var(--fzd-font); color: var(--s-dim); }
+    html body.fz-draft .fzd-slot.is-empty .fzd-slot-name { font: 500 13px/1 var(--fzd-font); color: var(--s-mute); }
     html body.fz-draft .fzd-slot-meta { font: 400 11px/1 var(--fzd-font); color: var(--s-faint); }
     html body.fz-draft .fzd-slot-pos { height: 20px; padding: 0 7px; }
     /* Les comptes de chaque carte disent déjà les limites. */

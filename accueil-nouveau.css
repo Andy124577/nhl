@@ -23,7 +23,7 @@
 }
 #fzDashOnboard :is(h2, h3, p) { margin: 0; }
 #fzDashOnboard a { color: inherit; text-decoration: none; }
-#fzDashOnboard :is(a, button):focus-visible { outline: 2px solid var(--s-red); outline-offset: 3px; }
+#fzDashOnboard :is(a, button):focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: 3px; }
 
 /* ---- Mot d'accueil ---- */
 #fzDashOnboard .fzn-intro { display: flex; flex-direction: column; gap: 10px; padding: 24px 20px 4px; }
@@ -97,7 +97,7 @@ html[data-theme="light"] #fzDashOnboard .fzn-instant { --fzo-line: #DDDAD5; --fz
     list-style: none; cursor: pointer; color: var(--s-ink);
 }
 #fzDashOnboard .fzn-instant summary::-webkit-details-marker { display: none; }
-#fzDashOnboard .fzn-instant summary:focus-visible { outline: 2px solid var(--s-red); outline-offset: -2px; border-radius: 18px; }
+#fzDashOnboard .fzn-instant summary:focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: -2px; border-radius: 18px; }
 #fzDashOnboard .fzn-instant-ico { display: flex; align-items: center; justify-content: center; flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--s-red-soft); color: var(--s-red-ink); }
 #fzDashOnboard .fzn-instant-tete { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
 #fzDashOnboard .fzn-instant-tete strong { font: 600 15px/1 'Saira', sans-serif; }
@@ -236,7 +236,7 @@ body.fz-onboard-page:has(.is-pool-erreur) #storiesSection { display: none !impor
 #fzDashErreur p { margin: 0; color: var(--s-mute); text-wrap: pretty; }
 #fzDashErreur button {
     margin-top: 8px; min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px;
-    background: var(--s-red); color: #fff; font: 700 14px/1 'Saira', sans-serif; cursor: pointer;
+    background: var(--s-red-fill); color: #fff; font: 700 14px/1 'Saira', sans-serif; cursor: pointer;
 }
 #fzDashErreur button:disabled { opacity: .55; cursor: progress; }
-#fzDashErreur button:focus-visible { outline: 2px solid var(--s-red); outline-offset: 3px; }
+#fzDashErreur button:focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: 3px; }

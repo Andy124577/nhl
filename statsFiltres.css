@@ -15,61 +15,49 @@
    ============================================================ */
 
 body.fz-stats {
-    --sj-bg: #0F1316;
-    --sj-card: #1C201F;
-    --sj-line: #2A2E2D;
-    --sj-row: #202423;
-    --sj-chip: #252928;
-    --sj-chip-on: #323636;
-    --sj-btn-line: #393D3D;
-    --sj-switch-off: #4A4E4E;
-    --sj-ink: #F3F1EE;
-    --sj-ink2: #C9C7C4;
-    --sj-mute: #A8A6A3;
-    --sj-soft: #9E9B98;
-    --sj-faint: #85827F;
+    /* Palette : couleurs.css. Les jetons --sj-* gardent leurs noms pour les
+       règles de la page, mais pointent sur les rôles du site. */
+    --sj-bg: var(--s-bg);
+    --sj-card: var(--s-card);
+    --sj-line: var(--s-line);
+    --sj-row: var(--s-line);
+    --sj-chip: var(--s-chip);
+    --sj-chip-on: color-mix(in srgb, var(--s-chip), var(--s-ink) 8%);
+    --sj-btn-line: var(--s-btn-line);
+    --sj-switch-off: var(--s-switch);
+    --sj-ink: var(--s-ink);
+    --sj-ink2: var(--s-ink2);
+    --sj-mute: var(--s-mute);
+    --sj-soft: var(--s-mute);
+    --sj-faint: var(--s-mute);
     --sj-on-ink-cap: #55524E;
-    --sj-red: #E5372B;
+    --sj-red: var(--s-red);
     --sj-on-red: #FFFFFF;
-    --sj-gold: #E0B341;
-    --sj-gold-soft: rgba(224, 179, 65, .16);
-    --sj-att: rgb(110, 214, 138);
-    --sj-att-soft: rgba(110, 214, 138, .16);
-    --sj-def: rgb(120, 170, 255);
-    --sj-def-soft: rgba(120, 170, 255, .16);
-    --sj-gar: rgb(255, 138, 128);
-    --sj-gar-soft: rgba(255, 138, 128, .16);
+    --sj-gold: var(--s-gold);
+    --sj-gold-soft: var(--s-gold-soft);
+    --sj-att: rgb(var(--s-pos-att));
+    --sj-att-soft: rgba(var(--s-pos-att), .16);
+    --sj-def: rgb(var(--s-pos-def));
+    --sj-def-soft: rgba(var(--s-pos-def), .16);
+    --sj-gar: rgb(var(--s-pos-gar));
+    --sj-gar-soft: rgba(var(--s-pos-gar), .16);
+    --sj-rec: rgb(var(--s-pos-rec));
+    --sj-rec-soft: rgba(var(--s-pos-rec), .16);
     --sj-shadow: 0 10px 30px rgba(0, 0, 0, .6);
     --sj-shadow-pop: 0 -10px 30px rgba(0, 0, 0, .55);
-    /* Hauteur de la barre du haut, collante : l'en-tête du tableau colle dessous. */
     --sj-nav-h: 70px;
     background: var(--sj-bg);
     font-family: 'Saira', system-ui, sans-serif;
 }
 html[data-theme="light"] body.fz-stats {
-    --sj-bg: #F3F2EF;
-    --sj-card: #FFFFFF;
-    --sj-line: #E7E5E2;
-    --sj-row: #ECEAE6;
-    --sj-chip: #FFFFFF;
-    --sj-chip-on: #EEECE8;
-    --sj-btn-line: #DDDAD5;
-    --sj-switch-off: #CFCCC7;
-    --sj-ink: #141416;
-    --sj-ink2: #34343A;
-    --sj-mute: #5E5C59;
-    --sj-soft: #6A6764;
-    --sj-faint: #74716D;
+    /* Au clair, les pastilles sont blanches sur la page. */
+    --sj-chip: var(--s-card);
+    --sj-chip-on: var(--s-line);
     --sj-on-ink-cap: #B5B2AD;
-    --sj-red: #D52B1E;
-    --sj-gold: #976111;
-    --sj-gold-soft: rgba(151, 97, 17, .12);
-    --sj-att: #1D8048;
-    --sj-att-soft: rgba(29, 128, 72, .1);
-    --sj-def: #2F5FB8;
-    --sj-def-soft: rgba(47, 95, 184, .1);
-    --sj-gar: #B83A2E;
-    --sj-gar-soft: rgba(184, 58, 46, .1);
+    --sj-att-soft: rgba(var(--s-pos-att), .1);
+    --sj-def-soft: rgba(var(--s-pos-def), .1);
+    --sj-gar-soft: rgba(var(--s-pos-gar), .1);
+    --sj-rec-soft: rgba(var(--s-pos-rec), .1);
     --sj-shadow: 0 10px 30px rgba(20, 20, 22, .14);
     --sj-shadow-pop: 0 -10px 30px rgba(20, 20, 22, .12);
 }
@@ -161,7 +149,7 @@ body.fz-stats #tableContainer #playerTable tbody.sj-section th { height: auto; p
 body.fz-stats #tableContainer #playerTable tbody.sj-section tr,
 body.fz-stats #tableContainer #playerTable tbody.sj-section tr:hover { background: transparent !important; cursor: default; }
 body.fz-stats #tableContainer #playerTable thead th.is-sorted,
-body.fz-stats #tableContainer #playerTable thead th.is-sorted:hover { color: var(--sj-red); }
+body.fz-stats #tableContainer #playerTable thead th.is-sorted:hover { color: var(--s-red-ink); }
 body.fz-stats #tableContainer #playerTable thead th.sortable:hover { color: var(--sj-ink); }
 body.fz-stats #tableContainer #playerTable .sort-caret { font-size: 1em; margin-left: 1px; }
 body.fz-stats #tableContainer #playerTable .sort-caret::before { content: none; }
@@ -245,7 +233,8 @@ body.fz-stats .pos-tag[data-pos="L"],
 body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: var(--sj-att-soft); --pos-fg: var(--sj-att); }
 body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: var(--sj-def-soft); --pos-fg: var(--sj-def); }
 body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: var(--sj-gar-soft); --pos-fg: var(--sj-gar); }
-body.fz-stats .sj-tag-recrue { background: var(--sj-gold-soft); color: var(--sj-gold); }
+/* Recrue : la couleur de position des recrues, pas l'or de l'attente. */
+body.fz-stats .sj-tag-recrue { background: var(--sj-rec-soft); color: var(--sj-rec); }
 body.fz-stats .sj-tag { box-sizing: border-box; line-height: 13px; border: 1px solid transparent; }
 body.fz-stats .sj-tag-recrue { line-height: 13px; }
 body.fz-stats .sj-tag-moi { background: var(--sj-ink); border-color: var(--sj-ink); color: var(--sj-bg); letter-spacing: .4px; }
@@ -471,7 +460,7 @@ body.fz-stats .sj-feuille .st-chip {
     cursor: pointer;
 }
 body.fz-stats .sj-feuille .st-chip:hover { color: var(--sj-ink); border-color: var(--sj-ink2); }
-body.fz-stats .sj-feuille .st-chip[aria-pressed="true"] { background: var(--sj-red); border-color: var(--sj-red); color: var(--sj-on-red); }
+body.fz-stats .sj-feuille .st-chip[aria-pressed="true"] { background: var(--sj-ink); border-color: var(--sj-ink); color: var(--s-on-ink); }
 
 /* Agents libres : un interrupteur. */
 body.fz-stats .sj-libres {
@@ -510,7 +499,7 @@ body.fz-stats .sj-switch::after {
     box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
     transition: left .2s;
 }
-body.fz-stats .sj-switch:checked { background: var(--sj-red); }
+body.fz-stats .sj-switch:checked { background: var(--s-green); }
 body.fz-stats .sj-switch:checked::after { left: 24px; }
 body.fz-stats .sj-switch:disabled { opacity: .45; cursor: default; }
 body.fz-stats .sj-switch:focus-visible { outline: 2px solid var(--sj-ink); outline-offset: 2px; }
@@ -540,7 +529,7 @@ body.fz-stats .sj-voir {
     height: 52px;
     border: 0;
     border-radius: 14px;
-    background: var(--sj-red);
+    background: var(--s-red-fill);
     color: var(--sj-on-red);
     font: 700 15px/1 'Saira', sans-serif;
     cursor: pointer;

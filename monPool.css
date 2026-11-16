@@ -15,64 +15,22 @@
    ============================================================ */
 
 body.fz-pool-page {
-    --s-bg: #0F1316;
-    --s-card: #1C201F;
-    --s-raise: #242827;
-    --s-line: #2A2E2D;
-    --s-chip: #2A2E2D;
-    --s-av: #393D3D;
-    --s-ink: #F3F1EE;
-    --s-ink2: #C9C7C4;
-    --s-mute: #A8A6A3;
-    --s-soft: #9E9B98;
-    --s-faint: #928F8C;
-    --s-dim: #5A5A60;
-    --s-red: #E5372B;
-    --s-red-soft: rgba(229, 55, 43, .2);
+    /* Palette : couleurs.css. Ici, les teintes propres à la page. */
     --s-red-tint: rgba(229, 55, 43, .08);
     --s-red-line: rgba(229, 55, 43, .5);
-    --s-red-ink: #FF8A80;
-    --s-hot: #FF5A4E;
-    --s-green: #7FD49B;
-    --s-gold: #E8B26A;
-    --s-lock: #E0B341;
-    /* Les positions : ATT, DÉF, GAR, REC, ÉQ, BANC. */
-    --p-att: 156, 201, 255;
-    --p-def: 201, 162, 255;
-    --p-gar: 255, 138, 128;
-    --p-rec: 232, 178, 106;
-    --p-eq: 110, 220, 215;
+    /* Les positions : ATT, DÉF, GAR, REC, ÉQ (couleurs du site), BANC. */
+    --p-att: var(--s-pos-att);
+    --p-def: var(--s-pos-def);
+    --p-gar: var(--s-pos-gar);
+    --p-rec: var(--s-pos-rec);
+    --p-eq: var(--s-pos-eq);
     --p-banc: 168, 166, 163;
     --p-alpha: .16;
     background: var(--s-bg);
 }
 html[data-theme="light"] body.fz-pool-page {
-    --s-bg: #F3F2EF;
-    --s-card: #FFFFFF;
-    --s-raise: #F6F5F2;
-    --s-line: #E8E6E2;
-    --s-chip: #EEECE8;
-    --s-av: #E6E4E0;
-    --s-ink: #141416;
-    --s-ink2: #34343A;
-    --s-mute: #5E5C59;
-    --s-soft: #6A6764;
-    --s-faint: #74716D;
-    --s-dim: #A29F9A;
-    --s-red: #D52B1E;
-    --s-red-soft: rgba(213, 43, 30, .1);
     --s-red-tint: rgba(213, 43, 30, .05);
     --s-red-line: rgba(213, 43, 30, .45);
-    --s-red-ink: #B3241A;
-    --s-hot: #C42A1E;
-    --s-green: #1D8048;
-    --s-gold: #976111;
-    --s-lock: #976111;
-    --p-att: 37, 99, 171;
-    --p-def: 112, 66, 184;
-    --p-gar: 184, 50, 40;
-    --p-rec: 146, 92, 18;
-    --p-eq: 18, 122, 116;
     --p-banc: 94, 92, 89;
     --p-alpha: .1;
 }
@@ -88,8 +46,8 @@ html[data-theme="light"] body.fz-pool-page {
     --text-gray: var(--s-faint);
     --text-light-gray: var(--s-dim);
     --border-light: var(--s-line);
-    --primary: var(--s-red);
-    --primary-deep: var(--s-red);
+    --primary: var(--s-red-fill);
+    --primary-deep: var(--s-red-fill);
     --primary-text: var(--s-red-ink);
     --danger: var(--s-red-ink);
     --success: var(--s-green);
@@ -100,7 +58,7 @@ html[data-theme="light"] body.fz-pool-page {
     -webkit-font-smoothing: antialiased;
 }
 .pp-page[data-vue="pool"] :is(h1, h2, p) { margin: 0; }
-.pp-page[data-vue="pool"] :is(a, button):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
+.pp-page[data-vue="pool"] :is(a, button):focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: 2px; }
 .mp-ico { flex: none; display: block; }
 
 /* ---- En-tête : vignette, état, nom, format ---- */
@@ -132,8 +90,8 @@ html[data-theme="light"] body.fz-pool-page {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.mp-head-sub { display: flex; align-items: center; gap: 6px; font: 500 12px/1.2 'Saira', sans-serif; color: var(--s-soft); }
-.mp-lock { color: var(--s-lock); display: inline-flex; }
+.mp-head-sub { display: flex; align-items: center; gap: 6px; font: 500 12px/1.2 'Saira', sans-serif; color: var(--s-mute); }
+.mp-lock { color: var(--s-gold); display: inline-flex; }
 
 /* ---- Onglets ---- */
 .mp-tabs {
@@ -160,17 +118,17 @@ html[data-theme="light"] body.fz-pool-page {
 }
 .mp-tab:hover { color: var(--s-ink); }
 .mp-tab.is-active { color: var(--s-ink); }
-.mp-tab.is-active::after { content: ''; position: absolute; left: 16px; right: 16px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--s-red); }
+.mp-tab.is-active::after { content: ''; position: absolute; left: 16px; right: 16px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--s-red-ink); }
 
 .mp-body { padding: 0 10px; }
 .mp-pane { display: flex; flex-direction: column; }
 
 /* ---- Pièces communes ---- */
 .mp-card { margin: 0; padding: 0; list-style: none; border-radius: 18px; background: var(--s-card); border: 1px solid var(--s-line); overflow: hidden; }
-.mp-sh { display: flex; align-items: center; gap: 10px; margin: 24px 6px 10px; color: var(--s-red); }
+.mp-sh { display: flex; align-items: center; gap: 10px; margin: 24px 6px 10px; color: var(--s-mute); }
 .mp-sh h2 { flex: 1; font: 800 18px/20px 'Saira Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-ink); }
 .mp-sh-count { font: 500 12px/1 'Saira', sans-serif; color: var(--s-faint); }
-.mp-sh-hot { font: 600 12px/1 'Saira', sans-serif; color: var(--s-hot); }
+.mp-sh-hot { font: 600 12px/1 'Saira', sans-serif; color: var(--s-red-ink); }
 .mp-note { display: flex; gap: 8px; margin: 12px 6px 0; font: 400 12px/17px 'Saira', sans-serif; color: var(--s-faint); text-wrap: pretty; }
 .mp-note .mp-ico { color: var(--s-dim); margin-top: 1px; }
 .mp-empty { padding: 24px 14px; text-align: center; color: var(--s-faint); }
@@ -180,7 +138,7 @@ html[data-theme="light"] body.fz-pool-page {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--s-av);
+    background: var(--s-chip);
     color: var(--s-ink2);
     display: flex;
     align-items: center;
@@ -306,16 +264,16 @@ html[data-theme="light"] body.fz-pool-page {
     font: inherit;
 }
 .mp-row:hover { background: var(--s-raise); }
-.mp-row.is-mine { background: var(--s-red-tint); }
+.mp-row.is-mine { background: var(--s-me); }
 .mp-row > .mp-ico { color: var(--s-dim); }
-.mp-rank { flex: none; width: 20px; font: 800 16px/1 'Saira Condensed', sans-serif; color: var(--s-soft); }
+.mp-rank { flex: none; width: 20px; font: 800 16px/1 'Saira Condensed', sans-serif; color: var(--s-mute); }
 .mp-rank.is-first { color: var(--s-gold); }
 .mp-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .mp-row-name { display: flex; align-items: center; gap: 6px; min-width: 0; font: 600 15px/1.1 'Saira', sans-serif; }
 .mp-row-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mp-row-meta { font: 400 12px/1.2 'Saira', sans-serif; color: var(--s-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mp-tag { flex: none; height: 18px; padding: 0 6px; border-radius: 5px; background: var(--s-red-soft); color: var(--s-red-ink); font: 700 10px/18px 'Saira', sans-serif; letter-spacing: .6px; text-transform: uppercase; }
-.mp-admin { flex: none; color: var(--s-soft); display: inline-flex; }
+.mp-tag { flex: none; height: 18px; padding: 0 6px; border-radius: 5px; background: var(--s-ink); color: var(--s-on-ink); font: 700 10px/18px 'Saira', sans-serif; letter-spacing: .6px; text-transform: uppercase; }
+.mp-admin { flex: none; color: var(--s-mute); display: inline-flex; }
 .mp-row-pts { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .mp-row-pts strong { font: 700 18px/1 'Saira', sans-serif; }
 .mp-row-pts small { font: 600 9px/1 'Saira', sans-serif; letter-spacing: 1px; color: var(--s-faint); }
@@ -339,7 +297,7 @@ html[data-theme="light"] body.fz-pool-page {
     gap: 6px;
     cursor: pointer;
 }
-.mp-copy:hover { background: var(--s-av); }
+.mp-copy:hover { background: var(--s-chip); }
 .mp-copy.is-done { color: var(--s-green); }
 .mp-more {
     align-self: flex-start;
@@ -358,7 +316,7 @@ html[data-theme="light"] body.fz-pool-page {
 
 /* ---- Équipes : une carte par équipe, alignement dépliable ---- */
 .mp-teams { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-.mp-team.is-mine { border-color: var(--s-red-line); }
+.mp-team.is-mine { border-color: var(--s-btn-line); }
 .mp-team.is-focus { box-shadow: 0 0 0 2px var(--s-red-line); }
 .mp-team-head {
     position: relative;
@@ -373,7 +331,7 @@ html[data-theme="light"] body.fz-pool-page {
 .mp-team-name { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; font: 600 15px/1.1 'Saira', sans-serif; color: var(--s-ink); }
 .mp-team-name .ps-team-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mp-team-meta { font: 400 12px/1.2 'Saira', sans-serif; color: var(--s-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mp-team-count { flex: none; font: 600 12px/1 'Saira', sans-serif; color: var(--s-soft); }
+.mp-team-count { flex: none; font: 600 12px/1 'Saira', sans-serif; color: var(--s-mute); }
 .mp-edit,
 .mp-team-name .ps-icon-btn {
     flex: none;
@@ -384,7 +342,7 @@ html[data-theme="light"] body.fz-pool-page {
     border: 0;
     border-radius: 8px;
     background: none;
-    color: var(--s-soft);
+    color: var(--s-mute);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -411,7 +369,7 @@ html[data-theme="light"] body.fz-pool-page {
     border: 0;
     border-radius: 10px;
     background: none;
-    color: var(--s-soft);
+    color: var(--s-mute);
     display: flex;
     align-items: center;
     justify-content: center;

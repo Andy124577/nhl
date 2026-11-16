@@ -150,7 +150,7 @@ html[data-theme="dark"] .fz-dash {
     font: 700 12px/1 'Saira Condensed', 'Helvetica Neue', sans-serif;
     /* Rouge texte du thème clair, fixe : l'écusson reste blanc dans les deux
        thèmes (5,38:1 ; #FF5C66 n'y ferait que 2,9:1). */
-    color: #D70015;
+    color: #B3241A;
 }
 .fzd-hero-copy { flex: 1; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
 .fzd-hero-eyebrow {
@@ -280,7 +280,7 @@ html[data-theme="dark"] .fz-dash {
 .fz-dash-hero.is-draft.is-myturn .fzd-hero-eyebrow,
 .fz-dash-hero.is-draft.is-myturn .fzd-hero-stat-lbl { color: var(--on-primary); }
 .fz-dash-hero.is-draft.is-myturn .fzd-hero-stat-sep { background-color: rgba(255,255,255,.28); }
-.fz-dash-hero.is-draft.is-myturn .fzd-hero-shield { background-color: #fff; color: #D70015; }
+.fz-dash-hero.is-draft.is-myturn .fzd-hero-shield { background-color: #fff; color: #B3241A; }
 .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta { background: #1D1D1F; }
 .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta:hover { background: #000000; }
 .fz-dash-hero.is-draft.is-myturn .fzd-hero-cta-label { color: #fff; }

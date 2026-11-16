@@ -17,51 +17,8 @@
    ============================================================ */
 
 body.fz-salon-page {
-    --s-bg: #0F1316;
-    --s-card: #1C201F;
-    --s-raise: #242827;
-    --s-line: #2F3333;
-    --s-line2: #2A2E2D;
-    --s-chip: #2A2E2D;
-    --s-me: #222625;
-    --s-face: #0F1316;
-    --s-btn: #202423;
-    --s-btn-line: #393D3D;
-    --s-switch: #4A4E4E;
-    --s-ink: #F3F1EE;
-    --s-ink2: #C9C7C4;
-    --s-mute: #A8A6A3;
-    --s-faint: #928F8C;
-    --s-dim: #5A5A60;
-    --s-red: #E5372B;
-    --s-red-soft: rgba(229, 55, 43, .16);
-    --s-red-ink: #FF8A80;
-    --s-green: #7FD49B;
-    --s-gold: #E8B26A;
+    /* Les jetons --s-* viennent de couleurs.css, la palette du site. */
     background: var(--s-bg);
-}
-html[data-theme="light"] body.fz-salon-page {
-    --s-bg: #F3F2EF;
-    --s-card: #FFFFFF;
-    --s-raise: #F6F5F2;
-    --s-line: #E2E0DC;
-    --s-line2: #ECEAE6;
-    --s-chip: #EEECE8;
-    --s-me: #F4F2EE;
-    --s-face: #ECEAE6;
-    --s-btn: #F7F6F3;
-    --s-btn-line: #DDDAD5;
-    --s-switch: #CFCCC7;
-    --s-ink: #141416;
-    --s-ink2: #34343A;
-    --s-mute: #5E5C59;
-    --s-faint: #74716D;
-    --s-dim: #A29F9A;
-    --s-red: #D52B1E;
-    --s-red-soft: rgba(213, 43, 30, .1);
-    --s-red-ink: #B3241A;
-    --s-green: #1D8048;
-    --s-gold: #976111;
 }
 
 .rp-container { padding-top: 20px; padding-bottom: 40px; }
@@ -83,7 +40,7 @@ html[data-theme="light"] body.fz-salon-page {
     -webkit-font-smoothing: antialiased;
 }
 .rp-salon :is(h1, h2, p) { margin: 0; }
-.rp-salon :is(a, button):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
+.rp-salon :is(a, button):focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: 2px; }
 .rp-ico { flex: none; }
 
 /* ==================== LE HÉROS ==================== */
@@ -169,7 +126,7 @@ html[data-theme="light"] .rp-hero { box-shadow: 0 10px 28px rgba(20, 20, 22, .14
     color: #8E8B88;
 }
 .rp-tuile-label .rp-ico { color: #C9C7C4; }
-.rp-tuile.is-auto .rp-tuile-label .rp-ico { color: #FF5A4E; fill: currentColor; }
+.rp-tuile.is-auto .rp-tuile-label .rp-ico { color: var(--s-red-ink); fill: currentColor; }
 .rp-tuile.is-manque .rp-tuile-label .rp-ico { color: #E8B26A; }
 .rp-tuile-valeur { display: block; font: 600 15px/1.15 'Saira', sans-serif; color: #F3F1EE; overflow-wrap: anywhere; }
 .rp-tuile-valeur::first-letter { text-transform: uppercase; }
@@ -379,7 +336,7 @@ html[data-theme="light"] .rp-hero { box-shadow: 0 10px 28px rgba(20, 20, 22, .14
 
 .rp-card { border-radius: 20px; background: var(--s-card); border: 1px solid var(--s-line2); overflow: hidden; }
 .rp-card-tete { display: flex; align-items: center; gap: 10px; margin: 0 14px; padding: 14px 0 4px; }
-.rp-card-tete .rp-ico { color: var(--s-red); }
+.rp-card-tete .rp-ico { color: var(--s-mute); }
 .rp-card-tete h2 {
     flex: 1;
     min-width: 0;

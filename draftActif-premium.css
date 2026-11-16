@@ -67,7 +67,7 @@ body.fz-draft {
   --fzd-on-solid-border: #636366;
   /* Le rouge en texte SUR l'aplat : l'aplat est sombre en clair et clair en
      sombre, il prend donc la valeur de texte de l'autre thème. */
-  --fzd-accent-on-solid: #FF5C66;
+  --fzd-accent-on-solid: #FF8A80;
 
   /* Onglets de panneau : la piste, son survol et son libellé au repos. */
   --fzd-tab-track: var(--bg-gray-light);
@@ -113,7 +113,7 @@ html[data-theme="dark"] body.fz-draft {
   --fzd-on-solid-muted: #6E6E73;
   --fzd-on-solid-faint: #6E6E73;
   --fzd-on-solid-border: #86868B;
-  --fzd-accent-on-solid: #D70015;
+  --fzd-accent-on-solid: #B3241A;
 
   --fzd-tab-hover: #414545;
 

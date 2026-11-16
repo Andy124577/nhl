@@ -71,7 +71,7 @@
   display: grid;
   place-items: center;
   font: 700 13px/1 'Saira Condensed', sans-serif;
-  color: #D70015;              /* rouge texte sur l'écusson blanc : 5,38:1 */
+  color: #B3241A;              /* rouge texte sur l'écusson blanc : 5,38:1 */
 }
 .fz-end-titles { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .fz-end-eyebrow {
@@ -106,7 +106,7 @@
   transition: color .15s ease, border-color .15s ease, background .15s ease;
 }
 .fz-end-close:hover { color: #F5F5F7; border-color: #A1A1A6; background: rgba(255, 255, 255, .04); }
-.fz-end-close:focus-visible { outline: 2px solid #E62030; outline-offset: 2px; }
+.fz-end-close:focus-visible { outline: 2px solid #FF8A80; outline-offset: 2px; }
 
 /* ---- Corps : grille de joueurs ----------------------------------------- */
 
@@ -228,9 +228,9 @@
   transition: transform .15s ease, background .15s ease, border-color .15s ease;
 }
 .fz-end-btn:active { transform: translateY(1px); }
-.fz-end-btn:focus-visible { outline: 2px solid #E62030; outline-offset: 2px; }
-.fz-end-btn--primary { background: #E62030; color: #FFFFFF; }
-.fz-end-btn--primary:hover { background: #C41A28; }
+.fz-end-btn:focus-visible { outline: 2px solid #FF8A80; outline-offset: 2px; }
+.fz-end-btn--primary { background: #D9372B; color: #FFFFFF; }
+.fz-end-btn--primary:hover { background: #BC2F25; }
 .fz-end-btn--ghost { border-color: #636366; color: #F5F5F7; background: transparent; }
 .fz-end-btn--ghost:hover { border-color: #A1A1A6; background: rgba(255, 255, 255, .04); }
 
@@ -282,6 +282,6 @@
   cursor: pointer;
   transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
-.fz-end-tab:hover { border-color: #E62030; color: #F5F5F7; }
-.fz-end-tab:focus-visible { outline: 2px solid #E62030; outline-offset: 2px; }
+.fz-end-tab:hover { border-color: #FF8A80; color: #F3F1EE; }
+.fz-end-tab:focus-visible { outline: 2px solid #FF8A80; outline-offset: 2px; }
 .fz-end-tab.is-active { background: #F5F5F7; border-color: #F5F5F7; color: #000000; }  /* un seul aplat rouge par vue : le bouton principal */

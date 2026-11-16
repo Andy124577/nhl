@@ -4,7 +4,7 @@
    Téléphone : une colonne, des sections à plat séparées d'un filet, comme
    la maquette. Bureau (≥ 900 px) : deux colonnes de cartes, les alignements
    et À lire sur toute la largeur.
-   Les deux thèmes passent par les jetons --s-* ci-dessous ; seule la carte
+   Les deux thèmes passent par les jetons --s-* (couleurs.css) ; seule la carte
    « Ma position » reste sombre dans les deux, comme une carte de membre.
    Les accueils du repêchage (accueil-draft.css) et sans pool
    (accueil-nouveau.css) et la landing des visiteurs (landing.css,
@@ -12,56 +12,8 @@
    ============================================================ */
 body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page),
 html.fz-anon body {
-    --s-bg: #0F1316;
-    --s-card: #1C201F;
-    --s-raise: #242827;
-    --s-line: #2F3333;
-    --s-line2: #2A2E2D;
-    --s-chip: #2A2E2D;
-    --s-head: #141819;
-    --s-me: #222625;
-    --s-face: #0F1316;
-    --s-btn: #202423;
-    --s-btn-line: #393D3D;
-    --s-switch: #454949;
-    --s-ink: #F3F1EE;
-    --s-ink2: #C9C7C4;
-    --s-mute: #A8A6A3;
-    --s-faint: #928F8C;
-    --s-dim: #5A5A60;
-    --s-red: #E5372B;
-    --s-red-soft: rgba(229, 55, 43, .16);
-    --s-red-ink: #FF8A80;
-    --s-green: #7FD49B;
-    --s-gold: #E8B26A;
-    --s-coral: #E08A80;
+    /* Les jetons --s-* viennent de couleurs.css, la palette du site. */
     background: var(--s-bg);
-}
-html[data-theme="light"] body:is(.fz-season-page, .fz-draft-page, .fz-onboard-page),
-html[data-theme="light"].fz-anon body {
-    --s-bg: #F3F2EF;
-    --s-card: #FFFFFF;
-    --s-raise: #F6F5F2;
-    --s-line: #E2E0DC;
-    --s-line2: #ECEAE6;
-    --s-chip: #EEECE8;
-    --s-head: #F7F6F3;
-    --s-me: #F4F2EE;
-    --s-face: #ECEAE6;
-    --s-btn: #F7F6F3;
-    --s-btn-line: #DDDAD5;
-    --s-switch: #CFCCC7;
-    --s-ink: #141416;
-    --s-ink2: #34343A;
-    --s-mute: #5E5C59;
-    --s-faint: #74716D;
-    --s-dim: #A29F9A;
-    --s-red: #D52B1E;
-    --s-red-soft: rgba(213, 43, 30, .1);
-    --s-red-ink: #B3241A;
-    --s-green: #1D8048;
-    --s-gold: #976111;
-    --s-coral: #B4372B;
 }
 
 #fzDashSection:is(.is-season, .is-drafting) { background: var(--s-bg); padding: 0 0 calc(96px + env(safe-area-inset-bottom)); }
@@ -90,7 +42,7 @@ html[data-theme="light"].fz-anon body {
 :where(.fzs) :is(h2, p) { margin: 0; }
 :where(.fzs) ul { margin: 0; padding: 0; list-style: none; }
 .fzs a { color: inherit; text-decoration: none; }
-.fzs :is(a, button, [role="button"]):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; border-radius: 8px; }
+.fzs :is(a, button, [role="button"]):focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: 2px; border-radius: 8px; }
 :where(.fzs) button { font: inherit; color: inherit; cursor: pointer; }
 .fzs [role="button"] { cursor: pointer; }
 
@@ -100,7 +52,9 @@ html[data-theme="light"].fz-anon body {
 .fzs-sec { margin-top: 30px; border-top: 1px solid var(--s-line); overflow: hidden; }
 .fzs-sh { display: flex; align-items: center; gap: 10px; margin: 0 16px; padding: 18px 0 8px; }
 .fzs-sh h2 { flex: 1; min-width: 0; font: 800 18px/20px 'Saira Condensed', sans-serif; letter-spacing: .8px; text-transform: uppercase; }
-.fzs-ico { flex: none; color: var(--s-red); }
+/* Les icônes de section suivent le texte discret : le rouge garde la marque,
+   l'action principale et le direct (couleurs.css). */
+.fzs-ico { flex: none; color: var(--s-mute); }
 .fzs-sh.is-plain { align-items: baseline; padding: 0; }
 .fzs-sh-link { flex: none; font: 600 13px/1 'Saira', sans-serif; color: var(--s-mute); }
 .fzs-sh-link:hover { color: var(--s-ink); }
@@ -302,7 +256,7 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-zone-tete { display: flex; align-items: center; justify-content: space-between; }
 .fzs-zone-tete h2 { margin: 0; font: 800 12px/1 'Saira', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--s-faint); }
 .fzs-zone-x { width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--s-chip); color: var(--s-ink); font: 400 20px/1 system-ui, sans-serif; cursor: pointer; }
-.fzs-zone :is(a, button):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
+.fzs-zone :is(a, button):focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: 2px; }
 .fzs-zone-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
 .fzs-zone-club { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
 .fzs-zone-club img { width: 54px; height: 54px; object-fit: contain; }
@@ -320,7 +274,7 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-zone-stat span { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .fzs-zone-stat small { font-size: 11px; color: var(--s-faint); }
 .fzs-zone-stat span > i { display: flex; width: 100%; height: 4px; border-radius: 2px; overflow: hidden; background: var(--s-chip); }
-.fzs-zone-stat span > i > i { background: var(--s-red); }
+.fzs-zone-stat span > i > i { background: var(--s-ink2); }
 .fzs-zone-h { margin: 6px 0 0; font: 800 12px/1 'Saira', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--s-faint); }
 .fzs-zone-goals { margin: 0; padding: 0; list-style: none; }
 .fzs-zone-goals li { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--s-line2); font-size: 13px; }
@@ -377,7 +331,7 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-top-mug { position: relative; height: 98px; transition: transform .2s; transform-origin: bottom; }
 .fzs-top-rank { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0, 0, 0, .5); color: #fff; font: 700 12px/24px 'Saira', sans-serif; text-align: center; }
 .fzs-top-mine { position: absolute; top: 8px; right: 8px; height: 20px; padding: 0 7px; border-radius: 999px; background: #F3F1EE; color: #0B0B0C; font: 700 10px/20px 'Saira', sans-serif; }
-.fzs-top-body { padding: 10px 10px 12px; text-align: center; display: flex; flex-direction: column; gap: 5px; border-top: 1px solid var(--s-btn-line); }
+.fzs-top-body { padding: 10px 10px 12px; text-align: center; display: flex; flex-direction: column; gap: 5px; border-top: 1px solid var(--s-line); }
 .fzs-top-name { font: 600 14px/16px 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fzs-top-name small { font: 500 11px 'Saira', sans-serif; color: var(--s-faint); }
 .fzs-top-line { font: 400 12px/1 'Saira', sans-serif; color: var(--s-mute); }
@@ -419,7 +373,7 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-club span { font: 600 10px/1 'Saira', sans-serif; letter-spacing: .3px; color: var(--s-mute); }
 .fzs .fzs-club:hover { border-color: var(--s-ink2); transform: translateY(-1px); }
 .fzs .fzs-club:hover span { color: var(--s-ink); }
-.fzs-club.is-sel { border-color: var(--s-red); }
+.fzs-club.is-sel { border-color: var(--s-red-ink); }
 .fzs-club.is-sel span { color: var(--s-ink); }
 
 /* ---- À lire (#fzHomeNews, renderHomeNews dans accueil.js) ---- */

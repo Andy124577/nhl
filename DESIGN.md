@@ -1,38 +1,47 @@
 ---
 name: Fantazy
-description: The broadcast desk for a hockey pool — Apple's black-and-gray set, one signal red for everything you can tap, team colors as the only other chroma.
+description: The broadcast desk for a hockey pool — warm anthracite greys, one red for the brand and the main action, muted status and position hues, team colors as the only other chroma.
 colors:
-  signal-red: "#E62030"
-  signal-red-deep: "#C41A28"
-  signal-red-text: "#FF5C66"
-  on-signal-red: "#FFFFFF"
-  goal-green: "#30D158"
-  blue-line-cyan: "#64D2FF"
-  bench-yellow: "#FFD60A"
-  rookie-purple: "#BF5AF2"
-  arena-black: "#000000"
-  board-gray: "#1C1C1E"
-  board-gray-raised: "#2C2C2E"
-  press-box-black: "#161617"
-  rink-line: "#38383A"
-  edge-gray: "#636366"
-  scoreboard-white: "#F5F5F7"
-  broadcast-gray: "#A1A1A6"
-  far-gray: "#6E6E73"
-  light-page: "#F5F5F7"
+  red: "#E5372B"
+  red-fill: "#D9372B"
+  red-deep: "#BC2F25"
+  red-ink: "#FF8A80"
+  on-red: "#FFFFFF"
+  green: "#7FD49B"
+  gold: "#E8B26A"
+  info: "#8FBEFA"
+  pos-att: "#7FD49B"
+  pos-def: "#80C7F8"
+  pos-gar: "#D8C569"
+  pos-rec: "#C8A4F3"
+  page: "#0F1316"
+  card: "#1C201F"
+  raise: "#242827"
+  line: "#2A2E2D"
+  btn-line: "#767B7A"
+  ink: "#F3F1EE"
+  ink2: "#C9C7C4"
+  mute: "#A8A6A3"
+  dim: "#5A5A60"
+  on-ink: "#0B0B0C"
+  light-page: "#F3F2EF"
   light-card: "#FFFFFF"
-  light-raised: "#FBFBFD"
-  light-hover: "#E8E8ED"
-  light-rink-line: "#D2D2D7"
-  light-edge-gray: "#86868B"
-  light-label: "#1D1D1F"
-  light-secondary-label: "#6E6E73"
-  light-tertiary-label: "#86868B"
-  light-signal-red-text: "#D70015"
-  light-goal-green: "#1F7A35"
-  light-blue-line-cyan: "#0071A4"
-  light-bench-yellow: "#B25000"
-  light-rookie-purple: "#8944AB"
+  light-raise: "#F6F5F2"
+  light-line: "#E8E6E2"
+  light-btn-line: "#85827D"
+  light-ink: "#141416"
+  light-ink2: "#34343A"
+  light-mute: "#5E5C59"
+  light-dim: "#A29F9A"
+  light-red: "#D52B1E"
+  light-red-ink: "#B3241A"
+  light-green: "#1A7A43"
+  light-gold: "#976111"
+  light-info: "#286CAB"
+  light-pos-att: "#1A7A43"
+  light-pos-def: "#286CAB"
+  light-pos-gar: "#7C6705"
+  light-pos-rec: "#7A54A2"
 typography:
   display:
     fontFamily: "'Bebas Neue', 'Segoe UI', sans-serif"
@@ -89,72 +98,72 @@ spacing:
   xxxl: "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.signal-red}"
-    textColor: "{colors.on-signal-red}"
+    backgroundColor: "{colors.red-fill}"
+    textColor: "{colors.on-red}"
     rounded: "{rounded.lg}"
     padding: "15px 32px"
     height: "48px"
   button-primary-hover:
-    backgroundColor: "{colors.signal-red-deep}"
-    textColor: "{colors.on-signal-red}"
+    backgroundColor: "{colors.red-deep}"
+    textColor: "{colors.on-red}"
   button-secondary:
     backgroundColor: "transparent"
-    textColor: "{colors.signal-red-text}"
+    textColor: "{colors.red-ink}"
     rounded: "{rounded.lg}"
     padding: "15px 32px"
     height: "48px"
   button-tertiary:
     backgroundColor: "transparent"
-    textColor: "{colors.signal-red-text}"
+    textColor: "{colors.red-ink}"
     rounded: "{rounded.lg}"
     padding: "15px 32px"
   input-field:
-    backgroundColor: "{colors.board-gray-raised}"
-    textColor: "{colors.scoreboard-white}"
+    backgroundColor: "{colors.raise}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
     padding: "13px 16px"
     height: "48px"
   card-surface:
-    backgroundColor: "{colors.board-gray}"
-    textColor: "{colors.scoreboard-white}"
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.xxl}"
     padding: "28px 28px 24px"
   nav-link:
     backgroundColor: "transparent"
-    textColor: "{colors.broadcast-gray}"
+    textColor: "{colors.mute}"
     rounded: "{rounded.md}"
     padding: "10px 16px"
     height: "44px"
   nav-link-active:
-    backgroundColor: "{colors.board-gray-raised}"
-    textColor: "{colors.signal-red-text}"
+    backgroundColor: "{colors.raise}"
+    textColor: "{colors.red-ink}"
     rounded: "{rounded.md}"
     padding: "10px 16px"
     height: "44px"
   badge-label:
     backgroundColor: "transparent"
-    textColor: "{colors.broadcast-gray}"
+    textColor: "{colors.mute}"
     typography: "{typography.label}"
     rounded: "{rounded.pill}"
     padding: "7px 18px"
   position-badge-att:
     backgroundColor: "transparent"
-    textColor: "{colors.goal-green}"
+    textColor: "{colors.pos-att}"
     rounded: "{rounded.xs}"
     padding: "3px 8px"
   position-badge-def:
     backgroundColor: "transparent"
-    textColor: "{colors.blue-line-cyan}"
+    textColor: "{colors.pos-def}"
     rounded: "{rounded.xs}"
     padding: "3px 8px"
   position-badge-gar:
     backgroundColor: "transparent"
-    textColor: "{colors.bench-yellow}"
+    textColor: "{colors.pos-gar}"
     rounded: "{rounded.xs}"
     padding: "3px 8px"
   position-badge-rookie:
     backgroundColor: "transparent"
-    textColor: "{colors.rookie-purple}"
+    textColor: "{colors.pos-rec}"
     rounded: "{rounded.xs}"
     padding: "3px 8px"
 ---
@@ -167,15 +176,15 @@ components:
 
 Fantazy looks like the studio a hockey broadcast is called from: a dark set, a wall of numbers that has already been organized for you, and light used sparingly — only where something is live. The desk has authority because it is calm. It does not shout the score; it shows you the score, correctly, faster than you could have assembled it yourself. Every screen is a surface someone reads under time pressure, usually on a phone, sometimes with four friends waiting on their turn.
 
-The colors are Apple's, with one substitution. Surfaces and text use the gray ladder Apple ships across iOS, macOS and apple.com: pure black, `#1C1C1E` and `#2C2C2E` in dark; `#F5F5F7` and white in light. Every color has a dark value and a light value, each tuned to hold contrast on its own ground. Where Apple puts its blue, Fantazy puts **Signal Red** (`#E62030`). It marks what you can tap: links, buttons, the active tab, focus, the current pick. Green, cyan, yellow and purple come from Apple's system set and only ever carry meaning (a player's position, a status). The only chroma allowed to move freely is the NHL club palette, which enters the interface through team logos and the draft pick cards. That restraint is what lets a Colorado burgundy or a Nashville gold read instantly when it appears — it is the only unexpected color on screen.
+Surfaces and text use five warm anthracite greys: `#0F1316`, `#1C201F` and `#242827` in dark; a warm `#F3F2EF` and white in light. Every color has a dark value and a light value, each tuned to hold contrast on its own ground. One red (`#E5372B`) marks the brand, the main action and live play; its text value (`#FF8A80` / `#B3241A`) marks links, the active tab and focus. Green, gold, blue, yellow and purple share one lightness and only ever carry meaning (a player's position, a status). The only chroma allowed to move freely is the NHL club palette, which enters the interface through team logos and the draft pick cards. That restraint is what lets a Colorado burgundy or a Nashville gold read instantly when it appears — it is the only unexpected color on screen.
 
 Density is deliberate and high. This is a statistics product; tables are the primary component, not a fallback. Numbers set in monospace, positions demoted to a secondary line, whole rows made clickable rather than a small link — these are the system's real decisions. Ornament is spent almost nowhere so that the data can be dense without becoming loud.
 
 **Key Characteristics:**
-- Dark-first on pure black, with a full light theme as a peer, not an afterthought
-- Apple's gray ladder: three surface steps and three text steps per theme, nothing in between
-- One tint, Signal Red, for everything tappable; semantic color reserved for meaning
-- Every color has a dark and a light value; red has three (fill, dark-theme text, light-theme text)
+- Dark-first on warm anthracite, with a full light theme as a peer, not an afterthought
+- Five greys per theme (page, card, raised, separator, control outline) and three reading-text steps, nothing in between
+- One red for the brand, the main action and live play; semantic color reserved for meaning; "you" is neutral
+- Every color has a dark and a light value; red has two jobs (fill and text), each with its own value per theme
 - Flat fills: a button is one color, never a gradient
 - Condensed display type (Bebas Neue) against a plain system sans body
 - Monospace numerals wherever figures are compared down a column
@@ -184,102 +193,120 @@ Density is deliberate and high. This is a statistics product; tables are the pri
 
 ## Colors
 
-Apple's system palette, with Signal Red in the place of Apple's blue.
+Warm anthracite greys, one red, and a few muted hues that all share one lightness. The whole palette lives in [couleurs.css](couleurs.css), loaded by every page before its own stylesheets. The method behind it is the guide "Choosing colours for Fantazy" (16 Nov 2026).
 
-### Primary: Signal Red
+**How the tokens fit together.**
+- Reskinned pages read the `--s-*` tokens directly.
+- Older pages read the `index.css` tokens (`--primary`, `--success`, `--text-main`…), which now point at the same `--s-*` values.
+- A page stylesheet only defines what is truly its own, such as a page-specific shadow or a tint mixed from a palette color. It never sets its own grey, red or position color.
 
-One hue (355°) in three values, because no single red can do every job in both themes.
+**Picking a color.** Ask what the color's job is, then use the token for that job. A color has one job, and a job has one color. If nothing below fits, the answer is a neutral grey, not a new hue.
 
-| Token | Dark | Light | Job |
+### Surfaces and text
+
+| Job | Token | Dark | Light |
 | --- | --- | --- | --- |
-| `--primary` | `#E62030` | `#E62030` | Fills: primary buttons, the notification badge, the active rule under a tab, focus borders, the current pick. |
-| `--primary-deep` | `#C41A28` | `#C41A28` | Hover and pressed fill: `--primary` mixed with about 15% black. |
-| `--primary-text` | `#FF5C66` | `#D70015` | Red *as text*: links, the active nav label, sortable-header state, secondary and tertiary buttons, errors. |
-| `--on-primary` | `#FFFFFF` | `#FFFFFF` | The label on a red fill. |
-| `--primary-rgb` | `230, 32, 48` | `230, 32, 48` | Components of `--primary`, for `rgba()` tints, halos and glows. |
+| Page | `--s-bg` | `#0F1316` | `#F3F2EF` |
+| Card, sheet, dialog | `--s-card` | `#1C201F` | `#FFFFFF` |
+| Raised: hover, neutral filled button | `--s-raise` | `#242827` | `#F6F5F2` |
+| Separator (decorative) | `--s-line` | `#2A2E2D` | `#E8E6E2` |
+| Control outline: fields, switches, outlined buttons | `--s-btn-line` | `#767B7A` | `#85827D` |
+| Main text and numbers | `--s-ink` | `#F3F1EE` | `#141416` |
+| Secondary: club, position, time | `--s-ink2` | `#C9C7C4` | `#34343A` |
+| Quiet: column headers, hints, section icons | `--s-mute` | `#A8A6A3` | `#5E5C59` |
+| Decorative or disabled, never read | `--s-dim` | `#5A5A60` | `#A29F9A` |
+| Text on an ink pill | `--s-on-ink` | `#0B0B0C` | `#FFFFFF` |
 
-Why three values:
-- **The fill is the same in both themes.** White on `#E62030` reads 4.55:1, just over AA. That is also why hover goes darker (`#C41A28`, 5.96:1) and never lighter.
-- **The text value changes per theme.** `#E62030` as text reads only 3.74:1 on a dark card and 4.18:1 on the light page, so it fails AA as text in both themes. Apple handles the same problem for its blue with a brighter dark-mode value and a deeper light one, and Fantazy does the same. `#FF5C66` keeps the hue and reads 4.63:1 or better on every dark surface. `#D70015` is Apple's own increased-contrast system red: 4.94:1 on the light page, 5.38:1 on a card.
+- **Five greys, no more.** Chips, avatars, table heads and "your row" reuse these through aliases (`--s-chip`, `--s-face`, `--s-head`, `--s-me`), so they never introduce a sixth grey. In light, chips, avatars and your row take the separator grey, because the raised grey is too close to the page to be seen.
+- **Every reading text passes AA.** Ink, ink2 and mute are at 6:1 or better on every surface in both themes. Dim is 2.2–2.7:1 and is only for disabled controls and decoration.
+- **Control outlines pass 3:1** (WCAG 1.4.11) on page and card in both themes (3.4–4.3:1). Separators do not need to and do not.
+- **Warm, not cool.** The light page is a warm off-white (`#F3F2EF`), not Apple's blue-grey `#F5F5F7`, so it sits with the warm anthracite of the dark theme.
+- The navigation bar stays its own surface: `--navbar-bg` `#000000` / `#FBFAF8`, with `--navbar-glass` and a 20px backdrop blur for the sticky bars.
 
-**History.** Signal Red replaced Editorial Brick (`#E8795E`) on 26 Sept 2026, when the palette moved to Apple's system colors. Brick had itself replaced Rink Ice Cyan (`#00D4FF`), to end two accents on one screen. The same one-tint rule carries over.
+### Red: brand, main action, live
 
-**Red and the clubs.** Eight NHL clubs have a red main color: CAR, CGY, CHI, DET, MTL, NJD, OTT, WSH. So wherever Signal Red marks a state on a team surface (the current pick card, the turn banner), it never carries that state alone. A ring, a pulse or a label ("À vous") always goes with it, so a Detroit card reads as "current" and not just as "Detroit".
+| Job | Token | Dark | Light |
+| --- | --- | --- | --- |
+| Brand mark, live dot, badges | `--s-red` | `#E5372B` | `#D52B1E` |
+| Main button fill (white label) | `--s-red-fill` | `#D9372B` | `#D52B1E` |
+| Red as text: links, active tab line, sort arrow, focus ring, errors | `--s-red-ink` | `#FF8A80` | `#B3241A` |
+| Tint behind a red element | `--s-red-soft` | 16% | 10% |
 
-### Secondary: the semantic set
+- White on the fill is 4.63:1 in dark and 5.01:1 in light. Hover goes darker (`--primary-deep`, `#BC2F25` / `#B3241A`), never lighter.
+- Red as text is 6.5:1 or better on every surface in both themes. `--s-red` as text on a dark card is only 3.85:1, so text never uses it.
+- The old `index.css` names still work: `--primary` is the fill, `--primary-text` is the red-ink, `--danger` is an alias of `--primary-text`.
 
-Apple's system colors. Each role has a dark value (Apple's default dark-mode color) and a light value (Apple's increased-contrast light color, which is what holds AA as text on a pale ground).
+**Red and the clubs.** Eight NHL clubs have a red main color: CAR, CGY, CHI, DET, MTL, NJD, OTT, WSH. So wherever red marks a state on a team surface (the current pick card, the turn banner), it never carries that state alone. A ring, a pulse or a label ("À vous") always goes with it.
 
-| Role | Token | Dark | Light | Meaning |
-| --- | --- | --- | --- | --- |
-| **Goal Green** | `--success` | `#30D158` | `#1F7A35` | Success, completed actions, the **attaquants** badge. |
-| **Blue-Line Cyan** | `--position-def` | `#64D2FF` | `#0071A4` | The **défenseurs** badge. |
-| **Bench Yellow** | `--warning` | `#FFD60A` | `#B25000` | Warnings, the **gardiens** badge, the podium's gold, the standings leader wash. |
-| **Rookie Purple** | `--rookie` | `#BF5AF2` | `#8944AB` | The **rookies** badge. A single, narrow job. |
+### Status and positions
 
-- **Contrast.** On a dark card (`#1C1C1E`): green 8.42:1, cyan 9.89:1, yellow 12.05:1, purple 4.83:1. Purple drops to 3.96:1 on the raised step, so rookie badges sit on cards and rows, never on `#2C2C2E`. On the light page: 4.95:1, 4.95:1, 4.77:1, 5.54:1.
-- **Green's light value** is Apple's increased-contrast green (`#248A3D`) one step deeper, because Apple's value reads 4.40:1 on white, just under AA.
-- **Défenseurs moved off the accent.** The badge used to be brick, the accent of the time. With red as the tint, a red DEF badge would read as a link.
-- **As a solid fill** (the draft room's finish button, the turn banner's done state), a semantic color takes a black label in dark (`#000` on `#30D158`: 10.39:1) and a white label in light (`#FFF` on `#1F7A35`: 5.39:1). That label is `--on-success`.
+All of these share one lightness and one intensity (OKLCH about 79 / 0.11 in dark, about 52 / 0.12 in light). Only the hue changes, so none of them shouts louder than the others.
+
+| Job | Token | Dark | Light |
+| --- | --- | --- | --- |
+| Good: points gained, trade done, switch on | `--s-green` | `#7FD49B` | `#1A7A43` |
+| Waiting: for sale, deadline | `--s-gold` | `#E8B26A` | `#976111` |
+| Neutral news: NHL transaction | `--s-info` | `#8FBEFA` | `#286CAB` |
+| Attaquants (C, AG, AD) | `--s-pos-att` | `#7FD49B` | `#1A7A43` |
+| Défenseurs | `--s-pos-def` | `#80C7F8` | `#286CAB` |
+| Gardiens | `--s-pos-gar` | `#D8C569` | `#7C6705` |
+| Recrue | `--s-pos-rec` | `#C8A4F3` | `#7A54A2` |
+| Équipe (no hue) | `--s-pos-eq` | `#C9C7C4` | `#34343A` |
+
+- Each status color has a `-soft` version (16% dark, 10% light) for the tint behind it.
+- Positions are RGB triplets, so a page can write `rgb(var(--s-pos-att))` for the text and `rgba(var(--s-pos-att), .16)` for the tint behind it. `index.css` exposes them as `--position-att`, `--position-def`, `--position-gar` and `--rookie`.
+- **One position scheme everywhere.** The draft room no longer gives C, AG and AD three different colors. All forwards are green, as on every other page.
+- **Contrast.** Every status and position color is 7:1 or better on dark surfaces and 4.6:1 or better on the light page and card. On the light separator grey (your row, chips) green, gold and blue drop to about 4.2–4.4:1, so a position tag never sits directly on it.
+- **As a solid fill** (the switch, the draft room's finish button), green takes a black label in dark and a white one in light (`--on-success`).
+
+### "You" and selection are neutral
+
+- **Your row** is the raised grey (`--s-me`), with a thin ink bar where a marker is needed. It is never red.
+- **The "Toi" tag** is an ink pill: `--s-ink` background, `--s-on-ink` text.
+- **A selected filter chip** is the same ink pill. A switch that is on turns green.
+- **Section icons** are quiet (`--s-mute`), not red.
 
 ### Errors and destructive actions
 
-Apple's red is its destructive color. Here red is also the tint, so errors and destructive actions share the red tokens and are told apart by *form*, the way iOS does it.
+Red is both the brand and the error color, so errors and destructive actions are told apart by *form*, the way iOS does it.
 
-- **Errors:** red text (`--primary-text`) with an icon, placed next to the field or row it concerns. `--danger` is an alias of `--primary-text`. `--danger-deep` is an alias of `--primary`, for small red fills with a white label such as the notification badge.
+- **Errors:** red text (`--s-red-ink`) with an icon, next to the field or row it concerns.
 - **Destructive actions:** red *text* buttons, never a solid red fill. A solid red fill means "go ahead"; "Supprimer" is a plain or outlined red button. Anything irreversible goes through `fzConfirm`, which says in words what will be lost.
 
-### Tertiary: NHL club colors
+### NHL club colors
 
-- **NHL club colors**: sourced from the static table in [teamColors.js](teamColors.js), two per club (primary + secondary). They enter only through team identity — logos, and the pick card's `--team-accent` bottom rule — and that identity is the **pool team's own chosen club** ([repechage.js](repechage.js)'s pre-draft picker, `POST /choose-nhl-club`), not the club of whichever player got drafted. The second color exists to separate clubs that share a navy (Buffalo, Columbus, Florida). These are real brand colors of real organizations: never invent one, never assign one to a non-team.
+Sourced from the static table in [teamColors.js](teamColors.js), two per club (primary + secondary). They enter only through team identity — logos, and the pick card's `--team-accent` bottom rule — and that identity is the **pool team's own chosen club** ([repechage.js](repechage.js)'s pre-draft picker, `POST /choose-nhl-club`), not the club of whichever player got drafted. The second color exists to separate clubs that share a navy (Buffalo, Columbus, Florida). These are real brand colors of real organizations: never invent one, never assign one to a non-team.
 
-### Neutral: Apple's gray ladder
+### Kept on purpose
 
-Three surface steps, three text steps and two border steps per theme. Nothing in between.
-
-| Role | CSS tokens | Dark | Light |
-| --- | --- | --- | --- |
-| Ground and page | `--bg`, `--bg-page` | `#000000` | `#F5F5F7` |
-| Card, table row | `--card`, `--bg-odd-row` | `#1C1C1E` | `#FFFFFF` |
-| Raised panel | `--card-white` | `#2C2C2E` | `#FBFBFD` |
-| Input well | `--bg-gray-light` | `#2C2C2E` | `#F5F5F7` |
-| Hover | `--bg-hover` | `#2C2C2E` | `#E8E8ED` |
-| Sticky bars (top, bottom nav) | `--navbar-glass` | `rgba(22, 22, 23, .8)` + 20px backdrop blur | `rgba(251, 251, 253, .8)` + 20px backdrop blur |
-| Opaque chrome (drawers, menus, rail, footer) | `--navbar-bg` | `#161617` | `#FBFBFD` |
-| Separator | `--border-light`, `--border-table`, `--navbar-border` | `#38383A` | `#D2D2D7` |
-| Control border | `--border-gray` | `#636366` | `#86868B` |
-| Label (all reading text) | `--text-main`, `--text-dark` | `#F5F5F7` | `#1D1D1F` |
-| Secondary label | `--text-secondary`, `--text-gray` | `#A1A1A6` | `#6E6E73` |
-| Tertiary label | `--text-light-gray` | `#6E6E73` | `#86868B` |
-| Overlay | `--overlay-dark` | `rgba(0, 0, 0, .6)` | `rgba(0, 0, 0, .4)` |
-
-- **The dark page is pure black**, as on iOS. On a phone's OLED screen it is true black, and cards separate from it without a shadow. The navigation bar is the one surface *lighter* than the page: a frosted bar over black, not a darker frame.
-- **Label and body text are one color.** The old split, a sharper white for headings and a softened white for body copy, is gone. Hierarchy comes from size and weight, as on Apple's pages.
-- **Secondary label is safe for any text:** 5.42:1 on the raised dark step, 4.66:1 on the light page.
-- **Tertiary label is not.** At 4.14:1 on black and 3.33:1 on the light page, it is only for placeholders, disabled labels and hints, never for a value someone has to read.
-- **Control border.** `#86868B` is apple.com's input stroke (3.62:1 on white). `#636366` is its dark counterpart (2.84:1 on a card); there, the field's lighter fill finishes the job.
+- The red star next to your players in the Zone de match (andy's choice).
+- The glowing red line of the bottom navigation (andy's choice, "1b Ligne lumineuse").
+- The rank medals (gold, silver, bronze) and the dark "Ma position" card, in both themes.
+- The landing banner and its headline red: the landing stays dark in both themes ([LANDING.md](LANDING.md) §5).
 
 ### Light theme
 
-Light is a full peer theme, applied via `html[data-theme="light"]` and set before first paint by [theme.js](theme.js). Every token above has its light value in the same table, and none of them is an inversion of the dark value. `--primary`, `--primary-deep`, `--primary-rgb` and `--on-primary` are the only tokens that are identical in both themes. The `.impeccable/design.json` sidecar still carries the old brick palette and needs a refresh.
+Light is a full peer theme, applied via `html[data-theme="light"]` and set before first paint by [theme.js](theme.js). Every token above has its light value in the same tables, and none of them is an inversion of the dark value. The `.impeccable/design.json` sidecar still carries the old brick palette and needs a refresh.
 
-### Landing
+### History
 
-The visitor landing ([landing.css](landing.css)) keeps its banner dark in both themes ([LANDING.md](LANDING.md) §5).
-- **Red:** its two local reds, `--fzl-brick` and `--fzl-red`, both become `--primary`, so the black-and-red banner is the brand red.
-- **Surfaces:** its cool blue-black surfaces (`--fzl-body-bg #0D1013`, `--fzl-panel #141920`, `--fzl-panel-2 #1B2128`) move onto the dark ladder above: `#000000`, `#1C1C1E`, `#2C2C2E`.
+- 26 Sept 2026: Signal Red (`#E62030`) and Apple's system palette replaced Editorial Brick (`#E8795E`), which had itself replaced Rink Ice Cyan (`#00D4FF`).
+- 31 Oct 2026: the dark theme moved from Apple's black to the warm anthracite of today (`#0F1316` / `#1C201F`).
+- 16 Nov 2026: one palette file ([couleurs.css](couleurs.css)). Three reds became one red with a fill and a text value; ten dark greys became five; two families of intensity (soft and Apple-vivid) became one; three position schemes became one; "you" became neutral.
 
 ### Named Rules
 
-**The Tint Means Tappable Rule.** Signal Red marks what you can act on — a link, a button, the active tab, the focused control, the current pick — and nothing else. A heading, an eyebrow, a total or a card border at rest is never red. Only one control per view is a *solid* red fill, the primary action; everything else interactive is red text or a red outline. The landing banner is the one decorative use of red, and it stays on the marketing page.
+**The One Job Rule.** A color has one job and a job has one color. Before adding a color, find the job in the tables above. If the job is not there, use a neutral grey.
 
-**The Three Reds Rule.** A red fill uses `--primary`, red text uses `--primary-text`, and a label on red uses `--on-primary`. `color: var(--primary)` is always a bug: it reads 3.74:1 on a dark card.
+**The Red Is For Action Rule.** Red marks the brand, the main action, live play and errors. Red text (`--s-red-ink`) marks links, the active tab, the sort arrow and the focus ring. A heading, a section icon, a total, "you" or a card border at rest is never red. Only one control per view is a *solid* red fill.
 
-**The Real Teams Only Rule.** Chroma outside the semantic set may only come from `NHL_TEAM_COLORS`, and only attached to the club it belongs to. No invented team colors, no club palette borrowed for a UI accent.
+**The Two Reds Rule.** A red fill uses `--s-red-fill` (or `--primary`), red text uses `--s-red-ink` (or `--primary-text`). `color: var(--s-red)` or `color: var(--primary)` on text is a bug: it reads 3.85:1 on a dark card.
 
-**The Semantic Set Is Closed Rule.** Green, cyan, yellow and purple carry position and status. They are never chosen for variety. If a new state needs a color, it earns one of these four or it uses the neutral ladder. Red is not in the set: it is the tint.
+**The Real Teams Only Rule.** Chroma outside the status and position set may only come from `NHL_TEAM_COLORS`, and only attached to the club it belongs to.
 
-**The Destructive Is Text Rule.** A destructive action is never a solid red button. The solid fill means "go ahead"; "Supprimer" is red text, and anything irreversible passes through `fzConfirm`.
+**The Set Is Closed Rule.** Green, gold, blue, yellow and purple carry status and position. They are never chosen for variety. A new state earns one of them or uses the neutral greys.
+
+**The Destructive Is Text Rule.** A destructive action is never a solid red button.
 
 ## Typography
 
@@ -344,8 +371,8 @@ Stat-grid numerals above ~1.1rem (career modal's big season totals, alert icons)
 
 Depth comes from **tonal layering first, neutral shadow second, and colored glow almost never.**
 
-- **Dark theme:** the ground is pure black, cards rise to `#1C1C1E` and panels to `#2C2C2E`, and that stack does all the work. A shadow cast on `#000` is invisible, so in dark theme elevation *is* the surface ladder, plus the separator on the card's edge.
-- **Light theme:** white cards on `#F5F5F7` separate only faintly by tone, and the shadow ladder below carries them.
+- **Dark theme:** the page is `#0F1316`, cards rise to `#1C201F` and raised elements to `#242827`, and that stack does all the work. A shadow on a near-black page barely shows, so in dark theme elevation *is* the surface ladder, plus the separator on the card's edge.
+- **Light theme:** white cards on `#F3F2EF` separate only faintly by tone, and the shadow ladder below carries them.
 
 Neutral shadow is reserved for genuine z-separation — things that float above the page and could be dismissed: modals, dropdowns, drawers, toasts. A red glow is **state, not elevation**: it appears on focus and on live/current elements, and it disappears when that state does.
 
@@ -369,7 +396,7 @@ Neutral shadow is reserved for genuine z-separation — things that float above 
 
 Rounded, tactile, and consistently soft — this is a touch product and the geometry says so. The radius ladder runs **6px** (micro badges) → **8px** (small chips, table headers) → **10px** (navigation items, selects) → **12px** (the workhorse: buttons, inputs, cards, table rows) → **14px** (full-width primary actions) → **18px** (large form and panel cards), with **999px** for pills and **50%** for avatars and status dots. Twelve is the default; when in doubt, use 12px.
 
-Borders are the primary edge language: 1px separator (`--border-light`) for surface seams, 2px control border (`--border-gray`) for form controls that must look grabbable. Inputs are wells, filled one step off their card: lighter in dark (`#2C2C2E` on `#1C1C1E`), darker in light (`#F5F5F7` on white).
+Borders are the primary edge language: 1px separator (`--border-light`) for surface seams, 2px control border (`--border-gray`) for form controls that must look grabbable. Inputs are wells, filled one step off their card, with a `--s-btn-line` outline that holds 3:1.
 
 Two silhouettes recur and are worth protecting: the **row-as-pill** (a table row whose first and last cells carry the 12px radius, so a dense table reads as a stack of separated objects) and the **team-accent card** (a neutral dark card with a 3px bottom rule in the club's secondary color).
 
@@ -384,7 +411,7 @@ Tactile and confident: real weight, a clear press, and hit areas built for a thu
 
 - **Shape:** softly rounded (12px; 14px for full-width primary actions), minimum 44px tall, 48px for primary.
 - **Primary:** a flat `--primary` fill with an `--on-primary` (white) label, 800 weight, `15px 32px`. One color, no gradient, as on Apple's filled buttons. One per view.
-- **Hover / Focus:** the fill moves to `--primary-deep`, and the button lifts with `translateY(-3px)` over 0.2s on `cubic-bezier(.4,0,.2,1)`, plus the elevation-2 shadow (visible in light theme only). Focus-visible additionally draws the focus ring. `:active` returns to `translateY(0)` — the press must be felt. Hover never *lightens* the fill: white on `#E62030` is already at 4.55:1.
+- **Hover / Focus:** the fill moves to `--primary-deep`, and the button lifts with `translateY(-3px)` over 0.2s on `cubic-bezier(.4,0,.2,1)`, plus the elevation-2 shadow (visible in light theme only). Focus-visible additionally draws the focus ring. `:active` returns to `translateY(0)` — the press must be felt. Hover never *lightens* the fill: white on `#D9372B` is 4.63:1.
 - **Secondary:** transparent, with a 2px `--primary-text` border and a `--primary-text` label. On hover the fill takes `rgba(var(--primary-rgb), .10)`.
 - **Tertiary:** text only in `--primary-text`, no border (Apple's plain button). On hover it lifts 2px and takes a `rgba(var(--primary-rgb), .08)` fill.
 - **Destructive:** secondary or tertiary styling, never primary (The Destructive Is Text Rule).
@@ -453,8 +480,8 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 ## Do's and Don'ts
 
 ### Do:
-- **Do** define every color as a token in [index.css](index.css) and consume it as `var(--token)`. Both the `:root` default and the `html[data-theme="light"]` override, in the same commit — a token added to only one theme is a bug in the other.
-- **Do** pick the red by its job: `--primary` for a fill, `--primary-text` for text, `--on-primary` for a label on red.
+- **Do** define every color as a token in [couleurs.css](couleurs.css) and consume it as `var(--token)`. Both the `:root` default and the `html[data-theme="light"]` override, in the same commit — a token added to only one theme is a bug in the other.
+- **Do** pick the red by its job: `--s-red-fill` (`--primary`) for a fill, `--s-red-ink` (`--primary-text`) for text, `--s-on-red` for a label on red.
 - **Do** keep fills flat. A button is one color; hover changes its value, not its gradient.
 - **Do** write phone-first: base rules for the phone, `min-width` queries to enrich. Copy [draftActif.css](draftActif.css)'s structure for new surfaces.
 - **Do** keep to the three breakpoints — 480px, 768/769px, 1024px.
@@ -469,17 +496,17 @@ Every pool team chooses one real NHL club as its identity before the draft opens
 ### Don't:
 - **Don't** hardcode a hex outside the token layer, and **don't redeclare `:root` in a page stylesheet that already loads `index.css`.**
   - `trade.css` used to do exactly this: a stale, incomplete copy of the token set with no matching light-theme block, even though `trade.html` loads `index.css` first. It was fixed by deleting the local `:root`; the page now consumes `index.css`'s themed tokens directly.
-  - [legal.css:3](legal.css#L3) is a different case, not drift. `conditions.html`/`confidentialite.html` deliberately skip `index.css` to stay minimal, so a local `:root` is necessary there, and it ships a complete `html[data-theme="light"]` override alongside it.
-- **Don't** write `color: var(--primary)`. Red text is `--primary-text`: `#E62030` as text reads 3.74:1 on a dark card and 4.18:1 on the light page.
-- **Don't** put dark text on the red fill, and don't lighten the fill on hover. White on `#E62030` is 4.55:1, just over AA; hover goes to `--primary-deep`.
+  - [legal.css:3](legal.css#L3) is a different case, not drift. `conditions.html`/`confidentialite.html` deliberately skip `index.css` to stay minimal, so a local `:root` maps the few `index.css` names that navbar.css and fzDialog.css read onto the `--s-*` palette.
+- **Don't** write `color: var(--primary)` or `color: var(--s-red)`. Red text is `--s-red-ink`: the brand red as text reads 3.85:1 on a dark card.
+- **Don't** put dark text on the red fill, and don't lighten the fill on hover. White on `#D9372B` is 4.63:1, just over AA; hover goes to `--primary-deep`.
 - **Don't** make a destructive action a solid red button. Solid red means "go ahead".
-- **Don't** set text someone has to read in `--text-light-gray`. The tertiary label is for placeholders, disabled labels and hints.
+- **Don't** set text someone has to read in `--s-dim`. It is for disabled controls and decoration.
 - **Don't** use gradient text. `.gradient-text` ([index.css:180](index.css#L180)) is solid `--primary-text`, not a `background-clip` gradient. The rule went unenforced for a while: `accueil.css` shadowed it with an animated three-stop gradient (same class, loaded after index.css, so it silently won), and `trade.css`'s page-header `h1` ran its own gradient-clip. A live-rendered scan caught both; both are now solid color.
 - **Don't** animate layout properties — `width`, `height`, `max-height`, `padding`, `margin`. Use `transform`/`opacity`, or `grid-template-rows: 0fr → 1fr` for height. Four instances remain in [pool.css:651](pool.css#L651), [accueil.css:510](accueil.css#L510), and [draftActif.css:165](draftActif.css#L165).
 - **Don't** use overshoot or bounce easing (`cubic-bezier(0.68,-0.55,0.265,1.55)` and relatives) on ordinary state transitions. **Exception:** genuine celebration/success moments — the draft pick reveal, the trade-sent success check ([trade.css:272](trade.css#L272)) — may use `cubic-bezier(.34,1.56,.64,1)`. A dropdown is not a celebration, and neither is a confirmation dialog: [trade.css:1594](trade.css#L1594)'s `.trade-confirm-box` used the same bounce on its entrance and was moved to the standard ease.
 - **Don't** apply colored glow to elements at rest. Glow is live/focus state; elevation is the surface ladder and neutral shadow.
 - **Don't** add a decorative colored border on one side of a card ([accueil.css:293](accueil.css#L293), [pool.css:842](pool.css#L842)). The table row's 3px stripe is exempt: it appears only on hover/focus and signals that the row is actionable — that is an affordance, not ornament.
 - **Don't** introduce a second accent hue, and in particular don't bring Apple's blue back for links: 12 of the 32 clubs have a navy or blue main color, and a blue tint would blur into them. If something needs to stand out and red is taken, the answer is hierarchy, weight, or space.
-- **Don't** name a token for what it looks like in one theme. `--card-white` resolves to `#2C2C2E`, a dark gray; new tokens are named by role.
+- **Don't** name a token for what it looks like in one theme. `--card-white` resolves to `#242827`, a dark gray; new tokens are named by role.
 - **Don't** ship a phone layout that ignores the fixed bottom navigation's 80px reservation.
 - **Don't** treat the Dense UI Micro tier (~0.5–0.58rem) as settled. A live-rendered pass measured position-abbreviation and initials text there at 8.96–10.56px, under the 11px legibility floor that caught and fixed the old Meta step. Unlike Meta, Micro's uses (three-letter position badges, player initials) sit in tight fixed-size containers — raising them needs a per-component check, not a blanket find-replace.

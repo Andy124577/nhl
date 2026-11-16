@@ -566,9 +566,9 @@ body.fz-stats .pos-tag {
 }
 body.fz-stats .pos-tag[data-pos="C"],
 body.fz-stats .pos-tag[data-pos="L"],
-body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: color-mix(in srgb, var(--success) 10%, var(--card)); --pos-fg: var(--success); }
+body.fz-stats .pos-tag[data-pos="R"] { --pos-bg: color-mix(in srgb, var(--position-att) 10%, var(--card)); --pos-fg: var(--position-att); }
 body.fz-stats .pos-tag[data-pos="D"] { --pos-bg: color-mix(in srgb, var(--position-def) 10%, var(--card)); --pos-fg: var(--position-def); }
-body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: color-mix(in srgb, var(--warning) 10%, var(--card)); --pos-fg: var(--warning); }
+body.fz-stats .pos-tag[data-pos="G"] { --pos-bg: color-mix(in srgb, var(--position-gar) 10%, var(--card)); --pos-fg: var(--position-gar); }
 
 /* Téléphone : la rangée suit le classement cumulatif — rang étroit, photo
    collée au nom, chiffres serrés. La photo passe à 44px sur les plus petits

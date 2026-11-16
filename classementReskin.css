@@ -16,56 +16,19 @@
    ============================================================ */
 
 body.fz-classement {
-    --s-bg: #0F1316;
-    --s-card: #1C201F;
-    --s-line: #2A2E2D;
-    --s-chip: #252928;
-    --s-chip2: #2F3333;
-    --s-btn-line: #393D3D;
-    --s-me: #1F2222;
-    --s-hover: #222625;
-    --s-ink: #F3F1EE;
-    --s-ink2: #C9C7C4;
-    --s-mute: #A8A6A3;
-    --s-soft: #9E9B98;
-    --s-faint: #928F8C;
-    --s-ghost: #4A4A50;
-    --s-red: #E5372B;
-    --s-red-soft: rgba(229, 55, 43, .16);
-    --s-red-ink: #FF8A80;
-    --s-green: #7FD49B;
-    --s-green-soft: rgba(127, 212, 155, .14);
-    --s-or: #E8B95A;
+    /* Palette : couleurs.css. Ici, seulement ce qui est propre au classement :
+       l'or du temple de la renommée suit l'or du site, son libellé reste
+       plus doux. */
+    --s-or: var(--s-gold);
+    --s-or-soft: var(--s-gold-soft);
     --s-or-ink: #B9A27A;
-    --s-or-soft: rgba(232, 185, 90, .16);
     /* La gouttière du conteneur : 32 px au bureau, 10 px au téléphone.
        La fiche d'équipe s'en sert pour aller d'un bord à l'autre. */
     --st-gouttiere: 32px;
     background: var(--s-bg);
 }
 html[data-theme="light"] body.fz-classement {
-    --s-bg: #F3F2EF;
-    --s-card: #FFFFFF;
-    --s-line: #ECEAE6;
-    --s-chip: #EEECE8;
-    --s-chip2: #E6E4E0;
-    --s-btn-line: #DDDAD5;
-    --s-me: #F4F2EE;
-    --s-hover: #F6F5F2;
-    --s-ink: #141416;
-    --s-ink2: #34343A;
-    --s-mute: #5E5C59;
-    --s-soft: #6A6764;
-    --s-faint: #74716D;
-    --s-ghost: #B5B2AD;
-    --s-red: #D52B1E;
-    --s-red-soft: rgba(213, 43, 30, .1);
-    --s-red-ink: #B3241A;
-    --s-green: #1D8048;
-    --s-green-soft: rgba(29, 128, 72, .1);
-    --s-or: #976111;
     --s-or-ink: #8A6A2E;
-    --s-or-soft: rgba(151, 97, 17, .1);
 }
 
 body.fz-classement .container {
@@ -104,7 +67,7 @@ body.fz-classement .st-tete .page-title {
 body.fz-classement .st-titre-sur {
     font: 600 11px/1 'Saira', sans-serif;
     letter-spacing: 1.2px;
-    color: var(--s-soft);
+    color: var(--s-mute);
 }
 body.fz-classement .st-titre-nom { overflow-wrap: anywhere; text-wrap: balance; }
 body.fz-classement .st-maj {
@@ -123,7 +86,7 @@ body.fz-classement .st-mon-equipe {
     border: 1px solid var(--s-btn-line); border-radius: 999px; background: transparent; cursor: pointer;
     font: 600 13px/1 'Saira', sans-serif; color: var(--s-ink); white-space: nowrap;
 }
-body.fz-classement .st-mon-equipe:hover { background: var(--s-hover); }
+body.fz-classement .st-mon-equipe:hover { background: var(--s-raise); }
 body.fz-classement .st-mon-equipe[hidden] { display: none; }
 body.fz-classement .st-maj-direct { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--s-green); }
 body.fz-classement .st-maj-direct i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: stPouls 1.6s infinite; }
@@ -159,7 +122,7 @@ body.fz-classement .st-periode {
 body.fz-classement button.st-periode:hover { color: var(--s-ink); }
 body.fz-classement .st-periode.is-on,
 body.fz-classement button.st-periode.is-on:hover { background: var(--s-ink); color: var(--s-bg); }
-body.fz-classement .st-periode:focus-visible { outline: 2px solid var(--s-red); outline-offset: 1px; }
+body.fz-classement .st-periode:focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: 1px; }
 
 /* ==================== LA CARTE DU CLASSEMENT ==================== */
 
@@ -191,11 +154,12 @@ body.fz-classement .st-rangee.is-me::before {
     bottom: 14px;
     width: 3px;
     border-radius: 0 3px 3px 0;
-    background: var(--s-red);
+    /* « Toi » est neutre : le rouge garde la marque, l'action et le direct. */
+    background: var(--s-ink);
 }
 body.fz-classement .st-rangee.is-clickable:hover,
-body.fz-classement .st-rangee.is-clickable:focus-visible { background: var(--s-hover); }
-body.fz-classement .st-rangee:focus-visible { outline: 2px solid var(--s-red); outline-offset: -2px; }
+body.fz-classement .st-rangee.is-clickable:focus-visible { background: var(--s-raise); }
+body.fz-classement .st-rangee:focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: -2px; }
 
 body.fz-classement .st-rang {
     flex: none;
@@ -205,7 +169,7 @@ body.fz-classement .st-rang {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--s-chip2);
+    background: var(--s-chip);
     color: var(--s-ink2);
     font: 800 15px/1 'Saira Condensed', sans-serif;
 }
@@ -290,7 +254,7 @@ body.fz-classement .st-rangee .st-evo {
 body.fz-classement .st-rangee .st-evo svg { fill: currentColor; }
 body.fz-classement .st-rangee .st-evo-up { background: var(--s-green-soft); color: var(--s-green); }
 body.fz-classement .st-rangee .st-evo-down { background: var(--s-red-soft); color: var(--s-red-ink); }
-body.fz-classement .st-rangee .st-evo-flat { background: var(--s-chip); color: var(--s-soft); }
+body.fz-classement .st-rangee .st-evo-flat { background: var(--s-chip); color: var(--s-mute); }
 
 body.fz-classement .st-chiffres { display: flex; gap: 12px; }
 body.fz-classement .st-chiffre { display: flex; flex-direction: column; gap: 3px; }
@@ -302,7 +266,7 @@ body.fz-classement .st-chiffre small {
     font: 500 9px/1 'Saira', sans-serif;
     letter-spacing: .6px;
     text-transform: uppercase;
-    color: var(--s-soft);
+    color: var(--s-mute);
 }
 
 body.fz-classement .st-total { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
@@ -313,10 +277,10 @@ body.fz-classement .st-total-v {
     font: 800 30px/26px 'Saira Condensed', sans-serif;
     color: var(--s-ink);
 }
-body.fz-classement .st-ecart { font: 500 11px/1 'Saira', sans-serif; color: var(--s-soft); white-space: nowrap; }
+body.fz-classement .st-ecart { font: 500 11px/1 'Saira', sans-serif; color: var(--s-mute); white-space: nowrap; }
 body.fz-classement .st-ecart sup { font-size: .75em; }
 body.fz-classement .st-ecart.is-tete { color: var(--s-or); }
-body.fz-classement .st-rangee > .st-ico { flex: none; margin-left: -4px; color: var(--s-ghost); }
+body.fz-classement .st-rangee > .st-ico { flex: none; margin-left: -4px; color: var(--s-dim); }
 
 /* Ce que le soir a ajouté au total, en direct (pointsSoirHTML). */
 body.fz-classement .st-total-v .st-live-pts {
@@ -350,7 +314,7 @@ body.fz-classement .st-aide summary {
 body.fz-classement .st-aide summary::-webkit-details-marker { display: none; }
 body.fz-classement .st-aide summary > span { flex: 1; }
 body.fz-classement .st-aide summary:hover { color: var(--s-ink); }
-body.fz-classement .st-aide summary:focus-visible { outline: 2px solid var(--s-red); outline-offset: -2px; }
+body.fz-classement .st-aide summary:focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: -2px; }
 body.fz-classement .st-aide summary .st-ico:last-child { transition: transform .25s ease; }
 body.fz-classement .st-aide[open] summary .st-ico:last-child { transform: rotate(180deg); }
 body.fz-classement .st-aide dl {
@@ -585,8 +549,8 @@ body.fz-classement .hof-rangee {
 }
 body.fz-classement .hof-rangee + .hof-rangee { border-top: 1px solid var(--s-line); }
 body.fz-classement button.hof-rangee:hover,
-body.fz-classement .hof-rangee.is-on { background: var(--s-hover); }
-body.fz-classement .hof-rangee:focus-visible { outline: 2px solid var(--s-red); outline-offset: -2px; }
+body.fz-classement .hof-rangee.is-on { background: var(--s-raise); }
+body.fz-classement .hof-rangee:focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: -2px; }
 body.fz-classement .hof-rangee-ico {
     flex: none;
     width: 36px;
@@ -596,7 +560,7 @@ body.fz-classement .hof-rangee-ico {
     align-items: center;
     justify-content: center;
     background: var(--s-chip);
-    color: var(--s-soft);
+    color: var(--s-mute);
     transition: background-color .2s ease, color .2s ease;
 }
 body.fz-classement .hof-rangee.is-on .hof-rangee-ico { background: var(--s-or-soft); color: var(--s-or); }
@@ -605,10 +569,10 @@ body.fz-classement .hof-rangee-titre { display: flex; align-items: center; gap: 
 body.fz-classement .hof-point { width: 6px; height: 6px; border-radius: 50%; background: var(--s-green); animation: stPouls 1.6s infinite; }
 body.fz-classement .hof-grille { display: grid; grid-template-columns: 34px auto minmax(0, 1fr); align-items: center; gap: 4px 8px; }
 body.fz-classement .hof-k { font: 600 9px/1 'Saira', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--s-or-ink); }
-body.fz-classement .hof-k.is-pire { color: var(--s-soft); }
+body.fz-classement .hof-k.is-pire { color: var(--s-mute); }
 body.fz-classement .hof-v { font: 800 18px/1 'Saira Condensed', sans-serif; color: var(--s-ink); }
 body.fz-classement .hof-rangee.is-on .hof-v:not(.is-pire) { color: var(--s-or); }
-body.fz-classement .hof-v.is-pire { color: var(--s-soft); }
+body.fz-classement .hof-v.is-pire { color: var(--s-mute); }
 body.fz-classement .hof-e {
     display: flex;
     align-items: center;
@@ -622,7 +586,7 @@ body.fz-classement .hof-e {
 body.fz-classement .hof-e.is-pire { color: var(--s-faint); }
 body.fz-classement .hof-e-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 body.fz-classement .hof-e .st-avatar-fallback { width: 14px; height: 14px; font-size: 6px; background: var(--s-chip); color: var(--s-ink2); }
-body.fz-classement .hof-rangee > .st-ico { flex: none; align-self: center; color: var(--s-ghost); }
+body.fz-classement .hof-rangee > .st-ico { flex: none; align-self: center; color: var(--s-dim); }
 
 /* ---- Pas encore de records ---- */
 body.fz-classement .hall-of-fame .fz-empty {

@@ -15,35 +15,12 @@
    ============================================================ */
 
 html body.fz-trade {
-    --s-bg: #0F1316;
-    --s-card: #1C201F;
-    --s-raise: #222625;
-    --s-line: #2A2E2D;
-    --s-line2: #393D3D;
-    --s-box: #4A4E4E;
-    --s-face: #2A2E2D;
-    --s-ink: #F3F1EE;
-    --s-on-ink: #0B0B0C;
-    --s-ink2: #C9C7C4;
-    --s-mute: #A8A6A3;
-    --s-faint: #9E9B98;
-    --s-dim: #928F8C;
-    --s-ghost: #5A5A60;
-    --s-red: #E5372B;
+    /* Palette et pastilles de position : couleurs.css. Ici, les teintes
+       douces propres aux paniers d'échange. */
     --s-red-soft: rgba(229, 55, 43, .08);
-    --s-red-ink: #FF8A80;
-    --s-green: #7FD49B;
     --s-green-soft: rgba(127, 212, 155, .07);
     --s-give-soft: rgba(229, 55, 43, .07);
-    --s-gold: #E8B26A;
-    --s-wait: #E0B341;
     --s-shadow: 0 -8px 24px rgba(0, 0, 0, .35);
-    /* Pastilles de position : texte, puis fond à 16 % */
-    --s-pos-att: 156, 201, 255;
-    --s-pos-def: 201, 162, 255;
-    --s-pos-gar: 255, 138, 128;
-    --s-pos-rec: 232, 178, 106;
-    --s-pos-eq: 110, 220, 215;
 
     margin: 0;
     min-height: 100vh;
@@ -54,34 +31,10 @@ html body.fz-trade {
     overflow-x: hidden;
 }
 html[data-theme="light"] body.fz-trade {
-    --s-bg: #F3F2EF;
-    --s-card: #FFFFFF;
-    --s-raise: #F6F5F2;
-    --s-line: #ECEAE6;
-    --s-line2: #DDDAD5;
-    --s-box: #C9C6C1;
-    --s-face: #ECEAE6;
-    --s-ink: #141416;
-    --s-on-ink: #FFFFFF;
-    --s-ink2: #34343A;
-    --s-mute: #5E5C59;
-    --s-faint: #6B6965;
-    --s-dim: #74716D;
-    --s-ghost: #A29F9A;
-    --s-red: #D52B1E;
     --s-red-soft: rgba(213, 43, 30, .06);
-    --s-red-ink: #B3241A;
-    --s-green: #1D8048;
-    --s-green-soft: rgba(29, 128, 72, .07);
+    --s-green-soft: rgba(26, 122, 67, .07);
     --s-give-soft: rgba(213, 43, 30, .06);
-    --s-gold: #976111;
-    --s-wait: #8A6400;
     --s-shadow: 0 -8px 24px rgba(0, 0, 0, .08);
-    --s-pos-att: 38, 104, 186;
-    --s-pos-def: 120, 76, 196;
-    --s-pos-gar: 186, 52, 40;
-    --s-pos-rec: 160, 98, 18;
-    --s-pos-eq: 14, 128, 122;
 }
 
 body.fz-trade * { box-sizing: border-box; }
@@ -89,7 +42,7 @@ body.fz-trade :is(button, input) { font-family: inherit; }
 body.fz-trade button { -webkit-tap-highlight-color: transparent; }
 body.fz-trade button:disabled { cursor: not-allowed; }
 body.fz-trade .hidden { display: none !important; }
-body.fz-trade main :is(a, button, input):focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
+body.fz-trade main :is(a, button, input):focus-visible { outline: 2px solid var(--s-red-ink); outline-offset: 2px; }
 
 /* La barre du haut, le rail et le tiroir gardent la police du site. */
 body.fz-trade .navbar,
@@ -159,7 +112,7 @@ body.fz-trade .trade-tab {
     justify-content: center;
     gap: 6px;
     font: 600 14px/1 'Saira', sans-serif;
-    color: var(--s-dim);
+    color: var(--s-mute);
     cursor: pointer;
 }
 body.fz-trade .trade-tab::after {
@@ -174,7 +127,7 @@ body.fz-trade .trade-tab::after {
 }
 body.fz-trade .trade-tab:hover { color: var(--s-ink2); }
 body.fz-trade .trade-tab.active { color: var(--s-ink); }
-body.fz-trade .trade-tab.active::after { background: var(--s-red); }
+body.fz-trade .trade-tab.active::after { background: var(--s-red-ink); }
 body.fz-trade .trade-tab-badge {
     display: inline-grid;
     place-items: center;
@@ -195,10 +148,10 @@ body.fz-trade .tr-rule {
     gap: 8px;
     margin: 14px 6px 0;
     font: 400 12px/17px 'Saira', sans-serif;
-    color: var(--s-dim);
+    color: var(--s-mute);
     text-wrap: pretty;
 }
-body.fz-trade .tr-rule svg { flex: none; margin-top: 1px; color: var(--s-ghost); }
+body.fz-trade .tr-rule svg { flex: none; margin-top: 1px; color: var(--s-dim); }
 
 body.fz-trade .empty-msg,
 body.fz-trade .received-empty,
@@ -239,7 +192,7 @@ body.fz-trade .tr-chip {
     height: 44px;
     padding: 0 14px 0 5px;
     border-radius: 999px;
-    border: 1px solid var(--s-line2);
+    border: 1px solid var(--s-btn-line);
     background: transparent;
     color: var(--s-ink2);
     display: flex;
@@ -255,7 +208,7 @@ body.fz-trade .tr-chip-av {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--s-line2);
+    background: var(--s-chip);
     color: var(--s-ink2);
     display: grid;
     place-items: center;
@@ -314,7 +267,7 @@ body.fz-trade .tmm-meta {
     gap: 6px;
     min-width: 0;
     font: 400 11px/1 'Saira', sans-serif;
-    color: var(--s-dim);
+    color: var(--s-mute);
     white-space: nowrap;
 }
 body.fz-trade .tmm-meta > span:last-child { overflow: hidden; text-overflow: ellipsis; }
@@ -334,7 +287,7 @@ body.fz-trade .tmm-refus {
     flex: none;
     max-width: 42%;
     font: 500 11px/1.3 'Saira', sans-serif;
-    color: var(--s-dim);
+    color: var(--s-mute);
     text-align: right;
 }
 
@@ -380,7 +333,7 @@ body.fz-trade .tr-shot img {
     object-fit: cover;
     object-position: top;
 }
-body.fz-trade .tr-shot.is-club { background: var(--s-face); }
+body.fz-trade .tr-shot.is-club { background: var(--s-chip); }
 body.fz-trade .tr-shot.is-club img { inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); object-fit: contain; object-position: center; }
 body.fz-trade .tr-shot-init {
     color: #fff;
@@ -419,7 +372,7 @@ body.fz-trade .rc-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--s-line2);
+    background: var(--s-chip);
     color: var(--s-ink2);
     display: grid;
     place-items: center;
@@ -454,10 +407,10 @@ body.fz-trade .rc-search {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--s-dim);
+    color: var(--s-mute);
     cursor: text;
 }
-body.fz-trade .rc-search:focus-within { border-color: var(--s-line2); }
+body.fz-trade .rc-search:focus-within { border-color: var(--s-btn-line); }
 body.fz-trade .rc-search svg { flex: none; }
 body.fz-trade .rc-search input {
     flex: 1;
@@ -471,14 +424,14 @@ body.fz-trade .rc-search input {
     -webkit-appearance: none;
     appearance: none;
 }
-body.fz-trade .rc-search input::placeholder { color: var(--s-dim); }
+body.fz-trade .rc-search input::placeholder { color: var(--s-mute); }
 body.fz-trade .rc-search input::-webkit-search-cancel-button { display: none; }
 body.fz-trade .rc-forsale-toggle {
     flex: none;
     height: 44px;
     padding: 0 12px;
     border-radius: 12px;
-    border: 1px solid var(--s-line2);
+    border: 1px solid var(--s-btn-line);
     background: none;
     color: var(--s-ink2);
     font: 600 12px/1 'Saira', sans-serif;
@@ -504,7 +457,7 @@ body.fz-trade .pos-tab {
     height: 32px;
     padding: 0 12px;
     border-radius: 999px;
-    border: 1px solid var(--s-line2);
+    border: 1px solid var(--s-btn-line);
     background: transparent;
     color: var(--s-mute);
     font: 600 12px/1 'Saira', sans-serif;
@@ -529,7 +482,7 @@ body.fz-trade .roster-list-head {
     font: 600 10px/1 'Saira', sans-serif;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--s-dim);
+    color: var(--s-mute);
 }
 body.fz-trade .rlh-name { flex: 1; }
 body.fz-trade .rlh-stats,
@@ -561,13 +514,13 @@ body.fz-trade .pcr-check {
     width: 22px;
     height: 22px;
     border-radius: 6px;
-    border: 2px solid var(--s-box);
+    border: 2px solid var(--s-btn-line);
     display: grid;
     place-items: center;
     color: #fff;
 }
 body.fz-trade .pcr-check svg { opacity: 0; }
-body.fz-trade .player-card-roster.selected .pcr-check { border: 0; background: var(--s-red); }
+body.fz-trade .player-card-roster.selected .pcr-check { border: 0; background: var(--s-red-fill); }
 body.fz-trade .player-card-roster.selected .pcr-check svg { opacity: 1; }
 
 body.fz-trade .pcr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
@@ -597,7 +550,7 @@ body.fz-trade .pcr-team {
     gap: 6px;
     min-width: 0;
     font: 400 11px/1 'Saira', sans-serif;
-    color: var(--s-dim);
+    color: var(--s-mute);
     white-space: nowrap;
 }
 body.fz-trade .pcr-stats { font: 500 13px/1 'Saira', sans-serif; color: var(--s-faint); font-variant-numeric: tabular-nums; }
@@ -641,14 +594,14 @@ body.fz-trade .tes-ico {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: var(--s-face);
+    background: var(--s-chip);
     color: var(--s-faint);
     display: grid;
     place-items: center;
     margin-bottom: 4px;
 }
 body.fz-trade .trade-empty-state h3 { margin: 0; font: 600 15px/1.3 'Saira', sans-serif; color: var(--s-ink); }
-body.fz-trade .trade-empty-state p { margin: 0; max-width: 240px; font: 400 12px/1.5 'Saira', sans-serif; color: var(--s-dim); }
+body.fz-trade .trade-empty-state p { margin: 0; max-width: 240px; font: 400 12px/1.5 'Saira', sans-serif; color: var(--s-mute); }
 
 body.fz-trade .trade-basket { flex: 1; display: flex; flex-direction: column; gap: 12px; }
 body.fz-trade .tb-cols-lbl,
@@ -677,7 +630,7 @@ body.fz-trade .tb-card {
     gap: 8px;
 }
 body.fz-trade .tb-pair-row > .tb-card:last-child { background: var(--s-green-soft); }
-body.fz-trade .tb-card.is-ghost { background: none; border: 1px dashed var(--s-line2); }
+body.fz-trade .tb-card.is-ghost { background: none; border: 1px dashed var(--s-btn-line); }
 body.fz-trade .tb-card .tr-shot { width: 30px; height: 30px; }
 body.fz-trade .tb-card .tr-shot-init { font-size: 10px; }
 body.fz-trade .tb-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -689,7 +642,7 @@ body.fz-trade .tb-card-name {
     text-overflow: ellipsis;
 }
 body.fz-trade .tb-card.is-ghost .tb-card-name { color: var(--s-faint); }
-body.fz-trade .tb-card-meta { font: 400 10px/1.2 'Saira', sans-serif; color: var(--s-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .tb-card-meta { font: 400 10px/1.2 'Saira', sans-serif; color: var(--s-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.fz-trade .tb-card-remove {
     flex: none;
     width: 22px;
@@ -704,8 +657,8 @@ body.fz-trade .tb-card-remove {
 body.fz-trade .tb-card-remove:hover { background: var(--s-line); color: var(--s-ink); }
 body.fz-trade .tb-pair-mid { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 body.fz-trade .tb-pair-swap { font-size: 16px; line-height: 1; color: var(--s-ink2); }
-body.fz-trade .tb-pair-swap.is-ghost { color: var(--s-ghost); }
-body.fz-trade .tb-pair-cat { font: 800 9px/1 'Saira Condensed', sans-serif; letter-spacing: .4px; color: var(--s-dim); }
+body.fz-trade .tb-pair-swap.is-ghost { color: var(--s-dim); }
+body.fz-trade .tb-pair-cat { font: 800 9px/1 'Saira Condensed', sans-serif; letter-spacing: .4px; color: var(--s-mute); }
 
 body.fz-trade .tb-counter-note {
     display: flex;
@@ -732,7 +685,7 @@ body.fz-trade .tb-equity {
 body.fz-trade .tb-eq-row { display: flex; align-items: center; gap: 6px; font: 600 12px/1.3 'Saira', sans-serif; color: var(--s-green); }
 body.fz-trade .tb-eq-row.is-invalid { color: var(--s-faint); }
 body.fz-trade .tb-eq-row.is-invalid .tb-eq-check { display: none; }
-body.fz-trade .tb-eq-line { display: flex; justify-content: space-between; font: 400 12px/1 'Saira', sans-serif; color: var(--s-dim); }
+body.fz-trade .tb-eq-line { display: flex; justify-content: space-between; font: 400 12px/1 'Saira', sans-serif; color: var(--s-mute); }
 body.fz-trade .tb-eq-line strong { font: 600 13px/1 'Saira', sans-serif; color: var(--s-ink); font-variant-numeric: tabular-nums; }
 body.fz-trade .tb-eq-gap.is-positive strong { color: var(--s-green); }
 
@@ -742,7 +695,7 @@ body.fz-trade .tm-cta {
     height: 48px;
     border: 0;
     border-radius: 13px;
-    background: var(--s-red);
+    background: var(--s-red-fill);
     color: #fff;
     display: flex;
     align-items: center;
@@ -808,7 +761,7 @@ body.fz-trade .btn-success-secondary {
     cursor: pointer;
 }
 body.fz-trade .btn-success-primary { border: 0; background: var(--s-ink); color: var(--s-on-ink); }
-body.fz-trade .btn-success-secondary { border: 1px solid var(--s-line2); background: none; color: var(--s-ink); }
+body.fz-trade .btn-success-secondary { border: 1px solid var(--s-btn-line); background: none; color: var(--s-ink); }
 @media (prefers-reduced-motion: reduce) { body.fz-trade .trade-success-check { animation: none; } }
 
 /* ============================================================
@@ -828,7 +781,7 @@ body.fz-trade .trade-card-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--s-line2);
+    background: var(--s-chip);
     color: var(--s-ink2);
     display: grid;
     place-items: center;
@@ -836,14 +789,14 @@ body.fz-trade .trade-card-avatar {
 }
 body.fz-trade .trade-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 body.fz-trade .trade-card-teams { font: 600 15px/1.1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-body.fz-trade .trade-card-date { font: 400 12px/1 'Saira', sans-serif; color: var(--s-dim); }
+body.fz-trade .trade-card-date { font: 400 12px/1 'Saira', sans-serif; color: var(--s-mute); }
 body.fz-trade .trade-card-status {
     flex: none;
     height: 22px;
     padding: 0 8px;
     border-radius: 999px;
     background: rgba(224, 179, 65, .14);
-    color: var(--s-wait);
+    color: var(--s-gold);
     font: 700 10px/22px 'Saira', sans-serif;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -879,7 +832,7 @@ body.fz-trade .trade-arrow-icon {
     height: 28px;
     border-radius: 50%;
     background: var(--s-bg);
-    border: 1px solid var(--s-line2);
+    border: 1px solid var(--s-btn-line);
     color: var(--s-ink2);
     display: grid;
     place-items: center;
@@ -902,7 +855,7 @@ body.fz-trade .trade-card-actions button {
 }
 body.fz-trade .btn-accept-trade { border: 0; background: var(--s-ink); color: var(--s-on-ink); }
 body.fz-trade .btn-accept-trade:hover { opacity: .9; }
-body.fz-trade .btn-decline-trade { border: 1px solid var(--s-line2); background: none; color: var(--s-ink); }
+body.fz-trade .btn-decline-trade { border: 1px solid var(--s-btn-line); background: none; color: var(--s-ink); }
 body.fz-trade .btn-decline-trade:hover { border-color: var(--s-mute); }
 body.fz-trade .trade-card-actions .btn-counter-trade {
     grid-column: 1 / 3;
@@ -936,7 +889,7 @@ body.fz-trade .history-card-date {
     font: 600 11px/1 'Saira', sans-serif;
     letter-spacing: 1.2px;
     text-transform: uppercase;
-    color: var(--s-dim);
+    color: var(--s-mute);
 }
 body.fz-trade .history-card-status {
     height: 20px;
@@ -949,7 +902,7 @@ body.fz-trade .history-card-status {
     text-transform: uppercase;
 }
 body.fz-trade .history-card-status[data-statut="refuse"] { background: rgba(255, 138, 128, .14); color: var(--s-red-ink); }
-body.fz-trade .history-card-status[data-statut="annule"] { background: var(--s-face); color: var(--s-faint); }
+body.fz-trade .history-card-status[data-statut="annule"] { background: var(--s-chip); color: var(--s-faint); }
 body.fz-trade .history-card-sides {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr);
@@ -959,14 +912,14 @@ body.fz-trade .history-card-sides {
 body.fz-trade .history-card.is-declined .history-card-sides { opacity: .6; }
 body.fz-trade .history-side { min-width: 0; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
 body.fz-trade .history-side.is-right { align-items: flex-end; }
-body.fz-trade .history-side-name { font: 500 11px/1 'Saira', sans-serif; color: var(--s-dim); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .history-side-name { font: 500 11px/1 'Saira', sans-serif; color: var(--s-mute); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.fz-trade .history-side-player { display: flex; align-items: center; gap: 6px; max-width: 100%; }
 body.fz-trade .history-player-name { font: 600 13px/1.1 'Saira', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-body.fz-trade .history-divider { display: flex; color: var(--s-ghost); }
+body.fz-trade .history-divider { display: flex; color: var(--s-dim); }
 
 body.fz-trade .received-trade-card.is-target,
 body.fz-trade .history-card.is-target {
-    outline: 2px solid var(--s-red);
+    outline: 2px solid var(--s-red-ink);
     outline-offset: -2px;
     scroll-margin-block: 100px;
 }
@@ -1005,13 +958,13 @@ body.fz-trade .trade-confirm-title { margin: 0 0 14px; font: 800 22px/1.1 'Saira
 body.fz-trade .tc-trade-row { display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr); gap: 6px; align-items: center; margin-bottom: 8px; }
 body.fz-trade .tc-side { min-width: 0; padding: 10px; border-radius: 12px; background: var(--s-give-soft); display: flex; flex-direction: column; gap: 5px; }
 body.fz-trade .tc-trade-row .tc-side:last-child { background: var(--s-green-soft); text-align: right; }
-body.fz-trade .tc-side-label { font: 600 10px/1.2 'Saira', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.fz-trade .tc-side-label { font: 600 10px/1.2 'Saira', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.fz-trade .tc-side strong { font: 600 14px/1.2 'Saira', sans-serif; color: var(--s-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.fz-trade .tc-arrow { text-align: center; color: var(--s-faint); }
 body.fz-trade .trade-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
 body.fz-trade .tc-btn { height: 46px; border-radius: 12px; font: 600 14px/1 'Saira', sans-serif; cursor: pointer; }
-body.fz-trade .tc-cancel { border: 1px solid var(--s-line2); background: none; color: var(--s-ink); }
-body.fz-trade .tc-ok { border: 0; background: var(--s-red); color: #fff; }
+body.fz-trade .tc-cancel { border: 1px solid var(--s-btn-line); background: none; color: var(--s-ink); }
+body.fz-trade .tc-ok { border: 0; background: var(--s-red-fill); color: #fff; }
 body.fz-trade .tc-ok:hover { opacity: .9; }
 
 body.fz-trade .trade-notification {
@@ -1022,7 +975,7 @@ body.fz-trade .trade-notification {
     padding: 12px 16px;
     border-radius: 14px;
     background: var(--s-card);
-    border: 1px solid var(--s-line2);
+    border: 1px solid var(--s-line);
     box-shadow: 0 12px 32px rgba(0, 0, 0, .25);
     z-index: 9999;
     transition: right .3s cubic-bezier(.4, 0, .2, 1);
@@ -1103,7 +1056,7 @@ body.fz-trade .loading-spinner {
         height: 18px;
         padding: 0 5px;
         border-radius: 999px;
-        background: var(--s-line2);
+        background: var(--s-chip);
         color: var(--s-faint);
         font: 700 10px/1 'Saira', sans-serif;
     }
@@ -1158,11 +1111,11 @@ body.fz-trade .loading-spinner {
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    body.fz-trade .tm-balance-val.is-empty { color: var(--s-ghost); }
-    body.fz-trade .tm-balance-swap { color: var(--s-box); }
+    body.fz-trade .tm-balance-val.is-empty { color: var(--s-dim); }
+    body.fz-trade .tm-balance-swap { color: var(--s-btn-line); }
     body.fz-trade .tm-balance-swap.is-ready { color: var(--s-ink); }
     body.fz-trade .tm-cta { background: var(--s-raise); color: var(--s-faint); font-size: 14px; }
-    body.fz-trade .tm-cta.is-ready { background: var(--s-red); color: #fff; font-size: 15px; }
+    body.fz-trade .tm-cta.is-ready { background: var(--s-red-fill); color: #fff; font-size: 15px; }
     body.fz-trade .tm-cta-ico { display: flex; }
     body.fz-trade .tm-cta span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
