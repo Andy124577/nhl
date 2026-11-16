@@ -345,6 +345,8 @@
         if (utilisateur() && reponse.headers.get('X-Fz-Connecte') === '0') {
             throw Object.assign(new Error('Session expirée'), { raison: 'session' });
         }
+        // Le serveur a répondu : ce qu'on montre n'est plus un souvenir.
+        ancienDepuis = null;
         // Le texte brut sert d'empreinte : comparer avant d'analyser évite
         // aussi de reconstruire des objets identiques à ceux déjà en main.
         const texte = await reponse.text();
@@ -357,6 +359,7 @@
         tousLesPools = JSON.parse(texte);
         construireMesPools();
         garderInstantane(texte);
+        garderMemoire(texte);
         return true;
     }
 
@@ -403,10 +406,71 @@
         } catch { return null; }
     }
 
-    /** Démarre sur l'instantané ; true s'il a servi. */
+    // ==================== MÉMOIRE ENTRE LES VISITES ====================
+
+    /**
+     * Le dernier /draft lu, gardé sur l'appareil (localStorage) jusqu'à 24 h.
+     *
+     * L'instantané de l'onglet ne dure que la visite : la première ouverture
+     * du jour — souvent celle où Neon dort — repartait d'un squelette. Une
+     * nouvelle visite (onglet neuf, app rouverte) ouvre maintenant sur ce
+     * qu'on avait vu la dernière fois, et le relit aussitôt ; tant que la
+     * relecture n'a pas répondu, fzReactif.js affiche l'heure de ces
+     * données (« Données de 22 h 14 · mise à jour… »).
+     *
+     * Seulement pour un pool en saison (repêchage terminé) : un repêchage
+     * qui commence ou avance ne se montre jamais de mémoire. Seulement au
+     * début d'une visite : pendant la visite, l'instantané de l'onglet (cinq
+     * minutes, effacé par toute écriture) reste la règle, pour qu'un échange
+     * accepté ne réapparaisse jamais à l'état d'avant. Lié au nom
+     * d'utilisateur : une autre personne connectée sur l'appareil ne le
+     * voit pas.
+     */
+    const CLE_MEMOIRE = 'fzDraftMemoire';
+    const MEMOIRE_MAX_MS = 24 * 60 * 60 * 1000;
+    // Premier chargement de cet onglet ? Lu avant d'être posé.
+    const nouvelleVisite = (() => {
+        try {
+            const deja = sessionStorage.getItem('fzVisite') === '1';
+            sessionStorage.setItem('fzVisite', '1');
+            return !deja;
+        } catch { return false; }
+    })();
+    // Heure des données montrées de mémoire, tant que le serveur ne les a
+    // pas confirmées ; null sinon.
+    let ancienDepuis = null;
+
+    function garderMemoire(texte) {
+        try {
+            if (texte.length > 1000000) { localStorage.removeItem(CLE_MEMOIRE); return; }
+            localStorage.setItem(CLE_MEMOIRE, JSON.stringify({ u: utilisateur(), at: Date.now(), t: texte }));
+        } catch { /* stockage plein ou indisponible : on s'en passe */ }
+    }
+
+    function oublierMemoire() {
+        try { localStorage.removeItem(CLE_MEMOIRE); } catch { /* rien */ }
+    }
+
+    function lireMemoire() {
+        try {
+            const brut = localStorage.getItem(CLE_MEMOIRE);
+            if (!brut) return null;
+            const s = JSON.parse(brut);
+            if (!s || s.u !== utilisateur() || typeof s.t !== 'string') return null;
+            if (!(Date.now() - s.at < MEMOIRE_MAX_MS)) return null;
+            return s;
+        } catch { return null; }
+    }
+
+    /** Démarre sur l'instantané (ou la mémoire d'une visite) ; true s'il a servi. */
     function demarrerSurInstantane() {
         if (pageLieeAuDraft || pageDuRepechage) return false;
-        const texte = lireInstantane();
+        let texte = lireInstantane();
+        let depuis = null;
+        if (!texte && nouvelleVisite) {
+            const memoire = lireMemoire();
+            if (memoire) { texte = memoire.t; depuis = memoire.at; }
+        }
         if (!texte) return false;
         try {
             tousLesPools = JSON.parse(texte);
@@ -414,7 +478,9 @@
             const nom = resoudreActif();
             const donnees = nom && tousLesPools[nom];
             if (!nom || !donnees || etatRepechage(donnees).etat === 'encours') throw new Error('instantané inutilisable');
+            if (depuis !== null && etatRepechage(donnees).etat !== 'termine') throw new Error('mémoire réservée à la saison');
             empreinteDraft = `${utilisateur()}\n${texte}`;
+            ancienDepuis = depuis;
             return true;
         } catch {
             tousLesPools = {};
@@ -422,6 +488,32 @@
             empreinteDraft = '';
             return false;
         }
+    }
+
+    /**
+     * Après un départ sur la mémoire : relire jusqu'à ce que le serveur
+     * réponde. Un échec ne passe pas pour « rien de neuf » — la base peut
+     * dormir. Une session expirée, elle, ne se montre pas de mémoire : on
+     * oublie et on recharge, la page dira de se reconnecter.
+     */
+    const DELAIS_CONFIRMATION = [700, 1500, 3000, 5000, 10000, 20000, 30000, 60000];
+    async function confirmerMemoire(essai = 0) {
+        if (ancienDepuis === null) return rafraichir();
+        try {
+            if (await chargerDraft()) signalerDonnees();
+            echec = null;
+            return;
+        } catch (erreur) {
+            if (erreur.raison === 'session') {
+                oublierMemoire();
+                oublierInstantane();
+                window.location.reload();
+                return;
+            }
+            console.error('Relecture des pools impossible :', erreur);
+        }
+        const delai = DELAIS_CONFIRMATION[Math.min(essai, DELAIS_CONFIRMATION.length - 1)];
+        setTimeout(() => confirmerMemoire(essai + 1), delai);
     }
 
     /**
@@ -613,7 +705,7 @@
             // Repartir de ce que la page précédente venait de lire ; la
             // relecture suit aussitôt, en arrière-plan.
             let charge = demarrerSurInstantane();
-            if (charge) setTimeout(rafraichir, 0);
+            if (charge) setTimeout(() => confirmerMemoire(), 0);
             // Quelques essais rapprochés : la base gratuite met une à
             // quelques secondes à se réveiller, et la première lecture qui
             // la réveille peut échouer. Une session expirée, elle, ne
@@ -870,6 +962,15 @@
          * soit sans pool : ne pas lui proposer d'en créer un.
          */
         failed: () => echec,
+
+        /**
+         * Heure (ms) des données montrées de mémoire tant que le serveur ne
+         * les a pas confirmées ; null quand elles sont fraîches.
+         */
+        since: () => ancienDepuis,
+
+        /** Oublie la mémoire de l'appareil (déconnexion). */
+        forget: () => { oublierMemoire(); oublierInstantane(); },
 
         /** Données du pool actif. */
         data: () => (actif ? tousLesPools[actif] : null) || null,

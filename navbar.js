@@ -1153,7 +1153,7 @@ async function logout(event) {
         });
     } catch { /* le cookie expirera de lui-même */ }
 
-    ['isLoggedIn', 'username', 'isAdmin', 'activeUser', 'avatarUrl', 'activePool', 'draftClan', 'fzAlertes:v1']
+    ['isLoggedIn', 'username', 'isAdmin', 'activeUser', 'avatarUrl', 'activePool', 'draftClan', 'fzAlertes:v1', 'fzDraftMemoire']
         .forEach(cle => localStorage.removeItem(cle));
     window.location.href = 'index.html';
 }

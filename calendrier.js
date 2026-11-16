@@ -180,7 +180,11 @@
             if (Date.now() - memo.at < 60000) return;
             silencieux = true;
         } else if (!silencieux) {
-            rendreSquelette(lundi, date);
+            // Une autre semaine que celle à l'écran : ses matchs restent en
+            // place, atténués, jusqu'à l'arrivée des nouveaux (la plage du
+            // haut a déjà changé). Le squelette, seulement quand rien n'est
+            // encore affiché.
+            if (!patienterSurPlace()) rendreSquelette(lundi, date);
         }
         let recue = null;
         try {
@@ -510,7 +514,21 @@
         return chargerSemaine(auj);
     }
 
+    /** Atténue la semaine affichée ; faux s'il n'y en a pas. */
+    function patienterSurPlace() {
+        const jeux = document.getElementById('calGames');
+        const bande = document.getElementById('calStrip');
+        if (!jeux || !bande || !jeux.classList || !bande.classList || !semaine || !semaine.days || !semaine.days.length) return false;
+        if (!jeux.querySelector || jeux.querySelector('.fz-bone')) return false;
+        [jeux, bande].forEach(el => { el.classList.add('fz-patiente'); el.setAttribute('aria-busy', 'true'); });
+        return true;
+    }
+
     function rendre() {
+        ['calGames', 'calStrip'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.classList) { el.classList.remove('fz-patiente'); el.removeAttribute('aria-busy'); }
+        });
         rendreSemaine();
         libelleSaison();
         rendreFiltre();

@@ -25,6 +25,15 @@
       Gardée dans l'onglet (sessionStorage) : quitter une page et y revenir
       la retrouve. Toute écriture (POST, PUT, DELETE…) vide cette mémoire :
       après un échange accepté, rien de périmé ne revient.
+
+   5. L'attente se dit. Un squelette qui reste à l'écran (la base
+      gratuite dort, le réseau traîne) ou un contenu atténué qui attend sa
+      relève (.fz-patiente) : après 2,5 s, une ligne calme au bas de
+      l'écran, « Le serveur se réveille… » ; après 10 s, un bouton
+      Réessayer. Des pools montrés de mémoire (activePool.js, visite
+      précédente) : après 1 s sans réponse du serveur, leur heure,
+      « Données de 22 h 14 · mise à jour… ». Rien sous ces seuils : une
+      attente courte ne mérite pas de message.
    ============================================================ */
 (function () {
     'use strict';
@@ -210,4 +219,102 @@
             FZPool.refresh();
         }
     });
+
+    // ---------- 5. L'attente se dit ----------
+    // Hors d'une vraie page (tests, travailleur), rien à dire.
+    if (typeof setInterval !== 'function' || !document.documentElement) return;
+    const SEUIL_MEMOIRE_MS = 1000;
+    const SEUIL_REVEIL_MS = 2500;
+    const SEUIL_BOUTON_MS = 10000;
+    let attenteDepuis = 0;      // début de l'attente visible en cours, 0 sinon
+    let attenteGenre = null;    // 'reveil' | 'memoire'
+    let barre = null;
+
+    /** Un élément réellement à l'écran (ni caché, ni hors de la fenêtre). */
+    function aLEcran(el) {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight;
+    }
+
+    function attendVisiblement() {
+        if (document.documentElement.classList.contains('fz-home-pending')) return true;
+        const liste = document.querySelectorAll('.fz-bone, .fz-patiente');
+        for (let i = 0; i < liste.length && i < 60; i++) {
+            if (aLEcran(liste[i])) return true;
+        }
+        return false;
+    }
+
+    function heureDe(ms) {
+        const d = new Date(ms);
+        const heure = `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
+        const auj = new Date();
+        if (d.toDateString() === auj.toDateString()) return `de ${heure}`;
+        const hier = new Date(auj); hier.setDate(auj.getDate() - 1);
+        if (d.toDateString() === hier.toDateString()) return `d’hier, ${heure}`;
+        return `du ${d.getDate()} ${['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'][d.getMonth()]}, ${heure}`;
+    }
+
+    function creerBarre() {
+        barre = document.createElement('div');
+        barre.className = 'fz-attente';
+        barre.setAttribute('role', 'status');
+        barre.hidden = true;
+        barre.innerHTML = '<span class="fz-attente-point" aria-hidden="true"></span>'
+            + '<span class="fz-attente-texte"></span>'
+            + '<button type="button" class="fz-attente-bouton" hidden>Réessayer</button>';
+        barre.querySelector('button').addEventListener('click', () => {
+            if (attenteGenre === 'memoire' && window.FZPool && typeof FZPool.refresh === 'function') {
+                FZPool.refresh();
+                attenteDepuis = Date.now();
+                majBarre();
+                return;
+            }
+            window.location.reload();
+        });
+        document.body.appendChild(barre);
+    }
+
+    function afficher(texte, bouton) {
+        if (!barre) creerBarre();
+        const t = barre.querySelector('.fz-attente-texte');
+        if (t.textContent !== texte) t.textContent = texte;
+        barre.querySelector('button').hidden = !bouton;
+        barre.hidden = false;
+    }
+
+    function cacher() {
+        if (barre && !barre.hidden) barre.hidden = true;
+    }
+
+    function majBarre() {
+        if (document.hidden || !document.body) { attenteDepuis = 0; return; }
+        const memoire = window.FZPool && typeof FZPool.since === 'function' ? FZPool.since() : null;
+        // Un squelette l'emporte : c'est lui qu'on regarde attendre.
+        const genre = attendVisiblement() ? 'reveil' : (memoire ? 'memoire' : null);
+        if (!genre) { attenteDepuis = 0; attenteGenre = null; cacher(); return; }
+        if (genre !== attenteGenre) { attenteGenre = genre; attenteDepuis = attenteDepuis || Date.now(); }
+        if (!attenteDepuis) attenteDepuis = Date.now();
+        const duree = Date.now() - attenteDepuis;
+        const long = duree >= SEUIL_BOUTON_MS;
+        if (navigator.onLine === false) {
+            afficher('Pas de connexion internet.', long);
+        } else if (genre === 'memoire') {
+            if (duree < SEUIL_MEMOIRE_MS) return cacher();
+            afficher(`Données ${heureDe(memoire)} · mise à jour…`, long);
+        } else {
+            if (duree < SEUIL_REVEIL_MS) return cacher();
+            afficher(long ? 'C’est plus long que d’habitude.' : 'Le serveur se réveille…', long);
+        }
+    }
+
+    // La région « status » existe avant son premier message : un lecteur
+    // d'écran n'annonce pas une région qui apparaît avec son texte.
+    if (document.body) creerBarre();
+    else document.addEventListener('DOMContentLoaded', () => { if (!barre) creerBarre(); });
+
+    // Une page cachée n'attend personne : l'attente repart à son retour.
+    document.addEventListener('visibilitychange', () => { attenteDepuis = 0; majBarre(); });
+    // Un demi-tour de cadran suffit : la ligne n'apparaît qu'après 1 s.
+    setInterval(majBarre, 500);
 })();
