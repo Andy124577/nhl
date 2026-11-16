@@ -311,11 +311,34 @@ function fzsMatchHTML(g) {
         </button></li>`;
 }
 
+/* Un jour pas encore lu (Hier, Demain) : les matchs affichés restent en
+   place, atténués, et le bouton touché passe aussitôt à l'état pressé. Le
+   nouveau jour les remplace à son arrivée (fzsChargerJour). Au lieu d'un
+   squelette qui effaçait des matchs déjà là. Faux quand il n'y a rien à
+   garder ou rien à attendre : le dessin habituel suit. */
+let fzsDebutAuRetour = false;
+function fzsPatienterSurPlace(bouton) {
+    const filtre = fzsFiltreChoisi;
+    if (filtre !== 'hier' && filtre !== 'demain') return false;
+    const date = filtre === 'hier' ? fzsHierISO() : fzsDemainISO();
+    fzsChargerJour(date);
+    if (fzsJourBrut(date) !== null) return false;
+    const rail = document.querySelector('#fzSeasonHome .fzs-games .fzs-rail:not([aria-busy])');
+    if (!rail) return false;
+    document.querySelectorAll('#fzSeasonHome [data-fzs-jour]')
+        .forEach(b => b.setAttribute('aria-pressed', String(b === bouton)));
+    rail.classList.add('fz-patiente');
+    rail.setAttribute('aria-busy', 'true');
+    fzsDebutAuRetour = true;
+    return true;
+}
+
 /** Redessine les cases sur place, sans perdre la position du défilement. */
 function fzsActualiserMatchs() {
     const bloc = document.querySelector('#fzSeasonHome .fzs-games');
     if (!bloc) return;
-    const defile = bloc.querySelector('.fzs-rail')?.scrollLeft || 0;
+    const defile = fzsDebutAuRetour ? 0 : (bloc.querySelector('.fzs-rail')?.scrollLeft || 0);
+    fzsDebutAuRetour = false;
     bloc.outerHTML = fzsMatchsHTML(calTonight);
     const rail = document.querySelector('#fzSeasonHome .fzs-games .fzs-rail');
     if (rail && defile) rail.scrollLeft = defile;
@@ -488,6 +511,7 @@ document.addEventListener('click', e => {
     const jour = e.target.closest?.('#fzSeasonHome [data-fzs-jour]');
     if (jour) {
         fzsFiltreChoisi = jour.dataset.fzsJour;
+        if (fzsPatienterSurPlace(jour)) return;
         fzsActualiserMatchs();
         document.querySelector('#fzSeasonHome .fzs-games .fzs-rail')?.scrollTo({ left: 0 });
         return;

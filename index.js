@@ -1072,7 +1072,7 @@ async function switchToUser(t, e) {
 }
 
 function logout(t) {
-    t && t.preventDefault(), localStorage.removeItem("isLoggedIn"), localStorage.removeItem("username"), localStorage.removeItem("isAdmin"), localStorage.removeItem("activeUser"), location.reload()
+    t && t.preventDefault(), localStorage.removeItem("isLoggedIn"), localStorage.removeItem("username"), localStorage.removeItem("isAdmin"), localStorage.removeItem("activeUser"), localStorage.removeItem("fzDraftMemoire"), location.reload()
 }
 initStatsFilters(), document.getElementById("seasonMode").addEventListener("change", changerModeSaison), "undefined" != typeof FZDraftKit && FZDraftKit.chargerWatchlist().then(libellerModesSaison, () => {}), fetchPlayerData(), $(document).ready(function() {
     const t = "true" === localStorage.getItem("isLoggedIn"),

@@ -63,9 +63,17 @@
             if (connecte) {
                 document.documentElement.classList.add('fz-home-pending');
                 // Filet : un script en échec ne doit pas laisser l'accueil vide.
-                setTimeout(function () {
+                // Des pools qui arrivent encore (la base gratuite se réveille)
+                // ne sont pas un échec : le squelette reste, et la ligne
+                // d'attente (fzReactif.js) le dit. Réarmé tant qu'ils attendent.
+                var filet = function () {
+                    var p = window.FZPool;
+                    var attend = p && typeof p.get === 'function' && !p.get()
+                        && typeof p.failed === 'function' && !p.failed();
+                    if (attend) { setTimeout(filet, 4000); return; }
                     document.documentElement.classList.remove('fz-home-pending');
-                }, 8000);
+                };
+                setTimeout(filet, 8000);
             }
         })();
     </script>
@@ -109,13 +117,13 @@
     <link rel="stylesheet" href="accueil-nouveau.css?v=20261116a">
     <!-- Squelettes : les os partagés, puis celui de l'accueil d'un membre. -->
     <link rel="stylesheet" href="fzSquelette.css?v=20261003a">
-    <link rel="stylesheet" href="fzReactif.css?v=20261114a">
+    <link rel="stylesheet" href="fzReactif.css?v=20261116a">
     <link rel="stylesheet" href="accueil-squelette.css?v=20261115b">
     <script defer src="vendor/jquery-3.6.0.min.js"></script>
     <script src="icons.js" defer></script>
     <!-- Contexte de pool actif : doit precéder tout script de page. -->
-    <script defer src="activePool.js?v=20261114a"></script>
-    <script defer src="fzReactif.js?v=20261114a"></script>
+    <script defer src="activePool.js?v=20261116a"></script>
+    <script defer src="fzReactif.js?v=20261116a"></script>
     <link rel="stylesheet" href="bilanSoiree.css?v=20261115b">
 </head>
 <body>
@@ -855,12 +863,12 @@
     <script defer src="accueil-dash.js?v=20261115b"></script>
     <script defer src="instantDraft.js?v=20261029a"></script>
     <script defer src="accueil-mobile.js?v=20261015a"></script>
-    <script defer src="accueil-season.js?v=20261115a"></script>
+    <script defer src="accueil-season.js?v=20261116a"></script>
     <script defer src="accueil-draft-hero.js?v=20261029c"></script>
     <script defer src="accueil-draft.js?v=20261029a"></script>
     <script defer src="demos.js"></script>
     <script defer src="landing.js?v=20261022a"></script>
-    <script defer src="navbar.js?v=20261115a"></script>
+    <script defer src="navbar.js?v=20261116a"></script>
     <script defer src="installerApp.js?v=20261113a"></script>
     <!-- Bilan de la soirée : surgit une fois le dernier match du soir fini. -->
     <script defer src="bilanSoiree.js?v=20261115b"></script>

@@ -265,8 +265,11 @@ app.use((req, res, next) => {
     } else if (reqPath.match(/\.(js|css)$/)) {
         // Cache JS/CSS for 1 week but allow revalidation
         res.setHeader("Cache-Control", "public, max-age=604800, must-revalidate");
-    } else if (reqPath.match(/\.(html|htm)$/)) {
-        // HTML files: cache for 5 minutes with revalidation
+    } else if (reqPath === '/' || reqPath.match(/\.(html|htm)$/)) {
+        // HTML files: cache for 5 minutes with revalidation.
+        // « / » est l'accueil (index.html) et la page de départ de l'app
+        // installée (manifest.webmanifest) : même règle. Servi « no-store »,
+        // il était exclu du cache du bouton Retour du navigateur.
         res.setHeader("Cache-Control", "public, max-age=300, must-revalidate");
     } else if (reqPath === '/draftkit.json' || reqPath === '/draftkit-watchlist.json') {
         // La trousse de repêchage (1 Mo, 134 Ko compressée) : chargée avec un
