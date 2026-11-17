@@ -1,4 +1,14 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+// Une colonne DATE (game_date, week_start…) est une journée, sans heure ni
+// fuseau. pg en faisait une Date à minuit dans le fuseau du serveur — UTC sur
+// Render — que lib/dates.js relit dans l'Est : minuit UTC y tombe la VEILLE.
+// Les matchs du lundi glissaient donc au dimanche d'avant, hors de leur
+// semaine, et le contrôle de complétude d'un tête-à-tête ne trouvait jamais
+// le lundi : toute semaine ouverte par des matchs le lundi restait « en
+// attente » pour toujours. La journée revient maintenant telle qu'écrite,
+// 'YYYY-MM-DD'. (1082 = DATE ; TIMESTAMP et TIMESTAMPTZ ne changent pas.)
+types.setTypeParser(1082, valeur => valeur);
 const { remplacerNomEquipe, motifRecherche, noterAncienNom } = require('./lib/renommages.js');
 const fs = require('fs');
 const path = require('path');

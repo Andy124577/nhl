@@ -329,8 +329,13 @@ function creerServiceH2H({ store, db, pointage, diffusion, saisonCourante, logge
                     dedupKey: evenements.clesActivite.semaineFinalisee(poolId, saisonEffective, numero, 1)
                 });
 
+                // Pendant un rattrapage, la « nouvelle » semaine est souvent
+                // déjà finie elle aussi : l'annoncer enverrait une alerte par
+                // semaine rattrapée pour une semaine qui n'est plus à jouer.
+                // Seule la semaine réellement en cours (ou à venir) s'annonce.
                 const membres = new Set();
-                for (const equipe of Object.values(data.teams || {})) {
+                const aAnnoncer = !suivante || !dates.semaineTerminee(suivante);
+                for (const equipe of (aAnnoncer ? Object.values(data.teams || {}) : [])) {
                     for (const membre of (equipe.members || [])) membres.add(membre);
                 }
                 for (const membre of membres) {
@@ -384,7 +389,15 @@ function creerServiceH2H({ store, db, pointage, diffusion, saisonCourante, logge
                 if (erreur.name === 'ErreurMetier') {
                     // Semaine en cours ou données incomplètes : on s'arrête, ce
                     // n'est pas une panne. Toute autre erreur remonte.
-                    if (['semaine_en_cours', 'donnees_incompletes', 'deja_finalisee'].includes(erreur.extra?.code)) break;
+                    // Des données incomplètes se disent dans le journal : une
+                    // semaine bloquée en silence est restée « en attente » six
+                    // semaines sans qu'aucune ligne n'explique pourquoi.
+                    if (erreur.extra?.code === 'donnees_incompletes') {
+                        logger.warn?.(`⏸️ ${nomPool} : ${erreur.message} ` +
+                            `(${erreur.extra.matchsRecus ?? '?'} reçus sur ${erreur.extra.matchsAttendus ?? '?'})`);
+                        break;
+                    }
+                    if (['semaine_en_cours', 'deja_finalisee'].includes(erreur.extra?.code)) break;
                     logger.warn?.(`⏸️ Rattrapage arrêté pour ${nomPool} : ${erreur.message}`);
                     break;
                 }
