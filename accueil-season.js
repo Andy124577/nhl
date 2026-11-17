@@ -1080,6 +1080,77 @@ function fzsSoirEquipe(nom) {
     }));
 }
 
+/* ---- Chances de gagner ----
+   Refaites à chaque redessin : un but, un match qui avance, une blessure
+   annoncée les font bouger. Le calcul vit dans lib/duelAccueil.js ; ici, on
+   rassemble ses entrées : le rythme de chaque joueur (stats de saison), ses
+   matchs restants d'ici la fin de la semaine (horaire LNH), sa blessure
+   (injuries.js, chargé seulement pour un pool tête-à-tête). */
+const FZS_VS_HORAIRE_MS = 30 * 60 * 1000;
+function fzsHoraireVersus() {
+    return window.FZMemo ? FZMemo.donnee(`fzs:vs:horaire:${todayISO()}`, FZS_VS_HORAIRE_MS) : null;
+}
+
+async function fzsChargerHoraireVersus() {
+    if (fzsHoraireVersus()) return;
+    const h = await fetch(`${BASE_URL}/schedule/${todayISO()}`).then(r => (r.ok ? r.json() : null)).catch(() => null);
+    const jours = ((h && h.days) || []).map(d => ({ date: d.date, games: (d.games || []).map(g => ({
+        id: g.id, state: g.state, away: g.away && g.away.abbrev, home: g.home && g.home.abbrev })) }));
+    if (jours.length && window.FZMemo) FZMemo.ecrire(`fzs:vs:horaire:${todayISO()}`, jours);
+}
+
+/** La liste des blessés, une fois par page, et relue après 15 minutes. */
+let fzsBlessuresLues = 0;
+function fzsChargerBlessures() {
+    const relire = () => {
+        if (typeof loadInjuries !== 'function') return Promise.resolve();
+        if (Date.now() - fzsBlessuresLues > 15 * 60 * 1000 && window.injState) injState.promise = null;
+        fzsBlessuresLues = Date.now();
+        return loadInjuries();
+    };
+    if (typeof loadInjuries === 'function') return relire();
+    return new Promise(resolve => {
+        const script = document.createElement('script');
+        script.src = 'injuries.js?v=20261117a';
+        script.onload = () => relire().then(resolve, resolve);
+        script.onerror = resolve;
+        document.head.appendChild(script);
+    });
+}
+
+/** Les chances de chaque côté, ou null s'il manque de quoi les calculer. */
+function fzsChancesVersus(duel, mesPoints, sesPoints) {
+    const horaire = fzsHoraireVersus();
+    if (!horaire || !window.FZDuelAccueil || duel.mode === 'termine') return null;
+    const D = FZDuelAccueil;
+    const auj = todayISO();
+    const fin = String(duel.fin || '').slice(0, 10);
+    const debut = String(duel.debut || '').slice(0, 10);
+    const direct = new Map((((typeof calTonight !== 'undefined' && calTonight) || {}).games || []).map(g => [g.id, g]));
+    // Matchs restants par club, d'ici la fin de la semaine du duel.
+    const restants = {};
+    horaire.forEach(jour => {
+        if (jour.date < auj || (fin && jour.date > fin) || (debut && jour.date < debut)) return;
+        jour.games.forEach(g => {
+            const vivant = direct.get(g.id);
+            const part = jour.date === auj ? D.partRestante(vivant ? { ...vivant, state: vivant.state } : g) : 1;
+            [g.away, g.home].forEach(c => { if (c) restants[c] = (restants[c] || 0) + part; });
+        });
+    });
+    const clubs = new Map((((userData.teamsData && userData.teamsData.teams) || [])).map(t => [t.teamAbbrev, t]));
+    const equipe = nom => {
+        const td = (((window.FZPool && FZPool.data()) || {}).teams || {})[nom] || {};
+        return [...(td.offensive || []), ...(td.defensive || []), ...(td.goalie || []), ...(td.rookie || [])].map(n => {
+            const st = getPlayerStats(n);
+            if (!st || !st.teamAbbrev) return { moyenne: 0, variance: 0, matchs: 0 };
+            const rythme = D.rythmeJoueur(st, (clubs.get(st.teamAbbrev) || {}).gamesPlayed);
+            const blessure = typeof getPlayerInjury === 'function' ? getPlayerInjury(n, st.teamAbbrev) : null;
+            return { ...rythme, matchs: (restants[st.teamAbbrev] || 0) * D.disponibilite(blessure) };
+        });
+    };
+    return D.chancesVersus({ points: mesPoints, joueurs: equipe(duel.moi.nom) }, { points: sesPoints, joueurs: equipe(duel.adversaire.nom) });
+}
+
 function fzsVersusCoteHTML(cote, moi, mode) {
     const esc = escapeHTML;
     const bilan = cote.bilan ? `${cote.bilan.wins || 0}-${cote.bilan.losses || 0}-${cote.bilan.ties || 0}` : '';
@@ -1133,6 +1204,9 @@ function fzsVersusHTML(activeName) {
     const part = duel.mode === 'avenir' ? null : total > 0 ? Math.round((moi.points / total) * 100) : 50;
     const etat = duel.mode === 'avenir' ? '' : moi.points > lui.points ? ' is-ahead' : moi.points < lui.points ? ' is-behind' : ' is-tied';
     const ecart = Math.abs(moi.points - lui.points);
+    const chances = fzsChancesVersus(duel, moi.points, lui.points);
+    const mr = chances && chances.matchsRestants;
+    const restants = mr ? ` · matchs restants ${Math.round(mr.moi)} – ${Math.round(mr.lui)}` : '';
     const resume = duel.mode === 'avenir' ? `Semaine ${duel.semaine} contre ${lui.nom}, à venir`
         : `Semaine ${duel.semaine} : ${fzsPts(moi.points)} à ${fzsPts(lui.points)} contre ${lui.nom}`;
     const precedent = duel.precedent
@@ -1145,8 +1219,14 @@ function fzsVersusHTML(activeName) {
                 <span class="fzs-vs-mid" aria-hidden="true">VS</span>
                 ${fzsVersusCoteHTML(lui, false, duel.mode)}
             </span>
-            ${part === null ? '' : `<span class="fzs-vs-bar" aria-hidden="true"><i style="width:${part}%"></i></span>
-            <span class="fzs-vs-gap">${ecart === 0 ? 'Égalité' : `${moi.points > lui.points ? 'Tu mènes' : 'Tu tires de l’arrière'} par ${fzsPts(ecart)} point${ecart >= 2 ? 's' : ''}`}</span>`}
+            ${chances ? `<span class="fzs-vs-odds" aria-label="${escapeHTML(`Chances de gagner : toi ${chances.moi} %, ${lui.nom} ${chances.lui} %`)}">
+                <b${chances.moi >= chances.lui ? ' class="is-fav"' : ''}>${chances.moi}&nbsp;%</b>
+                <span class="fzs-vs-bar"><i style="width:${chances.moi}%"></i></span>
+                <b${chances.lui >= chances.moi ? ' class="is-fav"' : ''}>${chances.lui}&nbsp;%</b>
+            </span>
+            <span class="fzs-vs-gap"><span>Chances de gagner</span>${restants}</span>`
+            : part === null ? '' : `<span class="fzs-vs-bar" aria-hidden="true"><i style="width:${part}%"></i></span>`}
+            ${part === null ? '' : `<span class="fzs-vs-lead">${ecart === 0 ? 'Égalité' : `${moi.points > lui.points ? 'Tu mènes' : 'Tu tires de l’arrière'} par ${fzsPts(ecart)} point${ecart >= 2 ? 's' : ''}`}</span>`}
             ${precedent}
         </a>`;
 }
@@ -1162,6 +1242,11 @@ async function fzsChargerVersus(activeName) {
     fzsVersusLu = { pool: activeName, at: Date.now(), enVol: true };
     const lire = url => fetch(url, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
     const q = encodeURIComponent(activeName);
+    // L'horaire et les blessés arrivent à leur rythme ; la carte se redessine
+    // dès que chacun est là (les chances apparaissent alors).
+    const redessiner = () => { if (fzsRangContexte && fzsRangContexte.activeName === activeName) fzsRedessinerVersus(activeName); };
+    fzsChargerHoraireVersus().then(redessiner);
+    fzsChargerBlessures().then(redessiner);
     try {
         const cal = await lire(`${BASE_URL}/h2h/season-schedule?poolName=${q}`);
         if (!cal) return; // réseau ou base en réveil : la carte garde ce qu'elle avait
