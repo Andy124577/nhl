@@ -25,13 +25,14 @@ function getCurrentPage() {
 }
 
 /**
- * L'onglet qu'une page allume. « Mon équipe » n'a plus d'onglet (Récents a
- * pris sa place) : la fiche de son équipe est une fiche du classement, elle
- * allume Classement. Les échanges allument Récents, qui porte la pastille
- * des offres reçues et les montre en tête du fil.
+ * L'onglet qu'une page allume. Dans un pool H2H, « Mon équipe » a son
+ * onglet, entre Récents et Classement. Ailleurs, Récents a pris sa place :
+ * la fiche de son équipe est une fiche du classement, elle allume
+ * Classement. Les échanges allument Récents, qui porte la pastille des
+ * offres reçues et les montre en tête du fil.
  */
 function ongletDePage(page) {
-    if (page === 'equipe') return 'classement';
+    if (page === 'equipe') return navOngletEquipe() ? 'equipe' : 'classement';
     if (page === 'trade') return 'recents';
     return page;
 }
@@ -40,6 +41,18 @@ function ongletDePage(page) {
 // rechargement : le classement passe d'une fiche à l'autre sur place
 // (fzNavActiver).
 let _navPage = '';
+
+/**
+ * L'onglet « Mon équipe » est-il dans les barres ? Seulement dans un pool
+ * H2H dont le repêchage est fini. La réponse du serveur vient après la
+ * construction des barres : d'ici là, on se fie à la mémoire du pool
+ * (navVisibiliteMemorisee), comme pour les autres onglets conditionnels.
+ */
+let _navEquipe = null;
+function navOngletEquipe() {
+    if (_navEquipe === null) _navEquipe = navVisibiliteMemorisee().equipe === true;
+    return _navEquipe;
+}
 
 /**
  * Allume l'onglet d'une page dans les trois menus — barre du bas, barre du
@@ -370,6 +383,8 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
                     ${lien('recents', 'recents.html', 'Récents', ' id="desktopRecentsLink"')}
                         <span class="notif-badge" id="desktopTradeBadge" style="display: none;">0</span>
                     </a>
+                    ${lien('equipe', 'classement.html?vue=equipe', 'Mon équipe', ' id="desktopEquipeLink" style="display: none;"')}
+                    </a>
                     ${lien('classement', 'classement.html', 'Classement', ' id="desktopClassementLink"')}
                     </a>
                     ${lien('stats', 'stats.html', 'Joueurs')}
@@ -528,10 +543,11 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 // Cinq onglets (maquette « Fantazy Nav Options », 1b) :
 // La barre suit l'état du pool actif (onglets conditionnels, plus bas) :
 //   — saison, repêchage terminé : Accueil → Récents → Classement → Joueurs ;
+//     un pool H2H y ajoute Mon équipe, entre Récents et Classement ;
 //   — avant ou pendant le repêchage : Accueil → Repêchage → Stats ;
 //   — aucun pool : Accueil → Stats.
-// Récents porte la pastille des offres reçues ; la fiche de mon équipe
-// s'ouvre depuis Classement (« Mon équipe ») ; les scores, depuis
+// Récents porte la pastille des offres reçues ; hors H2H, la fiche de mon
+// équipe s'ouvre depuis Classement (« Mon équipe ») ; les scores, depuis
 // « Matchs ce soir » à l'accueil.
 function buildBottomNav(currentPage) {
     const existing = document.querySelector('.bottom-nav');
@@ -556,6 +572,8 @@ function buildBottomNav(currentPage) {
             </a>
             ${onglet('recents', 'recents.html', 'Récents', ' id="bottomRecentsLink"')}
                 <span class="notif-badge" id="bottomTradeBadge" style="display: none;">0</span>
+            </a>
+            ${onglet('equipe', 'classement.html?vue=equipe', 'Mon équipe', ' id="bottomEquipeLink" style="display: none;"')}
             </a>
             ${onglet('classement', 'classement.html', 'Classement', ' id="bottomClassementLink"')}
             </a>
@@ -1001,7 +1019,11 @@ const NAV_ONGLETS_CONDITIONNELS = {
     repechage: ['desktopPoolLink', 'bottomDraftLink'],
     // Récents suit Classement : le fil raconte la saison d'un pool dont le
     // repêchage est fini (même place que l'ancien onglet « Mon équipe »).
-    classement: ['desktopClassementLink', 'bottomClassementLink', 'desktopRecentsLink', 'bottomRecentsLink']
+    classement: ['desktopClassementLink', 'bottomClassementLink', 'desktopRecentsLink', 'bottomRecentsLink'],
+    // Mon équipe : pools H2H seulement, une fois le repêchage fini. Fermé
+    // par défaut (les liens naissent cachés) : la plupart des pools sont
+    // cumulatifs, l'onglet n'y apparaîtra jamais.
+    equipe: ['desktopEquipeLink', 'bottomEquipeLink']
 };
 
 /**
@@ -1023,6 +1045,12 @@ function navAppliquerVisibilite(cle, visible) {
         const lien = document.getElementById(id);
         if (lien) lien.style.display = visible ? '' : 'none';
     });
+    // Mon équipe apparaît ou part : la fiche de mon équipe change d'onglet
+    // (Mon équipe ou Classement), on rallume le bon.
+    if (cle === 'equipe' && _navEquipe !== visible) {
+        _navEquipe = visible;
+        if (_navPage) fzNavActiver(_navPage);
+    }
 }
 
 /** Réponse confirmée : on l'applique et on s'en souvient pour la page suivante. */
@@ -1044,6 +1072,8 @@ function appliquerVisibiliteMemorisee() {
     Object.keys(NAV_ONGLETS_CONDITIONNELS).forEach(cle => {
         if (memoire[cle] === false) navAppliquerVisibilite(cle, false);
     });
+    // Mon équipe naît caché : seul un « oui » retenu l'ouvre d'avance.
+    if (memoire.equipe === true) navAppliquerVisibilite('equipe', true);
 }
 
 /**
@@ -1125,6 +1155,9 @@ async function updateClassementLinkVisibility() {
         const visible = !!pool && FZPool.draftState(pool.data).etat === 'termine';
 
         navRetenirVisibilite('classement', visible);
+        // Mon équipe, dans un pool H2H où j'ai une équipe : le duel de la
+        // semaine se joue avec son alignement, on y revient souvent.
+        navRetenirVisibilite('equipe', visible && (pool.data || {}).poolMode === 'head-to-head' && !!FZPool.team());
     } catch (error) {
         console.error('Error checking classement link visibility:', error);
         navAppliquerVisibilite('classement', true);

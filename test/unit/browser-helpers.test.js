@@ -835,14 +835,24 @@ describe('navbar — getCurrentPage', () => {
 });
 
 describe('navbar — l’onglet qu’une page allume', () => {
-    const { ongletDePage } = chargerFonctions('navbar.js', ['ongletDePage']);
+    // Le bac à sable n'a pas de navbar : navOngletEquipe tient lieu de la
+    // mémoire du pool (pool H2H ou non).
+    let h2h = false;
+    const { ongletDePage } = chargerFonctions('navbar.js', ['ongletDePage'], { navOngletEquipe: () => h2h });
 
     test('les échanges allument Récents, qui porte la pastille des offres', () => {
         assert.equal(ongletDePage('trade'), 'recents');
     });
 
-    test('la fiche de mon équipe allume Classement : elle n’a plus d’onglet', () => {
+    test('hors H2H, la fiche de mon équipe allume Classement : elle n’a pas d’onglet', () => {
+        h2h = false;
         assert.equal(ongletDePage('equipe'), 'classement');
+    });
+
+    test('dans un pool H2H, la fiche de mon équipe allume son onglet Mon équipe', () => {
+        h2h = true;
+        assert.equal(ongletDePage('equipe'), 'equipe');
+        h2h = false;
     });
 
     test('les autres pages allument leur propre onglet', () => {
@@ -855,12 +865,15 @@ describe('navbar — l’onglet qu’une page allume', () => {
         const source = require('fs').readFileSync(require('path').join(__dirname, '../../navbar.js'), 'utf8');
         const barre = source.slice(source.indexOf('function buildBottomNav'), source.indexOf('BARRE DU BAS : LE TOUCHER'));
         const onglets = [...barre.matchAll(/\$\{onglet\('([a-z]+)'/g)].map(m => m[1]);
-        assert.deepEqual(onglets, ['accueil', 'repechage', 'recents', 'classement', 'stats']);
+        assert.deepEqual(onglets, ['accueil', 'repechage', 'recents', 'equipe', 'classement', 'stats']);
+        // Mon équipe naît caché : il n'apparaît que dans un pool H2H.
+        assert.match(barre, /onglet\('equipe', 'classement\.html\?vue=equipe', 'Mon équipe', ' id="bottomEquipeLink" style="display: none;"'\)/);
         // Récents et Classement suivent la fin du repêchage ; Repêchage, l’inverse.
         const { NAV_ONGLETS_CONDITIONNELS } = chargerFonctions('navbar.js', ['NAV_ONGLETS_CONDITIONNELS']);
         assert.ok(NAV_ONGLETS_CONDITIONNELS.repechage.includes('bottomDraftLink'));
         assert.ok(NAV_ONGLETS_CONDITIONNELS.classement.includes('bottomRecentsLink'));
         assert.ok(NAV_ONGLETS_CONDITIONNELS.classement.includes('bottomClassementLink'));
+        assert.deepEqual([...NAV_ONGLETS_CONDITIONNELS.equipe], ['desktopEquipeLink', 'bottomEquipeLink']);
     });
 });
 
