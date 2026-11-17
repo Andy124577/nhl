@@ -75,9 +75,11 @@
         if (chemin.includes('repechage') || chemin.includes('draftActif') ||
             chemin.includes('draftFini') || chemin.includes('draft.html')) return 'repechage';
         // La fiche de son équipe (classement.html?vue=equipe) est une fiche
-        // du classement ; les échanges allument Récents, comme la barre.
+        // du classement, sauf dans un pool H2H où « Mon équipe » a son
+        // onglet ; les échanges allument Récents, comme la barre.
         if (chemin.includes('classement')) {
-            return 'classement';
+            const vueEquipe = /[?&]vue=equipe(?:&|$)/.test(window.location.search || '');
+            return vueEquipe && window.FZPool && estH2H(FZPool.data()) ? 'equipe' : 'classement';
         }
         if (chemin.includes('trade') || chemin.includes('recents')) return 'recents';
         if (chemin.includes('stats')) return 'stats';
@@ -319,19 +321,26 @@
     /**
      * Les pages du pool actif, comme la barre du bas (navbar.js) :
      *   — repêchage terminé : Accueil, Récents, Classement, Joueurs ;
+     *     un pool H2H ajoute Mon équipe entre Récents et Classement ;
      *   — avant ou pendant : Accueil, Repêchage, Joueurs ;
      *   — sans pool : Accueil, Joueurs.
      * Récents porte la pastille des offres reçues ; la fiche de mon équipe
      * s'ouvre depuis Classement ; les scores, depuis l'accueil.
      */
+    function estH2H(donnees) {
+        return !!donnees && donnees.poolMode === 'head-to-head';
+    }
+
     function navigation() {
         const page = pageCourante();
         const donnees = FZPool.data();
         const fini = !!donnees && FZPool.draftState(donnees).etat === 'termine';
+        const monEquipe = fini && estH2H(donnees) && !!FZPool.team();
         const enAttente = Number(window.fzEchangesEnAttente) || 0;
         const liens = [
             { href: 'index.html', cle: 'accueil', texte: 'Accueil', icone: 'accueil' },
             fini && { href: 'recents.html', cle: 'recents', texte: 'Récents', icone: 'recents', badge: true },
+            monEquipe && { href: 'classement.html?vue=equipe', cle: 'equipe', texte: 'Mon équipe', icone: 'equipe' },
             fini
                 ? { href: 'classement.html', cle: 'classement', texte: 'Classement', icone: 'classement' }
                 : donnees && { href: 'repechage.html', cle: 'repechage', texte: 'Repêchage', icone: 'repechage' },

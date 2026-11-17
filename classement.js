@@ -111,6 +111,29 @@ function seasonStat(stats, cached, key) {
 }
 
 // ==================== INITIALIZATION ====================
+/**
+ * Pool H2H : « Mon équipe » et « Classement » sont deux onglets d'une même
+ * page. Passer de l'un à l'autre se fait sur place, sans recharger — les
+ * données sont déjà là. Le clic des barres (navbar.js) a déjà joué son
+ * onde ; on retient seulement la navigation.
+ */
+document.addEventListener('click', e => {
+    const lien = e.target.closest('.bottom-nav a[data-page="equipe"], .bottom-nav a[data-page="classement"], .navbar a[data-page="equipe"], .navbar a[data-page="classement"]');
+    if (!lien || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const poolName = currentPoolName;
+    if (!poolName || !allPoolsData[poolName] || !estPoolH2H(poolName)) return;
+    e.preventDefault();
+    if (lien.dataset.page === 'classement') {
+        if (currentView !== VIEW_STATES.POOL_STANDINGS) showPoolStandings(poolName);
+    } else {
+        const equipes = allPoolsData[poolName].teams || {};
+        const mienne = Object.keys(equipes).find(nom => estMonEquipe(poolName, nom));
+        if (!mienne) { window.location.href = lien.href; return; }
+        if (currentTeamName !== mienne) showTeamRoster(poolName, mienne);
+    }
+    window.scrollTo(0, 0);
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Le temple du squelette (classement.html) : les mêmes tuiles fantômes
     // que renderHallOfFame pose en attendant ses records.
@@ -412,17 +435,23 @@ function suivreVue(vue) {
     if (typeof fzNavActiver === 'function') fzNavActiver(vue === 'equipe' ? 'equipe' : 'classement');
 }
 
+/** Un pool H2H : « Mon équipe » y a son onglet dans les barres (navbar.js). */
+function estPoolH2H(poolName) {
+    return ((allPoolsData[poolName] || {}).poolMode || 'cumulative') === 'head-to-head';
+}
+
 /**
  * « Mon équipe », en haut du classement : la fiche de son équipe à une
- * touche, sans recharger. L'onglet du même nom a laissé sa place à Récents
- * dans les barres (navbar.js) ; ?vue=equipe ouvre toujours la même fiche.
+ * touche, sans recharger. Hors H2H, l'onglet du même nom a laissé sa place
+ * à Récents dans les barres (navbar.js) ; ?vue=equipe ouvre toujours la
+ * même fiche. Un pool H2H a gardé l'onglet : le bouton y ferait doublon.
  */
 function afficherBoutonMonEquipe(poolName) {
     const bouton = document.getElementById('stMonEquipe');
     if (!bouton) return;
     const equipes = (allPoolsData[poolName] || {}).teams || {};
     const mienne = Object.keys(equipes).find(nom => estMonEquipe(poolName, nom)) || null;
-    bouton.hidden = !mienne;
+    bouton.hidden = !mienne || estPoolH2H(poolName);
     bouton.onclick = mienne ? () => { showTeamRoster(poolName, mienne); window.scrollTo(0, 0); } : null;
 }
 
@@ -2027,8 +2056,11 @@ function renderRosterHeader(poolName, teamName) {
     // classement-premium.css sur téléphone).
     const header = document.getElementById('rosterHeader');
     header.classList.toggle('is-mine', rosterSale.mienne);
+    // Dans un pool H2H, ma fiche est l'onglet « Mon équipe » : un écran de
+    // départ, pas une page sous le classement, donc pas de retour.
+    const sansRetour = rosterSale.mienne && estPoolH2H(poolName);
     header.innerHTML = `
-        <button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>
+        ${sansRetour ? '' : `<button type="button" class="rh-back" data-rh-back aria-label="Retour au classement">${RH_ICON.back}</button>`}
         <div class="rh-title${picker ? ' has-picker' : ''}">
             <h1 class="rh-name">${escapeHtmlText(getDisplayName(teamName, teamData.members || []))}</h1>
             ${picker ? `<span class="rh-caret">${RH_ICON.caret}</span>${picker}` : ''}
