@@ -111,6 +111,13 @@ function fzsHeroHTML(activeName, movement) {
 function fzsActualiserRang() {
     const bloc = document.querySelector('#fzSeasonHome .fzs-hero');
     if (!bloc || !fzsRangContexte) return;
+    // Tête-à-tête : la carte Versus prend les points du soir sur place, et
+    // relit la semaine au plus toutes les trois minutes.
+    if (fzsRangContexte.h2h) {
+        fzsRedessinerVersus(fzsRangContexte.activeName);
+        if (Date.now() - fzsVersusLu.at > FZS_VS_FRAIS_MS) fzsChargerVersus(fzsRangContexte.activeName);
+        return;
+    }
     bloc.outerHTML = fzsHeroHTML(fzsRangContexte.activeName, fzsRangContexte.movement);
 }
 
@@ -655,6 +662,7 @@ function fzsActualiserSoiree(tonight) {
     if (!root || !fzsRangContexte) return;
     const bloc = root.querySelector('.fzs-mine');
     if (bloc) bloc.outerHTML = fzsJoueursHTML(tonight, fzsRangContexte.activeName);
+    if (fzsRangContexte.h2h) fzsActualiserRang();
     fzsActualiserMatchs();
     fzsActualiserClassement();
 }
@@ -995,6 +1003,7 @@ function renderSeasonHome({ tonight, movement, activeName }) {
         section.querySelector('.fz-dash').appendChild(root);
     }
     const estH2H = fzdPoolH2H();
+    if (estH2H) fzsRangContexte = { activeName, movement, live: 0, h2h: true };
     // Au téléphone, une colonne dans l'ordre de la maquette ; au bureau, deux
     // colonnes (.fzs-col) que la feuille de style aplatit au téléphone. Le
     // bandeau d'histoires (« histoires ») reste caché ici : on ne lui prend
@@ -1002,9 +1011,8 @@ function renderSeasonHome({ tonight, movement, activeName }) {
     // d'emplacement : son horaire du jour nourrit les matchs et mes joueurs.
     root.innerHTML = `
         <div class="fzs-col fzs-col-a">
-            ${fzsHeroHTML(activeName, movement)}
+            ${estH2H ? fzsVersusHTML(activeName) : fzsHeroHTML(activeName, movement)}
             ${fzsJoueursHTML(tonight, activeName)}
-            ${estH2H ? `<section class="fzs-sec fzs-duel" id="fzsDuel" aria-live="polite">${fzsTete('duel', 'Mon duel', `<a class="fzs-sh-link" href="classement.html?pool=${encodeURIComponent(activeName)}&amp;h2h=duel">Voir le duel</a>`)}<div class="fzs-duel-body"><p class="fzs-empty">Chargement du duel…</p></div></section>` : ''}
             ${fzsActiviteHTML()}
         </div>
         <div class="fzs-col fzs-col-b">
@@ -1016,7 +1024,7 @@ function renderSeasonHome({ tonight, movement, activeName }) {
         <div class="fzs-slot fzs-read" data-fz-bloc="actualites"></div>
         <div class="fzs-slot" data-fz-bloc="histoires" hidden></div>`;
     fzdPlaceCalendar();
-    if (estH2H) fzsLoadDuel(root, activeName, FZPool.team().name);
+    if (estH2H) fzsChargerVersus(activeName);
     fzsRendreSemaine();
     fzsRendreActivite(activeName);
     fzsReglerSuiviSoiree(tonight);
@@ -1024,11 +1032,18 @@ function renderSeasonHome({ tonight, movement, activeName }) {
     return true;
 }
 
-/* ---- Mon duel (tête-à-tête) ----
-   Le duel en cours, sinon le prochain, sinon le dernier joué — la règle vit
-   dans lib/duelAccueil.js. Les points d'une semaine en cours viennent de
-   /h2h/current-week-scores : le calendrier, lui, ne les porte qu'une fois la
-   semaine finalisée. */
+/* ---- Versus (tête-à-tête) ----
+   Dans un pool tête-à-tête, « Ma position » laisse la place au duel de la
+   semaine : mon équipe à gauche, l'adversaire à droite, chacune avec son
+   écusson (le club repêché), son bilan, ses points de la semaine, ses buts,
+   aides et matchs joués. Le duel en cours, sinon le prochain, sinon le
+   dernier joué — la règle vit dans lib/duelAccueil.js.
+
+   Le calendrier (/h2h/season-schedule) donne l'adversaire et les bilans ;
+   /h2h/current-week-scores, les points de la semaine en cours. Les deux
+   restent en mémoire dans l'onglet (FZMemo) : revenir à l'accueil redessine
+   la carte tout de suite, puis la relit. Les points du soir viennent du
+   direct de l'accueil (calTonight), sans requête de plus. */
 const FZS_MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 function fzsJourCourt(iso) {
     if (!iso) return '';
@@ -1036,53 +1051,142 @@ function fzsJourCourt(iso) {
     return a ? `${j} ${FZS_MOIS[m - 1]}` : '';
 }
 
-async function fzsLoadDuel(root, activeName, monEquipe) {
-    const corps = root.querySelector('#fzsDuel .fzs-duel-body');
-    if (!corps || !window.FZDuelAccueil) return;
+const FZS_VS_FRAIS_MS = 3 * 60 * 1000;
+let fzsVersusLu = { pool: null, at: 0, enVol: false };
+
+function fzsVersusCle(pool) { return `fzs:versus:${pool}`; }
+
+/** L'écusson d'une équipe du pool : son club repêché, sinon ses initiales. */
+function fzsEcussonEquipe(nom) {
+    const td = (((window.FZPool && FZPool.data()) || {}).teams || {})[nom] || {};
+    const club = (td.teams || [])[0];
+    const utah = c => (c === 'utahmammoth' ? 'utahhockeyclub' : c === 'utahhockeyclub' ? 'utahmammoth' : c);
+    const fiche = club && ((userData.teamsData && userData.teamsData.teams) || [])
+        .find(t => [fzsCle(club), utah(fzsCle(club))].includes(fzsCle(t.teamFullName)));
+    const initiales = String(nom || '?').trim().split(/\s+/).slice(0, 2).map(m => m.charAt(0)).join('').toUpperCase();
+    return `<span class="fzs-vs-logo">${escapeHTML(initiales)}${fiche && fiche.teamAbbrev
+        ? `<img src="teams/${escapeHTML(fiche.teamAbbrev)}.png" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+}
+
+/** Les lignes du soir d'une équipe, au barème du tête-à-tête. */
+function fzsSoirEquipe(nom) {
+    const td = (((window.FZPool && FZPool.data()) || {}).teams || {})[nom] || {};
+    const noms = new Set([...(td.offensive || []), ...(td.defensive || []), ...(td.goalie || []), ...(td.rookie || [])]);
+    const tonight = (typeof calTonight !== 'undefined' && calTonight) || {};
+    const jeux = new Map((tonight.games || []).map(g => [g.id, g]));
+    return (tonight.players || []).filter(p => noms.has(p.playerName)).map(p => ({
+        pts: fzdPointsCeSoir(p), goals: p.goals, assists: p.assists,
+        enCours: !FZS_FINI(jeux.get(p.gameId))
+    }));
+}
+
+function fzsVersusCoteHTML(cote, moi, mode) {
     const esc = escapeHTML;
-    const lire = url => fetch(url, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
-    const cal = await lire(`${BASE_URL}/h2h/season-schedule?poolName=${encodeURIComponent(activeName)}`);
-    if (!corps.isConnected) return;
+    const bilan = cote.bilan ? `${cote.bilan.wins || 0}-${cote.bilan.losses || 0}-${cote.bilan.ties || 0}` : '';
+    const stats = mode === 'avenir' ? ''
+        : `<span class="fzs-vs-stats">${cote.buts} B · ${cote.aides} A · ${cote.pj} PJ</span>`;
+    return `<span class="fzs-vs-side${moi ? ' is-me' : ''}">
+            ${fzsEcussonEquipe(cote.nom)}
+            <span class="fzs-vs-name">${moi ? '<em>Toi</em>' : ''}<span>${esc(cote.nom)}</span></span>
+            ${bilan ? `<span class="fzs-vs-rec" title="Bilan : victoires-défaites-nulles">${bilan}</span>` : ''}
+            <strong class="fzs-vs-pts">${mode === 'avenir' ? '—' : fzsPts(cote.points)}</strong>
+            ${stats}
+            ${cote.ceSoir ? `<span class="fzs-hero-live"><i></i>+${fzsPts(cote.ceSoir)} ce soir</span>` : ''}
+        </span>`;
+}
 
-    const equipe = (cal && cal.monEquipe) || monEquipe;
-    const duel = cal && cal.status === 'ok' ? FZDuelAccueil.duelAAfficher(cal.weeks, equipe) : null;
-    if (!duel) {
-        corps.innerHTML = `<p class="fzs-empty">Le calendrier des duels sera prêt une fois le repêchage terminé.</p>`;
-        return;
+/** La carte Versus, tirée de la mémoire ; un squelette avant la première lecture. */
+function fzsVersusHTML(activeName) {
+    const href = `classement.html?pool=${encodeURIComponent(activeName)}&amp;h2h=duel`;
+    const lu = window.FZMemo ? FZMemo.donnee(fzsVersusCle(activeName)) : null;
+    const monNom = (FZPool.team() || {}).name || '';
+    if (!lu || !lu.duel) {
+        const vide = lu && lu.vide;
+        return `<a class="fzs-hero fzs-vs${vide ? '' : ' is-loading'}" href="${href}" aria-label="Voir le duel">
+            <span class="fzs-vs-top"><span class="fzs-vs-week">${vide ? 'Duels' : 'Semaine'}</span>${fzsIcone('chevron', 22)}</span>
+            ${vide ? `<span class="fzs-vs-empty">Le calendrier des duels sera prêt une fois le repêchage terminé.</span>`
+                : `<span class="fzs-vs-grid">
+                <span class="fzs-vs-side is-me">${fzsEcussonEquipe(monNom)}<span class="fzs-vs-name"><em>Toi</em><span>${escapeHTML(monNom)}</span></span><span class="fz-bone fzs-vs-bone"></span></span>
+                <span class="fzs-vs-mid" aria-hidden="true">VS</span>
+                <span class="fzs-vs-side"><span class="fzs-vs-logo fz-bone"></span><span class="fz-bone fzs-vs-bone"></span><span class="fz-bone fzs-vs-bone"></span></span>
+            </span>`}
+        </a>`;
     }
+    const duel = lu.duel;
+    const direct = lu.direct || {};
+    const bilans = lu.bilans || {};
+    const enCours = duel.mode === 'encours';
+    const cote = (nom, points, joueurs) => ({
+        nom, bilan: bilans[nom] || null,
+        ...FZDuelAccueil.coteVersus(points, joueurs, enCours ? fzsSoirEquipe(nom) : [])
+    });
+    const moi = cote(duel.moi.nom, direct.moi != null ? direct.moi : duel.moi.points, direct.mesJoueurs);
+    const lui = cote(duel.adversaire.nom, direct.adversaire != null ? direct.adversaire : duel.adversaire.points, direct.sesJoueurs);
 
-    // Semaine en cours : les points qui bougent.
-    if (duel.mode === 'encours') {
-        const direct = await lire(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(activeName)}`);
-        const carte = direct && (direct.matchups || []).find(m => m.team1 === equipe || m.team2 === equipe);
-        if (carte) {
-            const premier = carte.team1 === equipe;
-            duel.moi.points = Number(premier ? carte.team1Points : carte.team2Points) || 0;
-            duel.adversaire.points = Number(premier ? carte.team2Points : carte.team1Points) || 0;
-        }
-        if (!corps.isConnected) return;
-    }
-
-    const pts = fzsPts;
-    const statut = duel.mode === 'encours'
-        ? `<span class="fzs-tag is-live">En cours</span> Semaine ${duel.semaine} · jusqu’au ${fzsJourCourt(duel.fin)}`
+    const issue = { victoire: 'Victoire', defaite: 'Défaite', nulle: 'Nulle' }[duel.issue] || '';
+    const semaine = enCours
+        ? `<span class="fzs-vs-tag is-live"><i></i>En cours</span><span>Semaine ${duel.semaine} · jusqu’au ${fzsJourCourt(duel.fin)}</span>`
         : duel.mode === 'avenir'
-            ? `<span class="fzs-tag">À venir</span> Semaine ${duel.semaine} · dès le ${fzsJourCourt(duel.debut)}`
-            : `<span class="fzs-tag">${duel.issue === 'victoire' ? 'Victoire' : duel.issue === 'defaite' ? 'Défaite' : 'Nulle'}</span> Semaine ${duel.semaine}${duel.finalise ? '' : ' · résultat provisoire'}`;
-    const menene = duel.mode === 'avenir' ? '' :
-        duel.moi.points > duel.adversaire.points ? 'is-ahead'
-        : duel.moi.points < duel.adversaire.points ? 'is-behind' : '';
+            ? `<span class="fzs-vs-tag">À venir</span><span>Semaine ${duel.semaine} · dès le ${fzsJourCourt(duel.debut)}</span>`
+            : `<span class="fzs-vs-tag">${issue}</span><span>Semaine ${duel.semaine}${duel.finalise ? '' : ' · provisoire'}</span>`;
+    const total = moi.points + lui.points;
+    const part = duel.mode === 'avenir' ? null : total > 0 ? Math.round((moi.points / total) * 100) : 50;
+    const etat = duel.mode === 'avenir' ? '' : moi.points > lui.points ? ' is-ahead' : moi.points < lui.points ? ' is-behind' : ' is-tied';
+    const ecart = Math.abs(moi.points - lui.points);
+    const resume = duel.mode === 'avenir' ? `Semaine ${duel.semaine} contre ${lui.nom}, à venir`
+        : `Semaine ${duel.semaine} : ${fzsPts(moi.points)} à ${fzsPts(lui.points)} contre ${lui.nom}`;
     const precedent = duel.precedent
-        ? `<p class="fzs-duel-prev">Semaine ${duel.precedent.semaine} : ${duel.precedent.issue === 'victoire' ? 'victoire' : duel.precedent.issue === 'defaite' ? 'défaite' : 'nulle'}
-               ${pts(duel.precedent.moi.points)}–${pts(duel.precedent.adversaire.points)} contre ${esc(duel.precedent.adversaire.nom)}</p>`
+        ? `<span class="fzs-vs-prev">Semaine ${duel.precedent.semaine} : ${{ victoire: 'victoire', defaite: 'défaite', nulle: 'nulle' }[duel.precedent.issue] || ''} ${fzsPts(duel.precedent.moi.points)}–${fzsPts(duel.precedent.adversaire.points)} contre ${escapeHTML(duel.precedent.adversaire.nom)}</span>`
         : '';
+    return `<a class="fzs-hero fzs-vs${etat}" href="${href}" aria-label="${escapeHTML(`${resume} · voir le duel`)}">
+            <span class="fzs-vs-top"><span class="fzs-vs-week">${semaine}</span>${fzsIcone('chevron', 22)}</span>
+            <span class="fzs-vs-grid">
+                ${fzsVersusCoteHTML(moi, true, duel.mode)}
+                <span class="fzs-vs-mid" aria-hidden="true">VS</span>
+                ${fzsVersusCoteHTML(lui, false, duel.mode)}
+            </span>
+            ${part === null ? '' : `<span class="fzs-vs-bar" aria-hidden="true"><i style="width:${part}%"></i></span>
+            <span class="fzs-vs-gap">${ecart === 0 ? 'Égalité' : `${moi.points > lui.points ? 'Tu mènes' : 'Tu tires de l’arrière'} par ${fzsPts(ecart)} point${ecart >= 2 ? 's' : ''}`}</span>`}
+            ${precedent}
+        </a>`;
+}
 
-    corps.innerHTML = `
-        <div class="fzs-duel-score ${menene}">
-            <div class="fzs-duel-side is-me"><span>${esc(duel.moi.nom)}</span><strong>${duel.mode === 'avenir' ? '—' : pts(duel.moi.points)}</strong></div>
-            <span class="fzs-duel-vs" aria-hidden="true">vs</span>
-            <div class="fzs-duel-side"><span>${esc(duel.adversaire.nom)}</span><strong>${duel.mode === 'avenir' ? '—' : pts(duel.adversaire.points)}</strong></div>
-        </div>
-        <p class="fzs-duel-status">${statut}</p>
-        ${precedent}`;
+function fzsRedessinerVersus(activeName) {
+    const bloc = document.querySelector('#fzSeasonHome .fzs-hero');
+    if (bloc) bloc.outerHTML = fzsVersusHTML(activeName);
+}
+
+/** Relit le calendrier et les points de la semaine, puis redessine la carte. */
+async function fzsChargerVersus(activeName) {
+    if (!window.FZDuelAccueil || fzsVersusLu.enVol) return;
+    fzsVersusLu = { pool: activeName, at: Date.now(), enVol: true };
+    const lire = url => fetch(url, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+    const q = encodeURIComponent(activeName);
+    try {
+        const cal = await lire(`${BASE_URL}/h2h/season-schedule?poolName=${q}`);
+        if (!cal) return; // réseau ou base en réveil : la carte garde ce qu'elle avait
+        const equipe = cal.monEquipe || (FZPool.team() || {}).name;
+        const duel = cal.status === 'ok' ? FZDuelAccueil.duelAAfficher(cal.weeks, equipe) : null;
+        const bilans = {};
+        (cal.teams || []).forEach(t => { if (t.record) bilans[t.name] = t.record; });
+        let direct = null;
+        if (duel && duel.mode === 'encours') {
+            const sem = await lire(`${BASE_URL}/h2h/current-week-scores?poolName=${q}`);
+            const carte = sem && (sem.matchups || []).find(m => m.team1 === equipe || m.team2 === equipe);
+            if (carte) {
+                const premier = carte.team1 === equipe;
+                direct = {
+                    moi: Number(premier ? carte.team1Points : carte.team2Points) || 0,
+                    adversaire: Number(premier ? carte.team2Points : carte.team1Points) || 0,
+                    // Seuls les chiffres utiles : la mémoire de l'onglet reste petite.
+                    mesJoueurs: ((premier ? carte.team1Players : carte.team2Players) || []).map(j => ({ goals: j.goals, assists: j.assists, matchs: j.matchs })),
+                    sesJoueurs: ((premier ? carte.team2Players : carte.team1Players) || []).map(j => ({ goals: j.goals, assists: j.assists, matchs: j.matchs }))
+                };
+            }
+        }
+        if (window.FZMemo) FZMemo.ecrire(fzsVersusCle(activeName), duel ? { duel, bilans, direct } : { vide: true });
+        if (fzsRangContexte && fzsRangContexte.activeName === activeName) fzsRedessinerVersus(activeName);
+    } finally {
+        fzsVersusLu.enVol = false;
+    }
 }

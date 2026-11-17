@@ -51,3 +51,24 @@ test('une équipe absente du calendrier ne reçoit rien', () => {
     assert.equal(duelAAfficher([semaine(1, 'ongoing', { team1: 'A', team2: 'B' })], 'Z'), null);
     assert.equal(duelAAfficher(null, 'A'), null);
 });
+
+const { coteVersus } = require('../../lib/duelAccueil.js');
+
+test('Versus : un match en cours s’ajoute au total, un match fini seulement à « ce soir »', () => {
+    const joueurs = [
+        { name: 'X', goals: 2, assists: 1, matchs: 3 },
+        { name: 'Y', goals: 0, assists: 4, matchs: 2 }
+    ];
+    const soir = [
+        { pts: 3.5, goals: 1, assists: 0, enCours: true },
+        { pts: 2, goals: 0, assists: 1, enCours: false }
+    ];
+    const cote = coteVersus(40, joueurs, soir);
+    assert.equal(cote.points, 43.5, 'le match fini est déjà en base (ou le sera dans le quart d’heure)');
+    assert.equal(cote.ceSoir, 5.5);
+    assert.deepEqual([cote.buts, cote.aides, cote.pj], [3, 5, 6]);
+});
+
+test('Versus : sans détail ni soirée, des zéros, jamais NaN', () => {
+    assert.deepEqual(coteVersus(undefined, null, null), { points: 0, ceSoir: 0, buts: 0, aides: 0, pj: 0 });
+});
