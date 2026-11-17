@@ -249,8 +249,7 @@ describe('recents — la barre', () => {
     test('Récents prend la place de Mon équipe, avec la pastille des offres', () => {
         const barre = source.slice(source.indexOf('function buildBottomNav'), source.indexOf('BARRE DU BAS : LE TOUCHER'));
         assert.match(barre, /onglet\('recents', 'recents\.html', 'Récents', ' id="bottomRecentsLink"'\)\}\s*<span class="notif-badge" id="bottomTradeBadge"/);
-        // Mon équipe ne reste que pour les pools H2H, caché par défaut.
-        assert.match(barre, /'Mon équipe', ' id="bottomEquipeLink" style="display: none;"'/);
+        assert.doesNotMatch(barre, /'Mon équipe'/);
     });
 
     test('la page existe et charge son script', () => {
