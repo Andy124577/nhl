@@ -23,8 +23,15 @@ const allPoolsData = {
 function charger() {
     return chargerFonctions('classement.js', [
         'getDisplayName', 'escapeHtmlText', 'escapeAttr', 'fmtH2HPts',
-        'h2hBornesSemaines', 'h2hFaitsSaillantsHTML', 'buildMatchupCardHTML'
-    ], { allPoolsData, h2hPlayerPhotoHTML: () => '' });
+        'h2hBornesSemaines', 'h2hFaitsSaillantsHTML', 'buildMatchupCardHTML',
+        'H2H_POSTES', 'nomCourtJoueur', 'h2hSousLigne', 'h2hCelluleJoueur', 'h2hRangeesFaceAFace', 'h2hDuelRepliHTML'
+    ], {
+        allPoolsData,
+        getTeamLogoHTML: () => '',
+        initialsFromName: n => String(n).slice(0, 2),
+        clubDuJoueur: j => j.teamAbbrev || null,
+        localStorage: { getItem: () => 'alice' }
+    });
 }
 
 describe('faits saillants d’une semaine close', () => {
@@ -81,9 +88,40 @@ describe('carte de duel', () => {
             team2Players: [{ name: 'G', position: 'G', wins: 1, saves: 30, shutouts: 0, fantasyPoints: 4 }]
         }), 'Ligue', false);
 
-        assert.match(html, /1B 2A/);
-        assert.match(html, /1V 30ARR/);
+        assert.match(html, /1 B · 2 A/);
+        assert.match(html, /1 V · 30 arr\./);
         assert.doesNotMatch(html, /Résultat final/);
+    });
+
+    test('face à face : mon équipe à gauche, les joueurs appariés par poste', () => {
+        const { buildMatchupCardHTML } = charger();
+        const html = buildMatchupCardHTML(duel({
+            team1Players: [
+                { name: 'Nick Suzuki', categorie: 'offensive', teamAbbrev: 'MTL', goals: 1, assists: 1, fantasyPoints: 8, enDirect: 3 },
+                { name: 'Lane Hutson', categorie: 'defensive', teamAbbrev: 'MTL', goals: 0, assists: 2, fantasyPoints: 4 }
+            ],
+            team2Players: [
+                { name: 'Cale Makar', categorie: 'defensive', teamAbbrev: 'COL', goals: 1, assists: 0, fantasyPoints: 5 },
+                { name: 'Nathan MacKinnon', categorie: 'offensive', teamAbbrev: 'COL', goals: 2, assists: 0, fantasyPoints: 7 }
+            ]
+        }), 'Ligue', true);
+
+        // alice (team2, « <b>Rouge</b> ») est à gauche : son pointage vient en premier.
+        assert.ok(html.indexOf('54,8') < html.indexOf('55,1'), 'mon équipe est à gauche');
+        const rangees = html.split('class="fa-rangee"').slice(1);
+        assert.equal(rangees.length, 2);
+        assert.match(rangees[0], /N\. MacKinnon[\s\S]*ATT[\s\S]*N\. Suzuki/);
+        assert.match(rangees[1], /C\. Makar[\s\S]*DÉF[\s\S]*L\. Hutson/);
+        assert.match(html, /\+3 en direct/);
+        assert.match(html, /teams\/MTL\.png/);
+        assert.match(html, /&lt;b&gt;Rouge&lt;\/b&gt;/, 'le nom saisi reste échappé');
+    });
+
+    test('un nom à un seul mot reste entier', () => {
+        const { nomCourtJoueur } = charger();
+        assert.equal(nomCourtJoueur('Nick Suzuki'), 'N. Suzuki');
+        assert.equal(nomCourtJoueur('Pierre-Luc Dubois'), 'P. Dubois');
+        assert.equal(nomCourtJoueur('Canadiens'), 'Canadiens');
     });
 });
 
