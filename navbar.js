@@ -320,8 +320,7 @@ function buildLoggedOutNavbar() {
 }
 
 // ==================== LOGGED IN NAVBAR ====================
-// Ordre : Accueil → Pools ▾ → Repêchage (🔴) → Récents (🔴) → Classement
-//         → Joueurs
+// Ordre : Accueil → Repêchage (🔴) → Récents (🔴) → Classement → Joueurs
 //
 // Repêchage tant que le pool actif repêche ; Récents et Classement une
 // fois qu'il a fini (onglets conditionnels, plus bas). Les échanges n'ont
@@ -329,10 +328,10 @@ function buildLoggedOutNavbar() {
 // pastille les compte, et « Mon équipe » (bouton du classement) mène à
 // « Échanges ». Les scores s'ouvrent depuis l'accueil.
 //
-// « Pools » mène à l'accueil des pools (pool.html) : trois boutons, créer
-// un pool, en rejoindre un, ou ouvrir le pool actif sous son nom — ses
-// équipes, ses règles, ses invitations (pool.html?onglet=…). Changer de
-// pool se fait dans le rail et le tiroir (poolNav.js).
+// Pas de lien « Pools » dans cette barre : le rail « Mes pools » (grand
+// écran) et le tiroir du menu (☰) donnent déjà accès au pool actif — ses
+// réglages, ses équipes, ses règles (pool.html?onglet=…) —, aux autres
+// pools, et aux tuiles Rejoindre / Créer (poolNav.js).
 //
 // Les pastilles ne comptent que le pool actif : c'est celui que ces liens
 // ouvriront. Ce qui se passe dans les autres pools est signalé par la
@@ -361,8 +360,6 @@ function buildLoggedInNavbar(username, isAdmin, currentPage) {
 
                 <nav class="nav-links">
                     ${lien('accueil', 'index.html', 'Accueil')}
-                    </a>
-                    ${lien('pools', 'pool.html', 'Pools', ' id="navPoolsBtn"')}
                     </a>
                     ${lien('repechage', 'repechage.html', 'Repêchage', ' id="desktopPoolLink"')}
                         <span class="notif-badge" id="desktopDraftBadge" style="display: none;"></span>
