@@ -208,7 +208,36 @@ test('une semaine complète se finalise, fige son résultat et avance le classem
     // Le résultat est FIGÉ en base : c'est lui qui fait foi ensuite.
     assert.equal(h.etat.pools.get('Ligue').data.h2hData.currentWeek, 2);
     assert.equal(h.etat.activity.filter(a => a.type === 'h2h_week_finalized').length, 1);
+    // La semaine 2 est déjà finie elle aussi (départ il y a quatre semaines) :
+    // c'est un rattrapage, rien à annoncer.
+    assert.equal(h.etat.notifications.filter(n => n.type === 'week_new').length, 0);
+});
+
+test('la nouvelle semaine ne s’annonce que si elle reste à jouer', async () => {
+    // Départ la semaine dernière : la semaine 1 est finie, la 2 est en cours.
+    const depart = dates.ajouterJours(dates.lundiDe(dates.journeeLocale()), -7);
+    const feuilles = [feuille('Attaquant A', depart, 2), feuille('Attaquant B', depart, 1)];
+    const calendrier = async (journee) => (journee === depart ? 1 : 0);
+    const h = banc({ pool: poolH2H({ seasonStart: depart }), feuilles, calendrier });
+
+    const resultat = await h.serviceH2H.finaliserSemaine('Ligue');
+
+    assert.equal(resultat.currentWeek, 2);
     assert.equal(h.etat.notifications.filter(n => n.type === 'week_new').length, 2);
+});
+
+test('le rattrapage ferme toutes les semaines échues, puis s’arrête à la semaine en cours', async () => {
+    const feuilles = [feuille('Attaquant A', S1.debut, 2), feuille('Attaquant B', S1.debut, 1)];
+    const calendrier = async (journee) => (journee === S1.debut ? 1 : 0);
+    const h = banc({ feuilles, calendrier });
+
+    const closes = await h.serviceH2H.rattraper('Ligue', { maxSemaines: 16 });
+
+    // Départ il y a quatre semaines : 1 à 4 sont échues, la 5 est en cours.
+    assert.deepEqual(closes, [1, 2, 3, 4]);
+    assert.equal(h.lirePool('Ligue').h2hData.currentWeek, 5);
+    assert.equal(h.etat.notifications.filter(n => n.type === 'week_new').length, 2,
+        'seule la semaine en cours est annoncée');
 });
 
 test('finaliser deux fois n inscrit pas deux victoires', async () => {

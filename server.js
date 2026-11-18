@@ -5534,6 +5534,16 @@ async function realignerDepartsH2H() {
 // ✅ Auto-check and finalize completed H2H weeks
 
 /**
+ * Combien de semaines un pool peut fermer en un passage.
+ *
+ * Quatre laissaient un pool en retard de six semaines a moitie rattrape
+ * jusqu'au passage de la nuit suivante. Une saison compte environ 26
+ * semaines : seize couvrent un long arret sans laisser un passage fermer la
+ * saison entiere d'un coup.
+ */
+const MAX_SEMAINES_RATTRAPEES = 16;
+
+/**
  * Rattrape les semaines terminees mais jamais closes.
  *
  * Meme service que le bouton manuel, donc meme resultat : c'est tout l'objet du
@@ -5545,7 +5555,7 @@ async function realignerDepartsH2H() {
  * essayer de fermer quinze semaines d'un coup, en interrogeant les feuilles de
  * chacune, pendant que le site repond aux visiteurs.
  */
-async function rattraperSemainesH2H({ maxSemainesParPool = 4 } = {}) {
+async function rattraperSemainesH2H({ maxSemainesParPool = MAX_SEMAINES_RATTRAPEES } = {}) {
     // Le pointage hebdomadaire lit les feuilles de match, qui vivent dans une
     // table PostgreSQL. En mode fichier l'operation n'existe pas — et le dire
     // vaut mieux que faire semblant de l'avoir tentee.
