@@ -1056,16 +1056,37 @@ let fzsVersusLu = { pool: null, at: 0, enVol: false };
 
 function fzsVersusCle(pool) { return `fzs:versus:${pool}`; }
 
-/** L'écusson d'une équipe du pool : son club repêché, sinon ses initiales. */
-function fzsEcussonEquipe(nom) {
+/** Le club repêché d'une équipe du pool (son abréviation), ou null. */
+function fzsClubEquipe(nom) {
     const td = (((window.FZPool && FZPool.data()) || {}).teams || {})[nom] || {};
     const club = (td.teams || [])[0];
     const utah = c => (c === 'utahmammoth' ? 'utahhockeyclub' : c === 'utahhockeyclub' ? 'utahmammoth' : c);
     const fiche = club && ((userData.teamsData && userData.teamsData.teams) || [])
         .find(t => [fzsCle(club), utah(fzsCle(club))].includes(fzsCle(t.teamFullName)));
+    return (fiche && fiche.teamAbbrev) || null;
+}
+
+/** L'écusson d'une équipe : son club repêché, sinon ses initiales. */
+function fzsEcussonEquipe(nom) {
+    const abbr = fzsClubEquipe(nom);
     const initiales = String(nom || '?').trim().split(/\s+/).slice(0, 2).map(m => m.charAt(0)).join('').toUpperCase();
-    return `<span class="fzs-vs-logo">${escapeHTML(initiales)}${fiche && fiche.teamAbbrev
-        ? `<img src="teams/${escapeHTML(fiche.teamAbbrev)}.png" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+    // Les initiales s'affichent (::after) seulement sans image : un écusson
+    // introuvable s'efface et les laisse paraître.
+    return `<span class="fzs-vs-logo" data-i="${escapeHTML(initiales)}">${abbr
+        ? `<img src="teams/${escapeHTML(abbr)}.png" alt="" onerror="this.remove()">` : ''}</span>`;
+}
+
+/**
+ * Les couleurs de la moitié d'une équipe : celles de son club repêché, le
+ * même calcul que le tableau d'affichage d'un match (teamBannerTokens,
+ * teamColors.js). Un gris neutre sans club.
+ */
+function fzsJetonsEquipe(nom, cote) {
+    const abbr = fzsClubEquipe(nom);
+    const j = abbr && typeof teamBannerTokens === 'function'
+        ? teamBannerTokens(abbr)
+        : { surface: '#2c2f36', edge: '#8995a8', trim: '#8995a8', crest: null };
+    return `--${cote}-surface:${j.surface};--${cote}-edge:${j.edge};--${cote}-trim:${j.trim};--${cote}-crest:${j.crest ? `url('${j.crest}')` : 'none'}`;
 }
 
 /** Les lignes du soir d'une équipe, au barème du tête-à-tête. */
@@ -1151,42 +1172,52 @@ function fzsChancesVersus(duel, mesPoints, sesPoints) {
     return D.chancesVersus({ points: mesPoints, joueurs: equipe(duel.moi.nom) }, { points: sesPoints, joueurs: equipe(duel.adversaire.nom) });
 }
 
-function fzsVersusCoteHTML(cote, moi, mode) {
+/**
+ * Une moitié du tableau : écusson, nom, bilan, et les points de ce soir
+ * quand il y en a. Les points de la semaine, eux, sont sur la plaque.
+ */
+function fzsVersusCoteHTML(cote, moi) {
     const esc = escapeHTML;
     const bilan = cote.bilan ? `${cote.bilan.wins || 0}-${cote.bilan.losses || 0}-${cote.bilan.ties || 0}` : '';
-    const stats = mode === 'avenir' ? ''
-        : `<span class="fzs-vs-stats">${cote.buts} B · ${cote.aides} A · ${cote.pj} PJ</span>`;
-    return `<span class="fzs-vs-side${moi ? ' is-me' : ''}">
+    return `<span class="fzs-vs-side ${moi ? 'is-me' : 'is-opp'}">
             ${fzsEcussonEquipe(cote.nom)}
-            <span class="fzs-vs-name">${moi ? '<em>Toi</em>' : ''}<span>${esc(cote.nom)}</span></span>
-            ${bilan ? `<span class="fzs-vs-rec" title="Bilan : victoires-défaites-nulles">${bilan}</span>` : ''}
-            <strong class="fzs-vs-pts">${mode === 'avenir' ? '—' : fzsPts(cote.points)}</strong>
-            ${stats}
-            ${cote.ceSoir ? `<span class="fzs-hero-live"><i></i>+${fzsPts(cote.ceSoir)} ce soir</span>` : ''}
+            <span class="fzs-vs-name" title="${esc(cote.nom)}">${esc(cote.nom)}</span>
+            <span class="fzs-vs-meta">${moi ? '<em>Toi</em>' : ''}${bilan ? `<span title="Bilan : victoires-défaites-nulles">${bilan}</span>` : ''}</span>
+            ${cote.ceSoir ? `<span class="fzs-vs-live"><i></i>+${fzsPts(cote.ceSoir)} ce soir</span>` : ''}
         </span>`;
 }
 
-/** La carte Versus, tirée de la mémoire ; un squelette avant la première lecture. */
+/**
+ * La carte Versus, au style du tableau d'affichage d'un match (match.css) :
+ * chaque équipe sur sa moitié, aux couleurs de son club repêché, séparées en
+ * biais ; les points de la semaine sur une plaque sombre au centre ; les
+ * chances de gagner dessous. Toujours sur fond sombre, dans les deux thèmes.
+ * Tirée de la mémoire ; un squelette avant la première lecture.
+ */
 function fzsVersusHTML(activeName) {
     const href = `classement.html?pool=${encodeURIComponent(activeName)}&amp;h2h=duel`;
     const lu = window.FZMemo ? FZMemo.donnee(fzsVersusCle(activeName)) : null;
     const monNom = (FZPool.team() || {}).name || '';
     if (!lu || !lu.duel) {
         const vide = lu && lu.vide;
-        return `<a class="fzs-hero fzs-vs${vide ? '' : ' is-loading'}" href="${href}" aria-label="Voir le duel">
-            <span class="fzs-vs-top"><span class="fzs-vs-week">${vide ? 'Duels' : 'Semaine'}</span>${fzsIcone('chevron', 22)}</span>
-            ${vide ? `<span class="fzs-vs-empty">Le calendrier des duels sera prêt une fois le repêchage terminé.</span>`
-                : `<span class="fzs-vs-grid">
-                <span class="fzs-vs-side is-me">${fzsEcussonEquipe(monNom)}<span class="fzs-vs-name"><em>Toi</em><span>${escapeHTML(monNom)}</span></span><span class="fz-bone fzs-vs-bone"></span></span>
-                <span class="fzs-vs-mid" aria-hidden="true">VS</span>
-                <span class="fzs-vs-side"><span class="fzs-vs-logo fz-bone"></span><span class="fz-bone fzs-vs-bone"></span><span class="fz-bone fzs-vs-bone"></span></span>
-            </span>`}
+        if (vide) {
+            return `<a class="fzs-hero fzs-vs is-empty" href="${href}" aria-label="Voir les duels">
+                <span class="fzs-vs-empty">Le calendrier des duels sera prêt une fois le repêchage terminé.</span>
+            </a>`;
+        }
+        return `<a class="fzs-hero fzs-vs is-loading" href="${href}" aria-label="Voir le duel" style="${fzsJetonsEquipe(monNom, 'a')}">
+            <span class="fzs-vs-board">
+                ${fzsVersusCoteHTML({ nom: monNom }, true)}
+                <span class="fzs-vs-plate"><span class="fz-bone fzs-vs-bone"></span></span>
+                <span class="fzs-vs-side is-opp"><span class="fzs-vs-logo fz-bone"></span><span class="fz-bone fzs-vs-bone is-name"></span></span>
+            </span>
         </a>`;
     }
     const duel = lu.duel;
     const direct = lu.direct || {};
     const bilans = lu.bilans || {};
     const enCours = duel.mode === 'encours';
+    const avenir = duel.mode === 'avenir';
     const cote = (nom, points, joueurs) => ({
         nom, bilan: bilans[nom] || null,
         ...FZDuelAccueil.coteVersus(points, joueurs, enCours ? fzsSoirEquipe(nom) : [])
@@ -1194,40 +1225,42 @@ function fzsVersusHTML(activeName) {
     const moi = cote(duel.moi.nom, direct.moi != null ? direct.moi : duel.moi.points, direct.mesJoueurs);
     const lui = cote(duel.adversaire.nom, direct.adversaire != null ? direct.adversaire : duel.adversaire.points, direct.sesJoueurs);
 
-    const issue = { victoire: 'Victoire', defaite: 'Défaite', nulle: 'Nulle' }[duel.issue] || '';
-    const semaine = enCours
-        ? `<span class="fzs-vs-tag is-live"><i></i>En cours</span><span>Semaine ${duel.semaine} · jusqu’au ${fzsJourCourt(duel.fin)}</span>`
-        : duel.mode === 'avenir'
-            ? `<span class="fzs-vs-tag">À venir</span><span>Semaine ${duel.semaine} · dès le ${fzsJourCourt(duel.debut)}</span>`
-            : `<span class="fzs-vs-tag">${issue}</span><span>Semaine ${duel.semaine}${duel.finalise ? '' : ' · provisoire'}</span>`;
-    const total = moi.points + lui.points;
-    const part = duel.mode === 'avenir' ? null : total > 0 ? Math.round((moi.points / total) * 100) : 50;
-    const etat = duel.mode === 'avenir' ? '' : moi.points > lui.points ? ' is-ahead' : moi.points < lui.points ? ' is-behind' : ' is-tied';
-    const ecart = Math.abs(moi.points - lui.points);
+    const issue = { victoire: 'Victoire', defaite: 'Défaite', nulle: 'Nulle' }[duel.issue] || 'Terminé';
+    const pastille = enCours ? '<span class="fzs-vs-pill is-live"><i></i>En cours</span>'
+        : avenir ? '<span class="fzs-vs-pill">À venir</span>'
+            : `<span class="fzs-vs-pill${duel.issue === 'victoire' ? ' is-win' : ''}">${issue}</span>`;
+    const quand = enCours ? `Sem. ${duel.semaine} · au ${fzsJourCourt(duel.fin)}`
+        : avenir ? `Sem. ${duel.semaine} · dès le ${fzsJourCourt(duel.debut)}`
+            : `Semaine ${duel.semaine}${duel.finalise ? '' : ' · provisoire'}`;
+    const perd = c => !avenir && c.points < (c === moi ? lui : moi).points;
+    const marque = c => `<b class="fzs-vs-score${perd(c) ? ' is-behind' : ''}">${avenir ? '–' : fzsPts(c.points)}</b>`;
+
+    // La barre suit les chances : sa part rouge (la mienne) est exactement
+    // mon pourcentage. Sans chances (semaine finie), pas de barre.
     const chances = fzsChancesVersus(duel, moi.points, lui.points);
     const mr = chances && chances.matchsRestants;
-    const restants = mr ? ` · matchs restants ${Math.round(mr.moi)} – ${Math.round(mr.lui)}` : '';
-    const resume = duel.mode === 'avenir' ? `Semaine ${duel.semaine} contre ${lui.nom}, à venir`
-        : `Semaine ${duel.semaine} : ${fzsPts(moi.points)} à ${fzsPts(lui.points)} contre ${lui.nom}`;
-    const precedent = duel.precedent
-        ? `<span class="fzs-vs-prev">Semaine ${duel.precedent.semaine} : ${{ victoire: 'victoire', defaite: 'défaite', nulle: 'nulle' }[duel.precedent.issue] || ''} ${fzsPts(duel.precedent.moi.points)}–${fzsPts(duel.precedent.adversaire.points)} contre ${escapeHTML(duel.precedent.adversaire.nom)}</span>`
-        : '';
-    return `<a class="fzs-hero fzs-vs${etat}" href="${href}" aria-label="${escapeHTML(`${resume} · voir le duel`)}">
-            <span class="fzs-vs-top"><span class="fzs-vs-week">${semaine}</span>${fzsIcone('chevron', 22)}</span>
-            <span class="fzs-vs-grid">
-                ${fzsVersusCoteHTML(moi, true, duel.mode)}
-                <span class="fzs-vs-mid" aria-hidden="true">VS</span>
-                ${fzsVersusCoteHTML(lui, false, duel.mode)}
+    const resume = avenir ? `Semaine ${duel.semaine} contre ${lui.nom}, à venir`
+        : `Semaine ${duel.semaine} : ${fzsPts(moi.points)} à ${fzsPts(lui.points)} contre ${lui.nom}`
+            + (chances ? `. Chances de gagner : ${chances.moi} %` : '');
+    return `<a class="fzs-hero fzs-vs" href="${href}" aria-label="${escapeHTML(`${resume} · voir le duel`)}"
+            style="${fzsJetonsEquipe(moi.nom, 'a')};${fzsJetonsEquipe(lui.nom, 'b')}">
+            <span class="fzs-vs-board">
+                ${fzsVersusCoteHTML(moi, true)}
+                <span class="fzs-vs-plate">
+                    <span class="fzs-vs-scores">${marque(moi)}<i aria-hidden="true">${avenir ? 'vs' : ''}</i>${marque(lui)}</span>
+                    ${pastille}
+                    <span class="fzs-vs-when">${quand}</span>
+                </span>
+                ${fzsVersusCoteHTML(lui, false)}
             </span>
-            ${chances ? `<span class="fzs-vs-odds" aria-label="${escapeHTML(`Chances de gagner : toi ${chances.moi} %, ${lui.nom} ${chances.lui} %`)}">
+            ${chances ? `<span class="fzs-vs-odds">
                 <b${chances.moi >= chances.lui ? ' class="is-fav"' : ''}>${chances.moi}&nbsp;%</b>
-                <span class="fzs-vs-bar"><i style="width:${chances.moi}%"></i></span>
+                <span class="fzs-vs-odds-mid">
+                    <span class="fzs-vs-odds-lbl">Chances de gagner${mr ? ` · ${Math.round(mr.moi)}–${Math.round(mr.lui)} matchs` : ''}</span>
+                    <span class="fzs-vs-bar" aria-hidden="true"><i style="width:${chances.moi}%"></i></span>
+                </span>
                 <b${chances.lui >= chances.moi ? ' class="is-fav"' : ''}>${chances.lui}&nbsp;%</b>
-            </span>
-            <span class="fzs-vs-gap"><span>Chances de gagner</span>${restants}</span>`
-            : part === null ? '' : `<span class="fzs-vs-bar" aria-hidden="true"><i style="width:${part}%"></i></span>`}
-            ${part === null ? '' : `<span class="fzs-vs-lead">${ecart === 0 ? 'Égalité' : `${moi.points > lui.points ? 'Tu mènes' : 'Tu tires de l’arrière'} par ${fzsPts(ecart)} point${ecart >= 2 ? 's' : ''}`}</span>`}
-            ${precedent}
+            </span>` : ''}
         </a>`;
 }
 
