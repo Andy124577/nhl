@@ -983,6 +983,74 @@ html.ss-lock { overflow: hidden; }
 }
 .ss-done:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
+/* -------------------- « Modifier l'alignement » -------------------- */
+/* Le panneau du banc (ouvrirAlignement) : la feuille .ss-* et ses
+   rangées, avec une pastille de poste à gauche et les points à droite. */
+.al-corps { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.al-corps .ss-list { overflow: visible; flex: none; }
+.al-section {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px 6px;
+    border-bottom: 1px solid var(--rr-line);
+    font: 700 12px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--rr-muted);
+}
+.al-list + .al-section { margin-top: 8px; border-top: 1px solid var(--rr-line); }
+button.al-row {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+}
+.al-row.is-choisi { cursor: default; background: var(--rr-hover); }
+.al-row.is-choisi:hover { background: var(--rr-hover); }
+.al-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.al-row:disabled { cursor: default; }
+.al-row.is-busy { opacity: .6; }
+.al-pastille {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 26px;
+    border: 1.5px solid var(--rr-ink);
+    border-radius: 13px;
+    font: 700 11px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    letter-spacing: .04em;
+    color: var(--rr-ink);
+}
+.al-pastille.is-banc { border-color: var(--rr-muted); color: var(--rr-muted); }
+.al-pastille.is-choisi,
+.al-pastille.is-banc.is-choisi { border-color: var(--rr-ink); background: var(--rr-ink); color: var(--rr-surface); }
+.al-row .rr-avatar { width: 44px; height: 44px; }
+.al-row .ss-meta em { font-style: normal; font-weight: 600; color: var(--rr-ink); }
+.al-pts { flex: none; display: flex; flex-direction: column; align-items: flex-end; min-width: 36px; }
+.al-pts b { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.al-sheet:focus { outline: none; }
+.al-vide { padding: 14px 16px; font-size: 14px; color: var(--rr-muted); }
+.al-msg { margin: 0; padding: 10px 16px 0; font-size: 13px; font-weight: 600; color: var(--rr-ink); }
+.al-msg.is-error { color: var(--accent, #C8102E); }
+.al-fiche {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--rr-btn-line);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--rr-ink);
+    font: 600 14px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    cursor: pointer;
+}
+.al-fiche:hover { background: var(--rr-hover); }
+.al-fiche:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@media (min-width: 681px) {
+    .al-sheet { max-width: 480px; }
+}
+
 @keyframes ssFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ssRise { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes ssPop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
