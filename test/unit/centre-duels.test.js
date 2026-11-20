@@ -118,7 +118,7 @@ describe('carte de duel', () => {
         assert.equal(rangees.length, 2);
         assert.match(rangees[0], /N\. MacKinnon[\s\S]*ATT[\s\S]*N\. Suzuki/);
         assert.match(rangees[1], /C\. Makar[\s\S]*DÉF[\s\S]*L\. Hutson/);
-        assert.match(html, /\+3 en direct/);
+        assert.match(html, /class="fa-direct" title="En direct">\+3</);
         assert.match(html, /teams\/MTL\.png/);
         assert.match(html, /class="fz-photo fz-shot fa-photo"/, 'la photo du joueur à côté de son nom');
         assert.match(html, /&lt;b&gt;Rouge&lt;\/b&gt;/, 'le nom saisi reste échappé');

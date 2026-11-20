@@ -3004,13 +3004,13 @@ function h2hCelluleJoueur(j, cote, gagne) {
     if (!/^[A-Z]{2,3}$/.test(abrev || '')) abrev = null;
     const club = abrev ? `<img class="fa-club" src="teams/${abrev}.png" alt="" onerror="this.remove()">` : '';
     const direct = Number(j.enDirect) > 0
-        ? `<small class="fa-direct">+${fmtH2HPts(j.enDirect).replace('.', ',')} en direct</small>` : '';
+        ? `<small class="fa-direct" title="En direct">+${fmtH2HPts(j.enDirect).replace('.', ',')}</small>` : '';
     return `
         <div class="fa-j fa-${cote}">
             ${photoJoueurHTML(j.name, j.playerId, abrev, 'fa-photo')}
             <div class="fa-qui">
                 <span class="fa-nomj">${cote === 'd' ? club : ''}<b title="${escapeAttr(j.name)}">${escapeHtmlText(nomCourtJoueur(j.name))}</b>${cote === 'g' ? club : ''}</span>
-                <span class="fa-pts${gagne ? ' is-devant' : ''}">${fmtH2HPts(j.fantasyPoints).replace('.', ',')}<small> FPts</small></span>${direct}
+                <span class="fa-ptsl"><span class="fa-pts${gagne ? ' is-devant' : ''}">${fmtH2HPts(j.fantasyPoints).replace('.', ',')}<small> FPts</small></span>${direct}</span>
             </div>
         </div>`;
 }
@@ -3079,9 +3079,8 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
             <div class="fa-equipe fa-${sens}">
                 <span class="fa-logo">${logo}</span>
                 <span class="fa-txt">
-                    <span class="fa-score${devant ? ' is-devant' : ''}">${fmtH2HPts(e.points).replace('.', ',')}</span>
-                    <span class="fa-nom" title="${escapeAttr(nom)}">${escapeHtmlText(nom)}${estMienne(e.cle) ? '<span class="hf-toi">Toi</span>' : ''}</span>
-                    ${bilan}
+                    <span class="fa-scorel"><span class="fa-score${devant ? ' is-devant' : ''}">${fmtH2HPts(e.points).replace('.', ',')}</span>${bilan}</span>
+                    <span class="fa-ligne"><span class="fa-nom" title="${escapeAttr(nom)}">${escapeHtmlText(nom)}</span>${estMienne(e.cle) ? '<span class="hf-toi">Toi</span>' : ''}</span>
                 </span>
             </div>`;
     };
@@ -3106,10 +3105,14 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
                 <span class="fa-vs">VS</span>
                 ${entete(d, 'd')}
             </div>
-            <div class="fa-barre" role="img" aria-label="${escapeAttr(phrase.replace(/<[^>]+>/g, ''))}">
-                <span class="fa-barre-g" style="width:${part}%"></span>
+            <div class="fa-jauge"${cotes ? ` data-cotes="${escapeAttr(JSON.stringify(cotes))}"` : ''}>
+                <span class="fa-cote" data-cote="g"></span>
+                <div class="fa-barre" role="img" aria-label="${escapeAttr(phrase.replace(/<[^>]+>/g, ''))}">
+                    <span class="fa-barre-g" style="width:${part}%"></span>
+                </div>
+                <span class="fa-cote" data-cote="d"></span>
             </div>
-            <p class="fa-phrase"${cotes ? ` data-cotes="${escapeAttr(JSON.stringify(cotes))}"` : ''}>${phrase}</p>
+            <p class="fa-phrase">${phrase}</p>
             <div class="fa-liste">
                 ${rangees || '<div class="h2h-no-players">Aucun joueur à afficher</div>'}
             </div>
@@ -3193,26 +3196,32 @@ function chancesDuel(poolName, cotes) {
     return D.chancesVersus({ points: gp, joueurs: partants(cotes.g) }, { points: dp, joueurs: partants(cotes.d) });
 }
 
-/** La ligne sous la barre : « 62 % · Chances de gagner · 38 % ». */
-function ligneChancesHTML(chances, mien) {
-    const g = chances.moi, d = chances.lui;
-    return `<span class="fa-cote${g >= d ? ' is-fav' : ''}">${g}&nbsp;%</span>`
-        + `<span class="fa-cote-lib">${mien ? 'Tes chances de gagner' : 'Chances de gagner'}</span>`
-        + `<span class="fa-cote${d >= g ? ' is-fav' : ''}">${d}&nbsp;%</span>`;
-}
-
 /** Pose les chances sous chaque barre de duel affichée ; relancé quand l'horaire ou les blessés arrivent. */
 function remplirChancesDuels(poolName) {
     const poser = () => {
         if (currentPoolName !== poolName) return;
-        document.querySelectorAll('#h2hMatchupsList .fa-phrase[data-cotes]').forEach(el => {
+        // La barre suit alors les chances (plus la part des points) : 10 % à
+        // gauche, une barre au dixième ; la phrase dessous dit ce qu'elle mesure.
+        document.querySelectorAll('#h2hMatchupsList .fa-jauge[data-cotes]').forEach(el => {
             let cotes;
             try { cotes = JSON.parse(el.dataset.cotes); } catch (_) { return; }
             const chances = chancesDuel(poolName, cotes);
             if (!chances) return;
-            el.classList.add('fa-cotes');
-            el.innerHTML = ligneChancesHTML(chances, cotes.mien);
-            el.setAttribute('aria-label', `Chances de gagner : ${chances.moi} % contre ${chances.lui} %`);
+            const g = chances.moi, d = chances.lui;
+            el.classList.add('is-cotes');
+            const [cg, cd] = el.querySelectorAll('.fa-cote');
+            cg.textContent = `${g} %`;
+            cd.textContent = `${d} %`;
+            cg.classList.toggle('is-fav', g >= d);
+            cd.classList.toggle('is-fav', d >= g);
+            el.querySelector('.fa-barre-g').style.width = `${g}%`;
+            const barre = el.querySelector('.fa-barre');
+            barre.setAttribute('aria-label', `Chances de gagner : ${g} % contre ${d} %`);
+            const phrase = el.nextElementSibling;
+            if (phrase && phrase.classList.contains('fa-phrase')) {
+                phrase.textContent = cotes.mien ? 'Tes chances de gagner' : 'Chances de gagner';
+                phrase.classList.add('is-cotes');
+            }
         });
     };
     poser();
@@ -3359,12 +3368,13 @@ async function renderH2HMatchupsForPeriod(poolName) {
             // sur une semaine 1 qui n'ouvre qu'au premier match de la saison.
             const ws = data.weekStatus || 'ongoing';
             const plage = h2hSchedDateRange(data.weekStart, data.weekEnd);
+            // Le bouton « Aujourd'hui » est allumé à côté : la date suffit.
             const sousTitre = (ws === 'upcoming' && plage)
-                ? `Semaine du ${plage} — premier duel à venir`
-                : `Aujourd'hui — ${h2hJourLong(data.date) || jourLocalLong()}`;
+                ? `Semaine du ${plage}`
+                : (h2hJourLong(data.date) || jourLocalLong());
             weekHeader.innerHTML = `
                 <div class="h2h-week-label">Semaine ${data.currentWeek} <span class="h2h-week-status ${H2H_WEEK_STATUS_CLASS[ws] || ''}">${H2H_WEEK_STATUS_LABEL[ws] || ''}</span></div>
-                <div class="h2h-week-dates">${escapeHtmlText(sousTitre)}</div>`;
+                <div class="h2h-week-dates">${escapeHtmlText(sousTitre)}${statutCourtHTML(ws)}</div>`;
         } else if (h2hSemaineVue) {
             // Une autre semaine que la courante : /h2h/matchup la sert figée
             // si elle est close (un échange de mardi ne la réécrit pas),
@@ -3437,7 +3447,7 @@ function h2hEnteteSemaineHTML(poolName, numero, data) {
             ${fleche(-1, 'Semaine précédente', numero <= 1)}
             <div>
                 <div class="h2h-week-label">Semaine ${numero} <span class="h2h-week-status ${H2H_WEEK_STATUS_CLASS[ws] || ''}">${H2H_WEEK_STATUS_LABEL[ws] || ''}</span></div>
-                <div class="h2h-week-dates">${escapeHtmlText(plage + corrige)}</div>
+                <div class="h2h-week-dates">${escapeHtmlText(plage + corrige)}${statutCourtHTML(ws)}</div>
             </div>
             ${fleche(1, 'Semaine suivante', numero >= total)}
         </div>`;
@@ -3523,6 +3533,13 @@ let h2hSchedTeam = null;       // équipe affichée dans le carrousel
  * dont les feuilles de match ne sont pas toutes arrivées n'est ni en cours ni
  * terminée. Les tables qui l'oubliaient la montraient « À venir ».
  */
+/** L'état de la semaine en bout de ligne de dates : « · terminée ». */
+function statutCourtHTML(ws) {
+    // « En cours » va de soi pour la semaine courante : seul un autre état se dit.
+    const texte = { upcoming: 'à venir', pending_finalization: 'en attente', completed: 'terminée' }[ws];
+    return texte ? `<span class="h2h-statut ${H2H_WEEK_STATUS_CLASS[ws] || ''}">${texte}</span>` : '';
+}
+
 const H2H_WEEK_STATUS_LABEL = {
     upcoming: '📅 À VENIR',
     ongoing: '🔴 EN COURS',

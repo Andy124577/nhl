@@ -40,7 +40,7 @@
     <link rel="stylesheet" href="classementReskin.css?v=20261120a">
     <!-- Pool H2H : onglets du haut, classement pleine largeur (fiche V-D-N,
          %V, écart) et duels face à face par position. Après le reskin. -->
-    <link rel="stylesheet" href="classementH2H.css?v=20261120b">
+    <link rel="stylesheet" href="classementH2H.css?v=20261120d">
 </head>
 <body class="fz-classement">
     <!-- Le bouton « Mon équipe » et les liens de l’accueil ouvrent la fiche de
@@ -117,10 +117,12 @@
 
             <!-- H2H: Current Matchups -->
             <div id="h2hMatchupsView" class="h2h-section" style="display: none;">
+                <div class="h2h-duels-barre">
                 <div class="h2h-week-header" id="h2hWeekHeader"></div>
                 <div class="h2h-period-filter" id="h2hPeriodFilter">
                     <button class="h2h-period-btn active" id="filterToday" onclick="setH2HPeriod('today')">Aujourd'hui</button>
                     <button class="h2h-period-btn" id="filterWeek" onclick="setH2HPeriod('week')">Semaine</button>
+                </div>
                 </div>
                 <div id="h2hMatchupsList" class="h2h-matchups-list"></div>
             </div>
@@ -304,7 +306,7 @@
     <!-- Récapitulatif « Ton équipe est complète », ouvert par classement.js (?recap=1). -->
     <script defer src="draftFinPopup.js?v=20261022b"></script>
     <script defer src="lib/duelAccueil.js?v=20261117b"></script>
-    <script defer src="classement.js?v=20261120c"></script>
+    <script defer src="classement.js?v=20261120d"></script>
     <script defer src="navbar.js?v=20261117a"></script>
     <script defer src="installerApp.js?v=20261113a"></script>
     <!-- Bilan de la soirée : surgit une fois le dernier match du soir fini. -->
