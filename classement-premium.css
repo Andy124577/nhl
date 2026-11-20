@@ -443,31 +443,6 @@ body.fz-classement .rr-sk .rr-chev { opacity: .65; }
    ces règles et garde exactement l'habillage précédent.
    ==================================================================== */
 
-/* -------------------- Sous-titre du pool -------------------- */
-/* Le titre donne le nom du pool ; cette ligne dit de quelle ligue il
-   s'agit et où en est la saison — les deux questions qu'on se pose avant
-   de lire un classement. */
-body.fz-classement .pool-header-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: -4px 0 20px;
-}
-body.fz-classement .phm-line {
-  margin: 0;
-  font: 400 12.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: var(--fzc-text-faint);
-}
-body.fz-classement .phm-badge {
-  padding: 5px 11px;
-  border: 1px solid color-mix(in srgb, var(--fzc-accent-fill) 45%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--fzc-accent-fill) 10%, var(--fzc-surface));
-  color: var(--fzc-accent);
-  font: 600 10.5px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-
 /* -------------------- Onglets H2H -------------------- */
 body.fz-classement .h2h-tabs {
   display: flex;

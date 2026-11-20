@@ -53,6 +53,8 @@ body.fz-classement .st-tete {
     margin: 0 0 14px;
 }
 body.fz-view-roster .st-tete { display: none; }
+/* Pool H2H : les onglets Mon équipe / Classement / Duels ouvrent la page. */
+body.fz-pool-h2h .st-tete { display: none; }
 body.fz-classement .st-tete .page-title {
     display: flex;
     flex-direction: column;
