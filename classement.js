@@ -502,19 +502,6 @@ function showPoolStandings(poolName) {
     const poolMode = poolData.poolMode || 'cumulative';
     document.body.classList.toggle('fz-pool-h2h', poolMode === 'head-to-head');
 
-    // Sous-titre du pool. Un pool H2H a un mode de ligue et un état de saison
-    // à annoncer ; un pool cumulatif n'a que son nom, déjà dans le titre.
-    const meta = document.getElementById('poolHeaderMeta');
-    if (poolMode === 'head-to-head') {
-        const participants = Object.values(poolData.teams || {})
-            .filter(td => td.members && td.members.length > 0).length;
-        document.getElementById('poolHeaderLine').textContent =
-            `Ligue H2H · ${participants} participant${participants > 1 ? 's' : ''}`;
-        meta.style.display = 'flex';
-    } else {
-        meta.style.display = 'none';
-    }
-
     const h2hTabs = document.getElementById('h2hTabs');
     const h2hMatchupsView = document.getElementById('h2hMatchupsView');
     const h2hHistoryView = document.getElementById('h2hHistoryView');
@@ -1577,7 +1564,6 @@ async function renderHallOfFame(poolName) {
 // Level 3: Team Roster View
 function showTeamRoster(poolName, teamName) {
     currentView = VIEW_STATES.TEAM_ROSTER;
-    document.getElementById('poolHeaderMeta').style.display = 'none';
     currentPoolName = poolName;
     currentTeamName = teamName;
 
@@ -3922,7 +3908,7 @@ function showError(title, message) {
     document.getElementById('breadcrumb').style.display = 'none';
     document.getElementById('pageTitle').textContent = 'Classement';
     majFraicheur('');
-    document.getElementById('poolHeaderMeta').style.display = 'none';
+    document.body.classList.remove('fz-pool-h2h');
 
     const poolList = document.getElementById('poolList');
     poolList.style.display = 'block';

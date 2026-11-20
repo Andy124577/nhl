@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="fonts/polices.css?v=20261115a">
     <link rel="stylesheet" href="couleurs.css?v=20261116a">
     <link rel="stylesheet" href="classement.css?v=20261120a" />
-    <link rel="stylesheet" href="classement-premium.css?v=20261120b" />
+    <link rel="stylesheet" href="classement-premium.css?v=20261120c" />
     <link rel="stylesheet" href="index.css?v=20261116a" />
     <link rel="stylesheet" href="injuries.css?v=20260926b" />
     <link rel="stylesheet" href="skeleton-loader.css?v=20260926b" />
@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="draftFinPopup.css?v=20261116a">
     <!-- Langage 6b Éditorial (maquette « Classement ») : Saira, intertitres
          Saira Condensed. La feuille passe après toutes les autres. -->
-    <link rel="stylesheet" href="classementReskin.css?v=20261116a">
+    <link rel="stylesheet" href="classementReskin.css?v=20261120a">
     <!-- Pool H2H : onglets du haut, classement pleine largeur (fiche V-D-N,
          %V, écart) et duels face à face par position. Après le reskin. -->
     <link rel="stylesheet" href="classementH2H.css?v=20261120b">
@@ -70,7 +70,8 @@
         <!-- Page Title -->
         <!-- « Classement » en surtitre, le nom du pool en os jusqu'à
              showPoolStandings(). À droite, la fraîcheur des totaux
-             (majFraicheur), posée par le rendu cumulatif. -->
+             (majFraicheur), posée par le rendu cumulatif. Masqué dans un
+             pool H2H : ses onglets du haut en tiennent lieu. -->
         <header class="st-tete">
             <h1 id="pageTitle" class="page-title"><span class="st-titre-sur">Classement</span><span class="fz-bone st-sk-titre" aria-hidden="true"></span></h1>
             <!-- « Mon équipe » : la fiche de son équipe, à une touche. L'onglet
@@ -80,13 +81,6 @@
                 <button type="button" class="st-mon-equipe" id="stMonEquipe" hidden>Mon équipe</button>
             </div>
         </header>
-
-        <!-- Sous-titre d'un pool H2H : mode de ligue, nombre de participants
-             et état de la saison. Rempli par showPoolStandings(). -->
-        <div id="poolHeaderMeta" class="pool-header-meta" style="display: none;">
-            <p class="phm-line" id="poolHeaderLine"></p>
-            <span class="phm-badge" id="poolHeaderBadge">Saison en cours</span>
-        </div>
 
         <!-- Pool H2H : trois onglets en haut de la page, comme une appli de
              ligue — Mon équipe (la fiche de mon équipe), Classement, Duels.
@@ -310,7 +304,7 @@
     <!-- Récapitulatif « Ton équipe est complète », ouvert par classement.js (?recap=1). -->
     <script defer src="draftFinPopup.js?v=20261022b"></script>
     <script defer src="lib/duelAccueil.js?v=20261117b"></script>
-    <script defer src="classement.js?v=20261120b"></script>
+    <script defer src="classement.js?v=20261120c"></script>
     <script defer src="navbar.js?v=20261117a"></script>
     <script defer src="installerApp.js?v=20261113a"></script>
     <!-- Bilan de la soirée : surgit une fois le dernier match du soir fini. -->
