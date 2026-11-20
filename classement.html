@@ -111,12 +111,13 @@
                  duel). Remplie par renderH2HStandingsStrip(). -->
             <div id="h2hStandingsStrip" class="h2h-strip" style="display: none;"></div>
 
-            <!-- H2H — Classement : raccourcis ronds vers le reste de la ligue
-                 (calendrier, historique, records, échanges). -->
+            <!-- H2H — Classement : raccourcis ronds. Classement (la table),
+                 Historique et Records (le temple, seul) se changent sur
+                 place ; Échanges mène à sa page. -->
             <nav id="h2hRaccourcis" class="h2h-hub" aria-label="La ligue" style="display: none;">
-                <button type="button" class="h2h-hub-btn" onclick="switchH2HTab('calendrier')"><span class="h2h-hub-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>Calendrier</button>
-                <button type="button" class="h2h-hub-btn" onclick="switchH2HTab('history')"><span class="h2h-hub-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>Historique</button>
-                <button type="button" class="h2h-hub-btn" onclick="allerAuxRecords()"><span class="h2h-hub-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></span>Records</button>
+                <button type="button" class="h2h-hub-btn" data-vue="standings" onclick="switchH2HTab('standings')"><span class="h2h-hub-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 21V9a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v12"/><path d="M8.5 13h-5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h17a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1h-5"/></svg></span>Classement</button>
+                <button type="button" class="h2h-hub-btn" data-vue="history" onclick="switchH2HTab('history')"><span class="h2h-hub-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>Historique</button>
+                <button type="button" class="h2h-hub-btn" data-vue="records" onclick="switchH2HTab('records')"><span class="h2h-hub-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3"/></svg></span>Records</button>
                 <a class="h2h-hub-btn" href="trade.html"><span class="h2h-hub-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg></span>Échanges</a>
             </nav>
 
@@ -228,27 +229,21 @@
                 <!-- Standings table is injected here -->
             </div>
 
-            <!-- Bas du classement : temple de la renommée et — en H2H
-                 seulement — les derniers résultats. En H2H la classe `is-h2h`
-                 les met côte à côte sur grand écran. -->
+            <!-- Temple de la renommée : sous le classement d'un pool
+                 cumulatif ; seul, derrière le raccourci « Records », en H2H
+                 (classe `is-h2h`). -->
             <div id="standingsInsights" class="standings-insights">
                 <!-- Temple de la renommée : record et pire journée, semaine, mois -->
                 <div id="hallOfFame" class="hall-of-fame" style="display: none;">
                     <!-- Injected by renderHallOfFame() -->
                 </div>
 
-                <!-- H2H : les dernières semaines finalisées, vues du côté de
-                     votre équipe. Rempli par renderH2HRecentResults(). -->
-                <div id="h2hRecentResults" class="h2h-recent-results" style="display: none;">
-                    <!-- Injected by renderH2HRecentResults() -->
-                </div>
             </div>
 
             <!-- H2H: Calendrier de la saison — carrousel de toutes les
                  semaines de duel, du premier lundi au dernier, pour l'équipe
                  choisie. Rempli par renderH2HSchedule(). -->
             <div id="h2hScheduleView" class="h2h-section" style="display: none;">
-                <button type="button" class="h2h-retour" onclick="switchH2HTab('standings')"><span aria-hidden="true">&#8249;</span> Classement</button>
                 <div class="h2h-sched-head">
                     <div class="h2h-sched-intro">
                         <div class="h2h-sched-title" id="h2hSchedTitle">Calendrier de la saison</div>
@@ -270,7 +265,6 @@
 
             <!-- H2H: History -->
             <div id="h2hHistoryView" class="h2h-section" style="display: none;">
-                <button type="button" class="h2h-retour" onclick="switchH2HTab('standings')"><span aria-hidden="true">&#8249;</span> Classement</button>
                 <div id="h2hHistoryList" class="h2h-history-list"></div>
             </div>
         </div>
