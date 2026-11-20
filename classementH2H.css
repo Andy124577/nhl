@@ -24,14 +24,14 @@ body.fz-classement .h2h-seg {
     background: var(--s-raise);
     border-radius: 999px;
     padding: 4px;
-    margin: 4px 0 14px;
+    margin: 2px 0 10px;
     max-width: 480px;
 }
 html[data-theme="light"] body.fz-classement .h2h-seg { background: var(--s-line); }
 body.fz-classement .h2h-seg-btn {
     flex: 1;
     min-width: 0;
-    min-height: 40px;
+    min-height: 34px;
     border: 0;
     border-radius: 999px;
     background: transparent;
@@ -239,48 +239,72 @@ body.fz-classement .fa-tete {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 8px;
-    padding: 10px 16px 6px;
+    padding: 4px 16px 2px;
 }
 body.fz-classement .fa-equipe { display: flex; align-items: center; gap: 10px; min-width: 0; }
 body.fz-classement .fa-equipe.fa-d { flex-direction: row-reverse; text-align: right; }
-body.fz-classement .fa-logo { flex: none; display: grid; place-items: center; width: 44px; height: 44px; }
-body.fz-classement .fa-logo .st-avatar-fallback { width: 40px; height: 40px; }
+body.fz-classement .fa-logo { flex: none; display: grid; place-items: center; width: 36px; height: 36px; }
+body.fz-classement .fa-logo img { max-width: 36px; max-height: 36px; }
+body.fz-classement .fa-logo .st-avatar-fallback { width: 34px; height: 34px; }
 body.fz-classement .fa-txt { display: flex; flex-direction: column; min-width: 0; }
 body.fz-classement .fa-score {
-    font: 800 38px/1 'Saira Condensed', 'Saira', sans-serif;
+    font: 800 32px/1 'Saira Condensed', 'Saira', sans-serif;
     color: var(--s-ink2);
     font-variant-numeric: tabular-nums;
 }
 body.fz-classement .fa-score.is-devant { color: var(--s-ink); }
+body.fz-classement .fa-ligne { display: flex; align-items: center; gap: 5px; min-width: 0; margin-top: 2px; }
+body.fz-classement .fa-d .fa-ligne { flex-direction: row-reverse; }
 body.fz-classement .fa-nom {
-    margin-top: 3px;
     font-size: 13px;
     font-weight: 600;
     color: var(--s-ink2);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
 }
-body.fz-classement .fa-bilan { font-size: 12px; color: var(--s-mute); font-variant-numeric: tabular-nums; }
+body.fz-classement .fa-ligne .hf-toi { flex: none; }
+body.fz-classement .fa-bilan { flex: none; font-size: 12px; color: var(--s-mute); font-variant-numeric: tabular-nums; }
+body.fz-classement .fa-scorel { display: flex; align-items: baseline; gap: 8px; }
+body.fz-classement .fa-d .fa-scorel { flex-direction: row-reverse; }
 body.fz-classement .fa-vs { font-size: 12px; font-weight: 700; color: var(--s-mute); }
 
+/* La jauge : les chances de chaque côté, et une barre à leur mesure.
+   Avant les chances (ou une semaine close), la part des points. */
+body.fz-classement .fa-jauge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 16px 0;
+}
+body.fz-classement .fa-cote {
+    flex: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--s-ink2);
+    font-variant-numeric: tabular-nums;
+}
+body.fz-classement .fa-cote:empty { display: none; }
+body.fz-classement .fa-cote.is-fav { font-weight: 800; color: var(--s-ink); }
 body.fz-classement .fa-barre {
+    flex: 1;
     display: flex;
     height: 6px;
-    margin: 6px 16px 0;
     border-radius: 6px;
     overflow: hidden;
     background: var(--s-line);
 }
-body.fz-classement .fa-barre-g { background: var(--s-ink2); border-radius: 6px 0 0 6px; }
+body.fz-classement .fa-barre-g { background: var(--s-ink2); border-radius: 6px 0 0 6px; transition: width .3s ease; }
 body.fz-classement .fa-duel.is-mien .fa-barre-g { background: var(--s-green); }
 body.fz-classement .fa-phrase {
-    margin: 8px 16px 12px;
-    font-size: 13px;
+    margin: 2px 16px 6px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--s-ink2);
     text-align: center;
 }
+body.fz-classement .fa-phrase.is-cotes { font-weight: 500; color: var(--s-mute); }
 
 body.fz-classement .fa-liste { border-top: 1px solid var(--s-line); }
 body.fz-classement .fa-rangee {
@@ -308,11 +332,11 @@ body.fz-classement .fa-j {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: 58px;
-    padding: 8px 12px 8px 16px;
+    min-height: 50px;
+    padding: 6px 12px 6px 16px;
     min-width: 0;
 }
-body.fz-classement .fa-j.fa-d { flex-direction: row-reverse; padding: 8px 16px 8px 12px; text-align: right; }
+body.fz-classement .fa-j.fa-d { flex-direction: row-reverse; padding: 6px 16px 6px 12px; text-align: right; }
 /* La photo ronde, sur la couleur du club ; ses initiales dessous. */
 body.fz-classement .fz-photo {
     position: relative;
@@ -348,13 +372,15 @@ body.fz-classement .fa-qui b {
     min-width: 0;
 }
 body.fz-classement .fa-club { flex: none; width: 16px; height: 16px; object-fit: contain; margin: 0 4px; }
-body.fz-classement .fa-qui small.fa-direct { display: block; font-size: 12px; color: var(--s-ink2); white-space: nowrap; }
+body.fz-classement .fa-ptsl { display: flex; align-items: baseline; gap: 8px; }
+body.fz-classement .fa-d .fa-ptsl { flex-direction: row-reverse; }
+body.fz-classement .fa-qui small.fa-direct { font-size: 12px; font-weight: 600; color: var(--s-ink2); white-space: nowrap; }
 body.fz-classement .fa-qui small.fa-direct::before {
     content: "";
     display: inline-block;
     width: 6px;
     height: 6px;
-    margin-right: 5px;
+    margin-right: 4px;
     border-radius: 50%;
     background: var(--s-red);
     vertical-align: 1px;
@@ -371,21 +397,6 @@ body.fz-classement .fa-pts small { font-size: 11px; font-weight: 500; color: var
 body.fz-classement .fa-pts.is-devant { font-weight: 700; color: var(--s-ink); }
 body.fz-classement .fa-j.is-vide .fa-pts { color: var(--s-dim); }
 
-/* Les chances de gagner, sous la barre : 62 % · Chances de gagner · 38 %. */
-body.fz-classement .fa-phrase.fa-cotes {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-}
-body.fz-classement .fa-cote {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--s-ink2);
-    font-variant-numeric: tabular-nums;
-}
-body.fz-classement .fa-cote.is-fav { font-weight: 800; color: var(--s-ink); }
-body.fz-classement .fa-cote-lib { font-size: 12px; font-weight: 500; color: var(--s-mute); text-align: center; }
 
 /* Les autres duels de la semaine : une ligne de pointage, repliée. */
 body.fz-classement .fa-autres-titre {
@@ -425,7 +436,7 @@ body.fz-classement .fa-autre .fa-duel { margin: 0 0 6px; }
 @media (min-width: 900px) {
     body.fz-classement .fa-tete,
     body.fz-classement .fa-autre > summary { padding-left: var(--st-gouttiere); padding-right: var(--st-gouttiere); }
-    body.fz-classement .fa-barre,
+    body.fz-classement .fa-jauge,
     body.fz-classement .fa-phrase { margin-left: var(--st-gouttiere); margin-right: var(--st-gouttiere); }
     body.fz-classement .fa-j { padding-left: var(--st-gouttiere); }
     body.fz-classement .fa-j.fa-d { padding-right: var(--st-gouttiere); padding-left: 12px; }
@@ -439,3 +450,66 @@ body.fz-classement .fa-autre .fa-duel { margin: 0 0 6px; }
 }
 /* Les initiales ne se voient que si la photo manque (elle se retire en erreur). */
 body.fz-classement .fz-photo img ~ span { visibility: hidden; }
+
+/* ==================== EN-TÊTE DES DUELS, COMPACT ==================== */
+/* Semaine et Aujourd'hui/Semaine sur une seule ligne : la place va aux joueurs. */
+body.fz-classement .h2h-duels-barre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 12px;
+    margin: 0 0 6px;
+}
+body.fz-classement .h2h-duels-barre .h2h-week-header { flex: 1 1 auto; min-width: 0; margin: 0; text-align: left; }
+body.fz-classement .h2h-duels-barre .h2h-week-nav-row { display: flex; align-items: center; gap: 4px; }
+body.fz-classement .h2h-duels-barre .h2h-week-nav {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--s-ink2);
+}
+body.fz-classement .h2h-duels-barre .h2h-week-label {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 6px;
+    font: 800 17px/1.15 'Saira', system-ui, sans-serif;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+body.fz-classement .h2h-duels-barre .h2h-week-status {
+    padding: 2px 7px;
+    font-size: 10px;
+    letter-spacing: .04em;
+}
+body.fz-classement .h2h-duels-barre .h2h-week-dates { margin-top: 1px; font-size: 12px; white-space: nowrap; }
+body.fz-classement .h2h-duels-barre .h2h-period-filter {
+    flex: none;
+    gap: 0;
+    margin: 0;
+    padding: 2px;
+    border-radius: 999px;
+    background: var(--s-raise);
+}
+html[data-theme="light"] body.fz-classement .h2h-duels-barre .h2h-period-filter { background: var(--s-line); }
+body.fz-classement .h2h-duels-barre .h2h-period-btn {
+    min-height: 28px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--s-ink2);
+    font: 600 12px/1 'Saira', system-ui, sans-serif;
+    letter-spacing: 0;
+}
+body.fz-classement .h2h-duels-barre .h2h-period-btn.active { background: var(--s-ink); color: var(--s-on-ink); box-shadow: none; }
+body.fz-classement .h2h-duels-barre .h2h-week-label .h2h-week-status { display: none; }
+body.fz-classement .h2h-statut::before { content: "·"; margin: 0 5px; color: var(--s-mute); }
+body.fz-classement .h2h-statut { font-weight: 600; }
+body.fz-classement .h2h-statut.status-ongoing { color: var(--s-red-ink); }
+/* Sous les onglets du haut, leur propre marge suffit. */
+body.fz-classement.fz-pool-h2h #poolStandingsView { margin-top: 0; }
