@@ -59,7 +59,7 @@ const VIEW_STATES = {
 };
 
 let currentView = VIEW_STATES.POOL_LIST;
-let currentH2HTab = 'standings'; // 'standings' | 'matchups' | 'calendrier' | 'history' ('equipe' = la fiche)
+let currentH2HTab = 'standings'; // 'standings' | 'matchups' | 'calendrier' | 'history' | 'records' ('equipe' = la fiche)
 // Le pool dont les duels sont déjà chargés : l'onglet Duels ne se lit qu'à la première visite.
 let h2hDuelsCharges = null;
 let h2hWeekCache = null; // cached full-week matchup data
@@ -490,7 +490,6 @@ function showPoolStandings(poolName) {
     // Reset on every pool switch — only the cumulative branch below re-shows
     // it, and a stale record from the previous pool must not linger.
     document.getElementById('hallOfFame').style.display = 'none';
-    document.getElementById('h2hRecentResults').style.display = 'none';
     const bandeH2H = document.getElementById('h2hStandingsStrip');
     bandeH2H.innerHTML = '';
     bandeH2H.style.display = 'none';
@@ -531,7 +530,7 @@ function showPoolStandings(poolName) {
         const demande = h2hDemandeUrl;
         h2hDemandeUrl = { onglet: null, semaine: null };
         const voulu = demande.onglet === 'duel' ? 'matchups' : demande.onglet;
-        const onglet = ['matchups', 'standings', 'calendrier', 'history'].includes(voulu)
+        const onglet = ['matchups', 'standings', 'calendrier', 'history', 'records'].includes(voulu)
             ? voulu : 'standings';
 
         h2hTabs.style.display = '';
@@ -1100,90 +1099,6 @@ function h2hFormeHTML(suite) {
 
 
 
-/**
- * Les dernières semaines finalisées, vues du côté de votre équipe : votre
- * score à gauche, celui de l'adversaire à droite, l'issue en pastille. Sans
- * équipe dans le pool (spectateur), le premier duel de la semaine sert de
- * point de vue — mieux qu'une carte vide.
- */
-function renderH2HRecentResults(poolName) {
-    const container = document.getElementById('h2hRecentResults');
-    if (!container) return;
-
-    const poolData = allPoolsData[poolName];
-    const historique = [...(((poolData || {}).h2hData || {}).matchupHistory || [])]
-        .sort((a, b) => (b.weekNumber || 0) - (a.weekNumber || 0))
-        .slice(0, 3);
-
-    const tete = `
-        <div class="fz-card-head">
-            <span class="fz-card-icon">${H2H_ICON.horloge}</span>
-            <h2 class="fz-card-title">Derniers résultats</h2>
-            ${historique.length ? `<button type="button" class="fz-card-link" onclick="switchH2HTab('history')">Voir tout</button>` : ''}
-        </div>`;
-
-    if (!historique.length) {
-        container.innerHTML = tete + fzEmptyHTML(
-            H2H_ICON.horloge,
-            'Aucun duel terminé',
-            "Les résultats s'afficheront à la fin de la première semaine."
-        );
-        container.style.display = 'block';
-        return;
-    }
-
-    const mienne = myTeamIn(poolName);
-    // L'historique ne garde que les clés d'équipe : les membres viennent du
-    // pool, pour afficher « user1 » là où la table affiche « user1 ».
-    const equipes = (poolData && poolData.teams) || {};
-    const nomAffiche = (cle) => getDisplayName(cle, (equipes[cle] || {}).members);
-
-    const lignes = historique.map(semaine => {
-        const duels = semaine.matchups || [];
-        const duel = duels.find(m => m.team1 === mienne || m.team2 === mienne) || duels[0];
-        if (!duel) return '';
-
-        // Le point de vue : votre équipe à gauche, faute de quoi team1.
-        const inverse = duel.team2 === mienne;
-        const nousNom = inverse ? duel.team2 : duel.team1;
-        const euxNom = inverse ? duel.team1 : duel.team2;
-        const nousPts = inverse ? duel.team2Points : duel.team1Points;
-        const euxPts = inverse ? duel.team1Points : duel.team2Points;
-
-        const issue = h2hOutcome(duel, nousNom);
-        const badge = { W: 'V', L: 'D', T: 'N' }[issue] || '—';
-        const classeIssue = { W: 'is-win', L: 'is-loss', T: 'is-tie' }[issue] || 'is-none';
-
-        const plage = (semaine.weekStart && semaine.weekEnd)
-            ? h2hSchedDateRange(semaine.weekStart, semaine.weekEnd) : '';
-
-        return `
-            <div class="h2h-res-row">
-                <span class="h2h-res-when">
-                    <span class="h2h-res-week">Semaine ${semaine.weekNumber}</span>
-                    <span class="h2h-res-dates">${escapeHtmlText(plage)}</span>
-                </span>
-                <span class="h2h-res-score">
-                    <span class="h2h-res-side">
-                        <span class="h2h-res-pts ${issue === 'W' ? 'is-top' : ''}">${fmtH2HPts(nousPts)}</span>
-                        <span class="h2h-res-team" title="${escapeAttr(nomAffiche(nousNom))}">${escapeHtmlText(nomAffiche(nousNom))}</span>
-                    </span>
-                    <span class="h2h-res-sep">-</span>
-                    <span class="h2h-res-side">
-                        <span class="h2h-res-pts ${issue === 'L' ? 'is-top' : ''}">${fmtH2HPts(euxPts)}</span>
-                        <span class="h2h-res-team" title="${escapeAttr(nomAffiche(euxNom))}">${escapeHtmlText(nomAffiche(euxNom))}</span>
-                    </span>
-                </span>
-                <span class="h2h-res-badge ${classeIssue}">${badge}</span>
-            </div>`;
-    }).join('');
-
-    container.innerHTML = `${tete}
-        <div class="h2h-res-list">${lignes}</div>
-        <button type="button" class="h2h-res-more" onclick="switchH2HTab('history')">Voir l'historique complet <span aria-hidden="true">&rarr;</span></button>`;
-    container.style.display = 'block';
-}
-
 /** État vide d'une carte : une icône fantôme, un constat, ce qui le lèvera. */
 function fzEmptyHTML(icone, titre, indice) {
     return `
@@ -1341,13 +1256,9 @@ async function renderPoolStandings(poolData, poolName) {
     document.getElementById('standingsSkeleton').style.display = 'none';
     standingsList.style.display = 'block';
 
-    // En H2H les deux blocs du bas se rangent côte à côte ; en cumulatif le
-    // temple de la renommée occupe seul la pleine largeur.
-    const insights = document.getElementById('standingsInsights');
-    if (insights) insights.classList.toggle('is-h2h', enH2H);
-
-    renderHallOfFame(poolName);
-    if (enH2H) renderH2HRecentResults(poolName);
+    // En H2H le temple de la renommée a son propre raccourci « Records » et
+    // ne s'affiche que là, seul ; en cumulatif il suit le classement.
+    if (!enH2H) renderHallOfFame(poolName);
 }
 
 // ==================== TEMPLE DE LA RENOMMÉE ====================
@@ -3076,9 +2987,17 @@ function h2hDuelRepliHTML(m, poolName) {
 
 
 // ==================== H2H TAB SWITCHING & RENDERING ====================
-/** Allume l'onglet du haut : Calendrier et Historique vivent sous Classement. */
+/** Les vues reliées par les raccourcis ronds, toutes sous l'onglet Classement. */
+const H2H_VUES_CLASSEMENT = ['standings', 'calendrier', 'history', 'records'];
+
+/** Allume l'onglet du haut et le raccourci rond de la vue affichée. */
 function allumerOngletH2H(tab) {
-    const allume = (tab === 'calendrier' || tab === 'history') ? 'standings' : tab;
+    const allume = H2H_VUES_CLASSEMENT.includes(tab) ? 'standings' : tab;
+    document.querySelectorAll('#h2hRaccourcis .h2h-hub-btn[data-vue]').forEach(b => {
+        const actif = b.dataset.vue === tab;
+        b.classList.toggle('is-on', actif);
+        if (actif) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+    });
     document.querySelectorAll('#h2hTabs .h2h-seg-btn').forEach(t => {
         const actif = t.dataset.tab === allume;
         t.classList.toggle('active', actif);
@@ -3088,7 +3007,8 @@ function allumerOngletH2H(tab) {
 
 /**
  * Les onglets d'un pool H2H : « Mon équipe » (la fiche de mon équipe),
- * « Classement » (avec ses raccourcis Calendrier et Historique) et « Duels ».
+ * « Classement » (avec ses raccourcis Classement, Historique et Records) et
+ * « Duels ».
  * Tout se change sur place : la fiche et le classement sont deux vues de la
  * même page.
  */
@@ -3120,12 +3040,14 @@ function switchH2HTab(tab) {
     document.getElementById('h2hScheduleView').style.display = (tab === 'calendrier') ? 'block' : 'none';
     document.getElementById('h2hHistoryView').style.display = (tab === 'history') ? 'block' : 'none';
 
-    // Les raccourcis et les blocs du bas appartiennent au seul onglet
-    // Classement.
-    const surClassement = tab === 'standings';
-    document.getElementById('h2hRaccourcis').style.display = surClassement ? '' : 'none';
+    // Les raccourcis suivent toutes les vues de l'onglet Classement ; le
+    // temple de la renommée ne s'affiche que seul, sous « Records ».
+    document.getElementById('h2hRaccourcis').style.display = H2H_VUES_CLASSEMENT.includes(tab) ? '' : 'none';
     const insights = document.getElementById('standingsInsights');
-    if (insights) insights.style.display = surClassement ? '' : 'none';
+    if (insights) {
+        insights.style.display = (tab === 'records') ? '' : 'none';
+        insights.classList.add('is-h2h');
+    }
 
     if (tab === 'standings') {
         const poolData = allPoolsData[poolName];
@@ -3137,12 +3059,7 @@ function switchH2HTab(tab) {
     }
     if (tab === 'calendrier') renderH2HSchedule(poolName);
     if (tab === 'history') renderH2HHistory(poolName);
-}
-
-/** Le raccourci « Records » : le temple de la renommée, sous le classement. */
-function allerAuxRecords() {
-    const temple = document.getElementById('hallOfFame');
-    if (temple && temple.style.display !== 'none') temple.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (tab === 'records') renderHallOfFame(poolName);
 }
 
 async function loadH2HCurrentWeek(poolName, semaine = null) {

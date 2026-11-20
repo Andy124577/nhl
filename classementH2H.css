@@ -94,17 +94,14 @@ body.fz-classement .h2h-hub-ico svg {
     stroke-linejoin: round;
 }
 
-/* « ‹ Classement » au-dessus du calendrier et de l'historique. */
-body.fz-classement .h2h-retour {
-    border: 0;
-    background: none;
-    padding: 4px 0;
-    margin: 0 0 10px;
-    color: var(--s-red-ink);
-    font: 600 14px/1 'Saira', system-ui, sans-serif;
-    cursor: pointer;
+/* Le raccourci de la vue affichée : pastille pleine, texte en encre. */
+body.fz-classement .h2h-hub-btn.is-on { color: var(--s-ink); }
+body.fz-classement .h2h-hub-btn.is-on .h2h-hub-ico,
+html[data-theme="light"] body.fz-classement .h2h-hub-btn.is-on .h2h-hub-ico {
+    background: var(--s-ink);
+    border-color: var(--s-ink);
+    color: var(--s-on-ink, var(--s-bg));
 }
-body.fz-classement .h2h-retour span { font-size: 20px; vertical-align: -2px; }
 
 /* ==================== LA FICHE (table) ==================== */
 
