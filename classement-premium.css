@@ -853,80 +853,47 @@ body.fz-classement .st-legend dd { margin: 0; color: var(--fzc-text); }
 }
 
 /* ==================== BANC (TÊTE-À-TÊTE) ==================== */
-body.fz-classement .bench-panel {
-  width: 100%;
-  margin-top: 8px;
-  padding: 16px;
-  border: 1px solid var(--fzc-border);
-  border-radius: 12px;
-  background: var(--fzc-surface);
-}
+/* Le banc, sous les partants : les mêmes rangées, sans rang. */
+body.fz-classement .bench-block { width: 100%; margin-top: 18px; }
+body.fz-classement .bench-head { padding: 0 2px 8px; }
 body.fz-classement .bench-title {
-  margin: 0 0 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 2px;
   font: 700 15px/1.2 'Saira Condensed', 'Helvetica Neue', sans-serif;
   text-transform: uppercase;
   letter-spacing: .04em;
   color: var(--fzc-ink);
 }
-body.fz-classement .bench-hint { margin: 0 0 12px; font-size: .86rem; line-height: 1.45; color: var(--fzc-text); }
+body.fz-classement .bench-title span { font-weight: 600; color: var(--fzc-text-muted); }
+body.fz-classement .bench-hint { margin: 0; font-size: 13px; line-height: 1.4; color: var(--fzc-text-muted); }
 body.fz-classement .bench-pending {
-  margin: 0 0 12px;
-  padding: 10px 12px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
   list-style: none;
   border-left: 3px solid var(--fzc-accent-fill);
   border-radius: 8px;
   background: var(--fzc-bg-alt);
-  font-size: .86rem;
+  font-size: 13px;
   color: var(--fzc-text);
 }
-body.fz-classement .bench-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
-body.fz-classement .bench-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--fzc-border-soft);
-  border-radius: 10px;
-}
-body.fz-classement .bench-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-body.fz-classement .bench-name { font-weight: 700; color: var(--fzc-ink); }
-body.fz-classement .bench-meta { font-size: .8rem; color: var(--fzc-text-muted); }
-body.fz-classement .bench-swap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-body.fz-classement .bench-sr {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
-}
-body.fz-classement .bench-select {
-  min-height: 44px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 0 12px;
-  border: 1px solid var(--fzc-border-input);
-  border-radius: 10px;
-  background: var(--fzc-surface);
-  color: var(--fzc-ink);
-  font: inherit;
-}
-body.fz-classement .bench-go {
-  min-height: 44px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--fzc-accent-fill);
-  color: var(--fzc-on-accent);
-  font: 700 .86rem/1 inherit;
-  cursor: pointer;
-}
-body.fz-classement .bench-go:disabled { opacity: .45; cursor: default; }
-body.fz-classement .bench-select:focus-visible,
-body.fz-classement .bench-go:focus-visible { outline: 2px solid var(--fzc-accent); outline-offset: 2px; }
-body.fz-classement .bench-empty { margin: 0; color: var(--fzc-text-faint); }
-body.fz-classement .bench-msg { margin: 12px 0 0; font-size: .86rem; font-weight: 600; color: var(--fzc-ink); }
+body.fz-classement .bench-empty { margin: 0; padding: 12px 2px; color: var(--fzc-text-faint); }
+body.fz-classement .bench-msg { margin: 0 0 10px; padding: 0 2px; font-size: 13px; font-weight: 600; color: var(--fzc-ink); }
 body.fz-classement .bench-msg.is-error { color: var(--fzc-accent); }
-@media (max-width: 520px) {
-  body.fz-classement .bench-swap { width: 100%; }
-  body.fz-classement .bench-select { flex: 1 1 auto; }
+/* Un joueur de banc ne marque pas : ses chiffres s'estompent. */
+body.fz-classement .roster-row.is-banc .rr-stats,
+body.fz-classement .roster-row.is-banc .rr-ppts { opacity: .55; }
+/* « Entre demain » / « Sort demain » : le changement attend minuit. */
+body.fz-classement .rr-demain {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--fzc-bg-alt);
+  color: var(--fzc-text);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ==================== POINTS DU SOIR ====================

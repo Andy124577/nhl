@@ -1982,6 +1982,139 @@ function openSaleSheet() {
     });
 }
 
+const POSITION_PAR_DEFAUT = { offensive: 'F', defensive: 'D', goalie: 'G', rookie: 'R' };
+
+/**
+ * Un choix de la fiche, tel que ses rangées le lisent. Chaque choix paraît —
+ * même un joueur que nhl_filtered_stats.json ne connaît pas (voir
+ * ficheJoueur). Une recrue gardienne est comptée en gardienne.
+ */
+function joueurDeFiche(playerName, category) {
+    const fiche = ficheJoueur(playerName, category);
+    const stats = getCurrentPlayerStats(playerName, fiche.playerId);
+    return {
+        name: playerName,
+        position: fiche.gardien ? 'G' : (fiche.position || POSITION_PAR_DEFAUT[category] || 'F'),
+        type: fiche.gardien ? 'goalie' : 'player',
+        category,
+        playerId: fiche.playerId || stats?.playerId || null,
+        stats: stats,
+        cached: fiche.cache,
+        teamAbbrev: stats?.teamAbbrev || fiche.club
+    };
+}
+
+/**
+ * Une rangée de la fiche d'équipe (partant, club ou joueur de banc), et ce
+ * que le panneau de mise en vente en reprend.
+ */
+function rangeeFiche(player, numero, extremes) {
+    const row = document.createElement('div');
+    row.className = 'roster-row';
+    row.dataset.player = player.name;
+
+    const alignable = alignementFiche.modifiable && LIB_POSTE[player.category];
+    if (alignable) {
+        row.classList.add('clickable');
+        row.tabIndex = 0;
+        row.setAttribute('role', 'button');
+        row.setAttribute('aria-label', `Modifier l’alignement : ${player.name}`);
+        row.onclick = () => ouvrirAlignement(player.name);
+        row.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirAlignement(player.name); } };
+    } else if (player.playerId) {
+        row.classList.add('clickable');
+        row.onclick = () => showCareerStats(player.playerId, player.name, player.type === 'goalie');
+    }
+    if (player.banc) row.classList.add('is-banc');
+    const estClub = player.type === 'team';
+
+    // Get player image
+    let imageHTML = '';
+    if (estClub) {
+        const teamLogo = `teams/${player.teamAbbrev}.png`;
+        imageHTML = `<img src="${escapeAttr(teamLogo)}" alt="${escapeAttr(player.name)}" onerror="this.style.display='none'">`;
+    } else {
+        // Try multiple sources for player headshot
+        let headshot = null;
+
+        // 1. Try stats headshot
+        if (player.stats?.headshot && !player.stats.headshot.includes('/teams/')) {
+            headshot = player.stats.headshot;
+        }
+
+        // 2. Try NHL API headshot URL
+        if (!headshot && player.playerId) {
+            headshot = `https://assets.web.nhl.com/mugs/nhl/latest/${player.playerId}.png`;
+        }
+
+        // 3. Try local image list
+        if (!headshot) {
+            headshot = getMatchingImage(player.name);
+        }
+
+        // Sur la couleur du club, comme à l'onglet Alignements. Les
+        // initiales restent dessous : une photo qui ne charge pas se
+        // retire et les découvre. data-no-lazy : lazy-load.js poserait un
+        // carré gris opaque par-dessus la couleur le temps du chargement ;
+        // le loading="lazy" du navigateur suffit.
+        const initiales = escapeHtmlText(initialsFromName(player.name || ''));
+        imageHTML = (headshot
+            ? `<img src="${escapeAttr(headshot)}" alt="${escapeAttr(player.name)}" loading="lazy" data-no-lazy onerror="this.remove()">`
+            : '') + `<div class="rr-initials">${initiales || escapeHtmlText(player.position)}</div>`;
+    }
+
+    const soiree = soireeDe(player);
+    const chiffres = statsDeRangee(player, soiree);
+    const { points } = chiffres;
+    const ppa = ppaDe(soiree);
+
+    // Get team abbreviation for display
+    const teamAbbrev = player.teamAbbrev || '';
+    // `teamAbbrevs` liste parfois les clubs d'une saison (« TOR,MTL ») :
+    // le dernier est l'actuel.
+    const club = String(teamAbbrev).split(',').pop().trim();
+    const meta = [club, estClub ? 'Équipe' : player.position].filter(Boolean).join(' · ');
+    const demain = changementDemain(player.name);
+    alignementFiche.joueurs.set(player.name, { ...player, meta, points, avatarHTML: null });
+
+    // « N. Kucherov » quand la bande est trop étroite pour le nom complet.
+    const mots = player.name.split(' ');
+    const nomCourt = !estClub && mots.length > 1 ? `${mots[0][0]}. ${mots.slice(1).join(' ')}` : '';
+    const nomHTML = nomCourt
+        ? `<span class="rr-name-full">${escapeHtmlText(player.name)}</span><span class="rr-name-short">${escapeHtmlText(nomCourt)}</span>`
+        : escapeHtmlText(player.name);
+
+    const avatarHTML = `
+        <div class="rr-avatar${estClub ? ' is-club' : ' fz-shot'}"${estClub ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
+            ${imageHTML}
+        </div>`;
+
+    alignementFiche.joueurs.get(player.name).avatarHTML = avatarHTML;
+
+    // « En vente » : une pastille après le club · position quand la bande
+    // a la place, une étiquette sur la photo sinon (classement.css).
+    row.innerHTML = `
+        <div class="rr-rank">${player.banc ? '' : numero}</div>
+        <div class="rr-shot">
+            ${avatarHTML}
+            <span class="rr-sale-dot" aria-hidden="true">${tagIcon(10)}</span>
+        </div>
+        <div class="rr-main">
+            <div class="rr-name-line">
+                <span class="rr-name">${nomHTML}</span>${estClub ? '' : injBadge(player.name, teamAbbrev)}
+                <span class="rr-meta">${escapeHtmlText(meta)}</span>
+                <span class="rr-sale">En vente</span>${demain ? `<span class="rr-demain">${demain}</span>` : ''}
+            </div>
+            <div class="rr-stats">${statsRangeeHTML(chiffres)}</div>
+        </div>
+        <div class="rr-soiree">${soireeBadgeHTML(ppa)}</div>
+        <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-marks">${player.banc ? '' : marquesHTML(player, points, soiree, extremes)}</span><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
+        <span class="rr-chev" aria-hidden="true">${alignable || player.playerId ? '›' : ''}</span>
+    `;
+
+    return { row, vente: { name: player.name, category: player.category, meta, points, avatarHTML } };
+}
+
 function renderTeamRoster(roster, activeListings = []) {
     const rosterList = document.getElementById('rosterList');
     rosterList.innerHTML = '';
@@ -1998,22 +2131,8 @@ function renderTeamRoster(roster, activeListings = []) {
     // Chaque choix paraît, case par case — même un joueur que
     // nhl_filtered_stats.json ne connaît pas (voir ficheJoueur). Une recrue
     // gardienne est comptée en gardienne.
-    const POSITION_PAR_DEFAUT = { offensive: 'F', defensive: 'D', goalie: 'G', rookie: 'R' };
     ['offensive', 'defensive', 'goalie', 'rookie'].forEach(category => {
-        (roster[category] || []).forEach(playerName => {
-            const fiche = ficheJoueur(playerName, category);
-            const stats = getCurrentPlayerStats(playerName, fiche.playerId);
-            players.push({
-                name: playerName,
-                position: fiche.gardien ? 'G' : (fiche.position || POSITION_PAR_DEFAUT[category]),
-                type: fiche.gardien ? 'goalie' : 'player',
-                category,
-                playerId: fiche.playerId || stats?.playerId || null,
-                stats: stats,
-                cached: fiche.cache,
-                teamAbbrev: stats?.teamAbbrev || fiche.club
-            });
-        });
+        (roster[category] || []).forEach(playerName => players.push(joueurDeFiche(playerName, category)));
     });
 
     // Add teams
@@ -2051,108 +2170,24 @@ function renderTeamRoster(roster, activeListings = []) {
     bloc.appendChild(rangees);
     rosterList.appendChild(bloc);
 
+    // Pool tête-à-tête avec banc : toucher un joueur de mon équipe ouvre
+    // « Modifier l'alignement » (ouvrirAlignement) ; sinon, sa fiche carrière.
+    const quotaBanc = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(allPoolsData[currentPoolName]) : 0;
+    alignementFiche = { roster, quota: quotaBanc, modifiable: !!quotaBanc && rosterSale.mienne, joueurs: new Map() };
+
     players.forEach((player, index) => {
-        const row = document.createElement('div');
-        row.className = 'roster-row';
-        row.dataset.player = player.name;
-
-        // Only make clickable if it has a playerId (not teams)
-        if (player.playerId) {
-            row.classList.add('clickable');
-            row.onclick = () => showCareerStats(player.playerId, player.name, player.type === 'goalie');
-        }
-
-        const pickNumber = index + 1;
-        const estClub = player.type === 'team';
-
-        // Get player image
-        let imageHTML = '';
-        if (estClub) {
-            const teamLogo = `teams/${player.teamAbbrev}.png`;
-            imageHTML = `<img src="${escapeAttr(teamLogo)}" alt="${escapeAttr(player.name)}" onerror="this.style.display='none'">`;
-        } else {
-            // Try multiple sources for player headshot
-            let headshot = null;
-
-            // 1. Try stats headshot
-            if (player.stats?.headshot && !player.stats.headshot.includes('/teams/')) {
-                headshot = player.stats.headshot;
-            }
-
-            // 2. Try NHL API headshot URL
-            if (!headshot && player.playerId) {
-                headshot = `https://assets.web.nhl.com/mugs/nhl/latest/${player.playerId}.png`;
-            }
-
-            // 3. Try local image list
-            if (!headshot) {
-                headshot = getMatchingImage(player.name);
-            }
-
-            // Sur la couleur du club, comme à l'onglet Alignements. Les
-            // initiales restent dessous : une photo qui ne charge pas se
-            // retire et les découvre. data-no-lazy : lazy-load.js poserait un
-            // carré gris opaque par-dessus la couleur le temps du chargement ;
-            // le loading="lazy" du navigateur suffit.
-            const initiales = escapeHtmlText(initialsFromName(player.name || ''));
-            imageHTML = (headshot
-                ? `<img src="${escapeAttr(headshot)}" alt="${escapeAttr(player.name)}" loading="lazy" data-no-lazy onerror="this.remove()">`
-                : '') + `<div class="rr-initials">${initiales || escapeHtmlText(player.position)}</div>`;
-        }
-
-        const soiree = soireeDe(player);
-        const chiffres = statsDeRangee(player, soiree);
-        const { points } = chiffres;
-        const ppa = ppaDe(soiree);
-
-        // Get team abbreviation for display
-        const teamAbbrev = player.teamAbbrev || '';
-        // `teamAbbrevs` liste parfois les clubs d'une saison (« TOR,MTL ») :
-        // le dernier est l'actuel.
-        const club = String(teamAbbrev).split(',').pop().trim();
-        const meta = [club, estClub ? 'Équipe' : player.position].filter(Boolean).join(' · ');
-
-        // « N. Kucherov » quand la bande est trop étroite pour le nom complet.
-        const mots = player.name.split(' ');
-        const nomCourt = !estClub && mots.length > 1 ? `${mots[0][0]}. ${mots.slice(1).join(' ')}` : '';
-        const nomHTML = nomCourt
-            ? `<span class="rr-name-full">${escapeHtmlText(player.name)}</span><span class="rr-name-short">${escapeHtmlText(nomCourt)}</span>`
-            : escapeHtmlText(player.name);
-
-        const avatarHTML = `
-            <div class="rr-avatar${estClub ? ' is-club' : ' fz-shot'}"${estClub ? '' : ` style="${clubShotStyle(teamAbbrev)}"`}>
-                ${imageHTML}
-            </div>`;
-        // Le panneau de mise en vente reprend la même photo et la même ligne.
-        rosterSale.players.push({ name: player.name, category: player.category, meta, points, avatarHTML });
-
-        // « En vente » : une pastille après le club · position quand la bande
-        // a la place, une étiquette sur la photo sinon (classement.css).
-        row.innerHTML = `
-            <div class="rr-rank">${pickNumber}</div>
-            <div class="rr-shot">
-                ${avatarHTML}
-                <span class="rr-sale-dot" aria-hidden="true">${tagIcon(10)}</span>
-            </div>
-            <div class="rr-main">
-                <div class="rr-name-line">
-                    <span class="rr-name">${nomHTML}</span>${estClub ? '' : injBadge(player.name, teamAbbrev)}
-                    <span class="rr-meta">${escapeHtmlText(meta)}</span>
-                    <span class="rr-sale">En vente</span>
-                </div>
-                <div class="rr-stats">${statsRangeeHTML(chiffres)}</div>
-            </div>
-            <div class="rr-soiree">${soireeBadgeHTML(ppa)}</div>
-            <div class="rr-ppts${points ? '' : ' is-zero'}"><span class="rr-marks">${marquesHTML(player, points, soiree, extremes)}</span><span class="rr-v">${points}</span><span class="rr-l">PPts</span></div>
-            <span class="rr-chev" aria-hidden="true">${player.playerId ? '›' : ''}</span>
-        `;
-
+        const { row, vente } = rangeeFiche(player, index + 1, extremes);
+        rosterSale.players.push(vente);
         rangees.appendChild(row);
     });
-    rosterAffiche = players;
+    const bancJoueurs = quotaBanc
+        ? (roster.bench || []).map(b => (typeof b === 'string' ? { nom: b, categorie: null } : b))
+            .map(b => ({ ...joueurDeFiche(b.nom, b.categorie), banc: true }))
+        : [];
+    rosterAffiche = [...players, ...bancJoueurs];
 
     refreshSaleMarks();
-    renderBenchPanel(rosterList, roster);
+    if (quotaBanc) renderBancFiche(rosterList, roster, bancJoueurs);
 
     // Hide skeleton, show content
     document.getElementById('rosterSkeleton').style.display = 'none';
@@ -2236,7 +2271,7 @@ function rafraichirFicheEnDirect() {
         const pastille = row.querySelector('.rr-soiree');
         if (pastille) pastille.innerHTML = soireeBadgeHTML(ppaDe(soiree));
         const marques = row.querySelector('.rr-marks');
-        if (marques) marques.innerHTML = marquesHTML(player, chiffres.points, soiree, extremes);
+        if (marques) marques.innerHTML = player.banc ? '' : marquesHTML(player, chiffres.points, soiree, extremes);
         const vente = rosterSale.players.find(v => v.name === player.name);
         if (vente) vente.points = chiffres.points;
     });
@@ -2425,8 +2460,6 @@ function marquesHTML(player, points, soiree, extremes) {
 // partant de la même position — en cas de blessure, le plus souvent — et le
 // changement compte à partir du lendemain (lib/lineup.js, /h2h/lineup/swap).
 
-const BANC_LIBELLES = { offensive: 'Attaquant', defensive: 'Défenseur', goalie: 'Gardien', rookie: 'Recrue' };
-
 /** Le message du dernier changement, affiché au prochain rendu du banc. */
 let benchMessageEnAttente = '';
 
@@ -2444,83 +2477,202 @@ function benchSeasonPoints(nom, categorie) {
     return seasonStat(stats, fiche.cache, 'points');
 }
 
-function renderBenchPanel(rosterList, roster) {
-    const poolData = allPoolsData[currentPoolName];
-    const quota = typeof window.fzQuotaBanc === 'function' ? window.fzQuotaBanc(poolData) : 0;
-    if (!quota) return;
+/** Le court d'un poste, comme au face-à-face des duels. */
+const LIB_POSTE = { offensive: 'ATT', defensive: 'DÉF', goalie: 'GAR', rookie: 'REC' };
 
-    const moi = localStorage.getItem('username');
-    const mienne = (roster.members || []).includes(moi);
-    const banc = (roster.bench || []).map(b => (typeof b === 'string' ? { nom: b, categorie: null } : b));
+/** La fiche affichée, pour « Modifier l'alignement » : son alignement et ses rangées. */
+let alignementFiche = { roster: null, quota: 0, modifiable: false, joueurs: new Map() };
+
+/** Les changements pas encore en vigueur (datés de demain ou après). */
+function changementsPrevus(roster) {
     const aujourdhui = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-    const prevus = (roster.lineupChanges || []).filter(c => c.date > aujourdhui);
+    return ((roster && roster.lineupChanges) || []).filter(c => c.date > aujourdhui);
+}
+
+/** « Entre demain » / « Sort demain » : un changement fait aujourd'hui compte dès demain. */
+function changementDemain(nom) {
+    const prevus = changementsPrevus(alignementFiche.roster);
+    // Le dernier changement qui le touche dit où il sera demain.
+    for (let i = prevus.length - 1; i >= 0; i--) {
+        if (prevus[i].entre === nom) return 'Entre demain';
+        if (prevus[i].sort === nom) return 'Sort demain';
+    }
+    return '';
+}
+
+/**
+ * Le banc, sous les partants : les mêmes rangées, sans rang. Sur ma fiche,
+ * toucher une rangée (partant ou banc) ouvre « Modifier l'alignement ».
+ */
+function renderBancFiche(rosterList, roster, bancJoueurs) {
+    const { quota, modifiable } = alignementFiche;
     const esc = escapeHtmlText;
     const jour = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-    const pts = v => (v == null ? '—' : `${v} pts`);
+    const prevus = changementsPrevus(roster);
 
-    const lignes = banc.map((b, i) => {
-        const partants = roster[b.categorie] || [];
-        const choix = mienne && partants.length ? `
-            <div class="bench-swap">
-                <label class="bench-sr" for="benchSwap-${i}">Remplacer quel partant par ${esc(b.nom)} ?</label>
-                <select class="bench-select" id="benchSwap-${i}" data-bench-entre="${escapeAttr(b.nom)}">
-                    <option value="">Remplacer…</option>
-                    ${partants.map(nom => `<option value="${escapeAttr(nom)}">${esc(nom)} · ${pts(benchSeasonPoints(nom, b.categorie))}</option>`).join('')}
-                </select>
-                <button type="button" class="bench-go" data-bench-go="${escapeAttr(b.nom)}" disabled>Faire entrer</button>
-            </div>` : '';
-        return `
-            <li class="bench-row">
-                <div class="bench-id">
-                    <span class="bench-name">${esc(b.nom)}</span>${injBadge(b.nom, '')}
-                    <span class="bench-meta">${esc(BANC_LIBELLES[b.categorie] || 'Joueur')} · ${pts(benchSeasonPoints(b.nom, b.categorie))}</span>
-                </div>
-                ${choix}
-            </li>`;
-    }).join('');
-
-    const panneau = document.createElement('section');
-    panneau.className = 'bench-panel';
-    panneau.setAttribute('aria-labelledby', 'benchTitle');
-    panneau.innerHTML = `
+    const bloc = document.createElement('section');
+    bloc.className = 'roster-block bench-block';
+    bloc.setAttribute('aria-labelledby', 'benchTitle');
+    bloc.innerHTML = `
         <header class="bench-head">
-            <h3 class="bench-title" id="benchTitle">Banc · ${banc.length}/${quota}</h3>
-            <p class="bench-hint">Les joueurs de banc ne marquent pas. ${mienne
-                ? 'Faites-en entrer un à la place d’un partant de la même position : le changement compte dès demain.'
-                : 'Seule l’équipe elle-même peut modifier son alignement.'}</p>
+            <h3 class="bench-title" id="benchTitle">Banc <span>${bancJoueurs.length}/${quota}</span></h3>
+            <p class="bench-hint">${modifiable
+                ? 'Touchez un joueur pour le faire entrer ou le mettre au banc. Le banc ne marque pas ; un changement compte dès demain.'
+                : 'Le banc ne marque pas. Seule l’équipe elle-même peut modifier son alignement.'}</p>
         </header>
+        <p class="bench-msg" id="benchMsg" role="status"${benchMessageEnAttente ? '' : ' hidden'}>${esc(benchMessageEnAttente)}</p>
         ${prevus.length ? `<ul class="bench-pending">${prevus.map(c =>
-            `<li><strong>${esc(c.entre)}</strong> remplace ${esc(c.sort)} à partir du ${esc(jour(c.date))}.</li>`).join('')}</ul>` : ''}
-        ${banc.length ? `<ul class="bench-list">${lignes}</ul>` : '<p class="bench-empty">Banc vide.</p>'}
-        <p class="bench-msg" id="benchMsg" role="status"${benchMessageEnAttente ? '' : ' hidden'}>${esc(benchMessageEnAttente)}</p>`;
+            `<li><strong>${esc(c.entre)}</strong> remplace ${esc(c.sort)} à partir du ${esc(jour(c.date))}.</li>`).join('')}</ul>` : ''}`;
     benchMessageEnAttente = '';
-    rosterList.appendChild(panneau);
+    if (bancJoueurs.length) {
+        const rangees = document.createElement('div');
+        rangees.className = 'roster-rows';
+        bancJoueurs.forEach(j => rangees.appendChild(rangeeFiche(j, 0, null).row));
+        bloc.appendChild(rangees);
+    } else {
+        bloc.insertAdjacentHTML('beforeend', '<p class="bench-empty">Banc vide.</p>');
+    }
+    rosterList.appendChild(bloc);
+}
 
-    panneau.querySelectorAll('.bench-select').forEach(select => {
-        select.addEventListener('change', () => {
-            const bouton = panneau.querySelector(`[data-bench-go="${CSS.escape(select.dataset.benchEntre)}"]`);
-            if (bouton) bouton.disabled = !select.value;
-        });
+/**
+ * « Modifier l'alignement » (façon Edit Lineup d'ESPN) : le joueur touché et
+ * ceux de la même position avec qui il peut changer de place. Un partant
+ * touché : les joueurs de banc de sa position, prêts à entrer. Un joueur de
+ * banc touché : les partants de sa position, prêts à sortir. Toucher une
+ * cible fait le changement (/h2h/lineup/swap), qui compte dès demain.
+ * Feuille du bas sur téléphone, fenêtre centrée sur grand écran (.ss-*).
+ */
+function ouvrirAlignement(nom) {
+    const { roster, modifiable, joueurs } = alignementFiche;
+    const choisi = joueurs.get(nom);
+    if (!modifiable || !choisi || !roster || document.querySelector('.ss-overlay')) return;
+    const retour = document.activeElement;
+    const categorie = choisi.category;
+    const banc = (roster.bench || []).map(b => (typeof b === 'string' ? { nom: b, categorie: null } : b));
+    const partants = (roster[categorie] || []).map(n => joueurs.get(n)).filter(Boolean);
+    const bancPoste = banc.filter(b => b.categorie === categorie).map(b => joueurs.get(b.nom)).filter(Boolean);
+    const surBanc = !!choisi.banc;
+    const esc = escapeHtmlText;
+    const pts = j => (j.points == null ? '—' : j.points);
+
+    const rangee = (j, cible) => {
+        const pastille = j.banc ? 'BANC' : LIB_POSTE[categorie];
+        const demain = changementDemain(j.name);
+        const action = cible
+            ? (surBanc ? `Faire entrer ${choisi.name} à la place de ${j.name}` : `Faire entrer ${j.name} à la place de ${choisi.name}`)
+            : '';
+        const contenu = `
+            <span class="al-pastille${j === choisi ? ' is-choisi' : ''}${j.banc ? ' is-banc' : ''}">${pastille}</span>
+            ${j.avatarHTML}
+            <span class="ss-id">
+                <span class="ss-name">${esc(j.name)}</span>
+                <span class="ss-meta">${esc(j.meta)}${demain ? ` · <em>${demain}</em>` : ''}</span>
+            </span>
+            <span class="al-pts"><b>${pts(j)}</b></span>`;
+        return cible
+            ? `<li><button type="button" class="ss-row al-row is-cible" data-al-cible="${escapeAttr(j.name)}" aria-label="${escapeAttr(action)}">${contenu}</button></li>`
+            : `<li><div class="ss-row al-row is-choisi">${contenu}</div></li>`;
+    };
+    const vide = texte => `<li class="al-vide">${texte}</li>`;
+    const libelle = { offensive: 'attaquant', defensive: 'défenseur', goalie: 'gardien', rookie: 'recrue' }[categorie];
+
+    const sectionPartants = surBanc
+        ? (partants.length ? partants.map(j => rangee(j, true)).join('') : vide('Aucun partant à cette position.'))
+        : rangee(choisi, false);
+    const sectionBanc = surBanc
+        ? rangee(choisi, false)
+        : (bancPoste.length ? bancPoste.map(j => rangee(j, true)).join('') : vide(`Aucun ${libelle} sur le banc.`));
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ss-overlay al-overlay';
+    overlay.innerHTML = `
+        <div class="ss-sheet al-sheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="alTitle" aria-describedby="alHint">
+            <div class="ss-head">
+                <h2 class="ss-title" id="alTitle">Modifier l’alignement</h2>
+                <button type="button" class="ss-close" data-ss-close aria-label="Fermer">${RH_ICON.close}</button>
+                <p class="ss-hint" id="alHint">${surBanc
+                    ? `Choisissez le partant qui laisse sa place à ${esc(choisi.name)}.`
+                    : `Choisissez le joueur de banc qui entre à la place de ${esc(choisi.name)}.`} Le changement compte dès demain.</p>
+            </div>
+            <div class="al-corps">
+                <div class="al-section"><span>Partants</span><span>PPts</span></div>
+                <ul class="ss-list al-list">${sectionPartants}</ul>
+                <div class="al-section"><span>Banc</span><span>PPts</span></div>
+                <ul class="ss-list al-list">${sectionBanc}</ul>
+            </div>
+            <p class="al-msg" role="status" hidden></p>
+            ${choisi.playerId ? `<div class="ss-foot al-foot">
+                <button type="button" class="al-fiche" data-al-fiche>Voir la fiche de ${esc(nomCourtJoueur(choisi.name))}</button>
+            </div>` : ''}
+        </div>`;
+
+    const sheet = overlay.querySelector('.ss-sheet');
+    const message = overlay.querySelector('.al-msg');
+    let ferme = false;
+    let occupe = false;
+
+    function fermer() {
+        if (ferme) return;
+        ferme = true;
+        document.documentElement.classList.remove('ss-lock');
+        overlay.classList.add('is-leaving');
+        const retirer = () => overlay.remove();
+        overlay.addEventListener('animationend', e => { if (e.target === sheet) retirer(); });
+        setTimeout(retirer, 260);
+        if (retour && document.contains(retour) && retour.focus) retour.focus({ preventScroll: true });
+    }
+
+    overlay.addEventListener('click', async e => {
+        if (e.target === overlay || e.target.closest('[data-ss-close]')) { fermer(); return; }
+        if (e.target.closest('[data-al-fiche]')) {
+            fermer();
+            showCareerStats(choisi.playerId, choisi.name, choisi.type === 'goalie');
+            return;
+        }
+        const cible = e.target.closest('[data-al-cible]');
+        if (!cible || occupe) return;
+        occupe = true;
+        const autre = cible.dataset.alCible;
+        const [entre, sort] = surBanc ? [choisi.name, autre] : [autre, choisi.name];
+        cible.classList.add('is-busy');
+        sheet.querySelectorAll('[data-al-cible]').forEach(b => { b.disabled = true; });
+        message.hidden = false;
+        message.classList.remove('is-error');
+        message.textContent = 'Changement en cours…';
+        const resultat = await faireEntrerDuBanc(entre, sort);
+        if (resultat.ok) { fermer(); return; }
+        occupe = false;
+        cible.classList.remove('is-busy');
+        sheet.querySelectorAll('[data-al-cible]').forEach(b => { b.disabled = false; });
+        message.classList.add('is-error');
+        message.textContent = resultat.message;
     });
-    panneau.querySelectorAll('[data-bench-go]').forEach(bouton => {
-        bouton.addEventListener('click', () => {
-            const entre = bouton.dataset.benchGo;
-            const select = panneau.querySelector(`[data-bench-entre="${CSS.escape(entre)}"]`);
-            if (select && select.value) faireEntrerDuBanc(entre, select.value, bouton);
-        });
+
+    overlay.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
+        if (e.key !== 'Tab') return;
+        const liste = [...sheet.querySelectorAll('button:not(:disabled)')];
+        const premier = liste[0];
+        const dernier = liste[liste.length - 1];
+        if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
+        else if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier.focus(); }
+    });
+
+    document.documentElement.classList.add('ss-lock');
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+        // Le panneau lui-même : pas d'anneau de focus sur une cible au toucher.
+        sheet.focus({ preventScroll: true });
     });
 }
 
-async function faireEntrerDuBanc(entre, sort, bouton) {
-    const message = document.getElementById('benchMsg');
-    const dire = (texte, erreur) => {
-        if (!message) return;
-        message.textContent = texte;
-        message.hidden = !texte;
-        message.classList.toggle('is-error', !!erreur);
-    };
-    bouton.disabled = true;
-    dire('Changement en cours…', false);
+/**
+ * Fait entrer `entre` (au banc) à la place de `sort` (partant). En cas de
+ * succès, la fiche se redessine avec le message du serveur.
+ * Renvoie { ok, message }.
+ */
+async function faireEntrerDuBanc(entre, sort) {
     try {
         const reponse = await fetch(`${BASE_URL}/h2h/lineup/swap`, {
             method: 'POST',
@@ -2528,15 +2680,15 @@ async function faireEntrerDuBanc(entre, sort, bouton) {
             body: JSON.stringify({ poolName: currentPoolName, entre, sort })
         });
         const resultat = await reponse.json().catch(() => ({}));
-        if (!reponse.ok) { dire(resultat.message || 'Changement impossible.', true); bouton.disabled = false; return; }
+        if (!reponse.ok) return { ok: false, message: resultat.message || 'Changement impossible.' };
         await FZPool.refresh();
         allPoolsData = FZPool.all();
         benchMessageEnAttente = resultat.message || 'Alignement mis à jour.';
         showTeamRoster(currentPoolName, currentTeamName);
+        return { ok: true };
     } catch (erreur) {
         console.error('Erreur /h2h/lineup/swap :', erreur);
-        dire('Erreur de connexion au serveur.', true);
-        bouton.disabled = false;
+        return { ok: false, message: 'Erreur de connexion au serveur.' };
     }
 }
 
@@ -2835,20 +2987,31 @@ function nomCourtJoueur(nom) {
     return parts.length < 2 ? (nom || '') : `${parts[0][0]}. ${parts.slice(1).join(' ')}`;
 }
 
-/** La ligne de stats d'un joueur du duel : « 1 B · 2 A », « 1 V · 30 arr. », « 3 PJ ». */
-function h2hSousLigne(j) {
-    if (!j) return '';
-    if (j.position === 'G') {
-        return `${j.wins || 0} V · ${j.saves || 0} arr.${j.shutouts ? ` · ${j.shutouts} BL` : ''}`;
-    }
-    if (j.goals != null) return `${j.goals} B · ${j.assists || 0} A`;
-    if (j.matchs != null) return `${j.matchs} PJ`;
-    return '';
+/**
+ * La photo d'un joueur, ronde, sur la couleur de son club (.fz-shot) ; ses
+ * initiales dessous si elle ne charge pas. Même ordre de sources que la
+ * fiche d'équipe : le relevé, la LNH par identifiant, puis la liste locale.
+ */
+function photoJoueurHTML(nom, playerId, teamAbbrev, classe = '') {
+    let photo = null;
+    try {
+        const stats = getCurrentPlayerStats(nom, playerId);
+        if (stats && stats.headshot && !stats.headshot.includes('/teams/')) photo = stats.headshot;
+        if (!playerId && stats) playerId = stats.playerId;
+    } catch (_) { /* relevé pas encore lu */ }
+    if (!photo && playerId) photo = `https://assets.web.nhl.com/mugs/nhl/latest/${playerId}.png`;
+    if (!photo) photo = getMatchingImage(nom);
+    const initiales = escapeHtmlText(initialsFromName(nom || ''));
+    const img = photo ? `<img src="${escapeAttr(photo)}" alt="" loading="lazy" data-no-lazy onerror="this.remove()">` : '';
+    return `<span class="fz-photo fz-shot ${classe}" style="${clubShotStyle(teamAbbrev)}">${img}<span>${initiales}</span></span>`;
 }
 
-/** Une moitié de rangée du face-à-face : nom, club, stats, points. */
+/**
+ * Une moitié de rangée du face-à-face : photo, nom et club, et ses points
+ * de la période sous le nom. Le côté droit est en miroir (photo au bord).
+ */
 function h2hCelluleJoueur(j, cote, gagne) {
-    if (!j) return `<div class="fa-j fa-${cote} is-vide"><span class="fa-pts">–</span></div>`;
+    if (!j) return `<div class="fa-j fa-${cote} is-vide"><span class="fa-photo-vide" aria-hidden="true"></span><div class="fa-qui"><span class="fa-pts">–</span></div></div>`;
     let abrev = j.teamAbbrev || null;
     if (!abrev) { try { abrev = clubDuJoueur(j); } catch (_) { abrev = null; } }
     abrev = abrev ? String(abrev).split(',').pop().trim() : null;
@@ -2858,11 +3021,11 @@ function h2hCelluleJoueur(j, cote, gagne) {
         ? `<small class="fa-direct">+${fmtH2HPts(j.enDirect).replace('.', ',')} en direct</small>` : '';
     return `
         <div class="fa-j fa-${cote}">
+            ${photoJoueurHTML(j.name, j.playerId, abrev, 'fa-photo')}
             <div class="fa-qui">
-                ${cote === 'd' ? club : ''}<b title="${escapeAttr(j.name)}">${escapeHtmlText(nomCourtJoueur(j.name))}</b>${cote === 'g' ? club : ''}
-                <small>${escapeHtmlText(h2hSousLigne(j))}</small>${direct}
+                <span class="fa-nomj">${cote === 'd' ? club : ''}<b title="${escapeAttr(j.name)}">${escapeHtmlText(nomCourtJoueur(j.name))}</b>${cote === 'g' ? club : ''}</span>
+                <span class="fa-pts${gagne ? ' is-devant' : ''}">${fmtH2HPts(j.fantasyPoints).replace('.', ',')}<small> FPts</small></span>${direct}
             </div>
-            <span class="fa-pts${gagne ? ' is-devant' : ''}">${fmtH2HPts(j.fantasyPoints).replace('.', ',')}</span>
         </div>`;
 }
 
@@ -2945,6 +3108,10 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
     const phrase = !meneur ? 'Égalité'
         : `${escapeHtmlText(meneur === g && estMienne(g.cle) ? 'Tu mènes' : nomDe(meneur) + ' mène')} par ${fmtH2HPts(ecart).replace('.', ',')}`;
 
+    // Les chances de gagner (remplirChancesDuels) se posent sous la barre une
+    // fois l'horaire de la semaine lu ; d'ici là, la phrase de l'avance.
+    const cotes = !fige && h2hCotesSemaine
+        ? { g: g.cle, d: d.cle, gp: g.points, dp: d.points, mien: estMienne(g.cle) } : null;
     const rangees = h2hRangeesFaceAFace(g.joueurs, d.joueurs, fige);
     return `
         <section class="fa-duel${estMienne(g.cle) ? ' is-mien' : ''}">
@@ -2956,12 +3123,121 @@ function buildMatchupCardHTML(m, poolName, showRecord) {
             <div class="fa-barre" role="img" aria-label="${escapeAttr(phrase.replace(/<[^>]+>/g, ''))}">
                 <span class="fa-barre-g" style="width:${part}%"></span>
             </div>
-            <p class="fa-phrase">${phrase}</p>
+            <p class="fa-phrase"${cotes ? ` data-cotes="${escapeAttr(JSON.stringify(cotes))}"` : ''}>${phrase}</p>
             <div class="fa-liste">
                 ${rangees || '<div class="h2h-no-players">Aucun joueur à afficher</div>'}
             </div>
             ${fige && rangees ? '<div class="h2h-no-players">Résultat final : les 3 meilleurs pointeurs de chaque équipe.</div>' : ''}
         </section>`;
+}
+
+// ==================== CHANCES DE GAGNER (DUELS) ====================
+// Le même calcul que la carte Versus de l'accueil (lib/duelAccueil.js) :
+// points actuels + rythme de chaque partant × ses matchs restants d'ici la
+// fin de la semaine (horaire LNH), un blessé absent ne jouant plus. Refait à
+// chaque rendu des duels ; l'horaire est gardé cinq minutes.
+
+/** Bornes de la semaine affichée, quand ses chances ont un sens ; null sinon. */
+let h2hCotesSemaine = null;
+let h2hHoraireCotes = { jour: null, at: 0, jours: null, promesse: null };
+const H2H_HORAIRE_MS = 5 * 60 * 1000;
+
+function jourEstISO() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
+
+function chargerHoraireCotes() {
+    const jour = jourEstISO();
+    const h = h2hHoraireCotes;
+    if (h.jour === jour && h.jours && Date.now() - h.at < H2H_HORAIRE_MS) return Promise.resolve(h.jours);
+    if (h.promesse) return h.promesse;
+    h.promesse = fetch(`${BASE_URL}/schedule/${jour}`)
+        .then(r => (r.ok ? r.json() : null))
+        .catch(() => null)
+        .then(data => {
+            const jours = ((data && data.days) || []).map(d => ({ date: d.date, games: (d.games || []).map(g => ({
+                id: g.id, state: g.gameState || g.state, period: g.period, clock: g.clock,
+                away: g.awayTeam ? g.awayTeam.abbrev : g.away && g.away.abbrev,
+                home: g.homeTeam ? g.homeTeam.abbrev : g.home && g.home.abbrev })) }));
+            h2hHoraireCotes = { jour, at: Date.now(), jours: jours.length ? jours : null, promesse: null };
+            return h2hHoraireCotes.jours;
+        });
+    return h.promesse;
+}
+
+/** Les chances de chaque côté d'un duel, ou null s'il manque de quoi les calculer. */
+function chancesDuel(poolName, cotes) {
+    const D = window.FZDuelAccueil;
+    const jours = h2hHoraireCotes.jours;
+    if (!D || !jours || !h2hCotesSemaine) return null;
+    const auj = jourEstISO();
+    const { debut, fin } = h2hCotesSemaine;
+    // Matchs restants par club, d'aujourd'hui jusqu'au dimanche (fin exclue).
+    const restants = {};
+    jours.forEach(jour => {
+        if (jour.date < auj || jour.date >= fin || (debut && jour.date < debut)) return;
+        jour.games.forEach(g => {
+            const part = jour.date === auj ? D.partRestante(g) : 1;
+            [g.away, g.home].forEach(c => { if (c) restants[c] = (restants[c] || 0) + part; });
+        });
+    });
+    const clubs = new Map(((currentTeams && currentTeams.teams) || []).filter(t => t.teamAbbrev).map(t => [t.teamAbbrev, t]));
+    const equipes = (allPoolsData[poolName] && allPoolsData[poolName].teams) || {};
+    const partants = cle => {
+        const td = equipes[cle] || {};
+        return ['offensive', 'defensive', 'goalie', 'rookie'].flatMap(cat => (td[cat] || []).map(nom => {
+            const st = getCurrentPlayerStats(nom, ficheJoueur(nom, cat).playerId);
+            if (!st || !st.teamAbbrev) return { moyenne: 0, variance: 0, matchs: 0 };
+            const club = String(st.teamAbbrev).split(',').pop().trim();
+            const rythme = D.rythmeJoueur(st, (clubs.get(club) || {}).gamesPlayed);
+            const blessure = typeof getPlayerInjury === 'function' ? getPlayerInjury(nom, club) : null;
+            return { ...rythme, matchs: (restants[club] || 0) * D.disponibilite(blessure) };
+        }));
+    };
+    // Vue « Aujourd'hui » : la carte montre les points du jour, mais les
+    // chances se jouent sur le total de la semaine.
+    let gp = cotes.gp, dp = cotes.dp;
+    if (h2hPeriod === 'today') {
+        const semaine = h2hWeekCache && h2hWeekCache.poolName === poolName ? h2hWeekCache.data : null;
+        const duel = semaine && (semaine.matchups || []).find(m => [m.team1, m.team2].includes(cotes.g) && [m.team1, m.team2].includes(cotes.d));
+        if (!duel) return null;
+        const pts = cle => Number(duel.team1 === cle ? duel.team1Points : duel.team2Points) || 0;
+        gp = pts(cotes.g); dp = pts(cotes.d);
+    }
+    return D.chancesVersus({ points: gp, joueurs: partants(cotes.g) }, { points: dp, joueurs: partants(cotes.d) });
+}
+
+/** La ligne sous la barre : « 62 % · Chances de gagner · 38 % ». */
+function ligneChancesHTML(chances, mien) {
+    const g = chances.moi, d = chances.lui;
+    return `<span class="fa-cote${g >= d ? ' is-fav' : ''}">${g}&nbsp;%</span>`
+        + `<span class="fa-cote-lib">${mien ? 'Tes chances de gagner' : 'Chances de gagner'}</span>`
+        + `<span class="fa-cote${d >= g ? ' is-fav' : ''}">${d}&nbsp;%</span>`;
+}
+
+/** Pose les chances sous chaque barre de duel affichée ; relancé quand l'horaire ou les blessés arrivent. */
+function remplirChancesDuels(poolName) {
+    const poser = () => {
+        if (currentPoolName !== poolName) return;
+        document.querySelectorAll('#h2hMatchupsList .fa-phrase[data-cotes]').forEach(el => {
+            let cotes;
+            try { cotes = JSON.parse(el.dataset.cotes); } catch (_) { return; }
+            const chances = chancesDuel(poolName, cotes);
+            if (!chances) return;
+            el.classList.add('fa-cotes');
+            el.innerHTML = ligneChancesHTML(chances, cotes.mien);
+            el.setAttribute('aria-label', `Chances de gagner : ${chances.moi} % contre ${chances.lui} %`);
+        });
+    };
+    poser();
+    chargerHoraireCotes().then(poser);
+    if (h2hPeriod === 'today' && !(h2hWeekCache && h2hWeekCache.poolName === poolName)) {
+        fetch(`${BASE_URL}/h2h/current-week-scores?poolName=${encodeURIComponent(poolName)}`, { cache: 'no-store' })
+            .then(r => (r.ok ? r.json() : null))
+            .then(data => { if (data) { h2hWeekCache = { poolName, data }; poser(); } })
+            .catch(() => {});
+    }
+    if (typeof loadInjuries === 'function') Promise.resolve(loadInjuries()).then(poser, () => {});
 }
 
 /** Un autre duel de la semaine : une ligne de pointage qui s'ouvre sur le face-à-face. */
@@ -3141,9 +3417,15 @@ async function renderH2HMatchupsForPeriod(poolName) {
         const mien = m => [m.team1, m.team2].some(c => ((equipes[c] && equipes[c].members) || []).includes(moi));
         const premier = data.matchups.find(mien) || data.matchups[0];
         const autres = data.matchups.filter(m => m !== premier);
+        // Les chances de gagner : seulement pour la semaine en cours (ou
+        // celle qui s'ouvre), jamais pour un résultat figé.
+        const ws = data.weekStatus || 'ongoing';
+        h2hCotesSemaine = !h2hSemaineVue && ['ongoing', 'upcoming'].includes(ws) && data.weekEnd
+            ? { debut: String(data.weekStart || '').slice(0, 10), fin: String(data.weekEnd).slice(0, 10) } : null;
         matchupsList.innerHTML = (recap ? h2hFaitsSaillantsHTML(recap, poolName) : '')
             + buildMatchupCardHTML(premier, poolName, true)
             + (autres.length ? `<h3 class="fa-autres-titre">Autres duels</h3>${autres.map(m => h2hDuelRepliHTML(m, poolName)).join('')}` : '');
+        if (h2hCotesSemaine) remplirChancesDuels(poolName);
 
     } catch (err) {
         if (perime()) return;

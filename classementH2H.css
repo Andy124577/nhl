@@ -307,27 +307,48 @@ body.fz-classement .fa-poste.is-eq { color: rgb(var(--s-pos-eq)); }
 body.fz-classement .fa-j {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
     min-height: 58px;
     padding: 8px 12px 8px 16px;
     min-width: 0;
 }
 body.fz-classement .fa-j.fa-d { flex-direction: row-reverse; padding: 8px 16px 8px 12px; text-align: right; }
-body.fz-classement .fa-qui { min-width: 0; }
+/* La photo ronde, sur la couleur du club ; ses initiales dessous. */
+body.fz-classement .fz-photo {
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    font: 700 12px/1 'Saira', system-ui, sans-serif;
+    color: rgba(255, 255, 255, .85);
+}
+body.fz-classement .fz-photo img {
+    position: absolute;
+    inset: 0;
+    width: 120%;
+    height: 120%;
+    left: -10%;
+    top: -4%;
+    object-fit: cover;
+}
+body.fz-classement .fa-photo-vide { flex: none; width: 36px; height: 36px; }
+body.fz-classement .fa-qui { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; }
+body.fz-classement .fa-nomj { display: flex; align-items: center; min-width: 0; }
+body.fz-classement .fa-d .fa-nomj { justify-content: flex-end; }
 body.fz-classement .fa-qui b {
     font-size: 14px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: calc(100% - 20px);
-    display: inline-block;
-    vertical-align: middle;
+    min-width: 0;
 }
-body.fz-classement .fa-club { width: 16px; height: 16px; object-fit: contain; vertical-align: middle; margin: 0 4px; }
-body.fz-classement .fa-qui small { display: block; font-size: 12px; color: var(--s-mute); white-space: nowrap; }
-body.fz-classement .fa-qui small.fa-direct { color: var(--s-ink2); }
+body.fz-classement .fa-club { flex: none; width: 16px; height: 16px; object-fit: contain; margin: 0 4px; }
+body.fz-classement .fa-qui small.fa-direct { display: block; font-size: 12px; color: var(--s-ink2); white-space: nowrap; }
 body.fz-classement .fa-qui small.fa-direct::before {
     content: "";
     display: inline-block;
@@ -338,15 +359,33 @@ body.fz-classement .fa-qui small.fa-direct::before {
     background: var(--s-red);
     vertical-align: 1px;
 }
+/* Les points de la période, sous le nom. */
 body.fz-classement .fa-pts {
-    flex: none;
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 500;
+    line-height: 1.2;
     color: var(--s-ink2);
     font-variant-numeric: tabular-nums;
 }
+body.fz-classement .fa-pts small { font-size: 11px; font-weight: 500; color: var(--s-mute); }
 body.fz-classement .fa-pts.is-devant { font-weight: 700; color: var(--s-ink); }
 body.fz-classement .fa-j.is-vide .fa-pts { color: var(--s-dim); }
+
+/* Les chances de gagner, sous la barre : 62 % · Chances de gagner · 38 %. */
+body.fz-classement .fa-phrase.fa-cotes {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+body.fz-classement .fa-cote {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--s-ink2);
+    font-variant-numeric: tabular-nums;
+}
+body.fz-classement .fa-cote.is-fav { font-weight: 800; color: var(--s-ink); }
+body.fz-classement .fa-cote-lib { font-size: 12px; font-weight: 500; color: var(--s-mute); text-align: center; }
 
 /* Les autres duels de la semaine : une ligne de pointage, repliée. */
 body.fz-classement .fa-autres-titre {
@@ -398,3 +437,5 @@ body.fz-classement .fa-autre .fa-duel { margin: 0 0 6px; }
     body.fz-classement .h2h-fiche-rangee,
     body.fz-classement .h2h-hub-ico { transition: none; }
 }
+/* Les initiales ne se voient que si la photo manque (elle se retire en erreur). */
+body.fz-classement .fz-photo img ~ span { visibility: hidden; }

@@ -24,12 +24,16 @@ function charger() {
     return chargerFonctions('classement.js', [
         'getDisplayName', 'escapeHtmlText', 'escapeAttr', 'fmtH2HPts',
         'h2hBornesSemaines', 'h2hFaitsSaillantsHTML', 'buildMatchupCardHTML',
-        'H2H_POSTES', 'nomCourtJoueur', 'h2hSousLigne', 'h2hCelluleJoueur', 'h2hRangeesFaceAFace', 'h2hDuelRepliHTML'
+        'H2H_POSTES', 'nomCourtJoueur', 'photoJoueurHTML', 'h2hCelluleJoueur', 'h2hRangeesFaceAFace', 'h2hDuelRepliHTML'
     ], {
         allPoolsData,
         getTeamLogoHTML: () => '',
         initialsFromName: n => String(n).slice(0, 2),
         clubDuJoueur: j => j.teamAbbrev || null,
+        getCurrentPlayerStats: () => null,
+        getMatchingImage: () => null,
+        clubShotStyle: () => '',
+        h2hCotesSemaine: null,
         localStorage: { getItem: () => 'alice' }
     });
 }
@@ -76,7 +80,7 @@ describe('carte de duel', () => {
         }), 'Ligue', false);
 
         assert.match(html, /Nikita Kucherov/);
-        assert.match(html, /3 PJ/);
+        assert.match(html, /22<small> FPts/);
         assert.match(html, /Résultat final/);
         assert.doesNotMatch(html, /undefined/);
     });
@@ -88,8 +92,10 @@ describe('carte de duel', () => {
             team2Players: [{ name: 'G', position: 'G', wins: 1, saves: 30, shutouts: 0, fantasyPoints: 4 }]
         }), 'Ligue', false);
 
-        assert.match(html, /1 B · 2 A/);
-        assert.match(html, /1 V · 30 arr\./);
+        // Les points sous le nom, plus de buts ni d'aides.
+        assert.match(html, /5<small> FPts<\/small>/);
+        assert.match(html, /4<small> FPts<\/small>/);
+        assert.doesNotMatch(html, /B · |arr\./);
         assert.doesNotMatch(html, /Résultat final/);
     });
 
@@ -114,6 +120,7 @@ describe('carte de duel', () => {
         assert.match(rangees[1], /C\. Makar[\s\S]*DÉF[\s\S]*L\. Hutson/);
         assert.match(html, /\+3 en direct/);
         assert.match(html, /teams\/MTL\.png/);
+        assert.match(html, /class="fz-photo fz-shot fa-photo"/, 'la photo du joueur à côté de son nom');
         assert.match(html, /&lt;b&gt;Rouge&lt;\/b&gt;/, 'le nom saisi reste échappé');
     });
 
