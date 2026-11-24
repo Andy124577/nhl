@@ -34,10 +34,11 @@ html.fz-anon body {
 .fzs .fzs-games { order: 2; }
 .fzs .fzs-mine { order: 3; }
 .fzs .fzs-top { order: 5; }
-.fzs .fzs-activity { order: 6; }
-.fzs .fzs-ranks { order: 7; }
-.fzs .fzs-lines { order: 8; }
-.fzs .fzs-read { order: 9; }
+.fzs .fzs-leaders { order: 6; }
+.fzs .fzs-activity { order: 7; }
+.fzs .fzs-ranks { order: 8; }
+.fzs .fzs-lines { order: 9; }
+.fzs .fzs-read { order: 10; }
 :where(.fzs) :is(h2, p) { margin: 0; }
 :where(.fzs) ul { margin: 0; padding: 0; list-style: none; }
 .fzs a { color: inherit; text-decoration: none; }
@@ -63,7 +64,7 @@ html.fz-anon body {
 .fzs-empty { padding: 12px 16px 18px; font-size: 13px; color: var(--s-faint); }
 .fzs-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--s-red); animation: fzsPulse 1.2s infinite; }
 
-/* Le défilement horizontal des cartes (matchs, meilleurs) */
+/* Le défilement horizontal des cartes (matchs, meilleurs, meneurs) */
 .fzs-rail { display: flex; gap: 10px; overflow-x: auto; padding: 12px 16px 2px; scroll-snap-type: x mandatory; scroll-padding: 0 16px; scrollbar-width: none; }
 .fzs-rail::-webkit-scrollbar { display: none; }
 .fzs-rail > li { flex: none; scroll-snap-align: start; }
@@ -320,8 +321,14 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-row.is-bone .fzs-row-txt span { display: block; height: 10px; border-radius: 5px; background: var(--s-chip); width: 70%; }
 .fzs-row.is-bone .fzs-row-txt span + span { width: 45%; }
 
-/* ---- Meilleurs de la semaine ---- */
-.fzs-top .fzs-rail { padding-top: 14px; padding-bottom: 14px; }
+/* ---- Meilleurs joueurs et Meneurs de la ligue ----
+   Les mêmes cartes ; la période (7 jours, 14, 30, 6 mois) en segments sous
+   le titre, la catégorie des meneurs en onglets qui défilent. */
+:is(.fzs-top, .fzs-leaders) .fzs-rail { padding-top: 14px; padding-bottom: 14px; }
+.fzs-top-zone { transition: opacity .15s; }
+.fzs-fenetres { max-width: calc(100% - 32px); box-sizing: border-box; overflow-x: auto; scrollbar-width: none; }
+.fzs-fenetres::-webkit-scrollbar { display: none; }
+.fzs .fzs-fenetres button { flex: none; padding: 0 12px; white-space: nowrap; }
 .fzs-top-card { width: 168px; border-radius: 16px; background: var(--s-tile); overflow: hidden; display: flex; flex-direction: column; }
 .fzs-top-card.is-bone { height: 214px; background: var(--s-chip); }
 .fzs-top-card[role="button"]:hover .fzs-top-mug { transform: scale(1.04); }
@@ -335,6 +342,7 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-top-name small { font: 500 11px 'Saira', sans-serif; color: var(--s-faint); }
 .fzs-top-line { font: 400 12px/1 'Saira', sans-serif; color: var(--s-mute); }
 .fzs-top-body strong { font: 700 26px/1.1 'Saira', sans-serif; font-variant-numeric: tabular-nums; }
+.fzs-top-body strong small { margin-left: 4px; font: 600 12px/1 'Saira', sans-serif; color: var(--s-mute); letter-spacing: .4px; }
 
 /* ---- Activité de la ligue ---- */
 .fzs-act { padding-top: 12px; padding-bottom: 12px; }
@@ -351,6 +359,10 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-tabs { display: flex; gap: 8px; padding: 14px 16px 0; }
 .fzs .fzs-tab { height: 36px; min-width: 58px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--s-btn-line); background: transparent; color: var(--s-mute); font: 600 14px/1 'Saira', sans-serif; }
 .fzs .fzs-tab[aria-pressed="true"] { border-color: var(--s-ink); color: var(--s-ink); }
+/* Six catégories de meneurs : la rangée défile au doigt plutôt que d'écraser ses onglets. */
+.fzs-tabs.is-defile { overflow-x: auto; scrollbar-width: none; scroll-padding: 0 16px; }
+.fzs-tabs.is-defile::-webkit-scrollbar { display: none; }
+.fzs-tabs.is-defile .fzs-tab { flex: none; white-space: nowrap; }
 .fzs .fzs-toggle { width: 100%; border: 0; background: none; padding: 16px; display: flex; align-items: center; justify-content: space-between; color: var(--s-ink); font: 500 15px/1 'Saira', sans-serif; text-align: left; }
 .fzs-switch { flex: none; position: relative; width: 40px; height: 22px; border-radius: 11px; background: var(--s-switch); transition: background .15s; }
 .fzs-switch i { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
@@ -510,6 +522,7 @@ html[data-theme="light"] .fzs-vs { box-shadow: 0 8px 22px rgba(20, 20, 30, .16);
     .fzs-games .fzs-rail { padding-bottom: 18px; }
     .fzs-games .fzs-empty { padding: 12px 18px 18px; }
     .fzs-jours { margin: 12px 18px 0; }
+    .fzs-fenetres { max-width: calc(100% - 36px); }
     .fzs-sh { margin: 0 18px; }
     .fzs-rail { padding-left: 18px; padding-right: 18px; scroll-padding: 0 18px; scrollbar-width: thin; }
     .fzs-row, .fzs-rank-head, .fzs-rank-row { padding-left: 18px; padding-right: 18px; }

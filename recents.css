@@ -166,6 +166,36 @@ body.fz-recents .rc-match.is-nouveau { animation: rc-eclair 2.4s ease-out 1; }
 @media (prefers-reduced-motion: reduce) {
     body.fz-recents .rc-but, body.fz-recents .rc-match.is-nouveau { animation: none; }
 }
+
+/* ==================== ÉCHANGES EN DIRECT ====================
+   Un échange conclu (ou une offre reçue) que la page n'avait pas vu surgit
+   en tête du fil : la ligne grandit d'un coup et s'éclaire en vert, la
+   couleur des échanges conclus. Une bulle en bas de l'écran l'annonce ; la
+   toucher ouvre le filtre « Échanges ». */
+body.fz-recents .rc-liste > li.is-nouveau { animation: rc-surgit .5s cubic-bezier(.2, .9, .3, 1.25) 1, rc-vert 3s ease-out 1; }
+@keyframes rc-surgit { 0% { opacity: 0; transform: translateY(-10px) scale(.96); } 100% { opacity: 1; transform: none; } }
+@keyframes rc-vert { 0%, 30% { background: color-mix(in srgb, var(--s-green) 16%, transparent); } 100% { background: transparent; } }
+body.fz-recents .rc-liste > li.is-mien.is-nouveau { animation: rc-surgit .5s cubic-bezier(.2, .9, .3, 1.25) 1; }
+
+.rc-bulle {
+    position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 1500;
+    width: min(440px, calc(100vw - 32px)); box-sizing: border-box;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+    padding: 12px 16px; border: 1px solid var(--s-line); border-left: 4px solid var(--s-green); border-radius: 14px;
+    background: var(--s-card); color: var(--s-ink); box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
+    font: 400 14px/1.35 'Saira', system-ui, sans-serif; text-align: left; cursor: pointer;
+    opacity: 0; pointer-events: none; transform: translate(-50%, 16px); transition: opacity .2s, transform .25s cubic-bezier(.2, .9, .3, 1.2);
+}
+.rc-bulle.is-visible { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+.rc-bulle b { font: 700 11px/1.2 'Saira', sans-serif; letter-spacing: .8px; text-transform: uppercase; color: var(--s-green); }
+.rc-bulle small { font: 600 11px/1 'Saira', sans-serif; color: var(--s-faint); }
+.rc-bulle span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--s-ink2); }
+.rc-bulle:focus-visible { outline: 2px solid var(--s-ink); outline-offset: 2px; }
+@media (min-width: 901px) { .rc-bulle { bottom: 28px; } }
+@media (prefers-reduced-motion: reduce) {
+    body.fz-recents .rc-liste > li.is-nouveau { animation: none; }
+    .rc-bulle { transition: none; }
+}
 @media (min-width: 901px) {
     body.fz-recents .rc-eq-score { font-size: 32px; }
 }

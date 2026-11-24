@@ -18,7 +18,7 @@
  * ancres qui se remplissent toutes seules.
  *
  * Dépendances : aucune. Volontairement — classement.html ne charge ni
- * statsLeaders.js (escapeHTML) ni la même trousse d'icônes que stats.html.
+ * accueil.js (escapeHTML) ni la même trousse d'icônes que stats.html.
  */
 
 /* ============================================================

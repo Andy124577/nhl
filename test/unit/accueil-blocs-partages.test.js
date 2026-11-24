@@ -70,17 +70,16 @@ describe('accueil — blocs partagés', () => {
         assert.match(INDEX, /class="fzh-watch fzd-off-section fzd-off-carousel" id="fzdOffWatch" data-watch-panel/);
     });
 
-    test('« Meilleurs joueurs » est le composant de la page Stats', () => {
-        // Même script, mêmes identifiants : statsTopPlayers.js remplit l'un
-        // comme l'autre. Le panneau prend le cadre de « Mouvements récents ».
-        const STATS = lire('stats.html');
+    test('« Meilleurs joueurs » est rempli par statsTopPlayers.js', () => {
+        // L'onglet « Meneurs » de la page Joueurs a rejoint l'accueil de
+        // saison (accueil-season.js) : seul index.html garde ce panneau.
+        // Il prend le cadre de « Mouvements récents ».
         assert.match(INDEX, /class="top-players-section fzd-off-section" id="fzTopPlayers"/);
-        for (const page of [INDEX, STATS]) {
-            for (const id of ['timeRangeLabel', 'topPlayersSkeleton', 'topPlayersList']) {
-                assert.equal(page.split(`id="${id}"`).length - 1, 1, `#${id} devrait être déclaré une seule fois`);
-            }
-            assert.match(page, /<script defer src="statsTopPlayers\.js\?v=[^"]+"><\/script>/);
+        for (const id of ['timeRangeLabel', 'topPlayersSkeleton', 'topPlayersList']) {
+            assert.equal(INDEX.split(`id="${id}"`).length - 1, 1, `#${id} devrait être déclaré une seule fois`);
         }
+        assert.match(INDEX, /<script defer src="statsTopPlayers\.js\?v=[^"]+"><\/script>/);
+        assert.doesNotMatch(lire('stats.html'), /statsTopPlayers\.js|top-players-section/);
         // À l'accueil, la fiche s'ouvre par fzhOpenPlayerCareer (accueil-watch.js).
         assert.ok(INDEX.indexOf('accueil-watch.js') < INDEX.indexOf('statsTopPlayers.js'));
     });

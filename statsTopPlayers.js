@@ -1,13 +1,11 @@
 /* ============================================================ */
 /* TOP PLAYERS — "Meilleurs joueurs"                             */
-/* Rendered in two places, from the same markup:                 */
-/*  - stats.html, right under "Meneurs de la ligue";             */
-/*  - index.html, as one of the member homes' shared blocks      */
-/*    (#fzTopPlayers), moved into each layout by                 */
-/*    fzdPlaceCalendar() in accueil-dash.js.                     */
-/* Reads BASE_URL and escapeHTML — index.js/statsLeaders.js on   */
-/* the stats page, accueil.js on the home — loaded before this   */
-/* script.                                                       */
+/* Rendered on index.html, as one of the member homes' shared    */
+/* blocks (#fzTopPlayers), moved into each layout by             */
+/* fzdPlaceCalendar() in accueil-dash.js. (The season home has   */
+/* its own carousel, accueil-season.js; stats.html no longer has */
+/* a "Meneurs" tab.) Reads BASE_URL and escapeHTML from          */
+/* accueil.js, loaded before this script.                        */
 /* ============================================================ */
 
 const TOP_PLAYERS_SIX_MONTHS_DAYS = 180;

@@ -14,6 +14,13 @@
  * un but fait alors remonter son match en tête, « il y a 10 secondes ».
  * Les relectures ne touchent pas la base tant que rien n'y a été écrit
  * (routes/recents.js) ; elles ne réveillent donc pas Neon pour rien.
+ *
+ * Les échanges arrivent en direct : le serveur signale chaque offre et
+ * chaque échange conclu à la salle du pool (tradePending, tradeUpdated,
+ * routes/trades.js). La page se relit alors ; un échange conclu ou une offre
+ * reçue qu'elle n'avait pas encore vu surgit en tête du fil, s'éclaire, et
+ * une bulle l'annonce. Sans socket, un relevé toutes les minutes prend le
+ * relais tant que la page est ouverte.
  */
 (function () {
     'use strict';
@@ -24,17 +31,31 @@
     // en tête « il y a quelques secondes ». La route ne lit que la mémoire du
     // serveur tant que rien n'est écrit en base.
     const DIRECT_MS = 15000;
+    // Sans socket (proxy, bibliothèque absente) : les échanges se relisent
+    // quand même, à la minute.
+    const SANS_SOCKET_MS = 60000;
+    // Plusieurs signaux tombent ensemble (tradeUpdated puis
+    // tradeListingsUpdated pour un même échange) : une seule relecture.
+    const SIGNAL_MS = 400;
+    const BULLE_MS = 6000;
     const BILAN_MS = 10 * 60 * 1000;
     const CLE_FILTRE = 'fzRecentsFiltre';
 
     const FILTRES = [
         ['tout', 'Tout'],
         ['mien', 'Mes joueurs'],
+        ['echanges', 'Échanges'],
         ['pool', 'Pool'],
         ['lnh', 'LNH']
     ];
 
-    const etat = { pool: null, user: null, donnees: null, offres: [], bilan: null, filtre: 'tout', minuteur: null, luA: 0, butsVus: new Set() };
+    const etat = {
+        pool: null, user: null, donnees: null, offres: [], bilan: null, filtre: 'tout', minuteur: null, luA: 0, butsVus: new Set(),
+        // Les échanges déjà montrés : un nouveau venu surgit (is-nouveau) et
+        // s'annonce dans une bulle. null avant la première lecture : ce qui
+        // est là à l'ouverture de la page n'est pas « nouveau ».
+        echangesVus: null, nouveaux: new Map(), offresLues: false, socket: false, signal: null
+    };
 
     // ---------- outils ----------
     const esc = v => String(v == null ? '' : v)
@@ -212,7 +233,8 @@
             switch (e.genre) {
                 case 'trade_completed': {
                     const mien = s.fromTeam === monEquipe || s.toTeam === monEquipe;
-                    return { ...base, mien, tag: 'Échange conclu', ton: 'is-vert',
+                    return { ...base, mien, echange: `conclu|${e.moment}|${s.fromTeam}|${s.toTeam}`, tag: 'Échange conclu', ton: 'is-vert',
+                        bulle: `${s.fromTeam} envoie ${(s.offering || []).join(', ')} à ${s.toTeam} contre ${(s.receiving || []).join(', ')}`,
                         texte: `<strong>${esc(s.fromTeam)}</strong> envoie ${esc((s.offering || []).join(', '))} à <strong>${esc(s.toTeam)}</strong> contre ${esc((s.receiving || []).join(', '))}` };
                 }
                 case 'listing_activated': {
@@ -240,6 +262,8 @@
     function entreesOffres(offres) {
         return (offres || []).map(t => ({
             cat: 'mien', mien: true, moment: t.date || t.createdAt || null,
+            echange: `offre|${t.id}`,
+            bulle: `${t.fromTeam} t’offre ${nomsDe(t.offering).join(', ')} pour ${nomsDe(t.receiving).join(', ')}`,
             face: faceJoueur(nomsDe(t.offering)[0] || '', null),
             tag: 'Offre reçue', ton: 'is-encre',
             texte: `<strong>${esc(t.fromTeam)}</strong> t’offre ${esc(nomsDe(t.offering).join(', '))} pour ${esc(nomsDe(t.receiving).join(', '))}`,
@@ -280,7 +304,50 @@
     function garder(e, filtre) {
         if (filtre === 'tout') return true;
         if (filtre === 'mien') return e.mien;
+        // Échanges : ceux conclus dans le pool, et les offres que j'ai reçues.
+        if (filtre === 'echanges') return !!e.echange;
         return e.cat === filtre;  // les matchs sont « LNH », les miens aussi « Mes joueurs »
+    }
+
+    /**
+     * Repère les échanges que la page n'avait pas encore vus. La première
+     * lecture les retient tous sans rien annoncer ; ensuite, chaque nouveau
+     * venu surgit dans le fil et s'annonce dans la bulle.
+     */
+    function reperer() {
+        const echanges = toutesLesEntrees({ sansMatchs: true }).filter(e => e.echange);
+        if (!etat.echangesVus) {
+            etat.echangesVus = new Set(echanges.map(e => e.echange));
+            return;
+        }
+        const neufs = echanges.filter(e => !etat.echangesVus.has(e.echange));
+        // Surgit pendant 2,5 s : un second rendu rapproché (les offres après
+        // le fil) rejoue l'entrée plutôt que de l'effacer.
+        neufs.forEach(e => { etat.echangesVus.add(e.echange); etat.nouveaux.set(e.echange, Date.now() + 2500); });
+        if (neufs.length) annoncer(neufs);
+    }
+
+    /** La bulle du bas : le plus récent des nouveaux échanges ; la toucher ouvre le filtre Échanges. */
+    function annoncer(neufs) {
+        let bulle = document.getElementById('rcBulle');
+        if (!bulle) {
+            bulle = document.createElement('button');
+            bulle.type = 'button';
+            bulle.id = 'rcBulle';
+            bulle.className = 'rc-bulle';
+            bulle.setAttribute('data-bulle', '');
+            document.body.appendChild(bulle);
+        }
+        const [premier] = neufs.sort((a, b) => (Date.parse(b.moment) || 0) - (Date.parse(a.moment) || 0));
+        const titre = premier.tag === 'Offre reçue' ? 'Nouvelle offre' : 'Nouvel échange';
+        const autres = neufs.length > 1 ? ` <small>+${neufs.length - 1}</small>` : '';
+        bulle.innerHTML = `<b>${esc(titre)}</b>${autres}<span>${esc(premier.bulle || '')}</span>`;
+        bulle.setAttribute('aria-label', `${titre} : ${premier.bulle || ''}. Voir les échanges.`);
+        bulle.classList.remove('is-visible');
+        void bulle.offsetWidth; // rejoue l'apparition
+        bulle.classList.add('is-visible');
+        clearTimeout(annoncer.minuteur);
+        annoncer.minuteur = setTimeout(() => bulle.classList.remove('is-visible'), BULLE_MS);
     }
 
     function ligneHTML(e) {
@@ -289,7 +356,10 @@
         const lien = e.href ? ` href="${esc(e.href)}"` : '';
         const moment = quandHTML(e);
         const tag = e.tagHTML || esc(e.tag);
-        return `<li class="${e.mien ? 'is-mien' : ''}"><${balise} class="rc-ligne"${lien}>
+        // Un échange tout juste arrivé surgit une fois, puis redevient une ligne comme les autres.
+        const nouveau = e.echange && (etat.nouveaux.get(e.echange) || 0) > Date.now();
+        const classes = [e.mien ? 'is-mien' : '', nouveau ? 'is-nouveau' : ''].filter(Boolean).join(' ');
+        return `<li class="${classes}"><${balise} class="rc-ligne"${lien}>
             ${e.face}
             <span class="rc-txt">
                 <span class="rc-tag ${e.ton || ''}">${tag}${moment ? ` · ${moment}` : ''}</span>
@@ -334,6 +404,7 @@
             const vide = {
                 tout: 'Rien de neuf dans ton pool pour l’instant.',
                 mien: 'Rien de neuf pour tes joueurs.',
+                echanges: 'Aucun échange dans ce pool pour l’instant. Ils apparaîtront ici dès qu’ils seront conclus.',
                 pool: 'Aucun échange ni joueur en vente récemment.',
                 lnh: 'Aucune blessure ni mouvement LNH pour les joueurs du pool.'
             }[etat.filtre];
@@ -363,11 +434,13 @@
         return r.json();
     }
 
-    async function charger({ force = false, direct = false } = {}) {
+    async function charger({ force = false, direct = false, offres = false } = {}) {
         const enc = encodeURIComponent(etat.pool);
         const memo = window.FZMemo;
         const cle = `recents:${etat.pool}`;
         if (force && memo) memo.oublier(cle);
+        // Un signal d'échange : les offres reçues se relisent pour de bon.
+        if (offres && memo) memo.oublier(`nav:echanges:${etat.user}`);
         const principal = memo ? memo.charger(cle, () => lireJSON(`/api/pools/${enc}/recents`), { fraisMs: FRAIS_MS })
             : lireJSON(`/api/pools/${enc}/recents`);
         // Pendant le direct, seul le fil principal se relit : les offres et
@@ -377,6 +450,9 @@
         try {
             etat.donnees = await principal;
             etat.luA = Date.now();
+            // Les offres reçues arrivent par chargerAnnexes : la première
+            // lecture des échanges attend qu'elles soient là (voir plus bas).
+            if (etat.echangesVus || etat.offresLues) reperer();
             rendre();
             majFraicheur();
         } catch (erreur) {
@@ -395,18 +471,60 @@
             : lireJSON(`/api/pools/${enc}/bilan-soiree`)).catch(() => null);
 
         offres.then(liste => {
+            const avant = etat.offresLues ? etat.offres.map(t => t.id).join(',') : null;
             etat.offres = (Array.isArray(liste) ? liste : []).filter(t => t.draftName === etat.pool);
-            if (etat.donnees) rendre();
+            etat.offresLues = true;
+            // Mêmes offres qu'avant : rien à redessiner (et l'éclair d'un
+            // échange qui vient d'arriver n'est pas coupé).
+            if (avant === etat.offres.map(t => t.id).join(',')) return;
+            if (etat.donnees) { reperer(); rendre(); }
         });
         bilan.then(b => { etat.bilan = b; if (etat.donnees) rendre(); });
     }
 
-    /** Toutes les 15 s tant qu'un match du jour est en jeu ; sinon rien. */
+    /**
+     * Toutes les 15 s tant qu'un match du jour est en jeu ; sans socket, à la
+     * minute pour ne pas manquer un échange ; sinon rien.
+     */
     function planifier() {
         clearTimeout(etat.minuteur);
+        if (document.hidden) return;
         const enJeu = ((etat.donnees && etat.donnees.matchs) || []).some(m => m.etat === 'LIVE');
-        if (!enJeu || document.hidden) return;
-        etat.minuteur = setTimeout(() => charger({ force: true, direct: true }), DIRECT_MS);
+        if (enJeu) etat.minuteur = setTimeout(() => charger({ force: true, direct: true }), DIRECT_MS);
+        else if (!etat.socket) etat.minuteur = setTimeout(() => charger({ force: true, offres: true }), SANS_SOCKET_MS);
+    }
+
+    /** Un signal d'échange du serveur : une relecture, regroupée. */
+    function surSignal(charge) {
+        if (!etat.pool || (charge && charge.poolName && charge.poolName !== etat.pool)) return;
+        clearTimeout(etat.signal);
+        etat.signal = setTimeout(() => {
+            if (document.hidden) return; // le retour sur l'onglet relira tout
+            charger({ force: true, offres: true });
+        }, SIGNAL_MS);
+    }
+
+    /**
+     * La connexion partagée de l'onglet (activePool.js). Le serveur y place
+     * chaque membre dans la salle de ses pools : tradePending (une offre
+     * faite), tradeUpdated (acceptée, refusée, annulée), tradeListingsUpdated
+     * (le marché) y arrivent sans qu'on demande rien.
+     */
+    function brancherSocket(essai = 0) {
+        const socket = window.fzSocketPartage && window.fzSocketPartage();
+        if (!socket) {
+            if (essai < 40) setTimeout(() => brancherSocket(essai + 1), 250);
+            return;
+        }
+        etat.socket = true;
+        ['tradePending', 'tradeUpdated', 'tradeListingsUpdated'].forEach(nom => socket.on(nom, surSignal));
+        // Une reconnexion (veille, réseau) a pu manquer un échange.
+        let connexions = socket.connected ? 1 : 0;
+        socket.on('connect', () => {
+            connexions += 1;
+            if (connexions > 1) surSignal(null);
+        });
+        planifier();
     }
 
     // ---------- démarrage ----------
@@ -434,14 +552,23 @@
         const titre = document.getElementById('rcPool');
         if (titre) titre.textContent = etat.pool;
         charger();
+        brancherSocket();
+    }
+
+    function choisirFiltre(filtre) {
+        etat.filtre = filtre;
+        try { sessionStorage.setItem(CLE_FILTRE, etat.filtre); } catch (err) { /* rien */ }
+        rendre();
     }
 
     document.addEventListener('click', e => {
         const chip = e.target.closest('[data-filtre]');
-        if (chip) {
-            etat.filtre = chip.dataset.filtre;
-            try { sessionStorage.setItem(CLE_FILTRE, etat.filtre); } catch (err) { /* rien */ }
-            rendre();
+        if (chip) { choisirFiltre(chip.dataset.filtre); return; }
+        const bulle = e.target.closest('[data-bulle]');
+        if (bulle) {
+            bulle.classList.remove('is-visible');
+            choisirFiltre('echanges');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
         if (e.target.closest('[data-reessayer]')) charger({ force: true });

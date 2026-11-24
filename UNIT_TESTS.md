@@ -378,7 +378,7 @@ After the §5.3 footer. Small, pure, user-visible.
 | [classement.js](classement.js) | `fmtPeriodPts` | `null`/`undefined` → `'—'`; an integer prints bare; a float prints one decimal |
 | [classement.js](classement.js) | `initialsFromName` | two words → two initials, upper-cased; a single word → its first two letters; accents preserved; symbols stripped; empty → `''` |
 | [classement.js:603](classement.js#L603) | `formatHofDate` / `formatHofMonth` | a known ISO date formats as expected; a month boundary |
-| [statsLeaders.js:94](statsLeaders.js#L94) | `escapeHTML` | a `<script>` payload neutralised; `&`, `"`, `'`; a clean string unchanged |
+| [accueil.js](accueil.js) | `escapeHTML` | a `<script>` payload neutralised; `&`, `"`, `'`; a clean string unchanged |
 | [statsTopPlayers.js:18](statsTopPlayers.js#L18) | `topPlayersRangeText` | each supported day count; the singular/plural boundary |
 | [draftkitData.js:59](draftkitData.js#L59) | `pointsGardien` / `pointsEquipe` | the documented formula per position; zeros |
 | [draftkitData.js:239](draftkitData.js#L239) | `cleNom` / `nomCanonique` | an accented variant maps to the canonical spelling; an unknown name returns unchanged |

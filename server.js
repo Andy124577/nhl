@@ -4843,7 +4843,7 @@ app.get('/hot-players', async (req, res) => {
     }
 });
 
-// Route to get top-5 stat leaders (points/goals/assists/wins) for the homepage hero.
+// Route to get top-10 stat leaders (points/goals/assists/wins) for the homepage carousel.
 // nhl_filtered_stats.json ne sert qu'à classer les joueurs (attaquants,
 // défenseurs, recrues, gardiens) : ses totaux sont ceux de l'an passé, et la
 // recopie des relevés saute les joueurs à zéro match, qui les gardaient. Les
@@ -4879,12 +4879,15 @@ app.get('/stats-leaders', async (req, res) => {
         filteredStats.Top_Rookies = enSaison(filteredStats.Top_Rookies);
         filteredStats.Top_50_Goalies = enSaison(filteredStats.Top_50_Goalies);
 
+        // Un joueur échangé en cours de saison porte « BOS,TOR » : sa photo est
+        // celle de son club actuel, le dernier.
+        const clubActuel = p => String(p.teamAbbrevs || '').split(',').pop().trim();
         const toSkater = p => ({
             playerId: p.playerId,
             playerName: p.skaterFullName,
             teamAbbrev: p.teamAbbrevs,
             position: p.positionCode,
-            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${clubActuel(p)}/${p.playerId}.png`,
             gamesPlayed: p.gamesPlayed,
             goals: p.goals,
             assists: p.assists,
@@ -4895,7 +4898,7 @@ app.get('/stats-leaders', async (req, res) => {
             playerName: p.goalieFullName,
             teamAbbrev: p.teamAbbrevs,
             position: 'G',
-            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${p.teamAbbrevs}/${p.playerId}.png`,
+            headshot: `https://assets.nhle.com/mugs/nhl/${cachedStatsSeasonString()}/${clubActuel(p)}/${p.playerId}.png`,
             gamesPlayed: p.gamesPlayed,
             wins: p.wins,
             points: p.points
@@ -4907,15 +4910,16 @@ app.get('/stats-leaders', async (req, res) => {
         const goalies    = (filteredStats.Top_50_Goalies || []).filter(p => p.gamesPlayed > 0);
         const allSkaters = [...forwards, ...defenders];
 
-        const top5 = (arr, key) => [...arr].sort((a, b) => (b[key] || 0) - (a[key] || 0)).slice(0, 5);
+        // Dix par catégorie : le carrousel « Meneurs de la ligue » de l'accueil.
+        const top10 = (arr, key) => [...arr].sort((a, b) => (b[key] || 0) - (a[key] || 0)).slice(0, 10);
 
         res.json({
-            forwardsPoints: top5(forwards, 'points').map(toSkater),
-            defensePoints:  top5(defenders, 'points').map(toSkater),
-            goalsLeaders:   top5(allSkaters, 'goals').map(toSkater),
-            assistsLeaders: top5(allSkaters, 'assists').map(toSkater),
-            rookiePoints:   top5(rookies, 'points').map(toSkater),
-            goalieWins:     top5(goalies, 'wins').map(toGoalie)
+            forwardsPoints: top10(forwards, 'points').map(toSkater),
+            defensePoints:  top10(defenders, 'points').map(toSkater),
+            goalsLeaders:   top10(allSkaters, 'goals').map(toSkater),
+            assistsLeaders: top10(allSkaters, 'assists').map(toSkater),
+            rookiePoints:   top10(rookies, 'points').map(toSkater),
+            goalieWins:     top10(goalies, 'wins').map(toGoalie)
         });
     } catch (error) {
         console.error('❌ Error fetching stats leaders:', error);

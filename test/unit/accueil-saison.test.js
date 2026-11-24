@@ -37,16 +37,18 @@ describe('accueil de saison', () => {
         assert.doesNotMatch(SAISON, /fzsLoadNews|fzmNewsWrap/);
     });
 
-    test('de haut en bas, comme la maquette « 6b Éditorial » : position, mes joueurs, activité ; matchs, meilleurs, classements ; alignements, À lire', () => {
+    test('de haut en bas, comme la maquette « 6b Éditorial » : position, mes joueurs, activité ; matchs, meilleurs, meneurs, classements ; alignements, À lire', () => {
         const rendu = corpsRendu();
-        const ordre = ['fzsHeroHTML', 'fzsJoueursHTML', 'fzsActiviteHTML', 'fzsMatchsHTML', 'fzsMeilleursHTML', 'fzsClassementHTML', 'fzsAlignementsHTML', 'data-fz-bloc="actualites"']
+        const ordre = ['fzsHeroHTML', 'fzsJoueursHTML', 'fzsActiviteHTML', 'fzsMatchsHTML', 'fzsMeilleursHTML', 'fzsMeneursHTML', 'fzsClassementHTML', 'fzsAlignementsHTML', 'data-fz-bloc="actualites"']
             .map(cle => rendu.indexOf(cle));
         ordre.forEach((pos, i) => assert.ok(pos >= 0, `bloc ${i} absent`));
         assert.deepEqual([...ordre].sort((x, y) => x - y), ordre, 'les blocs doivent suivre cet ordre');
         // Au téléphone, une seule colonne dans l'ordre de la maquette.
         const css = lire('accueil-season.css');
         const rang = cls => Number(css.match(new RegExp(`\\.fzs \\.${cls} \\{ order: (\\d+); \\}`))[1]);
-        const telephone = ['fzs-hero', 'fzs-games', 'fzs-mine', 'fzs-top', 'fzs-activity', 'fzs-ranks', 'fzs-lines', 'fzs-read'].map(rang);
+        const telephone = ['fzs-hero', 'fzs-games', 'fzs-mine', 'fzs-top', 'fzs-leaders', 'fzs-activity', 'fzs-ranks', 'fzs-lines', 'fzs-read'].map(rang);
+        // Les meneurs suivent les meilleurs joueurs, au téléphone aussi.
+        assert.equal(rang('fzs-leaders') - rang('fzs-top'), 1);
         assert.deepEqual([...telephone].sort((x, y) => x - y), telephone);
         // Les alignements des 32 clubs juste avant À lire.
         assert.equal(rang('fzs-read') - rang('fzs-lines'), 1);
@@ -159,6 +161,25 @@ describe('les sections de la maquette', () => {
         });
         assert.deepEqual(Array.from(charger(false).fzsTrierSemaine(joueurs), p => `${p.playerName}:${p.pts}`), ['G:9', 'B:7', 'A:5']);
         assert.deepEqual(Array.from(charger(true).fzsTrierSemaine(joueurs), p => `${p.playerName}:${p.pts}`), ['G:30', 'A:20', 'B:19']);
+    });
+
+    test('meilleurs joueurs : 7 jours, 14, 30 ou 6 mois ; meneurs : une catégorie par onglet', () => {
+        assert.match(SAISON, /const FZS_FENETRES = \[\[7, '7 jours'\], \[14, '14 jours'\], \[30, '30 jours'\], \[180, '6 mois'\]\]/);
+        assert.match(SAISON, /hot-players-last\$\{jours\}days/);
+        for (const cle of ['forwardsPoints', 'defensePoints', 'goalieWins', 'rookiePoints', 'goalsLeaders', 'assistsLeaders']) {
+            assert.match(SAISON, new RegExp(`\\['${cle}', `), `onglet ${cle}`);
+        }
+        // Plus de lien vers l'ancien onglet « Meneurs » de la page Joueurs.
+        assert.doesNotMatch(SAISON, /onglet=meneurs/);
+    });
+
+    test('meneurs : buts, aides et matchs sous le nom ; les matchs seuls chez un gardien ; le club actuel d’un joueur échangé', () => {
+        const { fzsLigneMeneur, fzsClubActuel } = chargerFonctions('accueil-season.js', ['fzsLigneMeneur', 'fzsClubActuel']);
+        assert.equal(fzsLigneMeneur({ position: 'C', goals: 12, assists: 20, gamesPlayed: 22 }), '12 B · 20 A · 22 PJ');
+        assert.equal(fzsLigneMeneur({ position: 'G', wins: 14, gamesPlayed: 18 }), '18 PJ');
+        assert.equal(fzsClubActuel('BOS,TOR'), 'TOR');
+        assert.equal(fzsClubActuel('MTL'), 'MTL');
+        assert.equal(fzsClubActuel(undefined), '');
     });
 
     test('positions à la française et noms comparés sans accents', () => {

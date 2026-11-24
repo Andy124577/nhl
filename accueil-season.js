@@ -2,9 +2,10 @@
    ACCUEIL DE SAISON — maquette « 6b Éditorial » (Fantazy Accueil Final)
    ------------------------------------------------------------
    De haut en bas : ma position, les matchs ce soir, mes joueurs ce soir,
-   mon duel (tête-à-tête seulement), les meilleurs de la semaine,
-   l'activité de la ligue, les classements de la semaine par position, les
-   alignements des 32 clubs et, tout en bas, À lire.
+   mon duel (tête-à-tête seulement), les meilleurs joueurs (7 jours, 14, 30
+   ou 6 mois), les meneurs de la ligue, l'activité de la ligue, les
+   classements de la semaine par position, les alignements des 32 clubs et,
+   tout en bas, À lire.
 
    Une colonne au téléphone, deux au bureau (accueil-season.css). Les deux
    thèmes passent par les mêmes jetons --s-*.
@@ -12,7 +13,8 @@
    Données : rien de neuf côté serveur. Le rang et le total viennent du
    pool (buildTeamScores), la soirée de /tonight-boxscores et du calendrier
    du jour (calData), le direct des matchs du bandeau d'histoires
-   (storySlides, accueil.js), la semaine de /hot-players-last7days, la vie
+   (storySlides, accueil.js), les meilleurs joueurs de /hot-players-lastNdays,
+   les meneurs de /stats-leaders (déjà lus par accueil.js), la vie
    de la ligue de fzhChargerLigue (accueil-watch.js) et les actualités de
    renderHomeNews (accueil.js), dans l'emplacement « actualites ».
    ============================================================ */
@@ -40,6 +42,7 @@ const FZS_ICONES = {
     rangs: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5l1.5-1v5M3.8 15.5a1.4 1.4 0 0 1 2.6.6c0 1-2.6 2-2.6 3h2.8"/>',
     trios: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M9.5 4v16M14.5 10v10"/>',
     duel: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5 13 3h3v3l-3.5 3.5"/>',
+    etoile: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9Z"/>',
     chevron: '<path d="m9 6 6 6-6 6"/>'
 };
 function fzsIcone(nom, taille = 22) {
@@ -718,26 +721,41 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden && fzsSoireeMinuteur) fzsRafraichirSoiree();
 });
 
-/* ---- La semaine : meilleurs joueurs et classements par position ----
-   Une seule lecture de /hot-players-last7days (en cache 15 min au serveur)
-   nourrit les deux sections. Les points suivent le barème du pool : au
-   cumulatif, buts + aides (et le barème des gardiens) ; en tête-à-tête,
-   les points fantasy. */
+/* ---- Les meilleurs joueurs et les classements par position ----
+   /hot-players-lastNdays (en cache 15 min au serveur), la même lecture que
+   la page Joueurs : 7 jours, 14, 30 ou 6 mois pour les meilleurs joueurs ;
+   la semaine (7 jours) nourrit aussi les classements par position. Les
+   points suivent le barème du pool : au cumulatif, buts + aides (et le
+   barème des gardiens) ; en tête-à-tête, les points fantasy. */
 const FZS_SEMAINE_MS = 10 * 60 * 1000;
-let fzsSemaine = { data: null, lu: 0, requete: null };
+const fzsLectures = new Map(); // jours → { data, lu, requete }
 
-function fzsChargerSemaine() {
-    if (fzsSemaine.data && Date.now() - fzsSemaine.lu < FZS_SEMAINE_MS) return Promise.resolve(fzsSemaine.data);
-    if (fzsSemaine.requete) return fzsSemaine.requete;
-    fzsSemaine.requete = fetch(`${BASE_URL}/hot-players-last7days`)
+/** Les joueurs des N derniers jours : une lecture à la fois, gardée 10 minutes. */
+function fzsChargerFenetre(jours) {
+    const connu = fzsLectures.get(jours);
+    if (connu && connu.requete) return connu.requete;
+    if (connu && connu.lu && Date.now() - connu.lu < FZS_SEMAINE_MS) return Promise.resolve(connu.data);
+    const entree = { data: connu ? connu.data : null, lu: connu ? connu.lu : 0, requete: null };
+    fzsLectures.set(jours, entree);
+    entree.requete = fetch(`${BASE_URL}/hot-players-last${jours}days`)
         .then(r => (r.ok ? r.json() : null))
         .catch(() => null)
         .then(data => {
-            fzsSemaine = { data, lu: Date.now(), requete: null };
-            return data;
+            // Un échec garde la lecture d'avant plutôt que de vider la section.
+            if (data) entree.data = data;
+            entree.lu = Date.now();
+            entree.requete = null;
+            return entree.data;
         });
-    return fzsSemaine.requete;
+    return entree.requete;
 }
+
+/** Ce qu'on a déjà lu d'une fenêtre, sans requête ; null avant la première lecture. */
+function fzsLue(jours) {
+    return (fzsLectures.get(jours) || {}).data || null;
+}
+
+const fzsChargerSemaine = () => fzsChargerFenetre(7);
 
 function fzsPointsSemaine(p) {
     if (fzdPoolH2H()) return Math.round(p.totalFantasyPoints || 0);
@@ -764,38 +782,192 @@ function fzsLigneStats(p) {
     return p.position === 'G' ? `${p.wins || 0} V · ${p.saves || 0} ARR` : `${p.goals || 0} B · ${p.assists || 0} A`;
 }
 
-function fzsMeilleursHTML() {
-    return `<section class="fzs-sec fzs-top" aria-label="Meilleurs de la semaine" data-fzs-semaine>
-            ${fzsTete('trophee', 'Meilleurs de la semaine', fzsPastille('7 jours'))}
-            <ul class="fzs-rail fzs-top-list" aria-busy="true">${'<li class="fzs-top-card is-bone"></li>'.repeat(3)}</ul>
-            ${fzsPied('stats.html?onglet=meneurs', 'Voir les meneurs')}
-        </section>`;
+/** Le sigle du club actuel : le dernier d'un joueur échangé en cours de saison (« BOS,TOR »). */
+function fzsClubActuel(abbrev) {
+    return String(abbrev || '').split(',').pop().trim();
 }
 
-function fzsRemplirMeilleurs(data) {
-    const bloc = document.querySelector('#fzSeasonHome .fzs-top');
-    if (!bloc) return;
-    const joueurs = fzsTrierSemaine(data && data.topPlayers).filter(p => p.pts > 0).slice(0, 10);
-    if (!joueurs.length) { bloc.hidden = true; return; }
+/**
+ * Une carte du carrousel, pour les meilleurs joueurs comme pour les meneurs :
+ * la photo sur la couleur du club, le rang, « À TOI » si je l'ai, puis le
+ * nom, une ligne de stats et le grand chiffre (`chiffre`, déjà échappé).
+ */
+function fzsCarteHTML(p, i, ligne, chiffre, mien) {
     const esc = escapeHTML;
-    const proprios = fzsProprietaires();
-    const moi = FZPool.team().name;
-    const liste = bloc.querySelector('.fzs-top-list');
-    liste.removeAttribute('aria-busy');
-    liste.innerHTML = joueurs.map((p, i) => `
-        <li class="fzs-top-card" style="--club:${esc(fzsCouleurClub(p.teamAbbrev))}"${fzsAttrsJoueur(p.playerName, p.playerId)}>
+    const club = fzsClubActuel(p.teamAbbrev);
+    return `
+        <li class="fzs-top-card" style="--club:${esc(fzsCouleurClub(club))}"${fzsAttrsJoueur(p.playerName, p.playerId)}>
             <span class="fzs-top-img">
-                <img class="fzs-top-logo" src="teams/${esc(p.teamAbbrev)}.png" alt="" loading="lazy" onerror="this.remove()">
+                <img class="fzs-top-logo" src="teams/${esc(club)}.png" alt="" loading="lazy" onerror="this.remove()">
                 <img class="fzs-top-mug" src="${esc(p.headshot || '')}" alt="" loading="lazy" onerror="this.remove()">
                 <span class="fzs-top-rank">${i + 1}</span>
-                ${proprios.get(fzsCle(p.playerName)) === moi ? '<span class="fzs-top-mine">À TOI</span>' : ''}
+                ${mien ? '<span class="fzs-top-mine">À TOI</span>' : ''}
             </span>
             <span class="fzs-top-body">
                 <span class="fzs-top-name">${esc(p.playerName)} <small>${esc(fzsPosition(p.position))}</small></span>
-                <span class="fzs-top-line">${esc(fzsLigneStats(p))}</span>
-                <strong>${fzsPts(p.pts)}</strong>
+                <span class="fzs-top-line">${esc(ligne)}</span>
+                <strong>${chiffre}</strong>
             </span>
-        </li>`).join('');
+        </li>`;
+}
+
+const FZS_CARTES_OS = `<ul class="fzs-rail fzs-top-list" aria-busy="true">${'<li class="fzs-top-card is-bone"></li>'.repeat(3)}</ul>`;
+
+/* ---- Meilleurs joueurs : 7 jours, 14, 30 ou 6 mois ----
+   Les fenêtres de l'ancien onglet « Meneurs » de la page Joueurs. Sans choix
+   de la personne, la plus courte qui a des joueurs (début de saison, pause
+   des Fêtes) ; une fois choisie, la fenêtre tient tant que la page reste
+   ouverte. */
+const FZS_FENETRES = [[7, '7 jours'], [14, '14 jours'], [30, '30 jours'], [180, '6 mois']];
+const fzsMeilleurs = { jours: null, montre: 7, jeton: 0 };
+
+function fzsJoueursFenetre(data) {
+    return fzsTrierSemaine(data && data.topPlayers).filter(p => p.pts > 0).slice(0, 10);
+}
+
+function fzsMeilleursHTML() {
+    const jours = fzsMeilleurs.jours || fzsMeilleurs.montre;
+    const onglets = FZS_FENETRES.map(([j, libelle]) =>
+        `<button type="button" data-fzs-fenetre="${j}" aria-pressed="${j === jours}">${libelle}</button>`).join('');
+    return `<section class="fzs-sec fzs-top" aria-labelledby="fzsTopTitre">
+            <header class="fzs-sh">${fzsIcone('trophee')}<h2 id="fzsTopTitre">Meilleurs joueurs</h2></header>
+            <div class="fzs-jours fzs-fenetres" role="group" aria-label="Période">${onglets}</div>
+            <div class="fzs-top-zone">${FZS_CARTES_OS}</div>
+            ${fzsPied('stats.html', 'Voir tous les joueurs')}
+        </section>`;
+}
+
+/** Les cartes d'une fenêtre, ou une phrase quand elle n'a personne. */
+function fzsMeilleursCartesHTML(joueurs, jours) {
+    if (!joueurs.length) {
+        const libelle = jours === 180 ? '6 derniers mois' : `${jours} derniers jours`;
+        return `<p class="fzs-empty">Aucun joueur n’a marqué dans les ${libelle}.</p>`;
+    }
+    const proprios = fzsProprietaires();
+    const moi = FZPool.team().name;
+    return `<ul class="fzs-rail fzs-top-list">${joueurs.map((p, i) =>
+        fzsCarteHTML(p, i, fzsLigneStats(p), fzsPts(p.pts), proprios.get(fzsCle(p.playerName)) === moi)).join('')}</ul>`;
+}
+
+function fzsRemplirMeilleurs(joueurs, jours) {
+    const bloc = document.querySelector('#fzSeasonHome .fzs-top');
+    if (!bloc) return;
+    fzsMeilleurs.montre = jours;
+    bloc.querySelectorAll('[data-fzs-fenetre]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.fzsFenetre) === jours)));
+    const zone = bloc.querySelector('.fzs-top-zone');
+    zone.classList.remove('fz-patiente');
+    zone.innerHTML = fzsMeilleursCartesHTML(joueurs, jours);
+}
+
+/**
+ * Lit puis dessine la fenêtre choisie. Sans choix, essaie les fenêtres dans
+ * l'ordre jusqu'à la première qui a des joueurs ; aucune n'en a : la section
+ * se cache, comme avant. Un clic pendant la lecture l'emporte (jeton).
+ */
+async function fzsRendreMeilleurs() {
+    const jeton = ++fzsMeilleurs.jeton;
+    const choisi = fzsMeilleurs.jours;
+    const essais = choisi ? [choisi] : FZS_FENETRES.map(([j]) => j);
+    for (const jours of essais) {
+        const joueurs = fzsJoueursFenetre(await fzsChargerFenetre(jours));
+        if (jeton !== fzsMeilleurs.jeton) return;
+        if (joueurs.length || choisi) { fzsRemplirMeilleurs(joueurs, jours); return; }
+    }
+    const bloc = document.querySelector('#fzSeasonHome .fzs-top');
+    if (bloc) bloc.hidden = true;
+}
+
+/** Un onglet de période : la fenêtre déjà lue s'affiche tout de suite ; sinon la liste pâlit le temps de la lire. */
+function fzsChoisirFenetre(jours) {
+    fzsMeilleurs.jours = jours;
+    const bloc = document.querySelector('#fzSeasonHome .fzs-top');
+    const lue = fzsLue(jours);
+    if (lue) fzsRemplirMeilleurs(fzsJoueursFenetre(lue), jours);
+    else {
+        bloc?.querySelectorAll('[data-fzs-fenetre]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.fzsFenetre) === jours)));
+        bloc?.querySelector('.fzs-top-zone')?.classList.add('fz-patiente');
+    }
+    bloc?.querySelector('.fzs-rail')?.scrollTo({ left: 0 });
+    // Relit au besoin (plus de 10 minutes) et redessine ; sans requête si la fenêtre est fraîche.
+    fzsRendreMeilleurs();
+}
+
+/* ---- Meneurs de la ligue ----
+   L'ancien onglet « Meneurs » de la page Joueurs, en carrousel : un onglet
+   par position (et les buts, les aides), dix cartes au chiffre de la saison.
+   /stats-leaders, qu'accueil.js lit déjà au chargement (userData.statsLeaders),
+   relu au plus toutes les 10 minutes. */
+const FZS_MENEURS = [
+    ['forwardsPoints', 'Attaquants', 'points', 'PTS'],
+    ['defensePoints', 'Défenseurs', 'points', 'PTS'],
+    ['goalieWins', 'Gardiens', 'wins', 'V'],
+    ['rookiePoints', 'Recrues', 'points', 'PTS'],
+    ['goalsLeaders', 'Buts', 'goals', 'B'],
+    ['assistsLeaders', 'Aides', 'assists', 'A']
+];
+const FZS_MENEURS_MS = 10 * 60 * 1000;
+const fzsMeneurs = { cat: 'forwardsPoints', data: null, lu: 0, requete: null };
+
+function fzsChargerMeneurs() {
+    if (fzsMeneurs.requete) return fzsMeneurs.requete;
+    if (fzsMeneurs.lu && Date.now() - fzsMeneurs.lu < FZS_MENEURS_MS) return Promise.resolve(fzsMeneurs.data);
+    const deja = typeof userData !== 'undefined' && userData.statsLeaders;
+    if (!fzsMeneurs.lu && deja && Array.isArray(deja.forwardsPoints)) {
+        fzsMeneurs.data = deja;
+        fzsMeneurs.lu = Date.now();
+        return Promise.resolve(deja);
+    }
+    fzsMeneurs.requete = fetch(`${BASE_URL}/stats-leaders`, { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : null))
+        .catch(() => null)
+        .then(data => {
+            if (data && Array.isArray(data.forwardsPoints)) fzsMeneurs.data = data;
+            fzsMeneurs.lu = Date.now();
+            fzsMeneurs.requete = null;
+            return fzsMeneurs.data;
+        });
+    return fzsMeneurs.requete;
+}
+
+/** La ligne sous le nom : buts, aides et matchs ; les matchs seulement chez les gardiens. */
+function fzsLigneMeneur(p) {
+    const pj = `${p.gamesPlayed || 0} PJ`;
+    return p.position === 'G' ? pj : `${p.goals || 0} B · ${p.assists || 0} A · ${pj}`;
+}
+
+function fzsMeneursCartesHTML() {
+    const data = fzsMeneurs.data;
+    if (!data) return fzsMeneurs.lu ? '<p class="fzs-empty">Les meneurs sont indisponibles pour le moment.</p>' : FZS_CARTES_OS;
+    const [cle, , stat, unite] = FZS_MENEURS.find(([k]) => k === fzsMeneurs.cat) || FZS_MENEURS[0];
+    const joueurs = (data[cle] || []).filter(p => p && p.playerName);
+    if (!joueurs.length) return '<p class="fzs-empty">Les meneurs apparaîtront après les premiers matchs de la saison.</p>';
+    const proprios = fzsProprietaires();
+    const moi = FZPool.team().name;
+    return `<ul class="fzs-rail fzs-top-list">${joueurs.map((p, i) =>
+        fzsCarteHTML(p, i, fzsLigneMeneur(p), `${fzsPts(p[stat])}<small>${unite}</small>`, proprios.get(fzsCle(p.playerName)) === moi)).join('')}</ul>`;
+}
+
+function fzsMeneursHTML() {
+    const onglets = FZS_MENEURS.map(([cle, libelle]) =>
+        `<button type="button" class="fzs-tab" data-fzs-meneur="${cle}" aria-pressed="${cle === fzsMeneurs.cat}">${libelle}</button>`).join('');
+    return `<section class="fzs-sec fzs-leaders" aria-labelledby="fzsMeneursTitre">
+            <header class="fzs-sh">${fzsIcone('etoile')}<h2 id="fzsMeneursTitre">Meneurs de la ligue</h2>${fzsPastille('Saison')}</header>
+            <div class="fzs-tabs is-defile" role="group" aria-label="Catégorie">${onglets}</div>
+            <div class="fzs-top-zone">${fzsMeneursCartesHTML()}</div>
+            ${fzsPied('stats.html?onglet=libres', 'Voir les agents libres')}
+        </section>`;
+}
+
+function fzsRemplirMeneurs() {
+    const bloc = document.querySelector('#fzSeasonHome .fzs-leaders');
+    if (!bloc) return;
+    bloc.querySelectorAll('[data-fzs-meneur]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fzsMeneur === fzsMeneurs.cat)));
+    bloc.querySelector('.fzs-top-zone').innerHTML = fzsMeneursCartesHTML();
+}
+
+async function fzsRendreMeneurs() {
+    await fzsChargerMeneurs();
+    fzsRemplirMeneurs();
 }
 
 /* Classements de la semaine : un onglet par position, et le filtre des
@@ -815,7 +987,7 @@ function fzsCeSoirClub(club, matchs) {
 function fzsClassementHTML() {
     const esc = escapeHTML;
     const etat = fzsClassement;
-    const data = fzsSemaine.data;
+    const data = fzsLue(7);
     const [, , cle] = FZS_POSITIONS.find(([k]) => k === etat.pos);
     const proprios = fzsProprietaires();
     const moi = FZPool.team().name;
@@ -860,9 +1032,10 @@ function fzsActualiserClassement() {
 }
 
 async function fzsRendreSemaine() {
-    const data = await fzsChargerSemaine();
+    fzsRendreMeilleurs();
+    fzsRendreMeneurs();
+    await fzsChargerSemaine();
     if (!document.getElementById('fzSeasonHome')) return;
-    fzsRemplirMeilleurs(data);
     fzsActualiserClassement();
 }
 
@@ -960,6 +1133,15 @@ function fzsAlignementsHTML() {
 document.addEventListener('click', e => {
     const root = document.getElementById('fzSeasonHome');
     if (!root || !root.contains(e.target)) return;
+    const fenetre = e.target.closest('[data-fzs-fenetre]');
+    if (fenetre) { fzsChoisirFenetre(Number(fenetre.dataset.fzsFenetre)); return; }
+    const meneur = e.target.closest('[data-fzs-meneur]');
+    if (meneur) {
+        fzsMeneurs.cat = meneur.dataset.fzsMeneur;
+        fzsRemplirMeneurs();
+        root.querySelector('.fzs-leaders .fzs-rail')?.scrollTo({ left: 0 });
+        return;
+    }
     const pos = e.target.closest('[data-fzs-pos]');
     if (pos) { fzsClassement.pos = pos.dataset.fzsPos; fzsClassement.plus = false; fzsActualiserClassement(); return; }
     if (e.target.closest('[data-fzs-libres]')) { fzsClassement.libres = !fzsClassement.libres; fzsActualiserClassement(); return; }
@@ -1018,6 +1200,7 @@ function renderSeasonHome({ tonight, movement, activeName }) {
         <div class="fzs-col fzs-col-b">
             ${fzsMatchsHTML(tonight)}
             ${fzsMeilleursHTML()}
+            ${fzsMeneursHTML()}
             ${fzsClassementHTML()}
         </div>
         ${fzsAlignementsHTML()}

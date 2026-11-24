@@ -1,18 +1,20 @@
 /* ============================================================
    STATS — FEUILLE DE FILTRES (maquette 2b)
    ------------------------------------------------------------
-   « Tous les joueurs » : la recherche et un bouton « Filtres » sur une
-   ligne, les filtres actifs dessous en pastilles retirables. Le bouton
-   ouvre une feuille : données (réelles ou projetées), position, agents
-   libres et club de la LNH. Chaque choix s'applique tout de suite.
+   « Tous les joueurs » et « Agents libres » : la recherche et un bouton
+   « Filtres » sur une ligne, les onglets de position dessous (#playerFilter),
+   puis les filtres actifs en pastilles retirables. Le bouton ouvre une
+   feuille : données (réelles ou projetées) et club de la LNH. Chaque choix
+   s'applique tout de suite.
 
    Aucune logique de tri ou de filtre ici : on écrit dans l'état d'index.js
-   (statsFilter, statsLibres, statsClub, #seasonMode) et on rappelle
-   updateTable(). Les pastilles #playerFilter et le champ #searchInput
-   gardent leurs écouteurs d'index.js ; ils ont seulement changé de place.
+   (statsLibres, statsClub, #seasonMode) et on rappelle updateTable(). Les
+   onglets #playerFilter et le champ #searchInput gardent leurs écouteurs
+   d'index.js.
 
    Le pool actif (activePool.js) dit qui appartient à qui : TOI, LIBRE, et
-   « Agents libres seulement ». Sans pool repêché, ni pastille ni option.
+   l'onglet « Agents libres » (statsLibres), qui ne garde que les joueurs
+   que personne n'a. Sans pool repêché, ni pastille ni agent libre.
    ============================================================ */
 (function () {
     const feuille = document.getElementById('sjFeuille');
@@ -22,8 +24,6 @@
     const badge = document.getElementById('sjBadge');
     const actifs = document.getElementById('sjActifs');
     const select = document.getElementById('seasonMode');
-    const libres = document.getElementById('sjLibres');
-    const libresLigne = document.getElementById('sjLibresLigne');
     const clubs = document.getElementById('sjClubs');
     const voir = document.getElementById('sjVoir');
     const corps = feuille.querySelector('.sj-feuille-corps');
@@ -102,11 +102,15 @@
         updateTable();
     });
 
-    // ==================== AGENTS LIBRES ====================
+    // ==================== ONGLET « AGENTS LIBRES » ====================
 
-    libres.addEventListener('change', () => {
-        statsLibres = libres.checked;
-        updateTable();
+    // switchStatsTab (stats.html) : « Agents libres » montre la même liste
+    // que « Tous les joueurs », sans les joueurs déjà pris dans le pool actif.
+    document.addEventListener('fz:stats-tab', e => {
+        const voulu = 'libres' === e.detail;
+        if (voulu === statsLibres) return;
+        statsLibres = voulu;
+        if ('undefined' != typeof fullPlayerData && fullPlayerData.length) updateTable();
     });
 
     // ==================== RÉINITIALISER ====================
@@ -114,7 +118,7 @@
     function toutEffacer() {
         if ('projection' === select.value) choisirSaison('stats');
         statsClub = '';
-        // index.js : recherche, position, tri, agents libres.
+        // index.js : recherche, position et tri ; l'onglet reste ouvert.
         reinitialiserFiltres();
         construireClubs();
     }
@@ -125,11 +129,9 @@
     const CROIX = '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 
     function filtresActifsListe() {
+        // La position et les agents libres se lisent déjà dans leurs onglets.
         const liste = [];
-        const chip = document.querySelector(`#playerFilter .st-chip[data-filter="${statsFilter}"]`);
-        if ('all' !== statsFilter && chip) liste.push({ cle: 'pos', libelle: chip.textContent });
         if (statsClub) liste.push({ cle: 'club', libelle: statsClub });
-        if (statsLibres) liste.push({ cle: 'libres', libelle: 'Agents libres' });
         if ('projection' === select.value) liste.push({ cle: 'saison', libelle: 'Projetées' });
         return liste;
     }
@@ -138,9 +140,7 @@
         if (!b) return;
         const cle = b.dataset.retirer;
         if ('tout' === cle) { toutEffacer(); return; }
-        if ('pos' === cle) choisirFiltre('all');
         if ('club' === cle) statsClub = '';
-        if ('libres' === cle) statsLibres = false;
         if ('saison' === cle) { choisirSaison('stats'); return; }
         updateTable();
     });
@@ -151,9 +151,6 @@
         document.getElementById('sjDonnees').innerHTML = [...select.options].map(o =>
             `<button type="button" role="radio" data-valeur="${o.value}" aria-checked="${o.selected}">${COURT[o.value] || o.textContent}</button>`
         ).join('');
-        libres.checked = statsLibres;
-        // Les clubs repêchés ne se filtrent pas : l'option ne vaut que pour les joueurs.
-        libres.disabled = 'teams' === statsFilter;
         if (null != dernierTotal) {
             voir.textContent = `Voir ${dernierTotal} ${1 === dernierTotal ? derniereSorte.replace(/s$/, '') : derniereSorte}`;
         }
@@ -206,8 +203,6 @@
         }
         const avant = proprio ? JSON.stringify([...proprio]) : '';
         proprio = carte;
-        libresLigne.hidden = !proprio;
-        if (!proprio && statsLibres) statsLibres = false;
         // Les données arrivent souvent après le premier rendu du tableau.
         if (avant !== (proprio ? JSON.stringify([...proprio]) : '')
             && 'undefined' != typeof fullPlayerData && fullPlayerData.length) updateTable();

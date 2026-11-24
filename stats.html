@@ -25,7 +25,6 @@
          dernier pour que ses règles spécialisent celles d'index.css. -->
     <link rel="stylesheet" href="injuries.css?v=20260926b">
     <link rel="stylesheet" href="statsLeaders.css?v=20260926b">
-    <link rel="stylesheet" href="statsTopPlayers.css?v=20260926b">
     <link rel="stylesheet" href="stats-premium.css?v=20261116a">
     <link rel="stylesheet" href="statsLineup.css?v=20261115b">
     <script defer src="vendor/jquery-3.6.0.min.js"></script>
@@ -38,7 +37,7 @@
     <link rel="stylesheet" href="bilanSoiree.css?v=20261115b">
     <!-- Maquette 2b « Feuille de filtres » : en dernier, elle habille
          l'en-tête, les onglets et la liste « Tous les joueurs ». -->
-    <link rel="stylesheet" href="statsFiltres.css?v=20261116a">
+    <link rel="stylesheet" href="statsFiltres.css?v=20261124a">
 </head>
 <body data-page="stats" class="fz-stats" data-stats-tab="tous">
     <nav class="navbar"></nav>
@@ -47,7 +46,7 @@
     <!-- HERO HEADER                                                   -->
     <!-- ============================================================ -->
     <!-- La saison affichée ne sert qu'à « Tous les joueurs » :
-         statsFiltres.css la cache sur les deux autres onglets. -->
+         statsFiltres.css la cache sur « Trios LNH ». -->
     <header class="stats-hero">
         <div class="stats-hero-inner sj-head">
             <span class="sj-saison" id="sjSaison"></span>
@@ -56,68 +55,15 @@
     </header>
 
     <!-- ============================================================ -->
-    <!-- SUB-NAV — Tous les joueurs / Meneurs / Alignements           -->
+    <!-- SUB-NAV — Tous les joueurs / Agents libres / Alignements     -->
     <!-- ============================================================ -->
     <div class="stats-subnav">
         <div class="stats-subnav-inner">
             <button class="stats-subnav-btn active" data-stats-tab="tous" onclick="switchStatsTab('tous')">Tous les joueurs</button>
-            <button class="stats-subnav-btn" data-stats-tab="meneurs" onclick="switchStatsTab('meneurs')">Meneurs</button>
+            <!-- Même liste que « Tous les joueurs », sans ceux qui sont pris
+                 dans le pool actif (statsFiltres.js). -->
+            <button class="stats-subnav-btn" data-stats-tab="libres" onclick="switchStatsTab('libres')">Agents libres</button>
             <button class="stats-subnav-btn" data-stats-tab="alignements" onclick="switchStatsTab('alignements')">Trios LNH</button>
-        </div>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- MENEURS TAB — league leaders + top performing players         -->
-    <!-- ============================================================ -->
-    <div class="stats-tab-panel" data-stats-panel="meneurs" style="display:none;">
-        <!-- League leaders — six top-5 boards -->
-        <div class="stats-leaders-section">
-            <div class="stats-leaders-head">
-                <h2 class="stats-leaders-title"><span data-icon="trophy" data-icon-size="22"></span> Meneurs de la ligue</h2>
-            </div>
-            <!-- Les six palmarès en os (fzSquelette.css) : vrais titres, os à la place
-                 des joueurs. statsLeaders.js remplace la grille. -->
-            <div class="leaders-grid" id="statsLeadersGrid" aria-busy="true">
-                <div class="leader-card leader-skeleton" aria-hidden="true"><div class="leader-card-head"><span class="leader-card-icon" data-icon="hockey" data-icon-size="15"></span><span class="leader-card-title">Pointeurs — Attaquants</span></div><div class="leader-featured"><span class="fz-bone is-round lk-photo"></span><span class="leader-featured-id"><span class="fz-bone lk-name"></span><span class="fz-bone-flat lk-meta"></span></span><span class="fz-bone lk-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:118px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:96px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:128px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:104px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div></div>
-                <div class="leader-card leader-skeleton" aria-hidden="true"><div class="leader-card-head"><span class="leader-card-icon" data-icon="shield" data-icon-size="15"></span><span class="leader-card-title">Pointeurs — Défenseurs</span></div><div class="leader-featured"><span class="fz-bone is-round lk-photo"></span><span class="leader-featured-id"><span class="fz-bone lk-name"></span><span class="fz-bone-flat lk-meta"></span></span><span class="fz-bone lk-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:104px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:132px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:96px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:112px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div></div>
-                <div class="leader-card leader-skeleton" aria-hidden="true"><div class="leader-card-head"><span class="leader-card-icon" data-icon="goal" data-icon-size="15"></span><span class="leader-card-title">Meneurs — Buts</span></div><div class="leader-featured"><span class="fz-bone is-round lk-photo"></span><span class="leader-featured-id"><span class="fz-bone lk-name"></span><span class="fz-bone-flat lk-meta"></span></span><span class="fz-bone lk-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:126px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:100px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:116px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:92px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div></div>
-                <div class="leader-card leader-skeleton" aria-hidden="true"><div class="leader-card-head"><span class="leader-card-icon" data-icon="arrows" data-icon-size="15"></span><span class="leader-card-title">Meneurs — Aides</span></div><div class="leader-featured"><span class="fz-bone is-round lk-photo"></span><span class="leader-featured-id"><span class="fz-bone lk-name"></span><span class="fz-bone-flat lk-meta"></span></span><span class="fz-bone lk-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:98px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:120px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:108px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:130px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div></div>
-                <div class="leader-card leader-skeleton" aria-hidden="true"><div class="leader-card-head"><span class="leader-card-icon" data-icon="star" data-icon-size="15"></span><span class="leader-card-title">Pointeurs — Recrues</span></div><div class="leader-featured"><span class="fz-bone is-round lk-photo"></span><span class="leader-featured-id"><span class="fz-bone lk-name"></span><span class="fz-bone-flat lk-meta"></span></span><span class="fz-bone lk-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:112px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:94px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:124px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:102px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div></div>
-                <div class="leader-card leader-skeleton" aria-hidden="true"><div class="leader-card-head"><span class="leader-card-icon" data-icon="trophy" data-icon-size="15"></span><span class="leader-card-title">Victoires — Gardiens</span></div><div class="leader-featured"><span class="fz-bone is-round lk-photo"></span><span class="leader-featured-id"><span class="fz-bone lk-name"></span><span class="fz-bone-flat lk-meta"></span></span><span class="fz-bone lk-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:130px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:106px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:98px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div><div class="leader-row"><span class="fz-bone-flat lk-rank"></span><span class="fz-bone lk-row-name" style="--w:118px"></span><span class="fz-bone-flat lk-team"></span><span class="fz-bone lk-row-val"></span></div></div>
-            </div>
-        </div>
-
-        <!-- Top performing players (relocated from index.html) -->
-        <div class="top-players-section">
-            <div class="section-title-row">
-                <div class="section-title-group">
-                    <span class="section-icon" data-icon="hockey" data-icon-size="22"></span>
-                    <h2 class="section-title">Meilleurs joueurs</h2>
-                    <span class="section-subtitle" id="timeRangeLabel">7 derniers jours</span>
-                </div>
-                <div class="time-filters">
-                    <button class="time-filter active" data-days="7" onclick="changeTimeRange(7)">7J</button>
-                    <button class="time-filter" data-days="14" onclick="changeTimeRange(14)">14J</button>
-                    <button class="time-filter" data-days="30" onclick="changeTimeRange(30)">30J</button>
-                    <!-- statsTopPlayers.js ne laisse visibles que les fenêtres qui ont des joueurs -->
-                    <button class="time-filter" data-days="180" onclick="changeTimeRange(180)" id="timeFilter6M">6M</button>
-                </div>
-            </div>
-
-            <!-- Les cinq cartes en os (fzSquelette.css), aux classes de statsTopPlayers.js. -->
-            <div id="topPlayersSkeleton" aria-busy="true">
-                <div class="players-grid">
-                    <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge gold">1</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:96px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
-                    <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge silver">2</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:84px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
-                    <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge bronze">3</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:104px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
-                    <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge normal">4</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:90px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
-                    <div class="player-card tp-sk-card" aria-hidden="true"><span class="player-rank-badge normal">5</span><span class="player-card-photo fz-bone"></span><span class="fz-bone tp-sk-name" style="--w:98px"></span><span class="fz-bone-flat tp-sk-team"></span><div class="player-card-stats"><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div><div class="pc-stat"><span class="fz-bone tp-sk-val"></span><span class="fz-bone-flat tp-sk-lbl"></span></div></div></div>
-                </div>
-            </div>
-            <!-- Content -->
-            <div class="actual-content players-grid" id="topPlayersList" style="display:none;">
-                <!-- Filled by JS -->
-            </div>
         </div>
     </div>
 
@@ -147,13 +93,14 @@
 
     <!-- ============================================================ -->
     <!-- TOUS TAB — full searchable/sortable player table              -->
+    <!-- (l'onglet « Agents libres » montre ce même panneau)           -->
     <!-- ============================================================ -->
     <div class="stats-tab-panel" data-stats-panel="tous">
         <div class="stats-container">
             <!-- Recherche et bouton Filtres sur une ligne ; dessous, les
-                 filtres actifs, chacun retirable d'un geste (statsFiltres.js).
-                 On trie en touchant l'en-tête d'une colonne
-                 (initStatsHeaderSorting, index.js). -->
+                 onglets de position, puis les filtres actifs, chacun
+                 retirable d'un geste (statsFiltres.js). On trie en touchant
+                 l'en-tête d'une colonne (initStatsHeaderSorting, index.js). -->
             <div class="sj-outils">
                 <div class="st-search">
                     <span class="st-search-icon" data-icon="search" data-icon-size="18" aria-hidden="true"></span>
@@ -168,6 +115,17 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
                     Filtres<span class="sj-badge" id="sjBadge" hidden></span>
                 </button>
+            </div>
+            <div class="st-chips sj-positions" id="playerFilter" role="group" aria-label="Filtrer par position">
+                <button type="button" class="st-chip" data-filter="all" aria-pressed="true">Tous</button>
+                <button type="button" class="st-chip" data-filter="offensive" aria-pressed="false">Attaquants</button>
+                <button type="button" class="st-chip" data-filter="C" aria-pressed="false">Centres</button>
+                <button type="button" class="st-chip" data-filter="L" aria-pressed="false">Ailiers G</button>
+                <button type="button" class="st-chip" data-filter="R" aria-pressed="false">Ailiers D</button>
+                <button type="button" class="st-chip" data-filter="defensive" aria-pressed="false">Défenseurs</button>
+                <button type="button" class="st-chip" data-filter="goalies" aria-pressed="false">Gardiens</button>
+                <button type="button" class="st-chip" data-filter="rookies" aria-pressed="false">Recrues</button>
+                <button type="button" class="st-chip" data-filter="teams" aria-pressed="false">Équipes</button>
             </div>
             <div class="sj-actifs" id="sjActifs" hidden></div>
 
@@ -225,6 +183,7 @@
     <!-- ------------------------------------------------------------ -->
     <!-- Monte du bas sur téléphone, s'ouvre au centre au bureau. Chaque -->
     <!-- choix s'applique tout de suite ; « Voir N joueurs » referme.   -->
+    <!-- La position et les agents libres sont des onglets de la page.  -->
     <!-- ============================================================ -->
     <div class="sj-feuille" id="sjFeuille" hidden>
         <button type="button" class="sj-voile" data-fermer aria-label="Fermer les filtres" tabindex="-1"></button>
@@ -249,30 +208,6 @@
             </div>
 
             <div class="sj-groupe">
-                <span class="sj-etiquette">Position</span>
-                <div class="st-chips" id="playerFilter" role="group" aria-label="Filtrer par position">
-                    <button type="button" class="st-chip" data-filter="all" aria-pressed="true">Tous</button>
-                    <button type="button" class="st-chip" data-filter="offensive" aria-pressed="false">Attaquants</button>
-                    <button type="button" class="st-chip" data-filter="C" aria-pressed="false">Centres</button>
-                    <button type="button" class="st-chip" data-filter="L" aria-pressed="false">Ailiers G</button>
-                    <button type="button" class="st-chip" data-filter="R" aria-pressed="false">Ailiers D</button>
-                    <button type="button" class="st-chip" data-filter="defensive" aria-pressed="false">Défenseurs</button>
-                    <button type="button" class="st-chip" data-filter="goalies" aria-pressed="false">Gardiens</button>
-                    <button type="button" class="st-chip" data-filter="rookies" aria-pressed="false">Recrues</button>
-                    <button type="button" class="st-chip" data-filter="teams" aria-pressed="false">Équipes</button>
-                </div>
-            </div>
-
-            <!-- Sans pool repêché, personne n'est « pris » : la ligne reste cachée. -->
-            <label class="sj-libres" id="sjLibresLigne" hidden>
-                <span class="sj-libres-texte">
-                    <span class="sj-libres-titre">Agents libres seulement</span>
-                    <span class="sj-libres-sous">Masquer les joueurs déjà repêchés</span>
-                </span>
-                <input type="checkbox" role="switch" class="sj-switch" id="sjLibres">
-            </label>
-
-            <div class="sj-groupe">
                 <span class="sj-etiquette">Équipe</span>
                 <div class="sj-clubs" id="sjClubs" role="group" aria-label="Filtrer par équipe"></div>
             </div>
@@ -294,13 +229,9 @@
          le fichier allégé draftkit-watchlist.json, pas la trousse entière. -->
     <script defer src="draftkitData.js?v=20261030a"></script>
     <script defer src="draft-watch.js?v=20260925"></script>
-    <script defer src="index.js?v=20261116a"></script>
+    <script defer src="index.js?v=20261124a"></script>
     <!-- Feuille de filtres : après index.js, dont il lit l'état. -->
-    <script defer src="statsFiltres.js?v=20261030a"></script>
-    <!-- Meneurs de la ligue : lit BASE_URL déjà déclaré par index.js ci-dessus. -->
-    <script defer src="statsLeaders.js?v=20260925c"></script>
-    <!-- Meilleurs joueurs : lit BASE_URL (index.js) et escapeHTML (statsLeaders.js). -->
-    <script defer src="statsTopPlayers.js?v=20261015a"></script>
+    <script defer src="statsFiltres.js?v=20261124a"></script>
     <!-- Alignements : trios de chaque club, chargés à l'ouverture de l'onglet. -->
     <script defer src="statsLineup.js?v=20261114a"></script>
     <!-- Points du soir : la fiche d'un joueur ouverte en plein match montre
@@ -324,23 +255,28 @@
     <script defer src="poolInvites.js?v=20261114a"></script>
     <script defer src="notifications.js?v=20261114a"></script>
     <script>
-    // Sub-nav — "Tous les joueurs" / "Meneurs" / "Alignements" tabs
+    // Sub-nav — "Tous les joueurs" / "Agents libres" / "Alignements" tabs.
+    // « Agents libres » montre le panneau de « Tous les joueurs » :
+    // statsFiltres.js y retire les joueurs pris dans le pool actif.
     function switchStatsTab(tab) {
+        var panneau = tab === 'libres' ? 'tous' : tab;
         document.querySelectorAll('.stats-subnav-btn').forEach(function(btn) {
-            btn.classList.toggle('active', btn.dataset.statsTab === tab);
+            var actif = btn.dataset.statsTab === tab;
+            btn.classList.toggle('active', actif);
+            btn.setAttribute('aria-pressed', String(actif));
         });
         document.body.dataset.statsTab = tab;
         document.querySelectorAll('.stats-tab-panel').forEach(function(panel) {
-            panel.style.display = panel.dataset.statsPanel === tab ? '' : 'none';
+            panel.style.display = panel.dataset.statsPanel === panneau ? '' : 'none';
         });
         // statsLineup.js ne charge rien tant que son onglet reste fermé.
         document.dispatchEvent(new CustomEvent('fz:stats-tab', { detail: tab }));
     }
 
-    // stats.html?onglet=meneurs : « Voir les meneurs », à l'accueil, ouvre
-    // la page sur cet onglet (?onglet=alignements est lu par statsLineup.js).
+    // stats.html?onglet=libres ouvre la page sur les agents libres
+    // (?onglet=alignements est lu par statsLineup.js).
     document.addEventListener('DOMContentLoaded', function() {
-        if (new URLSearchParams(window.location.search).get('onglet') === 'meneurs') switchStatsTab('meneurs');
+        if (new URLSearchParams(window.location.search).get('onglet') === 'libres') switchStatsTab('libres');
     });
 
     // Auto-open player career modal when coming from accueil hot players

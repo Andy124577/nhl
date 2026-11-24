@@ -8,7 +8,7 @@
  *    d'un simple require(). Rien ici n'est nécessaire pour eux.
  *
  * 2. Les scripts de page — classement.js, navbar.js, trade.js,
- *    statsLeaders.js, statsTopPlayers.js — touchent au DOM dès leur première
+ *    accueil.js, statsTopPlayers.js — touchent au DOM dès leur première
  *    ligne (document.addEventListener, $(document).ready). Les charger en
  *    entier hors navigateur est impossible, et leur poser un pied d'export
  *    n'y changerait rien.

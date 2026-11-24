@@ -204,8 +204,8 @@ function getTeamLogoPath(t) {
  */
 let statsFilter = "all";
 let statsSort = "points";
-// La feuille de filtres (statsFiltres.js) : « Agents libres seulement », les
-// joueurs que personne n'a dans le pool actif ; et un club de la LNH.
+// L'onglet « Agents libres » (stats.html, statsFiltres.js) : les joueurs que
+// personne n'a dans le pool actif. La feuille de filtres : un club de la LNH.
 let statsLibres = false;
 let statsClub = "";
 
@@ -339,7 +339,7 @@ function updateTable() {
     const sources = sourcesDuTableau(),
         patineurs = sources.patineurs;
     statsAutres = null;
-    if ("teams" === t) return void populateTeamTable(clubsTrouves(a, sources.clubs));
+    if ("teams" === t) return void populateTeamTable(clubsTrouves(a, sources.clubs).filter(c => estLibre(c.teamFullName)));
     if ("goalies" === t) return void populateGoalieTable(gardiensTrouves(a, sources.gardiens));
     const e = cleDeTri(SKATER_COLUMNS);
     let n;
@@ -381,12 +381,14 @@ function viderRecherche() {
     synchroniserEffacer();
 }
 
-/** Bouton de l'état vide : tout revient à l'ouverture de la page, sauf la saison. */
+/**
+ * Bouton de l'état vide : tout revient à l'ouverture de la page, sauf la
+ * saison et l'onglet (« Agents libres » reste ouvert).
+ */
 function reinitialiserFiltres() {
     viderRecherche();
     choisirFiltre("all");
     statsSort = "points";
-    statsLibres = false;
     statsClub = "";
     updateTable();
 }
@@ -486,9 +488,9 @@ function colgroupDe(columns) {
     return `<colgroup>${columns.map(c => `<col${c.w ? ` style="--col-w:${c.w}"` : ''}>`).join('')}</colgroup>`;
 }
 
-/** Vrai dès que la recherche ou une pastille restreint la liste. */
+/** Vrai dès que la recherche, un onglet de position ou un club restreint la liste. */
 function filtresActifs() {
-    return "all" !== statsFilter || statsLibres || !!statsClub || !!document.getElementById("searchInput")?.value.trim();
+    return "all" !== statsFilter || !!statsClub || !!document.getElementById("searchInput")?.value.trim();
 }
 
 /**
@@ -498,6 +500,11 @@ function filtresActifs() {
  * elle se relance alors sous « Tous », qui fouille tout.
  */
 function buildEmptyState(colspan, message, hint) {
+    // « Agents libres » sans pool repêché : personne n'est pris, rien à lister.
+    if (statsLibres && null === proprioJoueur("")) {
+        message = "Aucun pool repêché";
+        hint = "Les agents libres sont les joueurs que personne n’a dans ton pool actif. Choisis un pool repêché pour les voir.";
+    }
     const partout = "all" !== statsFilter && !!document.getElementById("searchInput")?.value.trim()
         ? '<button type="button" class="table-empty-reset" data-action="search-all">Chercher dans toutes les positions</button>'
         : '';

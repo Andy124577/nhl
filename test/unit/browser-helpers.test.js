@@ -722,8 +722,8 @@ describe('classement — chaque choix paraît et compte', () => {
     });
 });
 
-describe('statsLeaders — escapeHTML', () => {
-    const { escapeHTML } = chargerFonctions('statsLeaders.js', ['escapeHTML']);
+describe('accueil — escapeHTML', () => {
+    const { escapeHTML } = chargerFonctions('accueil.js', ['escapeHTML']);
 
     test('neutralise une charge de script', () => {
         assert.equal(escapeHTML('<script>alert(1)</script>'), '&lt;script&gt;alert(1)&lt;/script&gt;');
