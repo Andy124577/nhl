@@ -595,12 +595,16 @@ function estRecrue(joueur) {
     return recruesIds.has(joueur.playerId);
 }
 
-/** Pastilles après la position : « R » d'une recrue, puis TOI ou LIBRE dans le pool actif. */
+/**
+ * Pastilles après la position : « R » d'une recrue, puis TOI ou LIBRE dans
+ * le pool actif. Sous l'onglet « Agents libres », tout le monde est libre :
+ * la pastille LIBRE n'y dirait rien.
+ */
 function pastillesJoueur(nom, recrue) {
     const proprio = proprioJoueur(nom);
     return (recrue ? '<abbr class="sj-tag sj-tag-recrue" title="Recrue">R</abbr>' : "")
         + ("moi" === proprio ? '<span class="sj-tag sj-tag-moi" title="Dans ton équipe">TOI</span>'
-            : "libre" === proprio ? '<span class="sj-tag sj-tag-libre" title="Personne ne l’a dans ce pool">LIBRE</span>' : "");
+            : "libre" === proprio && !statsLibres ? '<span class="sj-tag sj-tag-libre" title="Personne ne l’a dans ce pool">LIBRE</span>' : "");
 }
 
 async function populatePlayerTable(t) {

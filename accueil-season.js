@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    De haut en bas : ma position, les matchs ce soir, mes joueurs ce soir,
    mon duel (tête-à-tête seulement), les meilleurs joueurs (7 jours, 14, 30
-   ou 6 mois), les meneurs de la ligue, l'activité de la ligue, les
+   ou 6 mois), l'activité de la ligue, les meneurs de la ligue, les
    classements de la semaine par position, les alignements des 32 clubs et,
    tout en bas, À lire.
 
@@ -443,11 +443,18 @@ function fzsZoneCorpsHTML(g, feuille) {
         lignes.push(barre('Avantage numérique', an.detail.away, an.detail.home, buts(an.detail.away), buts(an.detail.home)));
     }
     // Mes joueurs du pool : une étoile rouge, comme au résumé de la feuille
-    // de match (match.js). Par numéro LNH, sinon par nom.
+    // de match (match.js). Par numéro LNH, sinon par nom. Chaque joueur,
+    // buteur ou passeur, ouvre sa fiche par-dessus la zone (fzsZoneJoueur).
     const mes = activeRosterNames();
     const mesIds = new Set(mes.map(n => Number(getPlayerStats(n)?.playerId)).filter(Boolean));
     const mesNoms = new Set(mes);
-    const nom = j => `${esc(j.name)}${mesIds.has(Number(j.playerId)) || mesNoms.has(j.name) ? FZS_MON_JOUEUR : ''}`;
+    const nom = j => {
+        const etoile = mesIds.has(Number(j.playerId)) || mesNoms.has(j.name) ? FZS_MON_JOUEUR : '';
+        if (!j.playerId) return `${esc(j.name)}${etoile}`;
+        return `<button type="button" class="fzs-zone-joueur" data-fzs-zone-joueur="${esc(j.playerId)}" data-fzs-nom="${esc(j.name)}" aria-label="Voir la fiche de ${esc(j.name)}">${esc(j.name)}</button>${etoile}`;
+    };
+    // Le logo du club qui marque ; son sigle si le logo manque.
+    const logo = club => `<img src="teams/${esc(club)}.png" alt="${esc(club)}" title="${esc(club)}" width="24" height="24" loading="lazy" onerror="this.replaceWith(this.alt)">`;
     const buts = [];
     (feuille.scoring || []).forEach(p => {
         const per = p.type === 'OT' ? 'Prol.' : p.number ? fzsOrdinal(p.number) : '';
@@ -455,7 +462,7 @@ function fzsZoneCorpsHTML(g, feuille) {
     });
     return `${lignes.length ? `<ul class="fzs-zone-stats">${lignes.join('')}</ul>` : ''}
         ${buts.length ? `<h3 class="fzs-zone-h">Buts</h3><ol class="fzs-zone-goals">${buts.map(b => `
-            <li><time>${esc(b.t)}</time><b>${esc(b.club)}</b><span>${b.qui}${b.aides ? `<small>${b.aides}</small>` : ''}</span></li>`).join('')}</ol>`
+            <li><time>${esc(b.t)}</time><span class="fzs-zone-goal-club">${b.club ? logo(b.club) : ''}</span><span>${b.qui}${b.aides ? `<small>${b.aides}</small>` : ''}</span></li>`).join('')}</ol>`
             : '<p class="fzs-zone-note">Aucun but pour l’instant.</p>'}`;
 }
 
@@ -515,9 +522,23 @@ function fzsFermerZone(rendreFocus = true) {
     fzsZoneRetour = null;
 }
 
+/** La fiche d'un joueur de la Zone de match, ouverte par-dessus elle (careerModal.js). */
+function fzsZoneJoueur(bouton) {
+    const id = bouton.dataset.fzsZoneJoueur;
+    if (typeof fzhOpenPlayerCareer === 'function') fzhOpenPlayerCareer(id, bouton.dataset.fzsNom);
+    else window.location.href = `stats.html?viewPlayer=${encodeURIComponent(id)}`;
+}
+
+/** Vrai quand la fiche d'un joueur est ouverte : Échap la ferme, elle, pas la zone dessous. */
+function fzsFicheOuverte() {
+    return document.getElementById('careerStatsModal')?.style.display === 'block';
+}
+
 document.addEventListener('click', e => {
     const fermer = e.target.closest?.('#fzsZone [data-fzs-fermer]');
     if (fermer) { fzsFermerZone(); return; }
+    const joueurZone = e.target.closest?.('#fzsZone [data-fzs-zone-joueur]');
+    if (joueurZone) { fzsZoneJoueur(joueurZone); return; }
     const jour = e.target.closest?.('#fzSeasonHome [data-fzs-jour]');
     if (jour) {
         fzsFiltreChoisi = jour.dataset.fzsJour;
@@ -530,7 +551,7 @@ document.addEventListener('click', e => {
     if (carte && carte.dataset.id) fzsOuvrirZone(carte.dataset.id, carte);
 });
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && document.getElementById('fzsZone')) fzsFermerZone();
+    if (e.key === 'Escape' && document.getElementById('fzsZone') && !fzsFicheOuverte()) fzsFermerZone();
 });
 
 /* ---- Mes joueurs ce soir ----
@@ -893,11 +914,14 @@ function fzsChoisirFenetre(jours) {
 }
 
 /* ---- Meneurs de la ligue ----
-   L'ancien onglet « Meneurs » de la page Joueurs, en carrousel : un onglet
-   par position (et les buts, les aides), dix cartes au chiffre de la saison.
+   L'ancien onglet « Meneurs » de la page Joueurs, en carrousel sous
+   « Activité de la ligue » : un onglet par position (et les buts, les
+   aides), dix cartes au chiffre de la saison. « Tout », l'onglet de départ,
+   réunit les pointeurs attaquants, défenseurs et recrues.
    /stats-leaders, qu'accueil.js lit déjà au chargement (userData.statsLeaders),
    relu au plus toutes les 10 minutes. */
 const FZS_MENEURS = [
+    ['tout', 'Tout', 'points', 'PTS'],
     ['forwardsPoints', 'Attaquants', 'points', 'PTS'],
     ['defensePoints', 'Défenseurs', 'points', 'PTS'],
     ['goalieWins', 'Gardiens', 'wins', 'V'],
@@ -906,7 +930,7 @@ const FZS_MENEURS = [
     ['assistsLeaders', 'Aides', 'assists', 'A']
 ];
 const FZS_MENEURS_MS = 10 * 60 * 1000;
-const fzsMeneurs = { cat: 'forwardsPoints', data: null, lu: 0, requete: null };
+const fzsMeneurs = { cat: 'tout', data: null, lu: 0, requete: null };
 
 function fzsChargerMeneurs() {
     if (fzsMeneurs.requete) return fzsMeneurs.requete;
@@ -935,11 +959,30 @@ function fzsLigneMeneur(p) {
     return p.position === 'G' ? pj : `${p.goals || 0} B · ${p.assists || 0} A · ${pj}`;
 }
 
+/**
+ * Les meneurs d'une catégorie. « Tout » : les pointeurs attaquants,
+ * défenseurs et recrues réunis, sans doublon (une recrue est aussi un
+ * attaquant ou un défenseur), les dix premiers aux points. Les dix meilleurs
+ * de chaque liste suffisent : un des dix premiers patineurs de la ligue est
+ * forcément parmi les dix premiers de sa position.
+ */
+function fzsMeneursListe(data, cle) {
+    if (cle !== 'tout') return (data[cle] || []).filter(p => p && p.playerName);
+    const parJoueur = new Map();
+    ['forwardsPoints', 'defensePoints', 'rookiePoints'].forEach(c => (data[c] || []).forEach(p => {
+        const id = p && p.playerName ? String(p.playerId || p.playerName) : null;
+        if (id && !parJoueur.has(id)) parJoueur.set(id, p);
+    }));
+    return [...parJoueur.values()]
+        .sort((a, b) => (b.points || 0) - (a.points || 0) || (b.goals || 0) - (a.goals || 0))
+        .slice(0, 10);
+}
+
 function fzsMeneursCartesHTML() {
     const data = fzsMeneurs.data;
     if (!data) return fzsMeneurs.lu ? '<p class="fzs-empty">Les meneurs sont indisponibles pour le moment.</p>' : FZS_CARTES_OS;
     const [cle, , stat, unite] = FZS_MENEURS.find(([k]) => k === fzsMeneurs.cat) || FZS_MENEURS[0];
-    const joueurs = (data[cle] || []).filter(p => p && p.playerName);
+    const joueurs = fzsMeneursListe(data, cle);
     if (!joueurs.length) return '<p class="fzs-empty">Les meneurs apparaîtront après les premiers matchs de la saison.</p>';
     const proprios = fzsProprietaires();
     const moi = FZPool.team().name;
@@ -954,7 +997,6 @@ function fzsMeneursHTML() {
             <header class="fzs-sh">${fzsIcone('etoile')}<h2 id="fzsMeneursTitre">Meneurs de la ligue</h2>${fzsPastille('Saison')}</header>
             <div class="fzs-tabs is-defile" role="group" aria-label="Catégorie">${onglets}</div>
             <div class="fzs-top-zone">${fzsMeneursCartesHTML()}</div>
-            ${fzsPied('stats.html?onglet=libres', 'Voir les agents libres')}
         </section>`;
 }
 
@@ -1196,11 +1238,11 @@ function renderSeasonHome({ tonight, movement, activeName }) {
             ${estH2H ? fzsVersusHTML(activeName) : fzsHeroHTML(activeName, movement)}
             ${fzsJoueursHTML(tonight, activeName)}
             ${fzsActiviteHTML()}
+            ${fzsMeneursHTML()}
         </div>
         <div class="fzs-col fzs-col-b">
             ${fzsMatchsHTML(tonight)}
             ${fzsMeilleursHTML()}
-            ${fzsMeneursHTML()}
             ${fzsClassementHTML()}
         </div>
         ${fzsAlignementsHTML()}

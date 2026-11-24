@@ -37,18 +37,18 @@ describe('accueil de saison', () => {
         assert.doesNotMatch(SAISON, /fzsLoadNews|fzmNewsWrap/);
     });
 
-    test('de haut en bas, comme la maquette « 6b Éditorial » : position, mes joueurs, activité ; matchs, meilleurs, meneurs, classements ; alignements, À lire', () => {
+    test('de haut en bas, comme la maquette « 6b Éditorial » : position, mes joueurs, activité, meneurs ; matchs, meilleurs, classements ; alignements, À lire', () => {
         const rendu = corpsRendu();
-        const ordre = ['fzsHeroHTML', 'fzsJoueursHTML', 'fzsActiviteHTML', 'fzsMatchsHTML', 'fzsMeilleursHTML', 'fzsMeneursHTML', 'fzsClassementHTML', 'fzsAlignementsHTML', 'data-fz-bloc="actualites"']
+        const ordre = ['fzsHeroHTML', 'fzsJoueursHTML', 'fzsActiviteHTML', 'fzsMeneursHTML', 'fzsMatchsHTML', 'fzsMeilleursHTML', 'fzsClassementHTML', 'fzsAlignementsHTML', 'data-fz-bloc="actualites"']
             .map(cle => rendu.indexOf(cle));
         ordre.forEach((pos, i) => assert.ok(pos >= 0, `bloc ${i} absent`));
         assert.deepEqual([...ordre].sort((x, y) => x - y), ordre, 'les blocs doivent suivre cet ordre');
         // Au téléphone, une seule colonne dans l'ordre de la maquette.
         const css = lire('accueil-season.css');
         const rang = cls => Number(css.match(new RegExp(`\\.fzs \\.${cls} \\{ order: (\\d+); \\}`))[1]);
-        const telephone = ['fzs-hero', 'fzs-games', 'fzs-mine', 'fzs-top', 'fzs-leaders', 'fzs-activity', 'fzs-ranks', 'fzs-lines', 'fzs-read'].map(rang);
-        // Les meneurs suivent les meilleurs joueurs, au téléphone aussi.
-        assert.equal(rang('fzs-leaders') - rang('fzs-top'), 1);
+        const telephone = ['fzs-hero', 'fzs-games', 'fzs-mine', 'fzs-top', 'fzs-activity', 'fzs-leaders', 'fzs-ranks', 'fzs-lines', 'fzs-read'].map(rang);
+        // Les meneurs juste sous « Activité de la ligue », au téléphone aussi.
+        assert.equal(rang('fzs-leaders') - rang('fzs-activity'), 1);
         assert.deepEqual([...telephone].sort((x, y) => x - y), telephone);
         // Les alignements des 32 clubs juste avant À lire.
         assert.equal(rang('fzs-read') - rang('fzs-lines'), 1);
@@ -166,11 +166,30 @@ describe('les sections de la maquette', () => {
     test('meilleurs joueurs : 7 jours, 14, 30 ou 6 mois ; meneurs : une catégorie par onglet', () => {
         assert.match(SAISON, /const FZS_FENETRES = \[\[7, '7 jours'\], \[14, '14 jours'\], \[30, '30 jours'\], \[180, '6 mois'\]\]/);
         assert.match(SAISON, /hot-players-last\$\{jours\}days/);
-        for (const cle of ['forwardsPoints', 'defensePoints', 'goalieWins', 'rookiePoints', 'goalsLeaders', 'assistsLeaders']) {
+        for (const cle of ['tout', 'forwardsPoints', 'defensePoints', 'goalieWins', 'rookiePoints', 'goalsLeaders', 'assistsLeaders']) {
             assert.match(SAISON, new RegExp(`\\['${cle}', `), `onglet ${cle}`);
         }
-        // Plus de lien vers l'ancien onglet « Meneurs » de la page Joueurs.
-        assert.doesNotMatch(SAISON, /onglet=meneurs/);
+        // « Tout » est l'onglet de départ.
+        assert.match(SAISON, /const fzsMeneurs = \{ cat: 'tout',/);
+        // Plus de lien vers l'ancien onglet « Meneurs » de la page Joueurs, ni de pied.
+        assert.doesNotMatch(SAISON, /onglet=meneurs|Voir les agents libres/);
+    });
+
+    test('meneurs « Tout » : attaquants, défenseurs et recrues réunis aux points, sans doublon ni gardien', () => {
+        const { fzsMeneursListe } = chargerFonctions('accueil-season.js', ['fzsMeneursListe']);
+        const j = (playerId, points, goals = 0) => ({ playerId, playerName: `J${playerId}`, points, goals });
+        const data = {
+            forwardsPoints: [j(1, 40, 20), j(2, 30), j(3, 12)],
+            defensePoints: [j(10, 35), j(11, 12, 5)],
+            rookiePoints: [j(3, 12), j(20, 25)], // 3 : une recrue déjà parmi les attaquants
+            goalieWins: [{ playerId: 99, playerName: 'G', wins: 30 }]
+        };
+        const ids = liste => Array.from(liste, p => p.playerId);
+        assert.deepEqual(ids(fzsMeneursListe(data, 'tout')), [1, 10, 2, 20, 11, 3], 'aux points ; à égalité, aux buts');
+        assert.deepEqual(ids(fzsMeneursListe(data, 'defensePoints')), [10, 11]);
+        const beaucoup = { forwardsPoints: Array.from({ length: 10 }, (_, i) => j(i + 1, 50 - i)), defensePoints: Array.from({ length: 10 }, (_, i) => j(i + 100, 45 - i)) };
+        assert.equal(fzsMeneursListe(beaucoup, 'tout').length, 10, 'dix au plus');
+        assert.deepEqual(ids(fzsMeneursListe({}, 'tout')), []);
     });
 
     test('meneurs : buts, aides et matchs sous le nom ; les matchs seuls chez un gardien ; le club actuel d’un joueur échangé', () => {
@@ -180,6 +199,33 @@ describe('les sections de la maquette', () => {
         assert.equal(fzsClubActuel('BOS,TOR'), 'TOR');
         assert.equal(fzsClubActuel('MTL'), 'MTL');
         assert.equal(fzsClubActuel(undefined), '');
+    });
+
+    test('zone de match : le logo du club qui marque, et chaque joueur ouvre sa fiche', () => {
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const { fzsZoneCorpsHTML } = chargerFonctions('accueil-season.js',
+            ['fzsOrdinal', 'FZS_EN_DIRECT', 'FZS_FINI', 'FZS_MON_JOUEUR', 'fzsZoneCorpsHTML'], {
+                escapeHTML: esc,
+                activeRosterNames: () => ['Kirill Kaprizov'],
+                getPlayerStats: () => ({ playerId: 8478864 })
+            });
+        const feuille = {
+            scoring: [{ number: 1, type: 'REG', goals: [{
+                playerId: 8478864, name: 'Kirill Kaprizov', teamAbbrev: 'MIN', timeInPeriod: '07:37',
+                assists: [{ playerId: 8481542, name: 'Matt Boldy' }, { playerId: null, name: 'Inconnu' }]
+            }] }]
+        };
+        const html = fzsZoneCorpsHTML({ state: 'FINAL' }, feuille);
+        assert.match(html, /<img src="teams\/MIN\.png" alt="MIN"/, 'le logo, plus le sigle seul');
+        assert.match(html, /data-fzs-zone-joueur="8478864" data-fzs-nom="Kirill Kaprizov"/, 'le buteur ouvre sa fiche');
+        assert.match(html, /data-fzs-zone-joueur="8481542" data-fzs-nom="Matt Boldy"/, 'un passeur aussi');
+        assert.doesNotMatch(html, /data-fzs-nom="Inconnu"/, 'sans numéro LNH, pas de fiche à ouvrir');
+        assert.match(html, /fzs-mine-star/, 'mon joueur garde son étoile');
+    });
+
+    test('zone de match : rien ne rétrécit dans la feuille, le bouton du bas garde sa hauteur', () => {
+        assert.match(lire('accueil-season.css'), /\.fzs-zone-feuille > \* \{ flex-shrink: 0; \}/);
+        assert.match(SAISON, /!fzsFicheOuverte\(\)\) fzsFermerZone\(\)/, 'Échap ferme la fiche, pas la zone dessous');
     });
 
     test('positions à la française et noms comparés sans accents', () => {

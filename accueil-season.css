@@ -34,8 +34,8 @@ html.fz-anon body {
 .fzs .fzs-games { order: 2; }
 .fzs .fzs-mine { order: 3; }
 .fzs .fzs-top { order: 5; }
-.fzs .fzs-leaders { order: 6; }
-.fzs .fzs-activity { order: 7; }
+.fzs .fzs-activity { order: 6; }
+.fzs .fzs-leaders { order: 7; }
 .fzs .fzs-ranks { order: 8; }
 .fzs .fzs-lines { order: 9; }
 .fzs .fzs-read { order: 10; }
@@ -249,7 +249,11 @@ html.fzs-zone-ouverte { overflow: hidden; }
     border-radius: 22px 22px 0 0; border-top: 1px solid var(--s-line);
     background: var(--s-card);
     transform: translateY(100%); transition: transform .24s cubic-bezier(.2, .8, .2, 1);
+    overscroll-behavior: contain;
 }
+/* Beaucoup de buts : la feuille défile, et rien ne s'y écrase — sans cela,
+   le bouton « Ouvrir la feuille de match » rétrécissait jusqu'à son texte. */
+.fzs-zone-feuille > * { flex-shrink: 0; }
 .fzs-zone.is-open .fzs-zone-fond { opacity: 1; }
 .fzs-zone.is-open .fzs-zone-feuille { transform: none; }
 .fzs-zone-poignee { align-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--s-switch); }
@@ -277,11 +281,16 @@ html.fzs-zone-ouverte { overflow: hidden; }
 .fzs-zone-stat span > i > i { background: var(--s-ink2); }
 .fzs-zone-h { margin: 6px 0 0; font: 800 12px/1 'Saira', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--s-faint); }
 .fzs-zone-goals { margin: 0; padding: 0; list-style: none; }
-.fzs-zone-goals li { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--s-line2); font-size: 13px; }
+.fzs-zone-goals li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--s-line2); font-size: 13px; }
 .fzs-zone-goals time { flex: none; width: 64px; font: 500 11px/1 'JetBrains Mono', ui-monospace, monospace; color: var(--s-faint); }
-.fzs-zone-goals b { flex: none; width: 36px; }
+/* Le logo du club qui marque (son sigle si le logo manque). */
+.fzs-zone-goals .fzs-zone-goal-club { flex: none; width: 28px; display: flex; justify-content: center; font: 700 11px/1 'Saira', sans-serif; color: var(--s-ink2); }
+.fzs-zone-goal-club img { width: 24px; height: 24px; object-fit: contain; }
 .fzs-zone-goals span { flex: 1; min-width: 0; }
 .fzs-zone-goals small { display: block; font-size: 11px; color: var(--s-faint); }
+/* Chaque joueur ouvre sa fiche : un bouton qui garde l'allure du texte. */
+.fzs-zone .fzs-zone-joueur { padding: 2px 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.fzs-zone .fzs-zone-joueur:hover { color: var(--s-ink); text-decoration: underline; text-underline-offset: 2px; }
 .fzs-mine-star { margin-left: 4px; font-style: normal; font-size: .85em; color: var(--s-red); }
 /* « Voir les trios MTL TOR » : les trios des deux clubs, à l'onglet Trios LNH. */
 .fzs-zone-trios { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; font-size: 13px; color: var(--s-mute); }

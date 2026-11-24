@@ -33,6 +33,17 @@ describe('page Joueurs — onglets', () => {
         assert.match(filtres, /statsLibres = voulu;/);
     });
 
+    test('sous « Agents libres », plus de pastille LIBRE ; TOI et R restent', () => {
+        const { chargerFonctions } = require('../fixtures/helpers.js');
+        const charger = statsLibres => chargerFonctions('index.js', ['proprioJoueur', 'pastillesJoueur'], {
+            statsLibres,
+            window: { fzStatsProprio: nom => ({ Moi: 'moi', Libre: 'libre' })[nom] || 'pris' }
+        }).pastillesJoueur;
+        assert.match(charger(false)('Libre', false), /sj-tag-libre/);
+        assert.doesNotMatch(charger(true)('Libre', false), /sj-tag-libre/);
+        assert.match(charger(true)('Moi', true), /sj-tag-recrue[\s\S]*sj-tag-moi/);
+    });
+
     test('les onglets de position sont sur la page, sous la recherche, et plus dans la feuille', () => {
         const feuille = STATS.slice(STATS.indexOf('id="sjFeuille"'));
         const page = STATS.slice(0, STATS.indexOf('id="sjFeuille"'));
